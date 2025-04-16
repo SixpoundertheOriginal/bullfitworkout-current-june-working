@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -196,8 +195,7 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
           <Progress 
             value={currentVolume > 0 ? (currentVolume / previousVolume) * 100 : 0} 
             max={100}
-            className="h-1.5 bg-gray-800"
-            indicatorClassName={currentVolume >= previousVolume ? "bg-green-500" : "bg-red-500"}
+            className={`h-1.5 bg-gray-800 ${currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
           />
         </div>
       </CardContent>
@@ -384,8 +382,7 @@ const TrainingSession = () => {
         <Progress 
           value={completionPercentage} 
           max={100}
-          className="h-1.5 bg-gray-800"
-          indicatorClassName="bg-purple-500"
+          className="h-1.5 bg-gray-800 [&>div]:bg-purple-500"
         />
       </div>
       
