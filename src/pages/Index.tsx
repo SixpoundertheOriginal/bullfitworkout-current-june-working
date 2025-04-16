@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
@@ -10,7 +11,8 @@ import {
   Moon, 
   Plus, 
   X, 
-  Zap 
+  Zap,
+  User as UserIcon
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -156,7 +158,7 @@ const Index = () => {
         <NavButton icon={<Clock size={20} />} label="Today" active />
         <NavButton icon={<BarChart3 size={20} />} label="Progress" />
         <NavButton icon={<Moon size={20} />} label="Recovery" />
-        <NavButton icon={<User size={20} />} label="Profile" />
+        <NavButton icon={<UserIcon size={20} />} label="Profile" />
       </nav>
 
       {/* Training Setup Dialog - Only shown when dialogOpen is true */}
