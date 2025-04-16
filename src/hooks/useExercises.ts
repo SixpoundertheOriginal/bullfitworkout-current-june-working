@@ -31,7 +31,7 @@ export function useExercises() {
 
       const exercises = data || [];
       console.log("Fetched exercises:", exercises.length);
-      return exercises;
+      return exercises as Exercise[];
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
       return [];
@@ -71,13 +71,14 @@ export function useExercises() {
     }
 
     console.log("Exercise created successfully:", data);
-    return data;
+    return data as Exercise;
   };
 
   const exercisesQuery = useQuery({
     queryKey: ['exercises'],
     queryFn: fetchExercises,
     enabled: !!user,
+    initialData: [] // Always provide an empty array as initial data
   });
 
   const createExerciseMutation = useMutation({
@@ -99,7 +100,7 @@ export function useExercises() {
   });
 
   return {
-    exercises: exercisesQuery.data || [],
+    exercises: exercisesQuery.data || [], // Ensure we always return an array
     isLoading: exercisesQuery.isLoading,
     isError: exercisesQuery.isError,
     error: exercisesQuery.error,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,7 +19,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Exercise } from "@/types/exercise";
@@ -223,7 +221,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 </>
               )}
             </CommandEmpty>
-            {Array.isArray(filteredExercises) && filteredExercises.length > 0 ? (
+            
+            {Array.isArray(filteredExercises) && filteredExercises.length > 0 && (
               <CommandGroup heading="Exercises">
                 {filteredExercises.map((exercise) => (
                   exercise && exercise.id ? (
@@ -248,7 +247,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                   ) : null
                 ))}
               </CommandGroup>
-            ) : null}
+            )}
           </Command>
         </PopoverContent>
       </Popover>
