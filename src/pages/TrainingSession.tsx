@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -20,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
+import { Input } from "@/components/ui/input";
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -164,7 +165,7 @@ const TrainingSession = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [time, setTime] = useState(0);
-  const [showPicker, setShowPicker] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState("");
   const [heartRate, setHeartRate] = useState(75);
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
@@ -221,20 +222,28 @@ const TrainingSession = () => {
     }
   };
   
-  const handleSelectExercise = (exercise: Exercise) => {
-    if (!exercise || !exercise.name) return;
+  const handleAddExercise = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (!exercises[exercise.name]) {
+    if (!newExerciseName.trim()) return;
+    
+    if (!exercises[newExerciseName]) {
       setExercises({
         ...exercises,
-        [exercise.name]: [
+        [newExerciseName]: [
           { weight: 0, reps: 0, completed: false },
           { weight: 0, reps: 0, completed: false },
           { weight: 0, reps: 0, completed: false },
         ]
       });
-      setCurrentExercise(exercise.name);
-      setShowPicker(false);
+      setCurrentExercise(newExerciseName);
+      setNewExerciseName("");
+    } else {
+      toast({
+        title: "Exercise already added",
+        description: "This exercise is already in your workout",
+        variant: "destructive"
+      });
     }
   };
   
@@ -383,7 +392,19 @@ const TrainingSession = () => {
         
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Add Exercise</h3>
-          <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
+          <form onSubmit={handleAddExercise} className="flex gap-2">
+            <Input
+              type="text"
+              value={newExerciseName}
+              onChange={(e) => setNewExerciseName(e.target.value)}
+              placeholder="Enter exercise name"
+              className="bg-gray-900 border-gray-700 text-white"
+            />
+            <Button type="submit" variant="secondary">
+              <Plus size={16} />
+              Add
+            </Button>
+          </form>
         </div>
         
         <Button 
