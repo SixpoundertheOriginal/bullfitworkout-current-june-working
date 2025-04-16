@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -21,6 +20,9 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
+import { Exercise, ExerciseSet } from "@/types/exercise";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for exercise history
 const exerciseHistoryData = {
@@ -45,45 +47,6 @@ const exerciseHistoryData = {
     { date: "Mar 24", weight: 0, reps: 6, sets: 3 },
   ],
 };
-
-// Exercise library with recommended weights based on history
-const exerciseLibrary = [
-  { 
-    name: "Bench Press", 
-    lastWeight: 135, 
-    lastReps: 10,
-    personal_record: 145,
-    muscle_group: "Chest"
-  },
-  { 
-    name: "Squats", 
-    lastWeight: 185, 
-    lastReps: 8,
-    personal_record: 195,
-    muscle_group: "Legs"
-  },
-  { 
-    name: "Deadlift", 
-    lastWeight: 225, 
-    lastReps: 5,
-    personal_record: 235,
-    muscle_group: "Back"
-  },
-  { 
-    name: "Pull-ups", 
-    lastWeight: 0, 
-    lastReps: 8,
-    personal_record: 12,
-    muscle_group: "Back"
-  },
-  { 
-    name: "Shoulder Press", 
-    lastWeight: 95, 
-    lastReps: 8,
-    personal_record: 105,
-    muscle_group: "Shoulders"
-  },
-];
 
 // Component for each set in an exercise
 const SetRow = ({ setNumber, weight, reps, completed, onComplete, onEdit }) => {
@@ -205,47 +168,6 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
   );
 };
 
-// Exercise Picker Component
-const ExercisePicker = ({ onSelect, onClose }) => {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col">
-      <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Add Exercise</h2>
-        <button onClick={onClose} className="p-2">
-          <X size={24} />
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-auto p-4">
-        {exerciseLibrary.map((exercise) => (
-          <div 
-            key={exercise.name}
-            onClick={() => {
-              onSelect(exercise.name);
-              onClose();
-            }}
-            className="flex justify-between items-center p-4 bg-gray-900 rounded-lg mb-3 border border-gray-800 hover:border-gray-700"
-          >
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium">{exercise.name}</h3>
-                {exercise.name === "Bench Press" && (
-                  <Badge className="bg-purple-500/20 text-purple-300 text-xs">PR</Badge>
-                )}
-              </div>
-              <div className="text-sm text-gray-400">{exercise.muscle_group}</div>
-              <div className="text-xs text-gray-500 mt-1">
-                Last: {exercise.lastWeight} lbs × {exercise.lastReps} reps
-              </div>
-            </div>
-            <ChevronRight size={20} className="text-gray-500" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 // Main Training Session component
 const TrainingSession = () => {
   const navigate = useNavigate();
@@ -253,17 +175,11 @@ const TrainingSession = () => {
   const [time, setTime] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
   const [heartRate, setHeartRate] = useState(75);
-  const [currentExercise, setCurrentExercise] = useState("Bench Press");
+  const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
   
   // State for exercise sets
-  const [exercises, setExercises] = useState({
-    "Bench Press": [
-      { weight: 135, reps: 10, completed: false },
-      { weight: 135, reps: 10, completed: false },
-      { weight: 135, reps: 10, completed: false },
-    ]
-  });
+  const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean }[]>>({});
   
   // Set start time when component mounts
   useEffect(() => {
@@ -316,19 +232,19 @@ const TrainingSession = () => {
     });
   };
   
-  // Add a new exercise to the workout
-  const handleAddExercise = (exerciseName) => {
-    if (!exercises[exerciseName]) {
-      const exerciseData = exerciseLibrary.find(e => e.name === exerciseName);
+  // Handle selecting an exercise from the autocomplete
+  const handleSelectExercise = (exercise: Exercise) => {
+    if (!exercises[exercise.name]) {
       setExercises({
         ...exercises,
-        [exerciseName]: [
-          { weight: exerciseData?.lastWeight || 0, reps: exerciseData?.lastReps || 0, completed: false },
-          { weight: exerciseData?.lastWeight || 0, reps: exerciseData?.lastReps || 0, completed: false },
-          { weight: exerciseData?.lastWeight || 0, reps: exerciseData?.lastReps || 0, completed: false },
+        [exercise.name]: [
+          { weight: 0, reps: 0, completed: false },
+          { weight: 0, reps: 0, completed: false },
+          { weight: 0, reps: 0, completed: false },
         ]
       });
-      setCurrentExercise(exerciseName);
+      setCurrentExercise(exercise.name);
+      setShowPicker(false);
     }
   };
   
@@ -340,22 +256,90 @@ const TrainingSession = () => {
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
   // End the workout and return to home screen
-  const handleFinishWorkout = () => {
+  const handleFinishWorkout = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save your workout.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Get the end time
     const endTime = new Date();
+    const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
     
-    // Create workout data object to pass to the completion page
-    const workoutData = {
-      exercises: exercises,
-      duration: time,
-      startTime: startTime,
-      endTime: endTime,
-      trainingType: "Strength Training", // This could be dynamic based on selected exercises
-      name: "Workout Session"
-    };
-    
-    // Navigate to the workout complete page with the workout data
-    navigate('/workout-complete', { state: { workoutData } });
+    try {
+      // First, create the workout session
+      const { data: workoutSession, error: workoutError } = await supabase
+        .from('workout_sessions')
+        .insert({
+          user_id: user.id,
+          name: "Training Session",
+          training_type: "Strength Training",
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          duration: duration,
+          notes: ""
+        })
+        .select()
+        .single();
+      
+      if (workoutError) throw workoutError;
+      
+      // Next, add all exercise sets
+      const setsToInsert: Omit<ExerciseSet, 'id'>[] = [];
+      
+      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+        sets.forEach((set, index) => {
+          if (set.completed) {
+            setsToInsert.push({
+              workout_id: workoutSession.id,
+              exercise_name: exerciseName,
+              weight: set.weight,
+              reps: set.reps,
+              completed: true,
+              set_number: index + 1
+            });
+          }
+        });
+      });
+      
+      if (setsToInsert.length > 0) {
+        const { error: setsError } = await supabase
+          .from('exercise_sets')
+          .insert(setsToInsert);
+        
+        if (setsError) throw setsError;
+      }
+      
+      toast({
+        title: "Workout completed",
+        description: "Your workout has been saved successfully!",
+      });
+      
+      // Create workout data object to pass to the completion page
+      const workoutData = {
+        id: workoutSession.id,
+        exercises: exercises,
+        duration: duration,
+        startTime: startTime,
+        endTime: endTime,
+        trainingType: "Strength Training",
+        name: "Workout Session"
+      };
+      
+      // Navigate to the workout complete page with the workout data
+      navigate('/workout-complete', { state: { workoutData } });
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      toast({
+        title: "Error saving workout",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -419,14 +403,11 @@ const TrainingSession = () => {
           />
         ))}
         
-        {/* Add Exercise Button */}
-        <button 
-          onClick={() => setShowPicker(true)}
-          className="w-full py-4 flex items-center justify-center bg-gray-900 border border-gray-800 rounded-lg text-lg font-medium hover:bg-gray-800 mb-6"
-        >
-          <Plus size={20} className="mr-2" />
-          Add Exercise
-        </button>
+        {/* Add Exercise */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-2">Add Exercise</h3>
+          <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
+        </div>
         
         {/* Complete Workout Button */}
         <Button 
@@ -436,14 +417,6 @@ const TrainingSession = () => {
           Complete Workout
         </Button>
       </main>
-      
-      {/* Exercise Picker Modal */}
-      {showPicker && (
-        <ExercisePicker 
-          onSelect={handleAddExercise}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
     </div>
   );
 };
