@@ -25,7 +25,7 @@ export interface ExerciseSet {
   weight: number;
   reps: number;
   completed: boolean;
-  set_number: number; // Make this required to match database schema
+  set_number: number; // Required to match database schema
   exercise_name: string;
-  workout_id: string; // Make this required to match database schema
+  workout_id: string; // Required to match database schema
 }

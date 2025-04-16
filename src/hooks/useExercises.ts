@@ -10,8 +10,13 @@ export function useExercises() {
   const queryClient = useQueryClient();
 
   const fetchExercises = async (): Promise<Exercise[]> => {
-    if (!user) throw new Error("User not authenticated");
+    if (!user) {
+      console.log("User not authenticated, not fetching exercises");
+      return [];
+    }
 
+    console.log("Fetching exercises for user:", user.id);
+    
     // Get global exercises and user's custom exercises
     const { data, error } = await supabase
       .from('exercises')
@@ -23,22 +28,30 @@ export function useExercises() {
       throw error;
     }
 
+    console.log("Fetched exercises:", data?.length || 0);
     return data || [];
   };
 
   const createExercise = async (exercise: Omit<Exercise, 'id'>): Promise<Exercise> => {
     if (!user) throw new Error("User not authenticated");
 
+    console.log("Creating new exercise:", exercise.name);
+
     const newExercise = {
       ...exercise,
       is_custom: true,
       created_by: user.id,
-      // Add required fields that might be missing
+      // Make sure all required fields are present
       instructions: exercise.instructions || {},
       is_compound: exercise.is_compound !== undefined ? exercise.is_compound : false,
-      // Ensure description is not undefined
-      description: exercise.description || ""
+      // Ensure these required fields are never undefined
+      description: exercise.description || "",
+      primary_muscle_groups: exercise.primary_muscle_groups || [],
+      secondary_muscle_groups: exercise.secondary_muscle_groups || [],
+      equipment_type: exercise.equipment_type || []
     };
+
+    console.log("Submitting exercise to database:", newExercise);
 
     const { data, error } = await supabase
       .from('exercises')
@@ -51,6 +64,7 @@ export function useExercises() {
       throw error;
     }
 
+    console.log("Exercise created successfully:", data);
     return data;
   };
 

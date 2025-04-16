@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 interface ExerciseAutocompleteProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -38,6 +39,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Form state for new exercise with all required fields
   const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id'>>({
@@ -48,16 +50,44 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     equipment_type: [],
     movement_pattern: "push",
     difficulty: "beginner",
-    instructions: {}, // Add required field
-    is_compound: false, // Add required field
+    instructions: {}, // Required field
+    is_compound: false, // Required field
   });
   
   const [tempMuscleGroup, setTempMuscleGroup] = useState("");
   const [tempEquipment, setTempEquipment] = useState("");
   
-  const { exercises, isLoading, createExercise, isPending } = useExercises();
+  const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
+
+  // Log exercises data for debugging
+  useEffect(() => {
+    if (exercises) {
+      console.log(`Loaded ${exercises.length} exercises`);
+    }
+    if (isError) {
+      console.error("Error in useExercises:", error);
+    }
+  }, [exercises, isError, error]);
 
   const handleCreateExercise = () => {
+    if (!newExercise.name) {
+      toast({
+        title: "Exercise name required",
+        description: "Please provide a name for your exercise",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newExercise.primary_muscle_groups.length === 0) {
+      toast({
+        title: "Muscle group required",
+        description: "Please add at least one primary muscle group",
+        variant: "destructive"
+      });
+      return;
+    }
+
     createExercise(newExercise, {
       onSuccess: (exercise) => {
         setDialogOpen(false);
@@ -74,8 +104,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
           equipment_type: [],
           movement_pattern: "push",
           difficulty: "beginner",
-          instructions: {}, // Add required field
-          is_compound: false, // Add required field
+          instructions: {}, // Required field
+          is_compound: false, // Required field
         });
       },
     });
@@ -115,6 +145,14 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     });
   };
 
+  // Filter exercises based on search term
+  const filteredExercises = searchTerm 
+    ? exercises.filter(ex => 
+        ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ex.primary_muscle_groups.some(m => m.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : exercises;
+
   return (
     <div className="flex items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -128,52 +166,72 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             {value
               ? exercises?.find((exercise) => exercise.name === value)?.name || value
               : "Select exercise..."}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            {isLoading ? (
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
           <Command className="bg-gray-800">
-            <CommandInput placeholder="Search exercises..." className="bg-gray-800 text-white" />
+            <CommandInput 
+              placeholder="Search exercises..." 
+              className="bg-gray-800 text-white"
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
             <CommandEmpty className="py-6 text-center text-gray-400">
-              No exercise found.
-              <Button 
-                variant="link" 
-                className="block w-full text-blue-400"
-                onClick={() => {
-                  setDialogOpen(true);
-                  setNewExercise({
-                    ...newExercise,
-                    name: value || "",
-                  });
-                  setOpen(false);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create "{value || 'new exercise'}"
-              </Button>
+              {isLoading ? (
+                <div className="flex flex-col items-center">
+                  <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                  <span>Loading exercises...</span>
+                </div>
+              ) : (
+                <>
+                  No exercise found.
+                  <Button 
+                    variant="link" 
+                    className="block w-full text-blue-400"
+                    onClick={() => {
+                      setDialogOpen(true);
+                      setNewExercise({
+                        ...newExercise,
+                        name: searchTerm || "",
+                      });
+                      setOpen(false);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create "{searchTerm || 'new exercise'}"
+                  </Button>
+                </>
+              )}
             </CommandEmpty>
-            <CommandGroup heading="Exercises">
-              {exercises?.map((exercise) => (
-                <CommandItem
-                  key={exercise.id}
-                  value={exercise.name}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue);
-                    onSelectExercise(exercise);
-                    setOpen(false);
-                  }}
-                  className="text-white hover:bg-gray-700"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === exercise.name ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {exercise.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {filteredExercises.length > 0 && (
+              <CommandGroup heading="Exercises">
+                {filteredExercises.map((exercise) => (
+                  <CommandItem
+                    key={exercise.id}
+                    value={exercise.name}
+                    onSelect={(currentValue) => {
+                      setValue(currentValue);
+                      onSelectExercise(exercise);
+                      setOpen(false);
+                    }}
+                    className="text-white hover:bg-gray-700"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === exercise.name ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {exercise.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
           </Command>
         </PopoverContent>
       </Popover>
