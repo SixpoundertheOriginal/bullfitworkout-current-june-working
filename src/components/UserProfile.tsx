@@ -74,7 +74,7 @@ export function UserProfile() {
               onClick={goToProfilePage}
             >
               <User className="mr-2 h-4 w-4" />
-              Edit Profile
+              View Profile
             </Button>
             
             <Button 
