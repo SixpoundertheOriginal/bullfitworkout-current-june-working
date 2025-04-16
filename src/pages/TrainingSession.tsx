@@ -220,9 +220,9 @@ const ExerciseCard = ({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-semibold text-lg">{exercise}</h3>
+            <h3 className="font-semibold text-lg font-heading">{exercise}</h3>
             <div className="flex items-center text-gray-400 text-sm">
-              <span>Last session: {previousSession.weight} lbs × {previousSession.reps} × {previousSession.sets}</span>
+              <span>Last session: <span className="mono-text">{previousSession.weight}</span> lbs × <span className="mono-text">{previousSession.reps}</span> × <span className="mono-text">{previousSession.sets}</span></span>
             </div>
           </div>
           <Badge 
@@ -230,11 +230,11 @@ const ExerciseCard = ({
             className={`flex items-center gap-1 ${isImproved ? "text-green-400 border-green-500/30" : "text-red-400 border-red-500/30"}`}
           >
             {isImproved ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-            {Math.abs(parseFloat(percentChange))}%
+            <span className="mono-text">{Math.abs(parseFloat(percentChange))}%</span>
           </Badge>
         </div>
         
-        <div className="flex items-center justify-between py-2 border-b border-gray-700 text-sm text-gray-400">
+        <div className="flex items-center justify-between py-2 border-b border-gray-700 text-xs text-gray-400 uppercase tracking-wider font-medium">
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight</div>
           <div className="flex-1 px-2">Reps</div>
@@ -263,7 +263,7 @@ const ExerciseCard = ({
           
           <button 
             onClick={() => onAddSet(exercise)}
-            className="w-full mt-3 py-2 flex items-center justify-center text-sm bg-gray-800 hover:bg-gray-750 rounded-md text-gray-300"
+            className="w-full mt-3 py-2 flex items-center justify-center text-sm bg-gray-800 hover:bg-gray-750 rounded-md text-gray-300 font-medium"
           >
             <Plus size={16} className="mr-1" />
             Add Set
@@ -272,8 +272,8 @@ const ExerciseCard = ({
         
         <div className="mt-4 pt-3 border-t border-gray-800">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-400">Volume vs last session</span>
-            <div className={isImproved ? "text-green-400" : "text-red-400"}>
+            <span className="text-gray-400 text-label">Volume vs last session</span>
+            <div className={isImproved ? "text-green-400 mono-text" : "text-red-400 mono-text"}>
               {volumeDiff > 0 ? "+" : ""}{volumeDiff} lbs ({volumePercentChange}%)
             </div>
           </div>
@@ -501,30 +501,30 @@ const TrainingSession = () => {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-xl font-semibold">Training Session</h1>
+        <h1 className="title-large">Training Session</h1>
         <div className="w-9"></div>
       </header>
 
       <div className="grid grid-cols-4 bg-gray-900 p-4">
         <div className="flex flex-col items-center">
           <Timer className="text-purple-400 mb-1" size={18} />
-          <span className="text-lg font-mono">{formatTime(time)}</span>
-          <span className="text-xs text-gray-400">Time</span>
+          <span className="text-lg font-mono mono-text">{formatTime(time)}</span>
+          <span className="text-xs text-gray-400 font-medium">Time</span>
         </div>
         <div className="flex flex-col items-center">
           <Dumbbell className="text-purple-400 mb-1" size={18} />
-          <span className="text-lg">{Object.keys(exercises).length}</span>
-          <span className="text-xs text-gray-400">Exercises</span>
+          <span className="text-lg mono-text">{Object.keys(exercises).length}</span>
+          <span className="text-xs text-gray-400 font-medium">Exercises</span>
         </div>
         <div className="flex flex-col items-center">
           <BarChart3 className="text-purple-400 mb-1" size={18} />
-          <span className="text-lg">{completedSets}/{totalSets}</span>
-          <span className="text-xs text-gray-400">Sets</span>
+          <span className="text-lg mono-text">{completedSets}/{totalSets}</span>
+          <span className="text-xs text-gray-400 font-medium">Sets</span>
         </div>
         <div className="flex flex-col items-center">
           <Heart className="text-red-400 mb-1" size={18} />
-          <span className="text-lg">{heartRate}</span>
-          <span className="text-xs text-gray-400">BPM</span>
+          <span className="text-lg mono-text">{heartRate}</span>
+          <span className="text-xs text-gray-400 font-medium">BPM</span>
         </div>
       </div>
 
@@ -556,7 +556,7 @@ const TrainingSession = () => {
         ))}
         
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Add Exercise</h3>
+          <h3 className="title-small mb-2">Add Exercise</h3>
           <form onSubmit={handleAddExercise} className="flex gap-2">
             <Input
               type="text"
@@ -565,7 +565,7 @@ const TrainingSession = () => {
               placeholder="Enter exercise name"
               className="bg-gray-900 border-gray-700 text-white"
             />
-            <Button type="submit" variant="secondary">
+            <Button type="submit" variant="secondary" className="font-medium">
               <Plus size={16} />
               Add
             </Button>
@@ -574,7 +574,7 @@ const TrainingSession = () => {
         
         <Button 
           onClick={finishWorkout}
-          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
+          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-heading font-medium"
         >
           Complete Workout
         </Button>

@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,7 +99,38 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+/* Typography styles */
+@layer components {
+  .title-large {
+    @apply text-2xl font-heading font-semibold tracking-tight;
+  }
+  
+  .title-medium {
+    @apply text-xl font-heading font-medium;
+  }
+  
+  .title-small {
+    @apply text-lg font-heading;
+  }
+  
+  .text-label {
+    @apply text-xs font-medium uppercase tracking-wider;
+  }
+  
+  .mono-text {
+    @apply font-mono tabular-nums;
+  }
+  
+  .status-tag {
+    @apply text-xs font-medium uppercase tracking-wider rounded-full px-2 py-0.5;
   }
 }
 
@@ -105,7 +138,7 @@
 body {
   background-color: #121212;
   color: white;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Custom gradient backgrounds */

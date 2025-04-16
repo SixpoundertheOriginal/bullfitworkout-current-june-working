@@ -235,18 +235,18 @@ const WorkoutComplete = () => {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-xl font-semibold">Workout Complete</h1>
+        <h1 className="title-large">Workout Complete</h1>
         <div className="w-9"></div>
       </header>
 
       <main className="flex-1 overflow-auto px-4 py-6">
         <div className="mb-8 rounded-xl p-6 text-center bg-gradient-to-r from-green-600 to-emerald-500">
           <CheckCircle size={48} className="mx-auto mb-2" />
-          <p className="text-xl font-medium">
+          <p className="title-medium">
             Congrats! You've completed your workout
           </p>
-          <p className="text-sm opacity-80 mt-1">
-            {workoutData.trainingType} • {formatTime(workoutData.duration)}
+          <p className="text-sm opacity-80 mt-1 font-medium">
+            {workoutData.trainingType} • <span className="mono-text">{formatTime(workoutData.duration)}</span>
           </p>
         </div>
 
@@ -254,39 +254,39 @@ const WorkoutComplete = () => {
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-lg font-semibold">{workoutData.name || workoutData.trainingType}</h2>
+                <h2 className="title-small">{workoutData.name || workoutData.trainingType}</h2>
                 <div className="flex items-center text-gray-400 text-sm">
                   <Calendar size={14} className="mr-1" />
                   <span>{new Date().toLocaleDateString()}</span>
                   <Clock size={14} className="ml-3 mr-1" />
-                  <span>{formatTime(workoutData.duration)}</span>
+                  <span className="mono-text">{formatTime(workoutData.duration)}</span>
                 </div>
               </div>
-              <Badge className="bg-purple-500/20 text-purple-300">
+              <Badge className="bg-purple-500/20 text-purple-300 status-tag">
                 {workoutData.trainingType}
               </Badge>
             </div>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="bg-gray-800 p-3 rounded text-center">
-                <div className="text-2xl font-semibold">{completedSets}/{totalSets}</div>
-                <div className="text-xs text-gray-400">Sets</div>
+                <div className="text-2xl font-medium mono-text">{completedSets}/{totalSets}</div>
+                <div className="text-xs text-gray-400 font-medium">Sets</div>
               </div>
               <div className="bg-gray-800 p-3 rounded text-center">
-                <div className="text-2xl font-semibold">{Object.keys(workoutData.exercises).length}</div>
-                <div className="text-xs text-gray-400">Exercises</div>
+                <div className="text-2xl font-medium mono-text">{Object.keys(workoutData.exercises).length}</div>
+                <div className="text-xs text-gray-400 font-medium">Exercises</div>
               </div>
               <div className="bg-gray-800 p-3 rounded text-center">
-                <div className="text-2xl font-semibold">{totalVolume}</div>
-                <div className="text-xs text-gray-400">Volume (lbs)</div>
+                <div className="text-2xl font-medium mono-text">{totalVolume}</div>
+                <div className="text-xs text-gray-400 font-medium">Volume (lbs)</div>
               </div>
             </div>
 
             <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-400 mb-2">Volume by Exercise</h3>
+              <h3 className="text-label text-gray-400 mb-2">Volume by Exercise</h3>
               <div className="bg-gray-800 p-3 rounded-lg h-40">
                 <ChartContainer 
-                  className="h-full w-full [&_.recharts-cartesian-axis-tick-value]:fill-gray-400"
+                  className="h-full w-full [&_.recharts-cartesian-axis-tick-value]:fill-gray-400 [&_.recharts-cartesian-axis-tick-value]:text-xs [&_.recharts-cartesian-axis-tick-value]:font-mono"
                   config={{
                     volume: { theme: { dark: '#9b87f5', light: '#9b87f5' } }
                   }}
@@ -304,7 +304,7 @@ const WorkoutComplete = () => {
         </Card>
 
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Add Notes</h3>
+          <h3 className="title-small mb-2">Add Notes</h3>
           <Textarea
             placeholder="How was your workout? Note any PRs or areas to improve..."
             className="bg-gray-900 border-gray-700 h-32"
@@ -320,7 +320,7 @@ const WorkoutComplete = () => {
           >
             <div className="flex items-center">
               <Save size={20} className="text-purple-400 mr-3" />
-              <span>Save as Template</span>
+              <span className="font-medium">Save as Template</span>
             </div>
             <div className={`h-6 w-6 rounded-full flex items-center justify-center ${saveAsTemplate ? 'bg-purple-500 text-white' : 'bg-gray-700'}`}>
               {saveAsTemplate && <CheckCircle size={14} />}
@@ -350,7 +350,7 @@ const WorkoutComplete = () => {
             Discard
           </Button>
           <Button
-            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
+            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-medium"
             onClick={saveWorkout}
             disabled={saving}
           >
@@ -359,12 +359,12 @@ const WorkoutComplete = () => {
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Exercises Completed</h3>
+          <h3 className="title-small mb-3">Exercises Completed</h3>
           {Object.keys(workoutData.exercises).map((exercise) => (
             <div key={exercise} className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-3">
               <div className="flex justify-between items-center">
                 <div>
-                  <h4 className="font-semibold">{exercise}</h4>
+                  <h4 className="font-medium">{exercise}</h4>
                   <p className="text-sm text-gray-400">
                     {workoutData.exercises[exercise].filter(set => set.completed).length} sets completed
                   </p>
