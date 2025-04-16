@@ -159,127 +159,129 @@ const Index = () => {
         <NavButton icon={<User size={20} />} label="Profile" />
       </nav>
 
-      {/* Training Setup Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-xl w-full max-w-md relative overflow-hidden">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">Configure Training</h2>
-                <button 
-                  onClick={() => setDialogOpen(false)}
-                  className="p-1 rounded-full hover:bg-gray-800"
+      {/* Training Setup Dialog - Only shown when dialogOpen is true */}
+      {dialogOpen && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div className="bg-gray-900 rounded-xl w-full max-w-md relative overflow-hidden">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold">Configure Training</h2>
+                  <button 
+                    onClick={() => setDialogOpen(false)}
+                    className="p-1 rounded-full hover:bg-gray-800"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Training Type */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Training Type</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="e.g., Running, Yoga, HIIT..."
+                      value={trainingType}
+                      onChange={(e) => setTrainingType(e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    {trainingType && (
+                      <button
+                        onClick={() => setTrainingType("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      >
+                        <X size={16} className="text-gray-400" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <SuggestionChip label="Running" onClick={() => setTrainingType("Running")} />
+                    <SuggestionChip label="Strength" onClick={() => setTrainingType("Strength")} />
+                    <SuggestionChip label="Yoga" onClick={() => setTrainingType("Yoga")} />
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Tags</label>
+                  <div className="flex flex-wrap gap-2">
+                    <TagChip 
+                      label="Cardio" 
+                      selected={selectedTags.includes("Cardio")} 
+                      onClick={() => handleTagToggle("Cardio")} 
+                    />
+                    <TagChip 
+                      label="Strength" 
+                      selected={selectedTags.includes("Strength")} 
+                      onClick={() => handleTagToggle("Strength")} 
+                    />
+                    <TagChip 
+                      label="Flexibility" 
+                      selected={selectedTags.includes("Flexibility")} 
+                      onClick={() => handleTagToggle("Flexibility")} 
+                    />
+                    <TagChip 
+                      label="Recovery" 
+                      selected={selectedTags.includes("Recovery")} 
+                      onClick={() => handleTagToggle("Recovery")} 
+                    />
+                    <TagChip 
+                      label="Outdoors" 
+                      selected={selectedTags.includes("Outdoors")} 
+                      onClick={() => handleTagToggle("Outdoors")} 
+                    />
+                  </div>
+                </div>
+
+                {/* Duration */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
+                  <ToggleGroup type="single" value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value || "30"))}>
+                    <ToggleGroupItem value="15" className="w-1/4">15</ToggleGroupItem>
+                    <ToggleGroupItem value="30" className="w-1/4">30</ToggleGroupItem>
+                    <ToggleGroupItem value="45" className="w-1/4">45</ToggleGroupItem>
+                    <ToggleGroupItem value="60" className="w-1/4">60</ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+
+                {/* Quick Setup */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Quick Setup</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <QuickSetupCard 
+                      title="Morning Cardio" 
+                      description="30min running session" 
+                      onClick={() => {
+                        setTrainingType("Running");
+                        setSelectedTags(["Cardio", "Morning"]);
+                        setDuration(30);
+                      }}
+                    />
+                    <QuickSetupCard 
+                      title="Full Body" 
+                      description="45min strength workout" 
+                      onClick={() => {
+                        setTrainingType("Strength");
+                        setSelectedTags(["Strength", "Full Body"]);
+                        setDuration(45);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Start Button */}
+                <Button 
+                  onClick={startTraining}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-3 rounded-lg font-medium"
                 >
-                  <X size={20} />
-                </button>
+                  Start Training
+                </Button>
               </div>
-
-              {/* Training Type */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Training Type</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="e.g., Running, Yoga, HIIT..."
-                    value={trainingType}
-                    onChange={(e) => setTrainingType(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  {trainingType && (
-                    <button
-                      onClick={() => setTrainingType("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                    >
-                      <X size={16} className="text-gray-400" />
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <SuggestionChip label="Running" onClick={() => setTrainingType("Running")} />
-                  <SuggestionChip label="Strength" onClick={() => setTrainingType("Strength")} />
-                  <SuggestionChip label="Yoga" onClick={() => setTrainingType("Yoga")} />
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  <TagChip 
-                    label="Cardio" 
-                    selected={selectedTags.includes("Cardio")} 
-                    onClick={() => handleTagToggle("Cardio")} 
-                  />
-                  <TagChip 
-                    label="Strength" 
-                    selected={selectedTags.includes("Strength")} 
-                    onClick={() => handleTagToggle("Strength")} 
-                  />
-                  <TagChip 
-                    label="Flexibility" 
-                    selected={selectedTags.includes("Flexibility")} 
-                    onClick={() => handleTagToggle("Flexibility")} 
-                  />
-                  <TagChip 
-                    label="Recovery" 
-                    selected={selectedTags.includes("Recovery")} 
-                    onClick={() => handleTagToggle("Recovery")} 
-                  />
-                  <TagChip 
-                    label="Outdoors" 
-                    selected={selectedTags.includes("Outdoors")} 
-                    onClick={() => handleTagToggle("Outdoors")} 
-                  />
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-                <ToggleGroup type="single" value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value || "30"))}>
-                  <ToggleGroupItem value="15" className="w-1/4">15</ToggleGroupItem>
-                  <ToggleGroupItem value="30" className="w-1/4">30</ToggleGroupItem>
-                  <ToggleGroupItem value="45" className="w-1/4">45</ToggleGroupItem>
-                  <ToggleGroupItem value="60" className="w-1/4">60</ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-
-              {/* Quick Setup */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Quick Setup</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <QuickSetupCard 
-                    title="Morning Cardio" 
-                    description="30min running session" 
-                    onClick={() => {
-                      setTrainingType("Running");
-                      setSelectedTags(["Cardio", "Morning"]);
-                      setDuration(30);
-                    }}
-                  />
-                  <QuickSetupCard 
-                    title="Full Body" 
-                    description="45min strength workout" 
-                    onClick={() => {
-                      setTrainingType("Strength");
-                      setSelectedTags(["Strength", "Full Body"]);
-                      setDuration(45);
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Start Button */}
-              <Button 
-                onClick={startTraining}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-3 rounded-lg font-medium"
-              >
-                Start Training
-              </Button>
             </div>
           </div>
-        </div>
-      </Dialog>
+        </Dialog>
+      )}
 
       {/* Floating Action Button */}
       <button className="fixed bottom-20 right-4 h-16 w-16 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-lg z-10">
