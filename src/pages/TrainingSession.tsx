@@ -28,6 +28,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { supabase } from "@/integrations/supabase/client";
+import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
 
 interface LocationState {
   trainingType?: string;
@@ -300,6 +301,7 @@ const TrainingSession = () => {
   const [heartRate, setHeartRate] = useState(75);
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   
   const locationState = location.state as LocationState | null;
   const [trainingType, setTrainingType] = useState(
@@ -448,6 +450,11 @@ const TrainingSession = () => {
     }
   };
   
+  const handleSelectExercise = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setNewExerciseName(exercise.name);
+  };
+  
   const handleAddExercise = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -464,6 +471,7 @@ const TrainingSession = () => {
       });
       setCurrentExercise(newExerciseName);
       setNewExerciseName("");
+      setSelectedExercise(null);
     } else {
       toast({
         title: "Exercise already added",
@@ -560,17 +568,11 @@ const TrainingSession = () => {
         
         <div className="mb-6">
           <h3 className="title-small mb-2">Add Exercise</h3>
-          <form onSubmit={handleAddExercise} className="flex gap-2">
-            <Input
-              type="text"
-              value={newExerciseName}
-              onChange={(e) => setNewExerciseName(e.target.value)}
-              placeholder="Enter exercise name"
-              className="bg-gray-900 border-gray-700 text-white"
-            />
+          <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
+            <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
             <Button type="submit" variant="secondary" className="font-medium">
               <Plus size={16} />
-              Add
+              Add Exercise
             </Button>
           </form>
         </div>

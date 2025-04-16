@@ -1,4 +1,14 @@
 
+export interface ExerciseSet {
+  id?: string;
+  weight: number;
+  reps: number;
+  completed: boolean;
+  set_number: number; // Required to match database schema
+  exercise_name: string;
+  workout_id: string; // Required to match database schema
+}
+
 export interface Exercise {
   id: string;
   name: string;
@@ -18,14 +28,4 @@ export interface Exercise {
   metadata?: any; // Json type in Supabase
   tips?: string[];
   variations?: string[];
-}
-
-export interface ExerciseSet {
-  id?: string;
-  weight: number;
-  reps: number;
-  completed: boolean;
-  set_number: number; // Required to match database schema
-  exercise_name: string;
-  workout_id: string; // Required to match database schema
 }
