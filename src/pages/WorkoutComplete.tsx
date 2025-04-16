@@ -240,29 +240,19 @@ const WorkoutComplete = () => {
       </header>
 
       <main className="flex-1 overflow-auto px-4 py-6">
-        <div className="mb-8 rounded-xl p-6 text-center bg-gradient-to-r from-green-600 to-emerald-500">
-          <CheckCircle size={48} className="mx-auto mb-2" />
-          <p className="title-medium">
-            Congrats! You've completed your workout
-          </p>
-          <p className="text-sm opacity-80 mt-1 font-medium">
-            {workoutData.trainingType} • <span className="mono-text">{formatTime(workoutData.duration)}</span>
-          </p>
-        </div>
-
         <Card className="bg-gray-900 border-gray-800 mb-6">
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="title-small">{workoutData.name || workoutData.trainingType}</h2>
-                <div className="flex items-center text-gray-400 text-sm">
-                  <Calendar size={14} className="mr-1" />
+                <h2 className="training-type-primary">{workoutData.name || workoutData.trainingType}</h2>
+                <div className="training-metadata">
+                  <Calendar size={14} />
                   <span>{new Date().toLocaleDateString()}</span>
-                  <Clock size={14} className="ml-3 mr-1" />
+                  <Clock size={14} />
                   <span className="mono-text">{formatTime(workoutData.duration)}</span>
                 </div>
               </div>
-              <Badge className="bg-purple-500/20 text-purple-300 status-tag">
+              <Badge className="training-type-tag">
                 {workoutData.trainingType}
               </Badge>
             </div>

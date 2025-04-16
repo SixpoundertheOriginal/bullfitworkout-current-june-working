@@ -413,22 +413,22 @@ const WorkoutCard = ({ type, date, duration, tags }) => {
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-lg">{type}</h3>
-            <div className="flex items-center text-gray-400 text-sm mt-1">
+            <h3 className="training-type-primary">{type}</h3>
+            <div className="training-metadata">
               <Calendar size={14} className="mr-1" />
               <span>{date}</span>
               <Clock size={14} className="ml-3 mr-1" />
               <span>{duration}</span>
             </div>
           </div>
-          <div className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs">
+          <div className="training-type-tag">
             Completed
           </div>
         </div>
         
         <div className="mt-3 flex flex-wrap gap-2">
           {tags.map((tag, index) => (
-            <span key={index} className="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded">
+            <span key={index} className="training-type-tag text-xs">
               {tag}
             </span>
           ))}
