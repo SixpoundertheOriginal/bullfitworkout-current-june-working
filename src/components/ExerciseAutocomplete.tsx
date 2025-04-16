@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
   // Safe exercises list that is always an array
-  const safeExercises = exercises || [];
+  const safeExercises: Exercise[] = Array.isArray(exercises) ? exercises : [];
 
   // Log exercises data for debugging
   useEffect(() => {
@@ -81,7 +82,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       return;
     }
 
-    if (newExercise.primary_muscle_groups.length === 0) {
+    if (!Array.isArray(newExercise.primary_muscle_groups) || newExercise.primary_muscle_groups.length === 0) {
       toast({
         title: "Muscle group required",
         description: "Please add at least one primary muscle group",
@@ -110,7 +111,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   };
 
   const addPrimaryMuscleGroup = () => {
-    if (tempMuscleGroup && !newExercise.primary_muscle_groups.includes(tempMuscleGroup)) {
+    if (tempMuscleGroup && Array.isArray(newExercise.primary_muscle_groups) && 
+        !newExercise.primary_muscle_groups.includes(tempMuscleGroup)) {
       setNewExercise({
         ...newExercise,
         primary_muscle_groups: [...newExercise.primary_muscle_groups, tempMuscleGroup],
@@ -120,7 +122,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   };
 
   const addEquipment = () => {
-    if (tempEquipment && !newExercise.equipment_type.includes(tempEquipment)) {
+    if (tempEquipment && Array.isArray(newExercise.equipment_type) && 
+        !newExercise.equipment_type.includes(tempEquipment)) {
       setNewExercise({
         ...newExercise,
         equipment_type: [...newExercise.equipment_type, tempEquipment],
@@ -130,6 +133,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   };
 
   const removeMuscleGroup = (group: string) => {
+    if (!Array.isArray(newExercise.primary_muscle_groups)) return;
+    
     setNewExercise({
       ...newExercise,
       primary_muscle_groups: newExercise.primary_muscle_groups.filter(g => g !== group),
@@ -137,6 +142,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   };
 
   const removeEquipment = (equipment: string) => {
+    if (!Array.isArray(newExercise.equipment_type)) return;
+    
     setNewExercise({
       ...newExercise,
       equipment_type: newExercise.equipment_type.filter(e => e !== equipment),
@@ -145,6 +152,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
   // Filter exercises based on search term with careful null checking
   const filteredExercises = React.useMemo(() => {
+    // If no search term or exercises is not an array, return the safe exercises array
     if (!searchTerm || !Array.isArray(safeExercises)) {
       return safeExercises;
     }
@@ -154,7 +162,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       if (!ex) return false;
       
       // Check if exercise name includes search term
-      const nameMatch = ex.name && ex.name.toLowerCase().includes(searchTermLower);
+      const nameMatch = ex.name && typeof ex.name === 'string' && ex.name.toLowerCase().includes(searchTermLower);
       
       // Check if any muscle group includes search term, with careful null checks
       const muscleMatch = Array.isArray(ex.primary_muscle_groups) && 
@@ -187,6 +195,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
+          {/* Ensure Command has valid children by doing null checks */}
           <Command className="bg-gray-800">
             <CommandInput 
               placeholder="Search exercises..." 
@@ -222,9 +231,11 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
               )}
             </CommandEmpty>
             
+            {/* Only render CommandGroup if filteredExercises is an array with items */}
             {Array.isArray(filteredExercises) && filteredExercises.length > 0 && (
               <CommandGroup heading="Exercises">
                 {filteredExercises.map((exercise) => (
+                  // Only render if exercise exists and has an id
                   exercise && exercise.id ? (
                     <CommandItem
                       key={exercise.id}
@@ -292,7 +303,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
-                {newExercise.primary_muscle_groups.map((group) => (
+                {Array.isArray(newExercise.primary_muscle_groups) && newExercise.primary_muscle_groups.map((group) => (
                   <Badge 
                     key={group} 
                     variant="secondary"
@@ -324,7 +335,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
-                {newExercise.equipment_type.map((equipment) => (
+                {Array.isArray(newExercise.equipment_type) && newExercise.equipment_type.map((equipment) => (
                   <Badge 
                     key={equipment} 
                     variant="secondary"
@@ -402,7 +413,9 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             </Button>
             <Button 
               onClick={handleCreateExercise} 
-              disabled={!newExercise.name || isPending || newExercise.primary_muscle_groups.length === 0}
+              disabled={!newExercise.name || isPending || 
+                !Array.isArray(newExercise.primary_muscle_groups) || 
+                newExercise.primary_muscle_groups.length === 0}
             >
               {isPending ? "Creating..." : "Create Exercise"}
             </Button>

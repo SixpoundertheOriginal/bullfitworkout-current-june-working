@@ -29,11 +29,13 @@ export function useExercises() {
         throw error;
       }
 
+      // Ensure we're returning a properly typed array, even if data is null
       const exercises = data || [];
       console.log("Fetched exercises:", exercises.length);
       return exercises as Exercise[];
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
+      // Always return an empty array, never undefined
       return [];
     }
   };
@@ -71,6 +73,7 @@ export function useExercises() {
     }
 
     console.log("Exercise created successfully:", data);
+    // Explicitly type the returned data
     return data as Exercise;
   };
 
@@ -78,7 +81,8 @@ export function useExercises() {
     queryKey: ['exercises'],
     queryFn: fetchExercises,
     enabled: !!user,
-    initialData: [] // Always provide an empty array as initial data
+    initialData: [], // Always provide an empty array as initial data
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const createExerciseMutation = useMutation({
@@ -100,7 +104,8 @@ export function useExercises() {
   });
 
   return {
-    exercises: exercisesQuery.data || [], // Ensure we always return an array
+    // Ensure we always return an array, never undefined
+    exercises: exercisesQuery.data || [], 
     isLoading: exercisesQuery.isLoading,
     isError: exercisesQuery.isError,
     error: exercisesQuery.error,

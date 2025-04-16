@@ -12,7 +12,7 @@ export interface ExerciseSet {
 export interface Exercise {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   primary_muscle_groups: string[];
   secondary_muscle_groups: string[];
   equipment_type: string[];
@@ -21,11 +21,11 @@ export interface Exercise {
   is_custom?: boolean;
   created_by?: string;
   // Required fields for the database
-  instructions: any; // Json type in Supabase
+  instructions: Record<string, any>; // Json type in Supabase, more strictly typed
   is_compound: boolean;
   // Optional fields
-  media_urls?: any; // Json type in Supabase
-  metadata?: any; // Json type in Supabase
+  media_urls?: Record<string, any>; // Json type in Supabase, more strictly typed
+  metadata?: Record<string, any>; // Json type in Supabase, more strictly typed
   tips?: string[];
   variations?: string[];
 }
