@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
@@ -33,7 +32,6 @@ const Index = () => {
   const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
   const [loadingWorkouts, setLoadingWorkouts] = useState(true);
 
-  // Fetch workout sessions from Supabase
   useEffect(() => {
     if (user) {
       fetchWorkoutSessions();
@@ -69,7 +67,6 @@ const Index = () => {
           variant: "destructive"
         });
       } else {
-        // Group exercise sets by workout session and extract unique exercise names
         const workoutsWithExercises = data.map(workout => {
           const exerciseNames = workout.exercise_sets 
             ? [...new Set(workout.exercise_sets.map(set => set.exercise_name))]
@@ -127,7 +124,6 @@ const Index = () => {
     setShowWorkouts(!showWorkouts);
   };
 
-  // Format date for display in workout log
   const formatWorkoutDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -143,14 +139,12 @@ const Index = () => {
     }
   };
 
-  // Format duration for display
   const formatDuration = (minutes: number) => {
     return `${minutes} min`;
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      {/* App Header */}
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
         <button className="p-2">
           <div className="w-6 h-0.5 bg-white mb-1"></div>
@@ -161,9 +155,7 @@ const Index = () => {
         <UserProfile />
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-auto px-4 py-6">
-        {/* Progress Banner */}
         <div className="mb-8 rounded-xl p-6 bg-gradient-to-r from-purple-600 to-pink-500">
           <p className="text-xl font-medium">
             {workoutSessions.length > 0 
@@ -173,12 +165,10 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Training Session Section */}
         <section className="mb-10 text-center">
           <h2 className="text-2xl font-bold mb-2">Start Your Training</h2>
           <p className="text-gray-400 mb-6">Focus today's session and get into flow mode</p>
           
-          {/* Training Info */}
           <div className="bg-gray-900 rounded-lg p-4 mb-6 mx-auto max-w-xs">
             <div className="flex justify-between mb-2">
               <span className="text-gray-400">Type:</span>
@@ -190,7 +180,6 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Start Button */}
           <button 
             onClick={() => setDialogOpen(true)}
             className="h-32 w-32 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex flex-col items-center justify-center mx-auto shadow-lg hover:shadow-purple-500/20 transition-all"
@@ -200,7 +189,6 @@ const Index = () => {
           </button>
         </section>
 
-        {/* Workout Log Section */}
         <section>
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
@@ -249,15 +237,17 @@ const Index = () => {
         </section>
       </main>
 
-      {/* Bottom Navigation */}
       <nav className="grid grid-cols-4 border-t border-gray-800 bg-black">
-        <NavButton icon={<Clock size={20} />} label="Today" active />
-        <NavButton icon={<BarChart3 size={20} />} label="Progress" />
-        <NavButton icon={<Moon size={20} />} label="Recovery" />
-        <NavButton icon={<UserIcon size={20} />} label="Profile" />
+        <NavButton icon={<Clock size={20} />} label="Today" active onClick={() => navigate('/')} />
+        <NavButton icon={<BarChart3 size={20} />} label="Progress" onClick={() => navigate('/progress')} />
+        <NavButton icon={<Moon size={20} />} label="Recovery" onClick={() => navigate('/recovery')} />
+        <NavButton 
+          icon={<UserIcon size={20} />} 
+          label="Profile" 
+          onClick={() => navigate('/profile')} 
+        />
       </nav>
 
-      {/* Training Setup Dialog - Only shown when dialogOpen is true */}
       {dialogOpen && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
@@ -273,7 +263,6 @@ const Index = () => {
                   </button>
                 </div>
 
-                {/* Training Type */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium mb-2">Training Type</label>
                   <div className="relative">
@@ -306,7 +295,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Tags */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium mb-2">Tags</label>
                   <div className="flex flex-wrap gap-2">
@@ -338,7 +326,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Duration */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
                   <ToggleGroup type="single" value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value || "30"))}>
@@ -349,7 +336,6 @@ const Index = () => {
                   </ToggleGroup>
                 </div>
 
-                {/* Quick Setup */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium mb-2">Quick Setup</label>
                   <div className="grid grid-cols-2 gap-3">
@@ -374,7 +360,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Start Button */}
                 <Button 
                   onClick={startTraining}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-3 rounded-lg font-medium"
@@ -385,9 +370,8 @@ const Index = () => {
             </div>
           </div>
         </Dialog>
-      )}
+      )
 
-      {/* Floating Action Button */}
       <button 
         onClick={() => setDialogOpen(true)}
         className="fixed bottom-20 right-4 h-16 w-16 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-lg z-10"
@@ -398,9 +382,22 @@ const Index = () => {
   );
 };
 
-const NavButton = ({ icon, label, active = false }) => {
+const NavButton = ({ 
+  icon, 
+  label, 
+  active = false, 
+  onClick 
+}: { 
+  icon: React.ReactNode, 
+  label: string, 
+  active?: boolean, 
+  onClick?: () => void 
+}) => {
   return (
-    <button className={`flex flex-col items-center justify-center py-3 ${active ? 'text-white' : 'text-gray-500'}`}>
+    <button 
+      onClick={onClick} 
+      className={`flex flex-col items-center justify-center py-3 ${active ? 'text-white' : 'text-gray-500'}`}
+    >
       {icon}
       <span className="text-xs mt-1">{label}</span>
     </button>
