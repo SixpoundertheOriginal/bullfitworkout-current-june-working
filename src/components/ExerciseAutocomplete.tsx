@@ -39,7 +39,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const [value, setValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // Form state for new exercise
+  // Form state for new exercise with all required fields
   const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id'>>({
     name: "",
     description: "",
@@ -48,6 +48,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     equipment_type: [],
     movement_pattern: "push",
     difficulty: "beginner",
+    instructions: {}, // Add required field
+    is_compound: false, // Add required field
   });
   
   const [tempMuscleGroup, setTempMuscleGroup] = useState("");
@@ -63,7 +65,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
         setValue(exercise.name);
         setOpen(false);
         
-        // Reset form
+        // Reset form with all required fields
         setNewExercise({
           name: "",
           description: "",
@@ -72,6 +74,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
           equipment_type: [],
           movement_pattern: "push",
           difficulty: "beginner",
+          instructions: {}, // Add required field
+          is_compound: false, // Add required field
         });
       },
     });
@@ -298,6 +302,22 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                   <SelectItem value="beginner">Beginner</SelectItem>
                   <SelectItem value="intermediate">Intermediate</SelectItem>
                   <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="isCompound">Exercise Type</Label>
+              <Select 
+                value={newExercise.is_compound.toString()}
+                onValueChange={(value) => setNewExercise({ ...newExercise, is_compound: value === "true" })}
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                  <SelectValue placeholder="Select exercise type" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                  <SelectItem value="true">Compound</SelectItem>
+                  <SelectItem value="false">Isolation</SelectItem>
                 </SelectContent>
               </Select>
             </div>
