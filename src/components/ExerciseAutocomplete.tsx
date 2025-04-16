@@ -147,14 +147,16 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
   // Filter exercises based on search term with careful null checking
   const filteredExercises = React.useMemo(() => {
-    if (!searchTerm || !safeExercises || safeExercises.length === 0) {
+    if (!searchTerm || !Array.isArray(safeExercises)) {
       return safeExercises;
     }
     
     const searchTermLower = searchTerm.toLowerCase();
     return safeExercises.filter(ex => {
+      if (!ex) return false;
+      
       // Check if exercise name includes search term
-      const nameMatch = ex.name?.toLowerCase().includes(searchTermLower);
+      const nameMatch = ex.name && ex.name.toLowerCase().includes(searchTermLower);
       
       // Check if any muscle group includes search term, with careful null checks
       const muscleMatch = Array.isArray(ex.primary_muscle_groups) && 
@@ -177,7 +179,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             className="w-full justify-between bg-gray-900 border-gray-700 text-white"
           >
             {value
-              ? safeExercises.find((exercise) => exercise.name === value)?.name || value
+              ? safeExercises.find((exercise) => exercise && exercise.name === value)?.name || value
               : "Select exercise..."}
             {isLoading ? (
               <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -224,24 +226,26 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             {Array.isArray(filteredExercises) && filteredExercises.length > 0 ? (
               <CommandGroup heading="Exercises">
                 {filteredExercises.map((exercise) => (
-                  <CommandItem
-                    key={exercise.id}
-                    value={exercise.name}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue);
-                      onSelectExercise(exercise);
-                      setOpen(false);
-                    }}
-                    className="text-white hover:bg-gray-700"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === exercise.name ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {exercise.name}
-                  </CommandItem>
+                  exercise && exercise.id ? (
+                    <CommandItem
+                      key={exercise.id}
+                      value={exercise.name}
+                      onSelect={(currentValue) => {
+                        setValue(currentValue);
+                        onSelectExercise(exercise);
+                        setOpen(false);
+                      }}
+                      className="text-white hover:bg-gray-700"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === exercise.name ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {exercise.name}
+                    </CommandItem>
+                  ) : null
                 ))}
               </CommandGroup>
             ) : null}
