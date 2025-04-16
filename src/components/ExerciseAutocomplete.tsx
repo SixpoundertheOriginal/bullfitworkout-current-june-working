@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -145,10 +146,12 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   };
 
   // Filter exercises based on search term
-  const filteredExercises = searchTerm 
+  const filteredExercises = searchTerm && safeExercises.length > 0
     ? safeExercises.filter(ex => 
         ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.primary_muscle_groups.some(m => m.toLowerCase().includes(searchTerm.toLowerCase()))
+        (ex.primary_muscle_groups && ex.primary_muscle_groups.some(m => 
+          m && m.toLowerCase().includes(searchTerm.toLowerCase())
+        ))
       )
     : safeExercises;
 
@@ -207,7 +210,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 </>
               )}
             </CommandEmpty>
-            {filteredExercises.length > 0 && (
+            {filteredExercises && filteredExercises.length > 0 ? (
               <CommandGroup heading="Exercises">
                 {filteredExercises.map((exercise) => (
                   <CommandItem
@@ -230,7 +233,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                   </CommandItem>
                 ))}
               </CommandGroup>
-            )}
+            ) : null}
           </Command>
         </PopoverContent>
       </Popover>
