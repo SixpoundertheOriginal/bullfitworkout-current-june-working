@@ -13,7 +13,9 @@ import {
   X,
   Trash2,
   Save,
-  Edit
+  Edit,
+  MinusCircle,
+  PlusCircle
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +63,9 @@ const SetRow = ({
   isEditing, 
   onSave, 
   onWeightChange, 
-  onRepsChange 
+  onRepsChange,
+  onWeightIncrement,
+  onRepsIncrement
 }) => {
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-800">
@@ -70,71 +74,105 @@ const SetRow = ({
       {isEditing ? (
         <>
           <div className="flex-1 px-2">
-            <Input 
-              type="number"
-              value={weight}
-              onChange={onWeightChange}
-              className="bg-gray-800 border-gray-700 text-white h-8 px-2"
-            />
+            <div className="flex items-center">
+              <button 
+                onClick={() => onWeightIncrement(-1)} 
+                className="p-1 text-gray-400 hover:text-white"
+              >
+                <MinusCircle size={16} />
+              </button>
+              <Input 
+                type="number"
+                value={weight}
+                onChange={onWeightChange}
+                className="bg-gray-800 border-gray-700 text-white h-8 px-2 mx-1 text-center"
+              />
+              <button 
+                onClick={() => onWeightIncrement(1)} 
+                className="p-1 text-gray-400 hover:text-white"
+              >
+                <PlusCircle size={16} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 px-2">
-            <Input 
-              type="number"
-              value={reps}
-              onChange={onRepsChange}
-              className="bg-gray-800 border-gray-700 text-white h-8 px-2"
-            />
+            <div className="flex items-center">
+              <button 
+                onClick={() => onRepsIncrement(-1)} 
+                className="p-1 text-gray-400 hover:text-white"
+              >
+                <MinusCircle size={16} />
+              </button>
+              <Input 
+                type="number"
+                value={reps}
+                onChange={onRepsChange}
+                className="bg-gray-800 border-gray-700 text-white h-8 px-2 mx-1 text-center"
+              />
+              <button 
+                onClick={() => onRepsIncrement(1)} 
+                className="p-1 text-gray-400 hover:text-white"
+              >
+                <PlusCircle size={16} />
+              </button>
+            </div>
           </div>
           <div className="flex gap-1">
             <button
               onClick={onSave}
-              className="w-6 h-6 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100"
             >
-              <Save size={14} />
+              <Save size={16} />
             </button>
             <button
               onClick={onRemove}
-              className="w-6 h-6 rounded-full flex items-center justify-center bg-red-600/70 text-red-100"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-red-600/70 text-red-100"
             >
-              <Trash2 size={14} />
+              <Trash2 size={16} />
             </button>
           </div>
         </>
       ) : (
         <>
           <div className="flex-1 px-2">
-            <div className="flex gap-1 items-baseline">
+            <button 
+              onClick={onEdit}
+              className="flex gap-1 items-baseline hover:bg-gray-800 px-2 py-1 rounded w-full"
+            >
               <span className="font-medium">{weight}</span>
               <span className="text-xs text-gray-400">lbs</span>
-            </div>
+            </button>
           </div>
           <div className="flex-1 px-2">
-            <div className="flex gap-1 items-baseline">
+            <button 
+              onClick={onEdit}
+              className="flex gap-1 items-baseline hover:bg-gray-800 px-2 py-1 rounded w-full"
+            >
               <span className="font-medium">{reps}</span>
               <span className="text-xs text-gray-400">reps</span>
-            </div>
+            </button>
           </div>
           <div className="flex gap-1">
             {completed ? (
               <button
                 onClick={onEdit}
-                className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-700 text-gray-300"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300"
               >
-                <Edit size={14} />
+                <Edit size={16} />
               </button>
             ) : (
               <button 
                 onClick={onComplete} 
-                className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-800 text-gray-400"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white"
               >
-                <Check size={14} />
+                <Check size={16} />
               </button>
             )}
             <button
               onClick={onRemove}
-              className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-700 text-gray-300"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
             >
-              <Trash2 size={14} />
+              <Trash2 size={16} />
             </button>
           </div>
         </>
@@ -153,6 +191,8 @@ const ExerciseCard = ({
   onWeightChange, 
   onRepsChange, 
   onSaveSet,
+  onWeightIncrement,
+  onRepsIncrement,
   isActive 
 }) => {
   const history = exerciseHistoryData[exercise] || [];
@@ -194,7 +234,7 @@ const ExerciseCard = ({
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight</div>
           <div className="flex-1 px-2">Reps</div>
-          <div className="w-14"></div>
+          <div className="w-20"></div>
         </div>
         
         <div className="my-2">
@@ -212,6 +252,8 @@ const ExerciseCard = ({
               onRemove={() => onRemoveSet(exercise, index)}
               onWeightChange={(e) => onWeightChange(exercise, index, e.target.value)}
               onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
+              onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
+              onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
             />
           ))}
           
@@ -367,6 +409,28 @@ const TrainingSession = () => {
     const updatedExercises = { ...exercises };
     if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
       updatedExercises[exerciseName][setIndex].reps = Number(value) || 0;
+      setExercises(updatedExercises);
+    }
+  };
+
+  const handleWeightIncrement = (exerciseName: string, setIndex: number, increment: number) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      const currentWeight = updatedExercises[exerciseName][setIndex].weight;
+      updatedExercises[exerciseName][setIndex].weight = Math.max(0, currentWeight + increment);
+      setExercises(updatedExercises);
+    }
+  };
+  
+  const handleRepsIncrement = (exerciseName: string, setIndex: number, increment: number) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      const currentReps = updatedExercises[exerciseName][setIndex].reps;
+      updatedExercises[exerciseName][setIndex].reps = Math.max(0, currentReps + increment);
       setExercises(updatedExercises);
     }
   };
@@ -540,6 +604,8 @@ const TrainingSession = () => {
             onSaveSet={handleSaveSet}
             onWeightChange={handleSetWeightChange}
             onRepsChange={handleSetRepsChange}
+            onWeightIncrement={handleWeightIncrement}
+            onRepsIncrement={handleRepsIncrement}
             isActive={exerciseName === currentExercise}
           />
         ))}
