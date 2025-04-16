@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
@@ -10,13 +9,13 @@ import {
   Clock, 
   Moon, 
   Plus, 
-  User, 
   X, 
   Zap 
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
+import { UserProfile } from "@/components/UserProfile";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -67,9 +66,7 @@ const Index = () => {
           <div className="w-6 h-0.5 bg-white"></div>
         </button>
         <h1 className="text-xl font-semibold">Today</h1>
-        <button className="p-2">
-          <User size={24} />
-        </button>
+        <UserProfile />
       </header>
 
       {/* Main Content */}
@@ -294,7 +291,6 @@ const Index = () => {
   );
 };
 
-// Helper Components
 const NavButton = ({ icon, label, active = false }) => {
   return (
     <button className={`flex flex-col items-center justify-center py-3 ${active ? 'text-white' : 'text-gray-500'}`}>
