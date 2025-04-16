@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
@@ -370,7 +371,7 @@ const Index = () => {
             </div>
           </div>
         </Dialog>
-      )
+      )}
 
       <button 
         onClick={() => setDialogOpen(true)}
