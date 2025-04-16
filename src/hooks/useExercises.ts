@@ -17,19 +17,24 @@ export function useExercises() {
 
     console.log("Fetching exercises for user:", user.id);
     
-    // Get global exercises and user's custom exercises
-    const { data, error } = await supabase
-      .from('exercises')
-      .select('*')
-      .or(`is_custom.eq.false,created_by.eq.${user.id}`);
+    try {
+      // Get global exercises and user's custom exercises
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .or(`is_custom.eq.false,created_by.eq.${user.id}`);
 
-    if (error) {
-      console.error("Error fetching exercises:", error);
-      throw error;
+      if (error) {
+        console.error("Error fetching exercises:", error);
+        throw error;
+      }
+
+      console.log("Fetched exercises:", data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error("Exception in fetchExercises:", error);
+      return [];
     }
-
-    console.log("Fetched exercises:", data?.length || 0);
-    return data || [];
   };
 
   const createExercise = async (exercise: Omit<Exercise, 'id'>): Promise<Exercise> => {
@@ -83,7 +88,7 @@ export function useExercises() {
         description: `${newExercise.name} has been added to your exercises.`,
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error creating exercise",
         description: error.message,

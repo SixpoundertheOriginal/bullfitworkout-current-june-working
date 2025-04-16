@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -52,6 +51,9 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     difficulty: "beginner",
     instructions: {}, // Required field
     is_compound: false, // Required field
+    // Other optional fields
+    tips: [],
+    variations: []
   });
   
   const [tempMuscleGroup, setTempMuscleGroup] = useState("");
@@ -59,15 +61,16 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
+  // Safe exercises list that is always an array even if data is undefined
+  const safeExercises = exercises || [];
+
   // Log exercises data for debugging
   useEffect(() => {
-    if (exercises) {
-      console.log(`Loaded ${exercises.length} exercises`);
-    }
-    if (isError) {
+    console.log(`Loaded ${safeExercises.length} exercises`);
+    if (isError && error) {
       console.error("Error in useExercises:", error);
     }
-  }, [exercises, isError, error]);
+  }, [safeExercises, isError, error]);
 
   const handleCreateExercise = () => {
     if (!newExercise.name) {
@@ -88,26 +91,22 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       return;
     }
 
-    createExercise(newExercise, {
-      onSuccess: (exercise) => {
-        setDialogOpen(false);
-        onSelectExercise(exercise);
-        setValue(exercise.name);
-        setOpen(false);
-        
-        // Reset form with all required fields
-        setNewExercise({
-          name: "",
-          description: "",
-          primary_muscle_groups: [],
-          secondary_muscle_groups: [],
-          equipment_type: [],
-          movement_pattern: "push",
-          difficulty: "beginner",
-          instructions: {}, // Required field
-          is_compound: false, // Required field
-        });
-      },
+    createExercise(newExercise);
+    setDialogOpen(false);
+    
+    // Reset form with all required fields
+    setNewExercise({
+      name: "",
+      description: "",
+      primary_muscle_groups: [],
+      secondary_muscle_groups: [],
+      equipment_type: [],
+      movement_pattern: "push",
+      difficulty: "beginner",
+      instructions: {}, // Required field
+      is_compound: false, // Required field
+      tips: [],
+      variations: []
     });
   };
 
@@ -147,11 +146,11 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
   // Filter exercises based on search term
   const filteredExercises = searchTerm 
-    ? exercises.filter(ex => 
+    ? safeExercises.filter(ex => 
         ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ex.primary_muscle_groups.some(m => m.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-    : exercises;
+    : safeExercises;
 
   return (
     <div className="flex items-center gap-2">
@@ -164,7 +163,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             className="w-full justify-between bg-gray-900 border-gray-700 text-white"
           >
             {value
-              ? exercises?.find((exercise) => exercise.name === value)?.name || value
+              ? safeExercises.find((exercise) => exercise.name === value)?.name || value
               : "Select exercise..."}
             {isLoading ? (
               <Loader2 className="ml-2 h-4 w-4 animate-spin" />
