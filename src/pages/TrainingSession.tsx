@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -19,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 // Mock data for exercise history
 const exerciseHistoryData = {
@@ -247,10 +249,12 @@ const ExercisePicker = ({ onSelect, onClose }) => {
 // Main Training Session component
 const TrainingSession = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [time, setTime] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
   const [heartRate, setHeartRate] = useState(75);
   const [currentExercise, setCurrentExercise] = useState("Bench Press");
+  const [startTime, setStartTime] = useState(new Date());
   
   // State for exercise sets
   const [exercises, setExercises] = useState({
@@ -260,6 +264,11 @@ const TrainingSession = () => {
       { weight: 135, reps: 10, completed: false },
     ]
   });
+  
+  // Set start time when component mounts
+  useEffect(() => {
+    setStartTime(new Date());
+  }, []);
   
   // Update timer and simulate heart rate changes
   useEffect(() => {
@@ -332,11 +341,21 @@ const TrainingSession = () => {
   
   // End the workout and return to home screen
   const handleFinishWorkout = () => {
-    toast({
-      title: "Workout completed!",
-      description: `Total time: ${formatTime(time)} | Sets: ${completedSets}/${totalSets}`,
-    });
-    navigate('/');
+    // Get the end time
+    const endTime = new Date();
+    
+    // Create workout data object to pass to the completion page
+    const workoutData = {
+      exercises: exercises,
+      duration: time,
+      startTime: startTime,
+      endTime: endTime,
+      trainingType: "Strength Training", // This could be dynamic based on selected exercises
+      name: "Workout Session"
+    };
+    
+    // Navigate to the workout complete page with the workout data
+    navigate('/workout-complete', { state: { workoutData } });
   };
   
   return (

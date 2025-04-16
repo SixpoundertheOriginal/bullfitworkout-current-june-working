@@ -305,6 +305,47 @@ export type Database = {
           },
         ]
       }
+      exercise_sets: {
+        Row: {
+          completed: boolean
+          created_at: string
+          exercise_name: string
+          id: string
+          reps: number
+          set_number: number
+          weight: number
+          workout_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          exercise_name: string
+          id?: string
+          reps: number
+          set_number: number
+          weight: number
+          workout_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          reps?: number
+          set_number?: number
+          weight?: number
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_sets_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           created_at: string
@@ -858,6 +899,45 @@ export type Database = {
           user_id?: string
           weight?: number
           weight_unit?: string
+        }
+        Relationships: []
+      }
+      workout_sessions: {
+        Row: {
+          created_at: string
+          duration: number
+          end_time: string
+          id: string
+          name: string
+          notes: string | null
+          start_time: string
+          training_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration: number
+          end_time: string
+          id?: string
+          name: string
+          notes?: string | null
+          start_time: string
+          training_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration?: number
+          end_time?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          start_time?: string
+          training_type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
