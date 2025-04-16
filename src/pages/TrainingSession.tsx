@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -11,7 +10,10 @@ import {
   BarChart3, 
   Heart, 
   ChevronRight,
-  X
+  X,
+  Trash2,
+  Save,
+  Edit
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,37 +50,111 @@ const exerciseHistoryData = {
   ],
 };
 
-const SetRow = ({ setNumber, weight, reps, completed, onComplete, onEdit }) => {
+const SetRow = ({ 
+  setNumber, 
+  weight, 
+  reps, 
+  completed, 
+  onComplete, 
+  onEdit, 
+  onRemove, 
+  isEditing, 
+  onSave, 
+  onWeightChange, 
+  onRepsChange 
+}) => {
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-800">
       <div className="w-8 text-center font-medium text-gray-400">#{setNumber}</div>
-      <div className="flex-1 px-2">
-        <div className="flex gap-1 items-baseline">
-          <span className="font-medium">{weight}</span>
-          <span className="text-xs text-gray-400">lbs</span>
-        </div>
-      </div>
-      <div className="flex-1 px-2">
-        <div className="flex gap-1 items-baseline">
-          <span className="font-medium">{reps}</span>
-          <span className="text-xs text-gray-400">reps</span>
-        </div>
-      </div>
-      <div className="w-8">
-        <button 
-          onClick={completed ? onEdit : onComplete} 
-          className={`w-6 h-6 rounded-full flex items-center justify-center ${
-            completed ? "bg-green-500/20 text-green-400" : "bg-gray-800 text-gray-400"
-          }`}
-        >
-          {completed ? <Check size={14} /> : <span className="text-xs">+</span>}
-        </button>
-      </div>
+      
+      {isEditing ? (
+        <>
+          <div className="flex-1 px-2">
+            <Input 
+              type="number"
+              value={weight}
+              onChange={onWeightChange}
+              className="bg-gray-800 border-gray-700 text-white h-8 px-2"
+            />
+          </div>
+          <div className="flex-1 px-2">
+            <Input 
+              type="number"
+              value={reps}
+              onChange={onRepsChange}
+              className="bg-gray-800 border-gray-700 text-white h-8 px-2"
+            />
+          </div>
+          <div className="flex gap-1">
+            <button
+              onClick={onSave}
+              className="w-6 h-6 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100"
+            >
+              <Save size={14} />
+            </button>
+            <button
+              onClick={onRemove}
+              className="w-6 h-6 rounded-full flex items-center justify-center bg-red-600/70 text-red-100"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex-1 px-2">
+            <div className="flex gap-1 items-baseline">
+              <span className="font-medium">{weight}</span>
+              <span className="text-xs text-gray-400">lbs</span>
+            </div>
+          </div>
+          <div className="flex-1 px-2">
+            <div className="flex gap-1 items-baseline">
+              <span className="font-medium">{reps}</span>
+              <span className="text-xs text-gray-400">reps</span>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            {completed ? (
+              <button
+                onClick={onEdit}
+                className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-700 text-gray-300"
+              >
+                <Edit size={14} />
+              </button>
+            ) : (
+              <button 
+                onClick={onComplete} 
+                className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-800 text-gray-400"
+              >
+                <Check size={14} />
+              </button>
+            )}
+            <button
+              onClick={onRemove}
+              className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-700 text-gray-300"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
-const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
+const ExerciseCard = ({ 
+  exercise, 
+  sets, 
+  onAddSet, 
+  onCompleteSet, 
+  onRemoveSet, 
+  onEditSet, 
+  onWeightChange, 
+  onRepsChange, 
+  onSaveSet,
+  isActive 
+}) => {
   const history = exerciseHistoryData[exercise] || [];
   const previousSession = history[0] || { weight: 0, reps: 0, sets: 0 };
   const olderSession = history[1] || previousSession;
@@ -118,7 +194,7 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight</div>
           <div className="flex-1 px-2">Reps</div>
-          <div className="w-8"></div>
+          <div className="w-14"></div>
         </div>
         
         <div className="my-2">
@@ -129,8 +205,13 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
               weight={set.weight}
               reps={set.reps}
               completed={set.completed}
-              onComplete={() => onComplete(exercise, index)}
-              onEdit={() => {/* Edit functionality would go here */}}
+              isEditing={set.isEditing}
+              onComplete={() => onCompleteSet(exercise, index)}
+              onEdit={() => onEditSet(exercise, index)}
+              onSave={() => onSaveSet(exercise, index)}
+              onRemove={() => onRemoveSet(exercise, index)}
+              onWeightChange={(e) => onWeightChange(exercise, index, e.target.value)}
+              onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
             />
           ))}
           
@@ -170,7 +251,7 @@ const TrainingSession = () => {
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
   
-  const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean }[]>>({});
+  const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean; isEditing?: boolean }[]>>({});
   
   useEffect(() => {
     setStartTime(new Date());
@@ -202,7 +283,7 @@ const TrainingSession = () => {
       ...exercises,
       [exerciseName]: [
         ...exerciseSets,
-        { weight: lastSet.weight, reps: lastSet.reps, completed: false }
+        { weight: lastSet.weight, reps: lastSet.reps, completed: false, isEditing: false }
       ]
     });
   };
@@ -222,6 +303,74 @@ const TrainingSession = () => {
     }
   };
   
+  const handleRemoveSet = (exerciseName: string, setIndex: number) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    updatedExercises[exerciseName] = updatedExercises[exerciseName].filter((_, i) => i !== setIndex);
+    
+    if (updatedExercises[exerciseName].length === 0) {
+      delete updatedExercises[exerciseName];
+      
+      if (currentExercise === exerciseName) {
+        const remainingExercises = Object.keys(updatedExercises);
+        setCurrentExercise(remainingExercises.length > 0 ? remainingExercises[0] : "");
+      }
+    }
+    
+    setExercises(updatedExercises);
+    
+    toast({
+      title: "Set removed",
+      description: `${exerciseName}: Set ${setIndex + 1} removed`,
+    });
+  };
+  
+  const handleEditSet = (exerciseName: string, setIndex: number) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      updatedExercises[exerciseName][setIndex].isEditing = true;
+      setExercises(updatedExercises);
+    }
+  };
+  
+  const handleSaveSet = (exerciseName: string, setIndex: number) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      updatedExercises[exerciseName][setIndex].isEditing = false;
+      setExercises(updatedExercises);
+      
+      toast({
+        title: "Set updated",
+        description: `${exerciseName}: Set ${setIndex + 1} updated successfully`,
+      });
+    }
+  };
+  
+  const handleSetWeightChange = (exerciseName: string, setIndex: number, value: string) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      updatedExercises[exerciseName][setIndex].weight = Number(value) || 0;
+      setExercises(updatedExercises);
+    }
+  };
+  
+  const handleSetRepsChange = (exerciseName: string, setIndex: number, value: string) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      updatedExercises[exerciseName][setIndex].reps = Number(value) || 0;
+      setExercises(updatedExercises);
+    }
+  };
+  
   const handleAddExercise = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -231,9 +380,9 @@ const TrainingSession = () => {
       setExercises({
         ...exercises,
         [newExerciseName]: [
-          { weight: 0, reps: 0, completed: false },
-          { weight: 0, reps: 0, completed: false },
-          { weight: 0, reps: 0, completed: false },
+          { weight: 0, reps: 0, completed: false, isEditing: false },
+          { weight: 0, reps: 0, completed: false, isEditing: false },
+          { weight: 0, reps: 0, completed: false, isEditing: false },
         ]
       });
       setCurrentExercise(newExerciseName);
@@ -385,7 +534,12 @@ const TrainingSession = () => {
             exercise={exerciseName}
             sets={exercises[exerciseName] || []}
             onAddSet={handleAddSet}
-            onComplete={handleCompleteSet}
+            onCompleteSet={handleCompleteSet}
+            onRemoveSet={handleRemoveSet}
+            onEditSet={handleEditSet}
+            onSaveSet={handleSaveSet}
+            onWeightChange={handleSetWeightChange}
+            onRepsChange={handleSetRepsChange}
             isActive={exerciseName === currentExercise}
           />
         ))}
