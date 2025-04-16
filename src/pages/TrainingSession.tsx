@@ -24,7 +24,6 @@ import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock data for exercise history
 const exerciseHistoryData = {
   "Bench Press": [
     { date: "Apr 10", weight: 135, reps: 10, sets: 3 },
@@ -48,7 +47,6 @@ const exerciseHistoryData = {
   ],
 };
 
-// Component for each set in an exercise
 const SetRow = ({ setNumber, weight, reps, completed, onComplete, onEdit }) => {
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-800">
@@ -79,18 +77,15 @@ const SetRow = ({ setNumber, weight, reps, completed, onComplete, onEdit }) => {
   );
 };
 
-// Component for each exercise card
 const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
   const history = exerciseHistoryData[exercise] || [];
   const previousSession = history[0] || { weight: 0, reps: 0, sets: 0 };
   const olderSession = history[1] || previousSession;
   
-  // Calculate progress compared to previous session
   const weightDiff = previousSession.weight - olderSession.weight;
   const percentChange = olderSession.weight ? ((weightDiff / olderSession.weight) * 100).toFixed(1) : "0";
   const isImproved = weightDiff > 0;
   
-  // Calculate total volume (weight × reps × sets)
   const currentVolume = sets.reduce((total, set) => {
     return total + (set.completed ? set.weight * set.reps : 0);
   }, 0);
@@ -118,7 +113,6 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
           </Badge>
         </div>
         
-        {/* Sets header */}
         <div className="flex items-center justify-between py-2 border-b border-gray-700 text-sm text-gray-400">
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight</div>
@@ -126,7 +120,6 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
           <div className="w-8"></div>
         </div>
         
-        {/* Sets list */}
         <div className="my-2">
           {sets.map((set, index) => (
             <SetRow 
@@ -149,7 +142,6 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
           </button>
         </div>
         
-        {/* Performance comparison */}
         <div className="mt-4 pt-3 border-t border-gray-800">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-gray-400">Volume vs last session</span>
@@ -168,7 +160,6 @@ const ExerciseCard = ({ exercise, sets, onAddSet, onComplete, isActive }) => {
   );
 };
 
-// Main Training Session component
 const TrainingSession = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -178,15 +169,12 @@ const TrainingSession = () => {
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
   
-  // State for exercise sets
   const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean }[]>>({});
   
-  // Set start time when component mounts
   useEffect(() => {
     setStartTime(new Date());
   }, []);
   
-  // Update timer and simulate heart rate changes
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(prev => prev + 1);
@@ -199,14 +187,12 @@ const TrainingSession = () => {
     return () => clearInterval(timer);
   }, []);
   
-  // Format timer display
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Add a set to an exercise
   const handleAddSet = (exerciseName) => {
     const exerciseSets = exercises[exerciseName] || [];
     const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0 };
@@ -220,7 +206,6 @@ const TrainingSession = () => {
     });
   };
   
-  // Mark a set as completed
   const handleCompleteSet = (exerciseName, setIndex) => {
     const updatedExercises = { ...exercises };
     updatedExercises[exerciseName][setIndex].completed = true;
@@ -232,7 +217,6 @@ const TrainingSession = () => {
     });
   };
   
-  // Handle selecting an exercise from the autocomplete
   const handleSelectExercise = (exercise: Exercise) => {
     if (!exercises[exercise.name]) {
       setExercises({
@@ -248,14 +232,12 @@ const TrainingSession = () => {
     }
   };
   
-  // Calculate overall workout statistics
   const totalSets = Object.values(exercises).reduce((sum, sets) => sum + sets.length, 0);
   const completedSets = Object.values(exercises).reduce((sum, sets) => 
     sum + sets.filter(set => set.completed).length, 0);
   
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
-  // End the workout and return to home screen
   const handleFinishWorkout = async () => {
     if (!user) {
       toast({
@@ -266,12 +248,10 @@ const TrainingSession = () => {
       return;
     }
     
-    // Get the end time
     const endTime = new Date();
     const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
     
     try {
-      // First, create the workout session
       const { data: workoutSession, error: workoutError } = await supabase
         .from('workout_sessions')
         .insert({
@@ -288,8 +268,7 @@ const TrainingSession = () => {
       
       if (workoutError) throw workoutError;
       
-      // Next, add all exercise sets
-      const setsToInsert: Omit<ExerciseSet, 'id'>[] = [];
+      const setsToInsert = [];
       
       Object.entries(exercises).forEach(([exerciseName, sets]) => {
         sets.forEach((set, index) => {
@@ -319,7 +298,6 @@ const TrainingSession = () => {
         description: "Your workout has been saved successfully!",
       });
       
-      // Create workout data object to pass to the completion page
       const workoutData = {
         id: workoutSession.id,
         exercises: exercises,
@@ -330,7 +308,6 @@ const TrainingSession = () => {
         name: "Workout Session"
       };
       
-      // Navigate to the workout complete page with the workout data
       navigate('/workout-complete', { state: { workoutData } });
     } catch (error) {
       console.error("Error saving workout:", error);
@@ -344,7 +321,6 @@ const TrainingSession = () => {
   
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      {/* Session Header */}
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
         <button 
           onClick={() => navigate('/')}
@@ -353,10 +329,9 @@ const TrainingSession = () => {
           <ArrowLeft size={24} />
         </button>
         <h1 className="text-xl font-semibold">Training Session</h1>
-        <div className="w-9"></div> {/* Spacer to balance header */}
+        <div className="w-9"></div>
       </header>
 
-      {/* Session Stats */}
       <div className="grid grid-cols-4 bg-gray-900 p-4">
         <div className="flex flex-col items-center">
           <Timer className="text-purple-400 mb-1" size={18} />
@@ -380,7 +355,6 @@ const TrainingSession = () => {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="px-4 py-2 bg-gray-900">
         <Progress 
           value={completionPercentage} 
@@ -389,9 +363,7 @@ const TrainingSession = () => {
         />
       </div>
       
-      {/* Main content */}
       <main className="flex-1 overflow-auto px-4 py-6">
-        {/* Exercise Cards */}
         {Object.keys(exercises).map((exerciseName) => (
           <ExerciseCard
             key={exerciseName}
@@ -403,13 +375,11 @@ const TrainingSession = () => {
           />
         ))}
         
-        {/* Add Exercise */}
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Add Exercise</h3>
           <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
         </div>
         
-        {/* Complete Workout Button */}
         <Button 
           onClick={handleFinishWorkout}
           className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"

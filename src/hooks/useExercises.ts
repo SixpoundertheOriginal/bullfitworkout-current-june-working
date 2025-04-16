@@ -33,6 +33,11 @@ export function useExercises() {
       ...exercise,
       is_custom: true,
       created_by: user.id,
+      // Add required fields that might be missing
+      instructions: exercise.instructions || {},
+      is_compound: exercise.is_compound !== undefined ? exercise.is_compound : false,
+      // Ensure description is not undefined
+      description: exercise.description || ""
     };
 
     const { data, error } = await supabase

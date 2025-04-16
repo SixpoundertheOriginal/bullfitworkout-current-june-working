@@ -10,6 +10,14 @@ export interface Exercise {
   difficulty: string;
   is_custom?: boolean;
   created_by?: string;
+  // Required fields for the database
+  instructions: any; // Json type in Supabase
+  is_compound: boolean;
+  // Optional fields
+  media_urls?: any; // Json type in Supabase
+  metadata?: any; // Json type in Supabase
+  tips?: string[];
+  variations?: string[];
 }
 
 export interface ExerciseSet {
@@ -17,7 +25,7 @@ export interface ExerciseSet {
   weight: number;
   reps: number;
   completed: boolean;
-  set_number?: number;
+  set_number: number; // Make this required to match database schema
   exercise_name: string;
-  workout_id?: string;
+  workout_id: string; // Make this required to match database schema
 }
