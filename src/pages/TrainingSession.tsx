@@ -220,21 +220,24 @@ const ExerciseCard = ({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-semibold text-lg font-heading">{exercise}</h3>
-            <div className="flex items-center text-gray-400 text-sm">
-              <span>Last session: <span className="mono-text">{previousSession.weight}</span> lbs × <span className="mono-text">{previousSession.reps}</span> × <span className="mono-text">{previousSession.sets}</span></span>
+            <h3 className="exercise-name">{exercise}</h3>
+            <div className="exercise-detail">
+              Last session: 
+              <span className="mono-text ml-1">
+                {previousSession.weight} lbs × {previousSession.reps} × {previousSession.sets}
+              </span>
             </div>
           </div>
           <Badge 
             variant="outline"
-            className={`flex items-center gap-1 ${isImproved ? "text-green-400 border-green-500/30" : "text-red-400 border-red-500/30"}`}
+            className={`flex items-center gap-1 ${isImproved ? "text-green-300 border-green-500/30" : "text-red-300 border-red-500/30"}`}
           >
             {isImproved ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             <span className="mono-text">{Math.abs(parseFloat(percentChange))}%</span>
           </Badge>
         </div>
         
-        <div className="flex items-center justify-between py-2 border-b border-gray-700 text-xs text-gray-400 uppercase tracking-wider font-medium">
+        <div className="flex items-center justify-between py-2 border-b border-gray-700 set-header">
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight</div>
           <div className="flex-1 px-2">Reps</div>
@@ -272,8 +275,8 @@ const ExerciseCard = ({
         
         <div className="mt-4 pt-3 border-t border-gray-800">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-400 text-label">Volume vs last session</span>
-            <div className={isImproved ? "text-green-400 mono-text" : "text-red-400 mono-text"}>
+            <span className="volume-label">Volume vs last session</span>
+            <div className={`${isImproved ? "text-green-300" : "text-red-300"} volume-value`}>
               {volumeDiff > 0 ? "+" : ""}{volumeDiff} lbs ({volumePercentChange}%)
             </div>
           </div>

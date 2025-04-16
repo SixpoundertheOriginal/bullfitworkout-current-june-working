@@ -1,170 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading tracking-tight;
-  }
-}
-
-/* Typography styles */
 @layer components {
-  .title-large {
-    @apply text-2xl font-heading font-semibold tracking-tight;
-  }
-  
-  .title-medium {
-    @apply text-xl font-heading font-medium;
-  }
-  
-  .title-small {
-    @apply text-lg font-heading;
-  }
-  
-  .text-label {
-    @apply text-xs font-medium uppercase tracking-wider;
-  }
-  
-  .mono-text {
-    @apply font-mono tabular-nums;
-  }
-  
-  .status-tag {
-    @apply text-xs font-medium uppercase tracking-wider rounded-full px-2 py-0.5;
-  }
-  
+  /* Update existing classes */
   .training-type-tag {
     @apply text-xs font-medium uppercase tracking-wider rounded-full px-2.5 py-1 
-           bg-purple-500/20 text-purple-300 border border-purple-500/30;
+           bg-purple-500/30 text-purple-200 border border-purple-500/40;
   }
   
   .training-type-primary {
-    @apply text-lg font-semibold text-white/90 tracking-tight;
+    @apply text-lg font-semibold text-white tracking-tight;
   }
   
   .training-metadata {
-    @apply text-sm text-white/70 flex items-center gap-2;
+    @apply text-sm text-white/80 flex items-center gap-2;
   }
-}
 
-/* Additional custom styles for the fitness app */
-body {
-  background-color: #121212;
-  color: white;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
+  /* New classes for exercise details */
+  .exercise-name {
+    @apply text-white font-semibold text-base;
+  }
 
-/* Custom gradient backgrounds */
-.gradient-purple-pink {
-  background: linear-gradient(90deg, #9b87f5 0%, #f87bdb 100%);
-}
+  .exercise-detail {
+    @apply text-white/70 text-sm;
+  }
 
-.gradient-button {
-  background: linear-gradient(90deg, #9b87f5 0%, #f87bdb 100%);
-  transition: all 0.3s ease;
-}
+  .set-header {
+    @apply text-white/60 text-xs uppercase tracking-wider;
+  }
 
-.gradient-button:hover {
-  background: linear-gradient(90deg, #8a75e4 0%, #e76ac9 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(155, 135, 245, 0.3);
+  .set-row {
+    @apply text-white/80 text-sm;
+  }
+
+  .volume-label {
+    @apply text-white/70 text-xs uppercase tracking-wider;
+  }
+
+  .volume-value {
+    @apply text-white font-medium;
+  }
 }
