@@ -23,12 +23,15 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { supabase } from "@/integrations/supabase/client";
-import { useLocation } from "react-router-dom";
+
+interface LocationState {
+  trainingType?: string;
+}
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -287,14 +290,17 @@ const ExerciseCard = ({
 
 const TrainingSession = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [time, setTime] = useState(0);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [heartRate, setHeartRate] = useState(75);
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
+  
+  const locationState = location.state as LocationState | null;
   const [trainingType, setTrainingType] = useState(
-    location.state?.trainingType || "Training Session"
+    locationState?.trainingType || "Training Session"
   );
   
   const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean; isEditing?: boolean }[]>>({});
