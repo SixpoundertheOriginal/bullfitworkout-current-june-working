@@ -28,6 +28,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocation } from "react-router-dom";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -292,6 +293,9 @@ const TrainingSession = () => {
   const [heartRate, setHeartRate] = useState(75);
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
+  const [trainingType, setTrainingType] = useState(
+    location.state?.trainingType || "Training Session"
+  );
   
   const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean; isEditing?: boolean }[]>>({});
   
@@ -466,85 +470,20 @@ const TrainingSession = () => {
   
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
-  const handleFinishWorkout = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to save your workout.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+  const finishWorkout = () => {
     const endTime = new Date();
-    const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+    const durationInSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
     
-    try {
-      const { data: workoutSession, error: workoutError } = await supabase
-        .from('workout_sessions')
-        .insert({
-          user_id: user.id,
-          name: "Training Session",
-          training_type: "Strength Training",
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          duration: duration,
-          notes: ""
-        })
-        .select()
-        .single();
-      
-      if (workoutError) throw workoutError;
-      
-      const setsToInsert = [];
-      
-      Object.entries(exercises).forEach(([exerciseName, sets]) => {
-        sets.forEach((set, index) => {
-          if (set.completed) {
-            setsToInsert.push({
-              workout_id: workoutSession.id,
-              exercise_name: exerciseName,
-              weight: set.weight,
-              reps: set.reps,
-              completed: true,
-              set_number: index + 1
-            });
-          }
-        });
-      });
-      
-      if (setsToInsert.length > 0) {
-        const { error: setsError } = await supabase
-          .from('exercise_sets')
-          .insert(setsToInsert);
-        
-        if (setsError) throw setsError;
-      }
-      
-      toast({
-        title: "Workout completed",
-        description: "Your workout has been saved successfully!",
-      });
-      
-      const workoutData = {
-        id: workoutSession.id,
-        exercises: exercises,
-        duration: duration,
-        startTime: startTime,
-        endTime: endTime,
-        trainingType: "Strength Training",
-        name: "Workout Session"
-      };
-      
-      navigate('/workout-complete', { state: { workoutData } });
-    } catch (error) {
-      console.error("Error saving workout:", error);
-      toast({
-        title: "Error saving workout",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+    const workoutData = {
+      exercises: exercises,
+      duration: durationInSeconds,
+      startTime: startTime,
+      endTime: endTime,
+      trainingType: trainingType,
+      name: trainingType
+    };
+    
+    navigate("/workout-complete", { state: { workoutData } });
   };
   
   return (
@@ -628,7 +567,7 @@ const TrainingSession = () => {
         </div>
         
         <Button 
-          onClick={handleFinishWorkout}
+          onClick={finishWorkout}
           className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
         >
           Complete Workout

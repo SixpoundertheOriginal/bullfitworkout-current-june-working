@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -23,7 +22,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChartContainer } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
-// Type definitions
 interface ExerciseSet {
   weight: number;
   reps: number;
@@ -58,12 +56,10 @@ const WorkoutComplete = () => {
     error: false
   });
 
-  // Get workout data from location state
   useEffect(() => {
     if (location.state?.workoutData) {
       setWorkoutData(location.state.workoutData);
     } else {
-      // If there's no workout data, redirect back to home
       toast({
         title: "No workout data found",
         description: "Please complete a workout session first",
@@ -73,7 +69,6 @@ const WorkoutComplete = () => {
     }
   }, [location.state, navigate]);
 
-  // Calculate workout statistics
   const totalVolume = workoutData ? Object.keys(workoutData.exercises).reduce((total, exercise) => {
     return total + workoutData.exercises[exercise].reduce((exerciseTotal, set) => {
       if (set.completed) {
@@ -97,14 +92,22 @@ const WorkoutComplete = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Function to save workout to Supabase
   const saveWorkout = async () => {
     if (!workoutData || !user) return;
     
     setSaving(true);
     
     try {
-      // First save workout session
+      console.log("Saving workout with data:", {
+        user_id: user.id,
+        name: workoutData.name || workoutData.trainingType,
+        training_type: workoutData.trainingType,
+        start_time: workoutData.startTime.toISOString(),
+        end_time: workoutData.endTime.toISOString(),
+        duration: workoutData.duration,
+        notes: notes || null
+      });
+      
       const { data: workoutSession, error: workoutError } = await supabase
         .from('workout_sessions')
         .insert({
@@ -124,7 +127,6 @@ const WorkoutComplete = () => {
       if (workoutSession) {
         setWorkoutId(workoutSession.id);
         
-        // Now save all exercise sets
         const exerciseSets = [];
         
         for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
@@ -142,6 +144,8 @@ const WorkoutComplete = () => {
           });
         }
         
+        console.log("Saving exercise sets:", exerciseSets);
+        
         if (exerciseSets.length > 0) {
           const { error: setsError } = await supabase
             .from('exercise_sets')
@@ -150,7 +154,6 @@ const WorkoutComplete = () => {
           if (setsError) throw setsError;
         }
         
-        // Save as template if requested
         if (saveAsTemplate) {
           const { error: templateError } = await supabase
             .from('workout_templates')
@@ -175,6 +178,10 @@ const WorkoutComplete = () => {
           title: "Workout saved!",
           description: "Your workout has been successfully recorded",
         });
+        
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
       }
     } catch (error) {
       console.error("Error saving workout:", error);
@@ -193,7 +200,6 @@ const WorkoutComplete = () => {
     }
   };
 
-  // Function to prepare chart data
   const getVolumeChartData = () => {
     if (!workoutData) return [];
     
@@ -222,7 +228,6 @@ const WorkoutComplete = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      {/* Header */}
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
         <button 
           onClick={() => navigate('/')}
@@ -231,12 +236,10 @@ const WorkoutComplete = () => {
           <ArrowLeft size={24} />
         </button>
         <h1 className="text-xl font-semibold">Workout Complete</h1>
-        <div className="w-9"></div> {/* Spacer to balance header */}
+        <div className="w-9"></div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-auto px-4 py-6">
-        {/* Success Banner */}
         <div className="mb-8 rounded-xl p-6 text-center bg-gradient-to-r from-green-600 to-emerald-500">
           <CheckCircle size={48} className="mx-auto mb-2" />
           <p className="text-xl font-medium">
@@ -247,7 +250,6 @@ const WorkoutComplete = () => {
           </p>
         </div>
 
-        {/* Workout Summary Card */}
         <Card className="bg-gray-900 border-gray-800 mb-6">
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-4">
@@ -265,7 +267,6 @@ const WorkoutComplete = () => {
               </Badge>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="bg-gray-800 p-3 rounded text-center">
                 <div className="text-2xl font-semibold">{completedSets}/{totalSets}</div>
@@ -281,7 +282,6 @@ const WorkoutComplete = () => {
               </div>
             </div>
 
-            {/* Volume Chart */}
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-400 mb-2">Volume by Exercise</h3>
               <div className="bg-gray-800 p-3 rounded-lg h-40">
@@ -303,7 +303,6 @@ const WorkoutComplete = () => {
           </CardContent>
         </Card>
 
-        {/* Notes Section */}
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Add Notes</h3>
           <Textarea
@@ -314,7 +313,6 @@ const WorkoutComplete = () => {
           />
         </div>
 
-        {/* Save as Template Section */}
         <div className="mb-8">
           <div 
             className="flex justify-between items-center p-4 bg-gray-900 border border-gray-800 rounded-lg mb-2"
@@ -343,7 +341,6 @@ const WorkoutComplete = () => {
           )}
         </div>
 
-        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <Button
             variant="outline"
@@ -361,7 +358,6 @@ const WorkoutComplete = () => {
           </Button>
         </div>
 
-        {/* List of Exercises */}
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-3">Exercises Completed</h3>
           {Object.keys(workoutData.exercises).map((exercise) => (

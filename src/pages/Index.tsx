@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,20 +12,83 @@ import {
   Plus, 
   X, 
   Zap,
-  User as UserIcon
+  User as UserIcon,
+  Loader2
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
 import { UserProfile } from "@/components/UserProfile";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [trainingType, setTrainingType] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [duration, setDuration] = useState(30);
+  const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
+  const [loadingWorkouts, setLoadingWorkouts] = useState(true);
+
+  // Fetch workout sessions from Supabase
+  useEffect(() => {
+    if (user) {
+      fetchWorkoutSessions();
+    }
+  }, [user]);
+
+  const fetchWorkoutSessions = async () => {
+    try {
+      setLoadingWorkouts(true);
+      
+      const { data, error } = await supabase
+        .from('workout_sessions')
+        .select(`
+          id,
+          name,
+          training_type,
+          start_time,
+          end_time,
+          duration,
+          exercise_sets (
+            exercise_name
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('start_time', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error("Error fetching workout sessions:", error);
+        toast({
+          title: "Failed to load workout history",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        // Group exercise sets by workout session and extract unique exercise names
+        const workoutsWithExercises = data.map(workout => {
+          const exerciseNames = workout.exercise_sets 
+            ? [...new Set(workout.exercise_sets.map(set => set.exercise_name))]
+            : [];
+            
+          return {
+            ...workout,
+            tags: [workout.training_type, ...exerciseNames.slice(0, 2)]
+          };
+        });
+        
+        setWorkoutSessions(workoutsWithExercises);
+      }
+    } catch (err) {
+      console.error("Error in fetchWorkoutSessions:", err);
+    } finally {
+      setLoadingWorkouts(false);
+    }
+  };
 
   const handleTagToggle = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -51,11 +114,38 @@ const Index = () => {
     });
     
     setDialogOpen(false);
-    navigate('/training-session');
+    navigate('/training-session', { 
+      state: { 
+        trainingType, 
+        tags: selectedTags, 
+        duration 
+      } 
+    });
   };
 
   const toggleWorkoutDisplay = () => {
     setShowWorkouts(!showWorkouts);
+  };
+
+  // Format date for display in workout log
+  const formatWorkoutDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  // Format duration for display
+  const formatDuration = (minutes: number) => {
+    return `${minutes} min`;
   };
 
   return (
@@ -76,7 +166,10 @@ const Index = () => {
         {/* Progress Banner */}
         <div className="mb-8 rounded-xl p-6 bg-gradient-to-r from-purple-600 to-pink-500">
           <p className="text-xl font-medium">
-            You've logged 3 workouts this week! <span role="img" aria-label="fire">🔥</span> Keep it up!
+            {workoutSessions.length > 0 
+              ? `You've logged ${workoutSessions.length} workout${workoutSessions.length !== 1 ? 's' : ''}! 🔥 Keep it up!`
+              : "Start your fitness journey today! 💪"
+            }
           </p>
         </div>
 
@@ -124,30 +217,33 @@ const Index = () => {
           </div>
 
           {showWorkouts ? (
-            <div className="space-y-4">
-              <WorkoutCard 
-                type="Running" 
-                date="Today" 
-                duration="32 min" 
-                tags={["Cardio", "Outdoors"]} 
-              />
-              <WorkoutCard 
-                type="Strength Training" 
-                date="Yesterday" 
-                duration="45 min" 
-                tags={["Upper Body", "Weights"]} 
-              />
-              <WorkoutCard 
-                type="Yoga" 
-                date="Apr 14" 
-                duration="60 min" 
-                tags={["Flexibility", "Recovery"]} 
-              />
-            </div>
+            loadingWorkouts ? (
+              <div className="text-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-purple-500" />
+                <p className="text-gray-400">Loading your workout history...</p>
+              </div>
+            ) : workoutSessions.length > 0 ? (
+              <div className="space-y-4">
+                {workoutSessions.map((workout) => (
+                  <WorkoutCard 
+                    key={workout.id}
+                    type={workout.training_type} 
+                    date={formatWorkoutDate(workout.start_time)} 
+                    duration={formatDuration(workout.duration)} 
+                    tags={workout.tags || [workout.training_type]} 
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 bg-gray-900 rounded-lg">
+                <p className="text-gray-400 mb-2">No workouts logged yet</p>
+                <p className="text-sm text-gray-500">Complete a training session to see it here</p>
+              </div>
+            )
           ) : (
             <div className="text-center py-10 bg-gray-900 rounded-lg">
-              <p className="text-gray-400 mb-2">No workouts logged yet</p>
-              <p className="text-sm text-gray-500">Complete a training session to see it here</p>
+              <p className="text-gray-400 mb-2">Workout log hidden</p>
+              <p className="text-sm text-gray-500">Click 'Show' to view your workout history</p>
             </div>
           )}
         </section>
@@ -201,6 +297,12 @@ const Index = () => {
                     <SuggestionChip label="Running" onClick={() => setTrainingType("Running")} />
                     <SuggestionChip label="Strength" onClick={() => setTrainingType("Strength")} />
                     <SuggestionChip label="Yoga" onClick={() => setTrainingType("Yoga")} />
+                    {workoutSessions.length > 0 && (
+                      <SuggestionChip 
+                        label={workoutSessions[0].training_type} 
+                        onClick={() => setTrainingType(workoutSessions[0].training_type)} 
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -286,7 +388,10 @@ const Index = () => {
       )}
 
       {/* Floating Action Button */}
-      <button className="fixed bottom-20 right-4 h-16 w-16 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-lg z-10">
+      <button 
+        onClick={() => setDialogOpen(true)}
+        className="fixed bottom-20 right-4 h-16 w-16 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-lg z-10"
+      >
         <Plus size={24} />
       </button>
     </div>
