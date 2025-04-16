@@ -62,7 +62,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
-  // Safe exercises list that is always an array even if data is undefined
+  // Safe exercises list that is always an array
   const safeExercises = exercises || [];
 
   // Log exercises data for debugging
@@ -145,15 +145,26 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     });
   };
 
-  // Filter exercises based on search term
-  const filteredExercises = searchTerm && safeExercises.length > 0
-    ? safeExercises.filter(ex => 
-        ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ex.primary_muscle_groups && ex.primary_muscle_groups.some(m => 
-          m && m.toLowerCase().includes(searchTerm.toLowerCase())
-        ))
-      )
-    : safeExercises;
+  // Filter exercises based on search term with careful null checking
+  const filteredExercises = React.useMemo(() => {
+    if (!searchTerm || !safeExercises || safeExercises.length === 0) {
+      return safeExercises;
+    }
+    
+    const searchTermLower = searchTerm.toLowerCase();
+    return safeExercises.filter(ex => {
+      // Check if exercise name includes search term
+      const nameMatch = ex.name?.toLowerCase().includes(searchTermLower);
+      
+      // Check if any muscle group includes search term, with careful null checks
+      const muscleMatch = Array.isArray(ex.primary_muscle_groups) && 
+        ex.primary_muscle_groups.some(m => 
+          m && typeof m === 'string' && m.toLowerCase().includes(searchTermLower)
+        );
+        
+      return nameMatch || muscleMatch;
+    });
+  }, [searchTerm, safeExercises]);
 
   return (
     <div className="flex items-center gap-2">
@@ -210,7 +221,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 </>
               )}
             </CommandEmpty>
-            {filteredExercises && filteredExercises.length > 0 ? (
+            {Array.isArray(filteredExercises) && filteredExercises.length > 0 ? (
               <CommandGroup heading="Exercises">
                 {filteredExercises.map((exercise) => (
                   <CommandItem

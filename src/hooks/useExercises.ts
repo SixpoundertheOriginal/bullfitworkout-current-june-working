@@ -29,8 +29,9 @@ export function useExercises() {
         throw error;
       }
 
-      console.log("Fetched exercises:", data?.length || 0);
-      return data || [];
+      const exercises = data || [];
+      console.log("Fetched exercises:", exercises.length);
+      return exercises;
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
       return [];

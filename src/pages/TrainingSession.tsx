@@ -187,13 +187,13 @@ const TrainingSession = () => {
     return () => clearInterval(timer);
   }, []);
   
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  const handleAddSet = (exerciseName) => {
+  const handleAddSet = (exerciseName: string) => {
     const exerciseSets = exercises[exerciseName] || [];
     const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0 };
     
@@ -206,18 +206,24 @@ const TrainingSession = () => {
     });
   };
   
-  const handleCompleteSet = (exerciseName, setIndex) => {
-    const updatedExercises = { ...exercises };
-    updatedExercises[exerciseName][setIndex].completed = true;
-    setExercises(updatedExercises);
+  const handleCompleteSet = (exerciseName: string, setIndex: number) => {
+    if (!exercises[exerciseName]) return;
     
-    toast({
-      title: "Set completed",
-      description: `${exerciseName}: Set ${setIndex + 1} logged successfully`,
-    });
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      updatedExercises[exerciseName][setIndex].completed = true;
+      setExercises(updatedExercises);
+      
+      toast({
+        title: "Set completed",
+        description: `${exerciseName}: Set ${setIndex + 1} logged successfully`,
+      });
+    }
   };
   
   const handleSelectExercise = (exercise: Exercise) => {
+    if (!exercise || !exercise.name) return;
+    
     if (!exercises[exercise.name]) {
       setExercises({
         ...exercises,
@@ -232,8 +238,8 @@ const TrainingSession = () => {
     }
   };
   
-  const totalSets = Object.values(exercises).reduce((sum, sets) => sum + sets.length, 0);
-  const completedSets = Object.values(exercises).reduce((sum, sets) => 
+  const totalSets = Object.values(exercises || {}).reduce((sum, sets) => sum + sets.length, 0);
+  const completedSets = Object.values(exercises || {}).reduce((sum, sets) => 
     sum + sets.filter(set => set.completed).length, 0);
   
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
@@ -364,11 +370,11 @@ const TrainingSession = () => {
       </div>
       
       <main className="flex-1 overflow-auto px-4 py-6">
-        {Object.keys(exercises).map((exerciseName) => (
+        {Object.keys(exercises || {}).map((exerciseName) => (
           <ExerciseCard
             key={exerciseName}
             exercise={exerciseName}
-            sets={exercises[exerciseName]}
+            sets={exercises[exerciseName] || []}
             onAddSet={handleAddSet}
             onComplete={handleCompleteSet}
             isActive={exerciseName === currentExercise}
