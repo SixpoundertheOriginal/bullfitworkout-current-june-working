@@ -902,6 +902,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          age: number | null
+          created_at: string
+          experience_level: string | null
+          fitness_goal: string | null
+          full_name: string | null
+          height: number | null
+          height_unit: string | null
+          id: string
+          updated_at: string
+          weight: number | null
+          weight_unit: string | null
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          experience_level?: string | null
+          fitness_goal?: string | null
+          full_name?: string | null
+          height?: number | null
+          height_unit?: string | null
+          id: string
+          updated_at?: string
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          experience_level?: string | null
+          fitness_goal?: string | null
+          full_name?: string | null
+          height?: number | null
+          height_unit?: string | null
+          id?: string
+          updated_at?: string
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Relationships: []
+      }
       workout_sessions: {
         Row: {
           created_at: string

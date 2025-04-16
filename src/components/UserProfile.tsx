@@ -4,11 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function UserProfile() {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   if (!user) return null;
   
@@ -28,6 +30,11 @@ export function UserProfile() {
   const handleSignOut = async () => {
     await signOut();
     setOpen(false);
+  };
+
+  const goToProfilePage = () => {
+    setOpen(false);
+    navigate('/profile');
   };
   
   return (
@@ -64,9 +71,18 @@ export function UserProfile() {
             <Button 
               variant="outline" 
               className="w-full justify-start text-white bg-gray-800 border-gray-700 hover:bg-gray-700"
+              onClick={goToProfilePage}
             >
               <User className="mr-2 h-4 w-4" />
               Edit Profile
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full justify-start text-white bg-gray-800 border-gray-700 hover:bg-gray-700"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
             </Button>
             
             <Button 

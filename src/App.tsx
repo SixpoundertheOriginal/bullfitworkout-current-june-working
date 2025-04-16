@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TrainingSession from "./pages/TrainingSession";
 import WorkoutComplete from "./pages/WorkoutComplete";
+import ProfilePage from "./pages/ProfilePage";
 import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -36,6 +37,7 @@ const AppRoutes = () => {
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/training-session" element={<ProtectedRoute><TrainingSession /></ProtectedRoute>} />
       <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
