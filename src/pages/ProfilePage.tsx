@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileForm } from "@/components/UserProfileForm";
 import { UserStats } from "@/components/UserStats";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +29,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("stats");
 
   useEffect(() => {
     if (!user) {
@@ -168,7 +169,12 @@ const ProfilePage = () => {
               )}
             </div>
             
-            <Tabs defaultValue="stats" className="w-full">
+            <Tabs 
+              defaultValue="stats" 
+              value={activeTab} 
+              onValueChange={setActiveTab} 
+              className="w-full"
+            >
               <TabsList className="grid grid-cols-2 bg-gray-800 border-gray-700 mb-6">
                 <TabsTrigger value="stats" className="data-[state=active]:bg-gray-700">
                   Stats
