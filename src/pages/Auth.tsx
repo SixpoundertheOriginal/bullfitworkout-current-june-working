@@ -29,11 +29,7 @@ const Auth = () => {
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // If already logged in, redirect to home
-  if (user) {
-    return <Navigate to="/" />;
-  }
-
+  // Initialize all form state regardless of user authentication status
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -68,6 +64,11 @@ const Auth = () => {
       console.error("Signup error:", error);
     }
   };
+
+  // If already logged in, redirect to home after all hooks are initialized
+  if (user) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <div className="flex min-h-screen bg-black text-white">
