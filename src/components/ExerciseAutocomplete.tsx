@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -170,69 +170,74 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
-          <Command className="bg-gray-800">
-            <CommandInput 
-              placeholder="Search exercises..." 
-              className="bg-gray-800 text-white"
-              value={searchTerm}
-              onValueChange={setSearchTerm}
-            />
+          <div className="bg-gray-800 w-full">
+            <div className="flex items-center border-b px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input
+                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 text-white"
+                placeholder="Search exercises..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             
             {isLoading ? (
-              <CommandEmpty className="py-6 text-center text-gray-400">
+              <div className="py-6 text-center text-gray-400">
                 <div className="flex flex-col items-center">
                   <Loader2 className="h-6 w-6 animate-spin mb-2" />
                   <span>Loading exercises...</span>
                 </div>
-              </CommandEmpty>
+              </div>
             ) : safeExercises.length === 0 ? (
-              <CommandEmpty className="py-6 text-center text-gray-400">
-                <>
-                  No exercise found.
-                  <Button 
-                    variant="link" 
-                    className="block w-full text-blue-400"
-                    onClick={() => {
-                      setDialogOpen(true);
-                      setNewExercise({
-                        ...newExercise,
-                        name: searchTerm || "",
-                      });
-                      setOpen(false);
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create "{searchTerm || 'new exercise'}"
-                  </Button>
-                </>
-              </CommandEmpty>
+              <div className="py-6 text-center text-gray-400">
+                <span>No exercise found.</span>
+                <Button 
+                  variant="link" 
+                  className="block w-full text-blue-400"
+                  onClick={() => {
+                    setDialogOpen(true);
+                    setNewExercise({
+                      ...newExercise,
+                      name: searchTerm || "",
+                    });
+                    setOpen(false);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create "{searchTerm || 'new exercise'}"
+                </Button>
+              </div>
             ) : (
-              <CommandGroup heading="Exercises">
-                {safeExercises.map((exercise) => (
-                  exercise && exercise.id ? (
-                    <CommandItem
-                      key={exercise.id}
-                      value={exercise.name}
-                      onSelect={(currentValue) => {
-                        setValue(currentValue);
-                        onSelectExercise(exercise);
-                        setOpen(false);
-                      }}
-                      className="text-white hover:bg-gray-700"
-                    >
-                      <Check
+              <div className="overflow-y-auto max-h-[300px]">
+                <div className="p-1">
+                  {safeExercises.map((exercise) => 
+                    exercise && exercise.id ? (
+                      <div
+                        key={exercise.id}
                         className={cn(
-                          "mr-2 h-4 w-4",
-                          value === exercise.name ? "opacity-100" : "opacity-0"
+                          "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-700 text-white",
+                          value === exercise.name ? "bg-gray-700" : ""
                         )}
-                      />
-                      {exercise.name}
-                    </CommandItem>
-                  ) : null
-                ))}
-              </CommandGroup>
+                        onClick={() => {
+                          setValue(exercise.name);
+                          onSelectExercise(exercise);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === exercise.name ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {exercise.name}
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              </div>
             )}
-          </Command>
+          </div>
         </PopoverContent>
       </Popover>
 
