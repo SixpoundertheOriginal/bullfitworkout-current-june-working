@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { toast } from "@/hooks/use-toast";
 import { UserProfile } from "@/components/UserProfile";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useElementVisibility } from "@/hooks/useElementVisibility";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,6 +32,11 @@ const Index = () => {
   const [duration, setDuration] = useState(30);
   const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
   const [loadingWorkouts, setLoadingWorkouts] = useState(true);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const isButtonVisible = useElementVisibility(buttonRef, {
+    threshold: 0.5,
+    rootMargin: "-100px"
+  });
 
   useEffect(() => {
     if (user) {
@@ -181,11 +187,21 @@ const Index = () => {
           </div>
           
           <button 
+            ref={buttonRef}
             onClick={() => setDialogOpen(true)}
-            className="h-32 w-32 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex flex-col items-center justify-center mx-auto shadow-lg hover:shadow-purple-500/20 transition-all"
+            className={`
+              transition-all duration-300 ease-out
+              flex flex-col items-center justify-center
+              bg-gradient-to-br from-purple-500 to-pink-600
+              shadow-lg hover:shadow-purple-500/20
+              ${isButtonVisible 
+                ? 'h-32 w-32 rounded-full mx-auto relative' 
+                : 'h-14 w-14 rounded-full fixed bottom-20 right-4 z-50'
+              }
+            `}
           >
-            <Zap size={28} className="mb-1" />
-            <span className="text-xl font-semibold">Start</span>
+            <Zap size={isButtonVisible ? 28 : 20} className="mb-1" />
+            {isButtonVisible && <span className="text-xl font-semibold">Start</span>}
           </button>
         </section>
 
