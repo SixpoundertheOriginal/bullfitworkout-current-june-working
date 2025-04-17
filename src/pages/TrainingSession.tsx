@@ -340,7 +340,6 @@ const TrainingSession = () => {
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [showAddExerciseForm, setShowAddExerciseForm] = useState(false);
   const [showRestTimer, setShowRestTimer] = useState(false);
   const startButtonRef = useRef<HTMLButtonElement>(null);
   const mainStartButtonVisible = useElementVisibility(startButtonRef, {
@@ -530,9 +529,6 @@ const TrainingSession = () => {
       setCurrentExercise(newExerciseName);
       setNewExerciseName("");
       setSelectedExercise(null);
-      setShowAddExerciseForm(false);
-      
-      if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
     } else {
       toast.error("This exercise is already in your workout", {
         style: {
@@ -566,10 +562,6 @@ const TrainingSession = () => {
     };
     
     navigate("/workout-complete", { state: { workoutData } });
-  };
-  
-  const toggleAddExerciseForm = () => {
-    setShowAddExerciseForm(!showAddExerciseForm);
   };
   
   return (
@@ -616,31 +608,23 @@ const TrainingSession = () => {
           ))}
         </div>
 
-        {showAddExerciseForm && (
-          <div className="mb-6 bg-gray-900/80 backdrop-blur-sm p-4 rounded-lg animate-fade-in border border-gray-800">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="title-small">Add Exercise</h3>
-              <button 
-                onClick={toggleAddExerciseForm}
-                className="p-1 rounded-full hover:bg-gray-800 text-gray-400"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
-              <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
-              <Button 
-                type="submit" 
-                variant="secondary" 
-                className="font-medium bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white"
-                disabled={!newExerciseName.trim()}
-              >
-                <Plus size={16} />
-                Add Exercise
-              </Button>
-            </form>
+        <div className="mb-6 bg-gray-900/80 backdrop-blur-sm p-4 rounded-lg border border-gray-800">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="title-small">Add Exercise</h3>
           </div>
-        )}
+          <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
+            <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
+            <Button 
+              type="submit" 
+              variant="secondary" 
+              className="font-medium bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white"
+              disabled={!newExerciseName.trim()}
+            >
+              <Plus size={16} />
+              Add Exercise
+            </Button>
+          </form>
+        </div>
         
         <Button 
           ref={startButtonRef}
@@ -650,13 +634,6 @@ const TrainingSession = () => {
           Complete Workout
         </Button>
       </main>
-      
-      {!showAddExerciseForm && (
-        <ExerciseFAB 
-          onClick={toggleAddExerciseForm} 
-          visible={!mainStartButtonVisible}
-        />
-      )}
       
       <RestTimer 
         isVisible={showRestTimer}
