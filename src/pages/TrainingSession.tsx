@@ -39,6 +39,9 @@ import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { convertWeight, formatWeightWithUnit, WeightUnit } from "@/utils/unitConversion";
+import { ExerciseFAB } from "@/components/ExerciseFAB";
+import { RestTimer } from "@/components/RestTimer";
+import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -84,7 +87,7 @@ const SetRow = ({
   const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
   
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-800">
+    <div className={`flex items-center justify-between py-2 border-b border-gray-800 transition-all duration-200 ${completed ? 'bg-gray-800/30' : ''}`}>
       <div className="w-8 text-center font-medium text-gray-400">#{setNumber}</div>
       
       {isEditing ? (
@@ -179,14 +182,14 @@ const SetRow = ({
             ) : (
               <button 
                 onClick={onComplete} 
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <Check size={16} />
               </button>
             )}
             <button
               onClick={onRemove}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white transform transition-all duration-200"
             >
               <Trash2 size={16} />
             </button>
@@ -204,12 +207,13 @@ const ExerciseCard = ({
   onCompleteSet, 
   onRemoveSet, 
   onEditSet, 
+  onSaveSet, 
   onWeightChange, 
   onRepsChange, 
-  onSaveSet,
   onWeightIncrement,
   onRepsIncrement,
-  isActive 
+  isActive,
+  onShowRestTimer
 }) => {
   const { weightUnit } = useWeightUnit();
   const history = exerciseHistoryData[exercise] || [];
@@ -234,8 +238,11 @@ const ExerciseCard = ({
   const volumeDiff = (currentVolume - previousVolume);
   const volumePercentChange = previousVolume ? ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
   
+  const completedSetsCount = sets.filter(set => set.completed).length;
+  const completionPercentage = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
+  
   return (
-    <Card className={`bg-gray-900 border-gray-800 mb-4 ${isActive ? "ring-1 ring-purple-500" : ""}`}>
+    <Card className={`bg-gray-900 border-gray-800 mb-4 transform transition-all duration-300 ${isActive ? "ring-1 ring-purple-500 scale-[1.01]" : ""}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
@@ -256,6 +263,13 @@ const ExerciseCard = ({
           </Badge>
         </div>
         
+        <div className="mb-3">
+          <Progress 
+            value={completionPercentage} 
+            className="h-1 bg-gray-800 [&>div]:bg-purple-500"
+          />
+        </div>
+        
         <div className="flex items-center justify-between py-2 border-b border-gray-700 set-header">
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight ({weightUnit})</div>
@@ -272,7 +286,11 @@ const ExerciseCard = ({
               reps={set.reps}
               completed={set.completed}
               isEditing={set.isEditing}
-              onComplete={() => onCompleteSet(exercise, index)}
+              onComplete={() => {
+                onCompleteSet(exercise, index);
+                if (navigator.vibrate) navigator.vibrate(50);
+                onShowRestTimer();
+              }}
               onEdit={() => onEditSet(exercise, index)}
               onSave={() => onSaveSet(exercise, index)}
               onRemove={() => onRemoveSet(exercise, index)}
@@ -286,7 +304,7 @@ const ExerciseCard = ({
           
           <button 
             onClick={() => onAddSet(exercise)}
-            className="w-full mt-3 py-2 flex items-center justify-center text-sm bg-gray-800 hover:bg-gray-750 rounded-md text-gray-300 font-medium"
+            className="w-full mt-3 py-2 flex items-center justify-center text-sm bg-gray-800 hover:bg-gray-750 rounded-md text-gray-300 font-medium transition-colors hover:bg-gray-700"
           >
             <Plus size={16} className="mr-1" />
             Add Set
@@ -296,7 +314,7 @@ const ExerciseCard = ({
         <div className="mt-4 pt-3 border-t border-gray-800">
           <div className="flex justify-between text-sm mb-2">
             <span className="volume-label">Volume vs last session</span>
-            <div className={`${isImproved ? "text-green-300" : "text-red-300"} volume-value`}>
+            <div className={`${volumeDiff >= 0 ? "text-green-300" : "text-red-300"} volume-value`}>
               {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
             </div>
           </div>
@@ -321,6 +339,8 @@ const TrainingSession = () => {
   const [currentExercise, setCurrentExercise] = useState("");
   const [startTime, setStartTime] = useState(new Date());
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [showAddExerciseForm, setShowAddExerciseForm] = useState(false);
+  const [showRestTimer, setShowRestTimer] = useState(false);
   
   const locationState = location.state as LocationState | null;
   const [trainingType, setTrainingType] = useState(
@@ -484,8 +504,8 @@ const TrainingSession = () => {
     setNewExerciseName(exercise.name);
   };
   
-  const handleAddExercise = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddExercise = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
     if (!newExerciseName.trim()) return;
     
@@ -504,6 +524,9 @@ const TrainingSession = () => {
       setCurrentExercise(newExerciseName);
       setNewExerciseName("");
       setSelectedExercise(null);
+      setShowAddExerciseForm(false);
+      
+      if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
     } else {
       toast.error("This exercise is already in your workout", {
         style: {
@@ -522,6 +545,8 @@ const TrainingSession = () => {
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
   const finishWorkout = () => {
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    
     const endTime = new Date();
     const durationInSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
     
@@ -537,50 +562,33 @@ const TrainingSession = () => {
     navigate("/workout-complete", { state: { workoutData } });
   };
   
+  const toggleAddExerciseForm = () => {
+    setShowAddExerciseForm(!showAddExerciseForm);
+  };
+  
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      <header className="flex justify-between items-center p-4 border-b border-gray-800">
+      <header className="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-gray-800 bg-black/95 backdrop-blur-sm">
         <button 
           onClick={() => navigate('/')}
-          className="p-2 rounded-full hover:bg-gray-900"
+          className="p-2 rounded-full hover:bg-gray-900 transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 className="title-large">Training Session</h1>
+        <h1 className="title-large">{trainingType}</h1>
         <WeightUnitToggle variant="badge" />
       </header>
 
-      <div className="grid grid-cols-4 bg-gray-900 p-4">
-        <div className="flex flex-col items-center">
-          <Timer className="text-purple-400 mb-1" size={18} />
-          <span className="text-lg font-mono mono-text">{formatTime(time)}</span>
-          <span className="text-xs text-gray-400 font-medium">Time</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Dumbbell className="text-purple-400 mb-1" size={18} />
-          <span className="text-lg mono-text">{Object.keys(exercises).length}</span>
-          <span className="text-xs text-gray-400 font-medium">Exercises</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <BarChart3 className="text-purple-400 mb-1" size={18} />
-          <span className="text-lg mono-text">{completedSets}/{totalSets}</span>
-          <span className="text-xs text-gray-400 font-medium">Sets</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Heart className="text-red-400 mb-1" size={18} />
-          <span className="text-lg mono-text">{heartRate}</span>
-          <span className="text-xs text-gray-400 font-medium">BPM</span>
-        </div>
-      </div>
-
-      <div className="px-4 py-2 bg-gray-900">
-        <Progress 
-          value={completionPercentage || 0} 
-          className="h-1.5 bg-gray-800 [&>div]:bg-purple-500"
-        />
-      </div>
+      <WorkoutMetrics 
+        time={time}
+        exerciseCount={Object.keys(exercises).length}
+        completedSets={completedSets}
+        totalSets={totalSets}
+        heartRate={heartRate}
+        className="sticky top-[73px] z-10 mx-4 mt-4"
+      />
       
-      <main className="flex-1 overflow-auto px-4 py-6">
+      <main className="flex-1 overflow-auto px-4 py-6 pb-24">
         {Object.keys(exercises || {}).map((exerciseName) => (
           <ExerciseCard
             key={exerciseName}
@@ -596,32 +604,62 @@ const TrainingSession = () => {
             onWeightIncrement={handleWeightIncrement}
             onRepsIncrement={handleRepsIncrement}
             isActive={exerciseName === currentExercise}
+            onShowRestTimer={() => setShowRestTimer(true)}
           />
         ))}
         
-        <div className="mb-6">
-          <h3 className="title-small mb-2">Add Exercise</h3>
-          <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
-            <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
-            <Button 
-              type="submit" 
-              variant="secondary" 
-              className="font-medium"
-              disabled={!newExerciseName.trim()}
-            >
-              <Plus size={16} />
-              Add Exercise
-            </Button>
-          </form>
-        </div>
+        {showAddExerciseForm && (
+          <div className="mb-6 bg-gray-900/80 backdrop-blur-sm p-4 rounded-lg animate-fade-in border border-gray-800">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="title-small">Add Exercise</h3>
+              <button 
+                onClick={toggleAddExerciseForm}
+                className="p-1 rounded-full hover:bg-gray-800 text-gray-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
+              <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
+              <Button 
+                type="submit" 
+                variant="secondary" 
+                className="font-medium bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white"
+                disabled={!newExerciseName.trim()}
+              >
+                <Plus size={16} />
+                Add Exercise
+              </Button>
+            </form>
+          </div>
+        )}
         
         <Button 
           onClick={finishWorkout}
-          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-heading font-medium"
+          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-heading font-medium shadow-lg transform transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] mb-10"
         >
           Complete Workout
         </Button>
       </main>
+      
+      {!showAddExerciseForm && (
+        <ExerciseFAB onClick={toggleAddExerciseForm} />
+      )}
+      
+      <RestTimer 
+        isVisible={showRestTimer}
+        onClose={() => setShowRestTimer(false)}
+        onComplete={() => {
+          toast.success("Rest complete! Continue your workout.", {
+            style: {
+              backgroundColor: "rgba(20, 20, 20, 0.9)",
+              color: "white",
+              border: "1px solid rgba(120, 120, 120, 0.3)",
+            },
+          });
+          setShowRestTimer(false);
+        }}
+      />
     </div>
   );
 };
