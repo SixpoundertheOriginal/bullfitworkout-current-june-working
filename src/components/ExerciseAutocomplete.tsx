@@ -91,18 +91,14 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
   const handleCreateExercise = () => {
     if (!newExercise.name) {
-      toast({
-        title: "Exercise name required",
-        description: "Please provide a name for your exercise",
-      });
+      // Fix: Change from object with title to string parameter
+      toast("Exercise name required");
       return;
     }
 
     if (!Array.isArray(newExercise.primary_muscle_groups) || newExercise.primary_muscle_groups.length === 0) {
-      toast({
-        title: "Muscle group required",
-        description: "Please add at least one primary muscle group",
-      });
+      // Fix: Change from object with title to string parameter
+      toast("Please add at least one primary muscle group");
       return;
     }
 

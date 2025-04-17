@@ -92,10 +92,10 @@ export function useExercises() {
     mutationFn: createExercise,
     onSuccess: (newExercise) => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      toast.success(`${newExercise.name} has been added to your exercises.`);
+      toast(`${newExercise.name} has been added to your exercises.`);
     },
     onError: (error: Error) => {
-      toast.error(`Error creating exercise: ${error.message}`);
+      toast(`Error creating exercise: ${error.message}`);
     },
   });
 
