@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
   ArrowUpRight, 
@@ -341,7 +341,12 @@ const TrainingSession = () => {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showAddExerciseForm, setShowAddExerciseForm] = useState(false);
   const [showRestTimer, setShowRestTimer] = useState(false);
-  
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+  const mainStartButtonVisible = useElementVisibility(startButtonRef, {
+    threshold: 0.5,
+    rootMargin: '-100px'
+  });
+
   const locationState = location.state as LocationState | null;
   const [trainingType, setTrainingType] = useState(
     locationState?.trainingType || "Training Session"
@@ -589,25 +594,27 @@ const TrainingSession = () => {
       />
       
       <main className="flex-1 overflow-auto px-4 py-6 pb-24">
-        {Object.keys(exercises || {}).map((exerciseName) => (
-          <ExerciseCard
-            key={exerciseName}
-            exercise={exerciseName}
-            sets={exercises[exerciseName] || []}
-            onAddSet={handleAddSet}
-            onCompleteSet={handleCompleteSet}
-            onRemoveSet={handleRemoveSet}
-            onEditSet={handleEditSet}
-            onSaveSet={handleSaveSet}
-            onWeightChange={handleSetWeightChange}
-            onRepsChange={handleSetRepsChange}
-            onWeightIncrement={handleWeightIncrement}
-            onRepsIncrement={handleRepsIncrement}
-            isActive={exerciseName === currentExercise}
-            onShowRestTimer={() => setShowRestTimer(true)}
-          />
-        ))}
-        
+        <div className="mb-8 rounded-xl p-6 bg-gradient-to-r from-purple-600 to-pink-500">
+          {Object.keys(exercises || {}).map((exerciseName) => (
+            <ExerciseCard
+              key={exerciseName}
+              exercise={exerciseName}
+              sets={exercises[exerciseName] || []}
+              onAddSet={handleAddSet}
+              onCompleteSet={handleCompleteSet}
+              onRemoveSet={handleRemoveSet}
+              onEditSet={handleEditSet}
+              onSaveSet={handleSaveSet}
+              onWeightChange={handleSetWeightChange}
+              onRepsChange={handleSetRepsChange}
+              onWeightIncrement={handleWeightIncrement}
+              onRepsIncrement={handleRepsIncrement}
+              isActive={exerciseName === currentExercise}
+              onShowRestTimer={() => setShowRestTimer(true)}
+            />
+          ))}
+        </div>
+
         {showAddExerciseForm && (
           <div className="mb-6 bg-gray-900/80 backdrop-blur-sm p-4 rounded-lg animate-fade-in border border-gray-800">
             <div className="flex justify-between items-center mb-3">
@@ -635,6 +642,7 @@ const TrainingSession = () => {
         )}
         
         <Button 
+          ref={startButtonRef}
           onClick={finishWorkout}
           className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-heading font-medium shadow-lg transform transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] mb-10"
         >
@@ -643,7 +651,10 @@ const TrainingSession = () => {
       </main>
       
       {!showAddExerciseForm && (
-        <ExerciseFAB onClick={toggleAddExerciseForm} />
+        <ExerciseFAB 
+          onClick={toggleAddExerciseForm} 
+          visible={!mainStartButtonVisible}
+        />
       )}
       
       <RestTimer 
