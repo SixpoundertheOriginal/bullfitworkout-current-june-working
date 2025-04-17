@@ -10,7 +10,7 @@ export const useElementVisibility = (
   elementRef: RefObject<Element>,
   options: UseElementVisibilityOptions = {}
 ): boolean => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   
   useEffect(() => {
     const element = elementRef.current;
