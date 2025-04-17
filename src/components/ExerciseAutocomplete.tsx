@@ -38,7 +38,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 interface ExerciseAutocompleteProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -69,7 +68,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const [tempEquipment, setTempEquipment] = useState("");
   const [tempSecondaryMuscle, setTempSecondaryMuscle] = useState("");
   
-  const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
+  const { exercises = [], isLoading, createExercise, isPending, error, isError } = useExercises();
 
   // Safe exercises list that is always an array
   const safeExercises = Array.isArray(exercises) ? exercises : [];

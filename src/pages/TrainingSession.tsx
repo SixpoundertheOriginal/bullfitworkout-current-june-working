@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -34,6 +35,7 @@ interface LocationState {
   trainingType?: string;
 }
 
+// Moving this outside of component to avoid hook-related issues
 const exerciseHistoryData = {
   "Bench Press": [
     { date: "Apr 10", weight: 135, reps: 10, sets: 3 },
@@ -57,6 +59,7 @@ const exerciseHistoryData = {
   ],
 };
 
+// Extracted as separate component to follow React rules of hooks
 const SetRow = ({ 
   setNumber, 
   weight, 
@@ -186,6 +189,7 @@ const SetRow = ({
   );
 };
 
+// Extracted as separate component
 const ExerciseCard = ({ 
   exercise, 
   sets, 
@@ -281,9 +285,9 @@ const ExerciseCard = ({
               {volumeDiff > 0 ? "+" : ""}{volumeDiff} lbs ({volumePercentChange}%)
             </div>
           </div>
+          {/* Fixed Progress component usage */}
           <Progress 
-            value={currentVolume > 0 ? (currentVolume / previousVolume) * 100 : 0} 
-            max={100}
+            value={currentVolume > 0 ? (currentVolume / Math.max(previousVolume, 1)) * 100 : 0} 
             className={`h-1.5 bg-gray-800 ${currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
           />
         </div>
@@ -308,6 +312,7 @@ const TrainingSession = () => {
     locationState?.trainingType || "Training Session"
   );
   
+  // Initialize with empty object to prevent undefined errors
   const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean; isEditing?: boolean }[]>>({});
   
   useEffect(() => {
@@ -485,10 +490,12 @@ const TrainingSession = () => {
     }
   };
   
+  // Calculate totals with null safety
   const totalSets = Object.values(exercises || {}).reduce((sum, sets) => sum + sets.length, 0);
   const completedSets = Object.values(exercises || {}).reduce((sum, sets) => 
     sum + sets.filter(set => set.completed).length, 0);
   
+  // Ensure we don't divide by zero
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
   const finishWorkout = () => {
@@ -544,9 +551,9 @@ const TrainingSession = () => {
       </div>
 
       <div className="px-4 py-2 bg-gray-900">
+        {/* Fixed Progress component with a default value if needed */}
         <Progress 
-          value={completionPercentage} 
-          max={100}
+          value={completionPercentage || 0} 
           className="h-1.5 bg-gray-800 [&>div]:bg-purple-500"
         />
       </div>

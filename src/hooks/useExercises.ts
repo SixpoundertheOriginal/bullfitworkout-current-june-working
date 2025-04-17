@@ -80,7 +80,7 @@ export function useExercises() {
   const exercisesQuery = useQuery({
     queryKey: ['exercises'],
     queryFn: fetchExercises,
-    enabled: !!user,
+    enabled: !!user, // Only run query if user is authenticated
     initialData: [], // Always provide an empty array as initial data
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
