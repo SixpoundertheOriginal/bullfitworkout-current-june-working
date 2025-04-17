@@ -56,7 +56,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Form state for new exercise with all required fields
   const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id'>>({
     name: "",
     description: "",
@@ -77,10 +76,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
-  // Safe exercises list that is always an array
   const safeExercises = Array.isArray(exercises) ? exercises : [];
 
-  // Log exercises data for debugging
   useEffect(() => {
     console.log(`Loaded ${safeExercises.length} exercises:`, safeExercises);
     if (isError && error) {
@@ -101,7 +98,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
     createExercise({
       ...newExercise,
-      // Ensure these required fields are never undefined or null
       instructions: newExercise.instructions || {},
       is_compound: Boolean(newExercise.is_compound),
       primary_muscle_groups: newExercise.primary_muscle_groups || [],
@@ -111,7 +107,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     
     setDialogOpen(false);
     
-    // Reset form with all required fields
     setNewExercise({
       name: "",
       description: "",
@@ -120,8 +115,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       equipment_type: [],
       movement_pattern: "push",
       difficulty: "beginner",
-      instructions: {}, // Required field
-      is_compound: false, // Required field
+      instructions: {},
+      is_compound: false,
       tips: [],
       variations: []
     });
@@ -177,11 +172,12 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       equipment_type: newExercise.equipment_type.filter(e => e !== equipment),
     });
   };
-  
-  // Filter exercises based on search term
-  const filteredExercises = safeExercises.filter(exercise => 
-    exercise && exercise.name && exercise.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
+  const filteredExercises = safeExercises
+    .filter(exercise => 
+      exercise?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="flex items-center gap-2">
@@ -194,7 +190,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             className="w-full justify-between bg-gray-900 border-gray-700 text-white"
           >
             {value
-              ? safeExercises.find((exercise) => exercise && exercise.name === value)?.name || value
+              ? safeExercises.find((exercise) => exercise?.name === value)?.name
               : "Select exercise..."}
             {isLoading ? (
               <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -224,28 +220,26 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 <CommandList className="max-h-[300px]">
                   {filteredExercises.length > 0 ? (
                     <CommandGroup>
-                      {filteredExercises.map((exercise) => 
-                        exercise && exercise.id ? (
-                          <CommandItem
-                            key={exercise.id}
-                            value={exercise.name}
-                            onSelect={() => {
-                              setValue(exercise.name);
-                              onSelectExercise(exercise);
-                              setOpen(false);
-                            }}
-                            className="text-white hover:bg-gray-700"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                value === exercise.name ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {exercise.name}
-                          </CommandItem>
-                        ) : null
-                      )}
+                      {filteredExercises.map((exercise) => (
+                        <CommandItem
+                          key={exercise.id}
+                          value={exercise.name}
+                          onSelect={() => {
+                            setValue(exercise.name);
+                            onSelectExercise(exercise);
+                            setOpen(false);
+                          }}
+                          className="text-white hover:bg-gray-700"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              value === exercise.name ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {exercise.name}
+                        </CommandItem>
+                      ))}
                     </CommandGroup>
                   ) : (
                     <CommandEmpty className="py-6 text-center text-gray-400">

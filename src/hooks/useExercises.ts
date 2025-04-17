@@ -1,7 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Exercise, COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT } from "@/types/exercise";
+import { Exercise } from "@/types/exercise";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -18,10 +17,10 @@ export function useExercises() {
     console.log("Fetching exercises for user:", user.id);
     
     try {
-      // Get global exercises and user's custom exercises
       const { data, error } = await supabase
         .from('exercises')
-        .select('*');
+        .select('*')
+        .order('name', { ascending: true });
 
       if (error) {
         console.error("Error fetching exercises:", error);
@@ -30,13 +29,9 @@ export function useExercises() {
 
       console.log("Fetched exercises data:", data);
       
-      // Ensure we're returning a properly typed array, even if data is null
-      const exercises = data || [];
-      console.log("Processed exercises:", exercises.length);
-      return exercises as Exercise[];
+      return (data || []) as Exercise[];
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
-      // Always return an empty array, never undefined
       return [];
     }
   };
@@ -50,10 +45,8 @@ export function useExercises() {
       ...exercise,
       is_custom: true,
       created_by: user.id,
-      // Make sure all required fields are present
       instructions: exercise.instructions || {},
       is_compound: exercise.is_compound !== undefined ? exercise.is_compound : false,
-      // Ensure these required fields are never undefined
       description: exercise.description || "",
       primary_muscle_groups: exercise.primary_muscle_groups || [],
       secondary_muscle_groups: exercise.secondary_muscle_groups || [],
@@ -74,17 +67,15 @@ export function useExercises() {
     }
 
     console.log("Exercise created successfully:", data);
-    // Explicitly type the returned data
     return data as Exercise;
   };
 
   const exercisesQuery = useQuery({
     queryKey: ['exercises'],
     queryFn: fetchExercises,
-    enabled: !!user, // Only run query if user is authenticated
-    initialData: [], // Always provide an empty array as initial data
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3, // Retry failed requests 3 times
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    retry: 3,
   });
 
   const createExerciseMutation = useMutation({
@@ -99,8 +90,7 @@ export function useExercises() {
   });
 
   return {
-    // Ensure we always return an array, never undefined
-    exercises: exercisesQuery.data || [], 
+    exercises: exercisesQuery.data || [],
     isLoading: exercisesQuery.isLoading,
     isError: exercisesQuery.isError,
     error: exercisesQuery.error,
