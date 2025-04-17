@@ -29,9 +29,11 @@ export function useExercises() {
         throw error;
       }
 
+      console.log("Fetched exercises data:", data);
+      
       // Ensure we're returning a properly typed array, even if data is null
       const exercises = data || [];
-      console.log("Fetched exercises:", exercises.length);
+      console.log("Processed exercises:", exercises.length);
       return exercises as Exercise[];
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
@@ -83,28 +85,17 @@ export function useExercises() {
     enabled: !!user, // Only run query if user is authenticated
     initialData: [], // Always provide an empty array as initial data
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3, // Retry failed requests 3 times
   });
 
   const createExerciseMutation = useMutation({
     mutationFn: createExercise,
     onSuccess: (newExercise) => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      toast.success(`${newExercise.name} has been added to your exercises.`, {
-        style: {
-          backgroundColor: "rgba(20, 20, 20, 0.9)",
-          color: "white",
-          border: "1px solid rgba(120, 120, 120, 0.3)",
-        },
-      });
+      toast.success(`${newExercise.name} has been added to your exercises.`);
     },
     onError: (error: Error) => {
-      toast.error(`Error creating exercise: ${error.message}`, {
-        style: {
-          backgroundColor: "rgba(220, 38, 38, 0.9)",
-          color: "white",
-          border: "1px solid rgba(239, 68, 68, 0.3)",
-        },
-      });
+      toast.error(`Error creating exercise: ${error.message}`);
     },
   });
 

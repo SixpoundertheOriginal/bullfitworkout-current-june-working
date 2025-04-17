@@ -31,13 +31,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 interface ExerciseAutocompleteProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -68,7 +76,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const [tempEquipment, setTempEquipment] = useState("");
   const [tempSecondaryMuscle, setTempSecondaryMuscle] = useState("");
   
-  const { exercises = [], isLoading, createExercise, isPending, error, isError } = useExercises();
+  const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
   // Safe exercises list that is always an array
   const safeExercises = Array.isArray(exercises) ? exercises : [];
@@ -86,7 +94,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       toast({
         title: "Exercise name required",
         description: "Please provide a name for your exercise",
-        variant: "destructive"
       });
       return;
     }
@@ -95,7 +102,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       toast({
         title: "Muscle group required",
         description: "Please add at least one primary muscle group",
-        variant: "destructive"
       });
       return;
     }
@@ -205,16 +211,13 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
-          <div className="bg-gray-800 w-full">
-            <div className="flex items-center border-b px-3">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <input
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 text-white"
-                placeholder="Search exercises..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <Command className="bg-gray-800 border-gray-700">
+            <CommandInput 
+              placeholder="Search exercises..." 
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+              className="bg-gray-800 text-white border-gray-700"
+            />
             
             {isLoading ? (
               <div className="py-6 text-center text-gray-400">
@@ -225,22 +228,20 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
               </div>
             ) : (
               <>
-                <div className="overflow-y-auto max-h-[300px]">
+                <CommandList className="max-h-[300px]">
                   {filteredExercises.length > 0 ? (
-                    <div className="p-1">
+                    <CommandGroup>
                       {filteredExercises.map((exercise) => 
                         exercise && exercise.id ? (
-                          <div
+                          <CommandItem
                             key={exercise.id}
-                            className={cn(
-                              "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-700 text-white",
-                              value === exercise.name ? "bg-gray-700" : ""
-                            )}
-                            onClick={() => {
+                            value={exercise.name}
+                            onSelect={() => {
                               setValue(exercise.name);
                               onSelectExercise(exercise);
                               setOpen(false);
                             }}
+                            className="text-white hover:bg-gray-700"
                           >
                             <Check
                               className={cn(
@@ -249,16 +250,16 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                               )}
                             />
                             {exercise.name}
-                          </div>
+                          </CommandItem>
                         ) : null
                       )}
-                    </div>
+                    </CommandGroup>
                   ) : (
-                    <div className="py-6 text-center text-gray-400">
-                      <span>No exercise found.</span>
-                    </div>
+                    <CommandEmpty className="py-6 text-center text-gray-400">
+                      No exercise found.
+                    </CommandEmpty>
                   )}
-                </div>
+                </CommandList>
                 <div className="p-2 border-t border-gray-700">
                   <Button 
                     variant="link" 
@@ -278,7 +279,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                 </div>
               </>
             )}
-          </div>
+          </Command>
         </PopoverContent>
       </Popover>
 
