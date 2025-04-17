@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -66,10 +67,10 @@ const WorkoutComplete = () => {
     if (location.state?.workoutData) {
       setWorkoutData(location.state.workoutData);
     } else {
-      toast({
-        title: "No workout data found",
+      toast("No workout data found", {
         description: "Please complete a workout session first",
-        variant: "destructive"
+        // Using the correct variant format for sonner
+        style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
       });
       navigate("/");
     }
@@ -198,7 +199,8 @@ const WorkoutComplete = () => {
       
       toast("Error saving workout", {
         description: "There was a problem saving your workout data",
-        variant: "destructive"
+        // Using the correct style format for sonner instead of variant
+        style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
       });
     } finally {
       setSaving(false);
