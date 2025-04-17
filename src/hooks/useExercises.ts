@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise, COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT } from "@/types/exercise";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 
 export function useExercises() {
   const { user } = useAuth();
@@ -89,16 +89,21 @@ export function useExercises() {
     mutationFn: createExercise,
     onSuccess: (newExercise) => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
-      toast({
-        title: "Exercise created",
-        description: `${newExercise.name} has been added to your exercises.`,
+      toast.success(`${newExercise.name} has been added to your exercises.`, {
+        style: {
+          backgroundColor: "rgba(20, 20, 20, 0.9)",
+          color: "white",
+          border: "1px solid rgba(120, 120, 120, 0.3)",
+        },
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error creating exercise",
-        description: error.message,
-        variant: "destructive",
+      toast.error(`Error creating exercise: ${error.message}`, {
+        style: {
+          backgroundColor: "rgba(220, 38, 38, 0.9)",
+          color: "white",
+          border: "1px solid rgba(239, 68, 68, 0.3)",
+        },
       });
     },
   });

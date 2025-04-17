@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   ArrowLeft, 
@@ -23,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -35,7 +34,6 @@ interface LocationState {
   trainingType?: string;
 }
 
-// Moving this outside of component to avoid hook-related issues
 const exerciseHistoryData = {
   "Bench Press": [
     { date: "Apr 10", weight: 135, reps: 10, sets: 3 },
@@ -59,7 +57,6 @@ const exerciseHistoryData = {
   ],
 };
 
-// Extracted as separate component to follow React rules of hooks
 const SetRow = ({ 
   setNumber, 
   weight, 
@@ -189,7 +186,6 @@ const SetRow = ({
   );
 };
 
-// Extracted as separate component
 const ExerciseCard = ({ 
   exercise, 
   sets, 
@@ -285,7 +281,6 @@ const ExerciseCard = ({
               {volumeDiff > 0 ? "+" : ""}{volumeDiff} lbs ({volumePercentChange}%)
             </div>
           </div>
-          {/* Fixed Progress component usage */}
           <Progress 
             value={currentVolume > 0 ? (currentVolume / Math.max(previousVolume, 1)) * 100 : 0} 
             className={`h-1.5 bg-gray-800 ${currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
@@ -312,7 +307,6 @@ const TrainingSession = () => {
     locationState?.trainingType || "Training Session"
   );
   
-  // Initialize with empty object to prevent undefined errors
   const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean; isEditing?: boolean }[]>>({});
   
   useEffect(() => {
@@ -358,9 +352,12 @@ const TrainingSession = () => {
       updatedExercises[exerciseName][setIndex].completed = true;
       setExercises(updatedExercises);
       
-      toast({
-        title: "Set completed",
-        description: `${exerciseName}: Set ${setIndex + 1} logged successfully`,
+      toast.success(`${exerciseName}: Set ${setIndex + 1} logged successfully`, {
+        style: {
+          backgroundColor: "rgba(20, 20, 20, 0.9)",
+          color: "white",
+          border: "1px solid rgba(120, 120, 120, 0.3)",
+        },
       });
     }
   };
@@ -382,9 +379,12 @@ const TrainingSession = () => {
     
     setExercises(updatedExercises);
     
-    toast({
-      title: "Set removed",
-      description: `${exerciseName}: Set ${setIndex + 1} removed`,
+    toast.error(`${exerciseName}: Set ${setIndex + 1} removed`, {
+      style: {
+        backgroundColor: "rgba(220, 38, 38, 0.9)",
+        color: "white",
+        border: "1px solid rgba(239, 68, 68, 0.3)",
+      },
     });
   };
   
@@ -406,9 +406,12 @@ const TrainingSession = () => {
       updatedExercises[exerciseName][setIndex].isEditing = false;
       setExercises(updatedExercises);
       
-      toast({
-        title: "Set updated",
-        description: `${exerciseName}: Set ${setIndex + 1} updated successfully`,
+      toast.success(`${exerciseName}: Set ${setIndex + 1} updated successfully`, {
+        style: {
+          backgroundColor: "rgba(20, 20, 20, 0.9)", 
+          color: "white",
+          border: "1px solid rgba(120, 120, 120, 0.3)",
+        },
       });
     }
   };
@@ -482,20 +485,20 @@ const TrainingSession = () => {
       setNewExerciseName("");
       setSelectedExercise(null);
     } else {
-      toast({
-        title: "Exercise already added",
-        description: "This exercise is already in your workout",
-        variant: "destructive"
+      toast.error("This exercise is already in your workout", {
+        style: {
+          backgroundColor: "rgba(220, 38, 38, 0.9)",
+          color: "white",
+          border: "1px solid rgba(239, 68, 68, 0.3)",
+        },
       });
     }
   };
   
-  // Calculate totals with null safety
   const totalSets = Object.values(exercises || {}).reduce((sum, sets) => sum + sets.length, 0);
   const completedSets = Object.values(exercises || {}).reduce((sum, sets) => 
     sum + sets.filter(set => set.completed).length, 0);
   
-  // Ensure we don't divide by zero
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
   const finishWorkout = () => {
@@ -551,7 +554,6 @@ const TrainingSession = () => {
       </div>
 
       <div className="px-4 py-2 bg-gray-900">
-        {/* Fixed Progress component with a default value if needed */}
         <Progress 
           value={completionPercentage || 0} 
           className="h-1.5 bg-gray-800 [&>div]:bg-purple-500"
