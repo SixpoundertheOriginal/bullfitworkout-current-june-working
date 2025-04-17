@@ -32,11 +32,15 @@ const Index = () => {
   const [duration, setDuration] = useState(30);
   const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
   const [loadingWorkouts, setLoadingWorkouts] = useState(true);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const isButtonVisible = useElementVisibility(buttonRef, {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isSectionVisible = useElementVisibility(sectionRef, {
     threshold: 0.5,
     rootMargin: "-100px"
   });
+  const buttonSize = {
+    large: { height: "8rem", width: "8rem" },
+    small: { height: "3.5rem", width: "3.5rem" }
+  };
 
   useEffect(() => {
     if (user) {
@@ -171,7 +175,7 @@ const Index = () => {
           </p>
         </div>
 
-        <section className="mb-10 text-center">
+        <section ref={sectionRef} className="mb-10 text-center">
           <h2 className="text-2xl font-bold mb-2">Start Your Training</h2>
           <p className="text-gray-400 mb-6">Focus today's session and get into flow mode</p>
           
@@ -186,23 +190,46 @@ const Index = () => {
             </div>
           </div>
           
-          <button 
-            ref={buttonRef}
-            onClick={() => setDialogOpen(true)}
-            className={`
-              transition-all duration-300 ease-out
-              flex flex-col items-center justify-center
-              bg-gradient-to-br from-purple-500 to-pink-600
-              shadow-lg hover:shadow-purple-500/20
-              ${isButtonVisible 
-                ? 'h-32 w-32 rounded-full mx-auto relative' 
-                : 'h-14 w-14 rounded-full fixed bottom-20 right-4 z-50'
-              }
-            `}
-          >
-            <Zap size={isButtonVisible ? 28 : 20} className="mb-1" />
-            {isButtonVisible && <span className="text-xl font-semibold">Start</span>}
-          </button>
+          <div style={{ height: buttonSize.large.height }} className="relative">
+            <button
+              onClick={() => setDialogOpen(true)}
+              className={`
+                transition-all duration-300 ease-out
+                flex flex-col items-center justify-center
+                bg-gradient-to-br from-purple-500 to-pink-600
+                shadow-lg hover:shadow-purple-500/20
+                rounded-full
+                fixed bottom-20 right-4 z-50
+                ${!isSectionVisible 
+                  ? 'opacity-100 pointer-events-auto scale-100' 
+                  : 'opacity-0 pointer-events-none scale-75'
+                }
+                h-14 w-14
+              `}
+            >
+              <Zap size={20} />
+            </button>
+            
+            <button 
+              onClick={() => setDialogOpen(true)}
+              className={`
+                transition-all duration-300 ease-out
+                flex flex-col items-center justify-center
+                bg-gradient-to-br from-purple-500 to-pink-600
+                shadow-lg hover:shadow-purple-500/20
+                rounded-full absolute left-1/2 top-0
+                transform -translate-x-1/2
+                ${isSectionVisible 
+                  ? 'opacity-100 pointer-events-auto scale-100' 
+                  : 'opacity-0 pointer-events-none scale-75'
+                }
+                h-32 w-32
+              `}
+            >
+              <Zap size={28} className="mb-1" />
+              <span className="text-xl font-semibold">Start</span>
+            </button>
+          </div>
         </section>
 
         <section>
