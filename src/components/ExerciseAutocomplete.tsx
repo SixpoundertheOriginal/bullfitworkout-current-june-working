@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -150,30 +149,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     });
   };
 
-  // Filter exercises based on search term with careful null checking
-  const filteredExercises = React.useMemo(() => {
-    // If no search term or exercises is not an array, return the safe exercises array
-    if (!searchTerm || !Array.isArray(safeExercises)) {
-      return safeExercises;
-    }
-    
-    const searchTermLower = searchTerm.toLowerCase();
-    return safeExercises.filter(ex => {
-      if (!ex) return false;
-      
-      // Check if exercise name includes search term
-      const nameMatch = ex.name && typeof ex.name === 'string' && ex.name.toLowerCase().includes(searchTermLower);
-      
-      // Check if any muscle group includes search term, with careful null checks
-      const muscleMatch = Array.isArray(ex.primary_muscle_groups) && 
-        ex.primary_muscle_groups.some(m => 
-          m && typeof m === 'string' && m.toLowerCase().includes(searchTermLower)
-        );
-        
-      return nameMatch || muscleMatch;
-    });
-  }, [searchTerm, safeExercises]);
-
   return (
     <div className="flex items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -195,7 +170,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
-          {/* Ensure Command has valid children by doing null checks */}
           <Command className="bg-gray-800">
             <CommandInput 
               placeholder="Search exercises..." 
@@ -203,13 +177,16 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandEmpty className="py-6 text-center text-gray-400">
-              {isLoading ? (
+            
+            {isLoading ? (
+              <CommandEmpty className="py-6 text-center text-gray-400">
                 <div className="flex flex-col items-center">
                   <Loader2 className="h-6 w-6 animate-spin mb-2" />
                   <span>Loading exercises...</span>
                 </div>
-              ) : (
+              </CommandEmpty>
+            ) : safeExercises.length === 0 ? (
+              <CommandEmpty className="py-6 text-center text-gray-400">
                 <>
                   No exercise found.
                   <Button 
@@ -228,14 +205,10 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                     Create "{searchTerm || 'new exercise'}"
                   </Button>
                 </>
-              )}
-            </CommandEmpty>
-            
-            {/* Only render CommandGroup if filteredExercises is an array with items */}
-            {Array.isArray(filteredExercises) && filteredExercises.length > 0 && (
+              </CommandEmpty>
+            ) : (
               <CommandGroup heading="Exercises">
-                {filteredExercises.map((exercise) => (
-                  // Only render if exercise exists and has an id
+                {safeExercises.map((exercise) => (
                   exercise && exercise.id ? (
                     <CommandItem
                       key={exercise.id}
