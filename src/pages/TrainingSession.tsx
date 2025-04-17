@@ -451,6 +451,7 @@ const TrainingSession = () => {
   };
   
   const handleSelectExercise = (exercise: Exercise) => {
+    console.log("Selected exercise:", exercise);
     setSelectedExercise(exercise);
     setNewExerciseName(exercise.name);
   };
@@ -461,12 +462,15 @@ const TrainingSession = () => {
     if (!newExerciseName.trim()) return;
     
     if (!exercises[newExerciseName]) {
+      const defaultWeight = selectedExercise?.metadata?.default_weight || 0;
+      const defaultReps = selectedExercise?.metadata?.default_reps || 0;
+      
       setExercises({
         ...exercises,
         [newExerciseName]: [
-          { weight: 0, reps: 0, completed: false, isEditing: false },
-          { weight: 0, reps: 0, completed: false, isEditing: false },
-          { weight: 0, reps: 0, completed: false, isEditing: false },
+          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false },
+          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false },
+          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false },
         ]
       });
       setCurrentExercise(newExerciseName);
@@ -570,7 +574,12 @@ const TrainingSession = () => {
           <h3 className="title-small mb-2">Add Exercise</h3>
           <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
             <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
-            <Button type="submit" variant="secondary" className="font-medium">
+            <Button 
+              type="submit" 
+              variant="secondary" 
+              className="font-medium"
+              disabled={!newExerciseName.trim()}
+            >
               <Plus size={16} />
               Add Exercise
             </Button>

@@ -15,13 +15,30 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Exercise } from "@/types/exercise";
+import { 
+  Exercise, 
+  COMMON_MUSCLE_GROUPS, 
+  COMMON_EQUIPMENT, 
+  MOVEMENT_PATTERNS, 
+  DIFFICULTY_LEVELS,
+  MuscleGroup,
+  EquipmentType,
+  MovementPattern,
+  Difficulty
+} from "@/types/exercise";
 import { useExercises } from "@/hooks/useExercises";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 interface ExerciseAutocompleteProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -44,13 +61,13 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     difficulty: "beginner",
     instructions: {}, // Required field
     is_compound: false, // Required field
-    // Other optional fields
     tips: [],
     variations: []
   });
   
   const [tempMuscleGroup, setTempMuscleGroup] = useState("");
   const [tempEquipment, setTempEquipment] = useState("");
+  const [tempSecondaryMuscle, setTempSecondaryMuscle] = useState("");
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
@@ -84,7 +101,16 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
       return;
     }
 
-    createExercise(newExercise);
+    createExercise({
+      ...newExercise,
+      // Ensure these required fields are never undefined or null
+      instructions: newExercise.instructions || {},
+      is_compound: Boolean(newExercise.is_compound),
+      primary_muscle_groups: newExercise.primary_muscle_groups || [],
+      secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
+      equipment_type: newExercise.equipment_type || []
+    });
+    
     setDialogOpen(false);
     
     // Reset form with all required fields
@@ -103,45 +129,61 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     });
   };
 
-  const addPrimaryMuscleGroup = () => {
-    if (tempMuscleGroup && Array.isArray(newExercise.primary_muscle_groups) && 
-        !newExercise.primary_muscle_groups.includes(tempMuscleGroup)) {
+  const addPrimaryMuscleGroup = (muscleGroup: MuscleGroup) => {
+    if (muscleGroup && !newExercise.primary_muscle_groups.includes(muscleGroup)) {
       setNewExercise({
         ...newExercise,
-        primary_muscle_groups: [...newExercise.primary_muscle_groups, tempMuscleGroup],
+        primary_muscle_groups: [...newExercise.primary_muscle_groups, muscleGroup],
       });
       setTempMuscleGroup("");
     }
   };
-
-  const addEquipment = () => {
-    if (tempEquipment && Array.isArray(newExercise.equipment_type) && 
-        !newExercise.equipment_type.includes(tempEquipment)) {
+  
+  const addSecondaryMuscleGroup = (muscleGroup: MuscleGroup) => {
+    if (muscleGroup && !newExercise.secondary_muscle_groups.includes(muscleGroup)) {
       setNewExercise({
         ...newExercise,
-        equipment_type: [...newExercise.equipment_type, tempEquipment],
+        secondary_muscle_groups: [...newExercise.secondary_muscle_groups, muscleGroup],
+      });
+      setTempSecondaryMuscle("");
+    }
+  };
+
+  const addEquipment = (equipment: EquipmentType) => {
+    if (equipment && !newExercise.equipment_type.includes(equipment)) {
+      setNewExercise({
+        ...newExercise,
+        equipment_type: [...newExercise.equipment_type, equipment],
       });
       setTempEquipment("");
     }
   };
 
   const removeMuscleGroup = (group: string) => {
-    if (!Array.isArray(newExercise.primary_muscle_groups)) return;
-    
     setNewExercise({
       ...newExercise,
       primary_muscle_groups: newExercise.primary_muscle_groups.filter(g => g !== group),
     });
   };
+  
+  const removeSecondaryMuscle = (group: string) => {
+    setNewExercise({
+      ...newExercise,
+      secondary_muscle_groups: newExercise.secondary_muscle_groups.filter(g => g !== group),
+    });
+  };
 
   const removeEquipment = (equipment: string) => {
-    if (!Array.isArray(newExercise.equipment_type)) return;
-    
     setNewExercise({
       ...newExercise,
       equipment_type: newExercise.equipment_type.filter(e => e !== equipment),
     });
   };
+  
+  // Filter exercises based on search term
+  const filteredExercises = safeExercises.filter(exercise => 
+    exercise && exercise.name && exercise.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex items-center gap-2">
@@ -185,9 +227,9 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             ) : (
               <>
                 <div className="overflow-y-auto max-h-[300px]">
-                  {safeExercises.length > 0 ? (
+                  {filteredExercises.length > 0 ? (
                     <div className="p-1">
-                      {safeExercises.map((exercise) => 
+                      {filteredExercises.map((exercise) => 
                         exercise && exercise.id ? (
                           <div
                             key={exercise.id}
@@ -258,7 +300,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 value={newExercise.description || ''}
@@ -269,19 +311,28 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             
             <div className="space-y-2">
               <Label>Primary Muscle Groups</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={tempMuscleGroup}
-                  onChange={(e) => setTempMuscleGroup(e.target.value)}
-                  placeholder="e.g., Chest, Back, Legs"
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-                <Button type="button" size="sm" onClick={addPrimaryMuscleGroup}>
-                  Add
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between bg-gray-800 border-gray-700 text-white">
+                    Select Muscle Group
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                  {COMMON_MUSCLE_GROUPS.map((muscle) => (
+                    <DropdownMenuItem 
+                      key={muscle}
+                      onClick={() => addPrimaryMuscleGroup(muscle)}
+                      className="cursor-pointer"
+                    >
+                      {muscle}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <div className="flex flex-wrap gap-2 mt-2">
-                {Array.isArray(newExercise.primary_muscle_groups) && newExercise.primary_muscle_groups.map((group) => (
+                {newExercise.primary_muscle_groups.map((group) => (
                   <Badge 
                     key={group} 
                     variant="secondary"
@@ -301,20 +352,71 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             </div>
             
             <div className="space-y-2">
-              <Label>Equipment Types</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={tempEquipment}
-                  onChange={(e) => setTempEquipment(e.target.value)}
-                  placeholder="e.g., Barbell, Dumbbell"
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-                <Button type="button" size="sm" onClick={addEquipment}>
-                  Add
-                </Button>
-              </div>
+              <Label>Secondary Muscle Groups</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between bg-gray-800 border-gray-700 text-white">
+                    Select Muscle Group
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                  {COMMON_MUSCLE_GROUPS.map((muscle) => (
+                    <DropdownMenuItem 
+                      key={muscle}
+                      onClick={() => addSecondaryMuscleGroup(muscle)}
+                      className="cursor-pointer"
+                    >
+                      {muscle}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <div className="flex flex-wrap gap-2 mt-2">
-                {Array.isArray(newExercise.equipment_type) && newExercise.equipment_type.map((equipment) => (
+                {newExercise.secondary_muscle_groups.map((group) => (
+                  <Badge 
+                    key={group} 
+                    variant="secondary"
+                    className="flex items-center gap-1 bg-gray-700"
+                  >
+                    {group}
+                    <button 
+                      onClick={() => removeSecondaryMuscle(group)}
+                      className="ml-1 text-gray-400 hover:text-white"
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Equipment Types</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between bg-gray-800 border-gray-700 text-white">
+                    Select Equipment
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                  {COMMON_EQUIPMENT.map((equipment) => (
+                    <DropdownMenuItem 
+                      key={equipment}
+                      onClick={() => addEquipment(equipment)}
+                      className="cursor-pointer"
+                    >
+                      {equipment}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <div className="flex flex-wrap gap-2 mt-2">
+                {newExercise.equipment_type.map((equipment) => (
                   <Badge 
                     key={equipment} 
                     variant="secondary"
@@ -337,19 +439,15 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
               <Label htmlFor="movement">Movement Pattern</Label>
               <Select 
                 value={newExercise.movement_pattern}
-                onValueChange={(value) => setNewExercise({ ...newExercise, movement_pattern: value })}
+                onValueChange={(value: MovementPattern) => setNewExercise({ ...newExercise, movement_pattern: value })}
               >
                 <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                   <SelectValue placeholder="Select movement pattern" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                  <SelectItem value="push">Push</SelectItem>
-                  <SelectItem value="pull">Pull</SelectItem>
-                  <SelectItem value="squat">Squat</SelectItem>
-                  <SelectItem value="hinge">Hinge</SelectItem>
-                  <SelectItem value="rotation">Rotation</SelectItem>
-                  <SelectItem value="carry">Carry</SelectItem>
-                  <SelectItem value="isolation">Isolation</SelectItem>
+                  {MOVEMENT_PATTERNS.map((pattern) => (
+                    <SelectItem key={pattern} value={pattern}>{pattern.charAt(0).toUpperCase() + pattern.slice(1)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -358,15 +456,15 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
               <Label htmlFor="difficulty">Difficulty</Label>
               <Select 
                 value={newExercise.difficulty}
-                onValueChange={(value) => setNewExercise({ ...newExercise, difficulty: value })}
+                onValueChange={(value: Difficulty) => setNewExercise({ ...newExercise, difficulty: value })}
               >
                 <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                   <SelectValue placeholder="Select difficulty" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
+                  {DIFFICULTY_LEVELS.map((level) => (
+                    <SelectItem key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -394,7 +492,6 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
             <Button 
               onClick={handleCreateExercise}
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!newExercise.name || isPending}
             >
               {isPending ? "Creating..." : "Create Exercise"}
             </Button>

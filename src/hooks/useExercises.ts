@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Exercise } from "@/types/exercise";
+import { Exercise, COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT } from "@/types/exercise";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
