@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -83,7 +82,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
   // Log exercises data for debugging
   useEffect(() => {
-    console.log(`Loaded ${safeExercises.length} exercises`);
+    console.log(`Loaded ${safeExercises.length} exercises:`, safeExercises);
     if (isError && error) {
       console.error("Error in useExercises:", error);
     }
@@ -91,13 +90,11 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
 
   const handleCreateExercise = () => {
     if (!newExercise.name) {
-      // Fix: Change from object with title to string parameter
       toast("Exercise name required");
       return;
     }
 
     if (!Array.isArray(newExercise.primary_muscle_groups) || newExercise.primary_muscle_groups.length === 0) {
-      // Fix: Change from object with title to string parameter
       toast("Please add at least one primary muscle group");
       return;
     }

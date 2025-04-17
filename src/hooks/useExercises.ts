@@ -21,8 +21,7 @@ export function useExercises() {
       // Get global exercises and user's custom exercises
       const { data, error } = await supabase
         .from('exercises')
-        .select('*')
-        .or(`is_custom.eq.false,created_by.eq.${user.id}`);
+        .select('*');
 
       if (error) {
         console.error("Error fetching exercises:", error);
