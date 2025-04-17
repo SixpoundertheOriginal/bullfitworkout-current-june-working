@@ -18,6 +18,7 @@ import {
   PlusCircle,
   Weight
 } from "lucide-react";
+import { useElementVisibility } from "@/hooks/useElementVisibility";
 
 interface LocationState {
   trainingType?: string;
