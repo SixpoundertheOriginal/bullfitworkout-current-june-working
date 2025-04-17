@@ -1,11 +1,15 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/exercise";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
+import { useWeightUnit } from "@/context/WeightUnitContext";
+import { convertWeight } from "@/utils/unitConversion";
 
 export function useExercises() {
   const { user } = useAuth();
+  const { weightUnit } = useWeightUnit();
   const queryClient = useQueryClient();
 
   const fetchExercises = async (): Promise<Exercise[]> => {
@@ -29,7 +33,31 @@ export function useExercises() {
 
       console.log("Fetched exercises data:", data);
       
-      return (data || []) as Exercise[];
+      // Normalize exercise data with weight unit conversions if needed
+      const normalizedExercises = (data || []).map(exercise => {
+        // If exercise has default weights in metadata, convert them to current unit preference
+        if (exercise.metadata?.default_weight) {
+          const defaultWeightUnit = exercise.metadata?.weight_unit || "kg";
+          const convertedWeight = convertWeight(
+            exercise.metadata.default_weight, 
+            defaultWeightUnit, 
+            weightUnit
+          );
+          
+          // Create a new object reference to trigger renders when unit changes
+          return {
+            ...exercise,
+            metadata: {
+              ...exercise.metadata,
+              normalized_weight: convertedWeight,
+              display_unit: weightUnit
+            }
+          };
+        }
+        return exercise;
+      });
+      
+      return normalizedExercises as Exercise[];
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
       return [];
@@ -41,6 +69,7 @@ export function useExercises() {
 
     console.log("Creating new exercise:", exercise.name);
 
+    // Store the original weight value but also include the unit information
     const newExercise = {
       ...exercise,
       is_custom: true,
@@ -50,7 +79,12 @@ export function useExercises() {
       description: exercise.description || "",
       primary_muscle_groups: exercise.primary_muscle_groups || [],
       secondary_muscle_groups: exercise.secondary_muscle_groups || [],
-      equipment_type: exercise.equipment_type || []
+      equipment_type: exercise.equipment_type || [],
+      // Add weight unit information to metadata if relevant
+      metadata: {
+        ...(exercise.metadata || {}),
+        weight_unit: weightUnit // Store current unit preference
+      }
     };
 
     console.log("Submitting exercise to database:", newExercise);
@@ -71,7 +105,7 @@ export function useExercises() {
   };
 
   const exercisesQuery = useQuery({
-    queryKey: ['exercises'],
+    queryKey: ['exercises', weightUnit], // Add weightUnit as a dependency to refetch when unit changes
     queryFn: fetchExercises,
     enabled: !!user,
     staleTime: 5 * 60 * 1000,

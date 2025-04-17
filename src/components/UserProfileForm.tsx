@@ -1,4 +1,3 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -15,8 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfileData } from "@/pages/ProfilePage";
+import { useWeightUnit } from "@/context/WeightUnitContext";
 
-// Schema for form validation
 const profileFormSchema = z.object({
   full_name: z.string().nullable().optional(),
   age: z.union([z.number().positive().int().nullable(), z.string().transform(v => v === "" ? null : parseInt(v))]),
@@ -34,6 +33,7 @@ interface UserProfileFormProps {
 }
 
 export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps) {
+  const { setWeightUnit } = useWeightUnit();
   const form = useForm<UserProfileData>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -49,13 +49,13 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
   });
 
   const handleSubmit = (data: UserProfileData) => {
+    setWeightUnit(data.weight_unit as "kg" | "lb");
     onSubmit(data);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Full Name */}
         <FormField
           control={form.control}
           name="full_name"
@@ -75,7 +75,6 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
           )}
         />
 
-        {/* Age */}
         <FormField
           control={form.control}
           name="age"
@@ -97,7 +96,6 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
           )}
         />
 
-        {/* Weight with unit selection */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -128,7 +126,19 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
               <FormItem>
                 <FormLabel className="text-white">Unit</FormLabel>
                 <Select 
-                  onValueChange={field.onChange} 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    
+                    const currentWeight = form.getValues("weight");
+                    if (currentWeight !== null && currentWeight !== undefined) {
+                      const currentUnit = form.getValues("weight_unit");
+                      if (currentUnit !== value) {
+                        const factor = value === "kg" ? 0.453592 : 2.20462;
+                        const convertedWeight = Math.round(currentWeight * factor * 10) / 10;
+                        form.setValue("weight", convertedWeight);
+                      }
+                    }
+                  }} 
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -147,7 +157,6 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
           />
         </div>
 
-        {/* Height with unit selection */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -197,7 +206,6 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
           />
         </div>
 
-        {/* Fitness Goal */}
         <FormField
           control={form.control}
           name="fitness_goal"
@@ -226,7 +234,6 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
           )}
         />
 
-        {/* Experience Level */}
         <FormField
           control={form.control}
           name="experience_level"

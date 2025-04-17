@@ -9,18 +9,22 @@ import {
   Save, 
   CheckCircle, 
   Dumbbell, 
-  ChevronRight 
+  ChevronRight,
+  Weight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChartContainer } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { useWeightUnit } from "@/context/WeightUnitContext";
+import { WeightUnitToggle } from "@/components/WeightUnitToggle";
+import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
 
 interface ExerciseSet {
   weight: number;
@@ -45,6 +49,8 @@ const WorkoutComplete = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { weightUnit } = useWeightUnit();
+  
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
@@ -72,7 +78,8 @@ const WorkoutComplete = () => {
   const totalVolume = workoutData ? Object.keys(workoutData.exercises).reduce((total, exercise) => {
     return total + workoutData.exercises[exercise].reduce((exerciseTotal, set) => {
       if (set.completed) {
-        return exerciseTotal + (set.weight * set.reps);
+        const convertedWeight = convertWeight(set.weight, "lb", weightUnit);
+        return exerciseTotal + (convertedWeight * set.reps);
       }
       return exerciseTotal;
     }, 0);
@@ -206,14 +213,15 @@ const WorkoutComplete = () => {
     return Object.keys(workoutData.exercises).map(exercise => {
       const totalExerciseVolume = workoutData.exercises[exercise].reduce((total, set) => {
         if (set.completed) {
-          return total + (set.weight * set.reps);
+          const convertedWeight = convertWeight(set.weight, "lb", weightUnit);
+          return total + (convertedWeight * set.reps);
         }
         return total;
       }, 0);
       
       return {
         name: exercise,
-        volume: totalExerciseVolume
+        volume: Math.round(totalExerciseVolume * 10) / 10
       };
     });
   };
@@ -236,7 +244,7 @@ const WorkoutComplete = () => {
           <ArrowLeft size={24} />
         </button>
         <h1 className="title-large">Workout Complete</h1>
-        <div className="w-9"></div>
+        <WeightUnitToggle variant="badge" />
       </header>
 
       <main className="flex-1 overflow-auto px-4 py-6">
@@ -244,16 +252,16 @@ const WorkoutComplete = () => {
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="training-type-primary">{workoutData.name || workoutData.trainingType}</h2>
+                <h2 className="training-type-primary">{workoutData?.name || workoutData?.trainingType}</h2>
                 <div className="training-metadata">
                   <Calendar size={14} />
                   <span>{new Date().toLocaleDateString()}</span>
                   <Clock size={14} />
-                  <span className="mono-text">{formatTime(workoutData.duration)}</span>
+                  <span className="mono-text">{formatTime(workoutData?.duration || 0)}</span>
                 </div>
               </div>
               <Badge className="training-type-tag">
-                {workoutData.trainingType}
+                {workoutData?.trainingType}
               </Badge>
             </div>
 
@@ -263,17 +271,21 @@ const WorkoutComplete = () => {
                 <div className="text-xs text-gray-400 font-medium">Sets</div>
               </div>
               <div className="bg-gray-800 p-3 rounded text-center">
-                <div className="text-2xl font-medium mono-text">{Object.keys(workoutData.exercises).length}</div>
+                <div className="text-2xl font-medium mono-text">{Object.keys(workoutData?.exercises || {}).length}</div>
                 <div className="text-xs text-gray-400 font-medium">Exercises</div>
               </div>
               <div className="bg-gray-800 p-3 rounded text-center">
-                <div className="text-2xl font-medium mono-text">{totalVolume}</div>
-                <div className="text-xs text-gray-400 font-medium">Volume (lbs)</div>
+                <div className="text-2xl font-medium mono-text">
+                  {Math.round(totalVolume * 10) / 10} <span className="text-sm text-gray-400">{weightUnit}</span>
+                </div>
+                <div className="text-xs text-gray-400 font-medium">Volume</div>
               </div>
             </div>
 
             <div className="mt-6">
-              <h3 className="text-label text-gray-400 mb-2">Volume by Exercise</h3>
+              <h3 className="text-label text-gray-400 mb-2">
+                Volume by Exercise <span className="text-xs">({weightUnit})</span>
+              </h3>
               <div className="bg-gray-800 p-3 rounded-lg h-40">
                 <ChartContainer 
                   className="h-full w-full [&_.recharts-cartesian-axis-tick-value]:fill-gray-400 [&_.recharts-cartesian-axis-tick-value]:text-xs [&_.recharts-cartesian-axis-tick-value]:font-mono"
@@ -284,7 +296,10 @@ const WorkoutComplete = () => {
                   <BarChart data={getVolumeChartData()} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value) => [`${value} ${weightUnit}`, 'Volume']}
+                      labelFormatter={(label) => `Exercise: ${label}`}
+                    />
                     <Bar dataKey="volume" name="Volume" fill="var(--color-volume)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ChartContainer>
@@ -324,7 +339,7 @@ const WorkoutComplete = () => {
                 type="text"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
-                placeholder={`${workoutData.trainingType} Template`}
+                placeholder={`${workoutData?.trainingType} Template`}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
@@ -350,13 +365,13 @@ const WorkoutComplete = () => {
 
         <div className="mb-6">
           <h3 className="title-small mb-3">Exercises Completed</h3>
-          {Object.keys(workoutData.exercises).map((exercise) => (
+          {Object.keys(workoutData?.exercises || {}).map((exercise) => (
             <div key={exercise} className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-3">
               <div className="flex justify-between items-center">
                 <div>
                   <h4 className="font-medium">{exercise}</h4>
                   <p className="text-sm text-gray-400">
-                    {workoutData.exercises[exercise].filter(set => set.completed).length} sets completed
+                    {workoutData?.exercises[exercise].filter(set => set.completed).length} sets completed
                   </p>
                 </div>
                 <ChevronRight size={20} className="text-gray-600" />

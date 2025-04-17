@@ -15,7 +15,8 @@ import {
   Save,
   Edit,
   MinusCircle,
-  PlusCircle
+  PlusCircle,
+  Weight
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,10 +30,9 @@ import { Input } from "@/components/ui/input";
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { supabase } from "@/integrations/supabase/client";
 import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
-
-interface LocationState {
-  trainingType?: string;
-}
+import { WeightUnitToggle } from "@/components/WeightUnitToggle";
+import { useWeightUnit } from "@/context/WeightUnitContext";
+import { convertWeight, formatWeightWithUnit, WeightUnit } from "@/utils/unitConversion";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -70,8 +70,13 @@ const SetRow = ({
   onWeightChange, 
   onRepsChange,
   onWeightIncrement,
-  onRepsIncrement
+  onRepsIncrement,
+  weightUnit
 }) => {
+  const { weightUnit: globalWeightUnit } = useWeightUnit();
+  
+  const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
+  
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-800">
       <div className="w-8 text-center font-medium text-gray-400">#{setNumber}</div>
@@ -144,8 +149,8 @@ const SetRow = ({
               onClick={onEdit}
               className="flex gap-1 items-baseline hover:bg-gray-800 px-2 py-1 rounded w-full"
             >
-              <span className="font-medium">{weight}</span>
-              <span className="text-xs text-gray-400">lbs</span>
+              <span className="font-medium">{displayWeight}</span>
+              <span className="text-xs text-gray-400">{globalWeightUnit}</span>
             </button>
           </div>
           <div className="flex-1 px-2">
@@ -200,19 +205,26 @@ const ExerciseCard = ({
   onRepsIncrement,
   isActive 
 }) => {
+  const { weightUnit } = useWeightUnit();
   const history = exerciseHistoryData[exercise] || [];
   const previousSession = history[0] || { weight: 0, reps: 0, sets: 0 };
   const olderSession = history[1] || previousSession;
+  
+  const previousSessionWeight = convertWeight(previousSession.weight, "lb", weightUnit);
   
   const weightDiff = previousSession.weight - olderSession.weight;
   const percentChange = olderSession.weight ? ((weightDiff / olderSession.weight) * 100).toFixed(1) : "0";
   const isImproved = weightDiff > 0;
   
   const currentVolume = sets.reduce((total, set) => {
-    return total + (set.completed ? set.weight * set.reps : 0);
+    if (set.completed) {
+      const weightInCurrentUnit = convertWeight(set.weight, "lb", weightUnit);
+      return total + (weightInCurrentUnit * set.reps);
+    }
+    return total;
   }, 0);
   
-  const previousVolume = previousSession.weight * previousSession.reps * previousSession.sets;
+  const previousVolume = previousSessionWeight * previousSession.reps * previousSession.sets;
   const volumeDiff = (currentVolume - previousVolume);
   const volumePercentChange = previousVolume ? ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
   
@@ -225,7 +237,7 @@ const ExerciseCard = ({
             <div className="exercise-detail">
               Last session: 
               <span className="mono-text ml-1">
-                {previousSession.weight} lbs × {previousSession.reps} × {previousSession.sets}
+                {previousSessionWeight} {weightUnit} × {previousSession.reps} × {previousSession.sets}
               </span>
             </div>
           </div>
@@ -240,7 +252,7 @@ const ExerciseCard = ({
         
         <div className="flex items-center justify-between py-2 border-b border-gray-700 set-header">
           <div className="w-8 text-center">Set</div>
-          <div className="flex-1 px-2">Weight</div>
+          <div className="flex-1 px-2">Weight ({weightUnit})</div>
           <div className="flex-1 px-2">Reps</div>
           <div className="w-20"></div>
         </div>
@@ -262,6 +274,7 @@ const ExerciseCard = ({
               onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
               onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
               onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
+              weightUnit="lb"
             />
           ))}
           
@@ -278,7 +291,7 @@ const ExerciseCard = ({
           <div className="flex justify-between text-sm mb-2">
             <span className="volume-label">Volume vs last session</span>
             <div className={`${isImproved ? "text-green-300" : "text-red-300"} volume-value`}>
-              {volumeDiff > 0 ? "+" : ""}{volumeDiff} lbs ({volumePercentChange}%)
+              {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
             </div>
           </div>
           <Progress 
@@ -295,6 +308,7 @@ const TrainingSession = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { weightUnit } = useWeightUnit();
   const [time, setTime] = useState(0);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [heartRate, setHeartRate] = useState(75);
@@ -527,7 +541,7 @@ const TrainingSession = () => {
           <ArrowLeft size={24} />
         </button>
         <h1 className="title-large">Training Session</h1>
-        <div className="w-9"></div>
+        <WeightUnitToggle variant="badge" />
       </header>
 
       <div className="grid grid-cols-4 bg-gray-900 p-4">
