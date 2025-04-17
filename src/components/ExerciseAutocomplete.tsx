@@ -1,14 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
@@ -61,7 +55,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
   // Safe exercises list that is always an array
-  const safeExercises: Exercise[] = Array.isArray(exercises) ? exercises : [];
+  const safeExercises = Array.isArray(exercises) ? exercises : [];
 
   // Log exercises data for debugging
   useEffect(() => {
@@ -188,54 +182,60 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                   <span>Loading exercises...</span>
                 </div>
               </div>
-            ) : safeExercises.length === 0 ? (
-              <div className="py-6 text-center text-gray-400">
-                <span>No exercise found.</span>
-                <Button 
-                  variant="link" 
-                  className="block w-full text-blue-400"
-                  onClick={() => {
-                    setDialogOpen(true);
-                    setNewExercise({
-                      ...newExercise,
-                      name: searchTerm || "",
-                    });
-                    setOpen(false);
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create "{searchTerm || 'new exercise'}"
-                </Button>
-              </div>
             ) : (
-              <div className="overflow-y-auto max-h-[300px]">
-                <div className="p-1">
-                  {safeExercises.map((exercise) => 
-                    exercise && exercise.id ? (
-                      <div
-                        key={exercise.id}
-                        className={cn(
-                          "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-700 text-white",
-                          value === exercise.name ? "bg-gray-700" : ""
-                        )}
-                        onClick={() => {
-                          setValue(exercise.name);
-                          onSelectExercise(exercise);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === exercise.name ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {exercise.name}
-                      </div>
-                    ) : null
+              <>
+                <div className="overflow-y-auto max-h-[300px]">
+                  {safeExercises.length > 0 ? (
+                    <div className="p-1">
+                      {safeExercises.map((exercise) => 
+                        exercise && exercise.id ? (
+                          <div
+                            key={exercise.id}
+                            className={cn(
+                              "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-700 text-white",
+                              value === exercise.name ? "bg-gray-700" : ""
+                            )}
+                            onClick={() => {
+                              setValue(exercise.name);
+                              onSelectExercise(exercise);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                value === exercise.name ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {exercise.name}
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center text-gray-400">
+                      <span>No exercise found.</span>
+                    </div>
                   )}
                 </div>
-              </div>
+                <div className="p-2 border-t border-gray-700">
+                  <Button 
+                    variant="link" 
+                    className="w-full text-blue-400 flex items-center justify-center"
+                    onClick={() => {
+                      setDialogOpen(true);
+                      setNewExercise({
+                        ...newExercise,
+                        name: searchTerm || "",
+                      });
+                      setOpen(false);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create "{searchTerm || 'new exercise'}"
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </PopoverContent>
@@ -291,6 +291,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                     <button 
                       onClick={() => removeMuscleGroup(group)}
                       className="ml-1 text-gray-400 hover:text-white"
+                      type="button"
                     >
                       ×
                     </button>
@@ -323,6 +324,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
                     <button 
                       onClick={() => removeEquipment(equipment)}
                       className="ml-1 text-gray-400 hover:text-white"
+                      type="button"
                     >
                       ×
                     </button>
@@ -390,10 +392,9 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
               Cancel
             </Button>
             <Button 
-              onClick={handleCreateExercise} 
-              disabled={!newExercise.name || isPending || 
-                !Array.isArray(newExercise.primary_muscle_groups) || 
-                newExercise.primary_muscle_groups.length === 0}
+              onClick={handleCreateExercise}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={!newExercise.name || isPending}
             >
               {isPending ? "Creating..." : "Create Exercise"}
             </Button>
