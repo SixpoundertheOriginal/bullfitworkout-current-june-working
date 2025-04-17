@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog } from "@/components/ui/dialog";
@@ -372,13 +371,6 @@ const Index = () => {
           </div>
         </Dialog>
       )}
-
-      <button 
-        onClick={() => setDialogOpen(true)}
-        className="fixed bottom-20 right-4 h-16 w-16 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 flex items-center justify-center shadow-lg z-10"
-      >
-        <Plus size={24} />
-      </button>
     </div>
   );
 };
