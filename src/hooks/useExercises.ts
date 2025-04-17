@@ -36,23 +36,27 @@ export function useExercises() {
       // Normalize exercise data with weight unit conversions if needed
       const normalizedExercises = (data || []).map(exercise => {
         // If exercise has default weights in metadata, convert them to current unit preference
-        if (exercise.metadata?.default_weight) {
-          const defaultWeightUnit = exercise.metadata?.weight_unit || "kg";
-          const convertedWeight = convertWeight(
-            exercise.metadata.default_weight, 
-            defaultWeightUnit, 
-            weightUnit
-          );
+        if (exercise.metadata && typeof exercise.metadata === 'object') {
+          const metadata = exercise.metadata as Record<string, any>;
           
-          // Create a new object reference to trigger renders when unit changes
-          return {
-            ...exercise,
-            metadata: {
-              ...exercise.metadata,
-              normalized_weight: convertedWeight,
-              display_unit: weightUnit
-            }
-          };
+          if (metadata.default_weight !== undefined) {
+            const defaultWeightUnit = metadata.weight_unit || "kg";
+            const convertedWeight = convertWeight(
+              metadata.default_weight, 
+              defaultWeightUnit, 
+              weightUnit
+            );
+            
+            // Create a new object reference to trigger renders when unit changes
+            return {
+              ...exercise,
+              metadata: {
+                ...metadata,
+                normalized_weight: convertedWeight,
+                display_unit: weightUnit
+              }
+            };
+          }
         }
         return exercise;
       });

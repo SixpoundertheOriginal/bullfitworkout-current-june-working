@@ -181,9 +181,8 @@ const WorkoutComplete = () => {
           error: false
         });
         
-        toast({
-          title: "Workout saved!",
-          description: "Your workout has been successfully recorded",
+        toast("Workout saved!", {
+          description: "Your workout has been successfully recorded"
         });
         
         setTimeout(() => {
@@ -197,8 +196,7 @@ const WorkoutComplete = () => {
         error: true
       });
       
-      toast({
-        title: "Error saving workout",
+      toast("Error saving workout", {
         description: "There was a problem saving your workout data",
         variant: "destructive"
       });

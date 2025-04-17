@@ -2,7 +2,7 @@
 import React from "react";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { Switch } from "@/components/ui/switch";
-import { Weight, WeightOff } from "lucide-react";
+import { Weight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ export const WeightUnitToggle: React.FC<WeightUnitToggleProps> = ({
         )}
         onClick={toggleWeightUnit}
       >
-        {weightUnit === "kg" ? <Weight size={14} className="mr-1" /> : <Weight size={14} className="mr-1" />}
+        <Weight size={14} className="mr-1" />
         {weightUnit.toUpperCase()}
       </Badge>
     );
@@ -48,7 +48,7 @@ export const WeightUnitToggle: React.FC<WeightUnitToggleProps> = ({
         onClick={toggleWeightUnit}
         className={cn("flex items-center gap-1 text-gray-400 hover:text-white", className)}
       >
-        {weightUnit === "kg" ? <Weight size={16} /> : <Weight size={16} />}
+        <Weight size={16} />
         {showLabel && <span>{weightUnit.toUpperCase()}</span>}
       </Button>
     );
