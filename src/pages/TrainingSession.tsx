@@ -116,6 +116,7 @@ const ExerciseCard = ({
   const handleCompleteSet = (index: number) => {
     onCompleteSet(exercise, index);
     setActiveRestTimer(index);
+    onShowRestTimer();
     
     if (navigator.vibrate) {
       navigator.vibrate(50);
@@ -176,8 +177,6 @@ const ExerciseCard = ({
               onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
               onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
               weightUnit="lb"
-              showRestTimer={activeRestTimer === index}
-              onRestTimerComplete={() => setActiveRestTimer(null)}
             />
           ))}
           
