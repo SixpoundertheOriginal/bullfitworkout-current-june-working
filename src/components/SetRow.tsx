@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { RestTimerControls } from "./RestTimerControls";
+import { convertWeight, WeightUnit } from "@/utils/unitConversion";
 
 interface SetRowProps {
   setNumber: number;
@@ -47,7 +47,7 @@ export const SetRow = ({
 }: SetRowProps) => {
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
-  const [restTime, setRestTime] = React.useState(90); // 90 seconds default
+  const [restTime, setRestTime] = React.useState(90);
   const [isTimerActive, setIsTimerActive] = React.useState(true);
   const timerRef = React.useRef<NodeJS.Timeout>();
   
@@ -59,7 +59,6 @@ export const SetRow = ({
             clearInterval(timerRef.current);
             if (onRestTimerComplete) onRestTimerComplete();
             
-            // Provide haptic feedback if available
             if (navigator.vibrate) {
               navigator.vibrate(200);
             }
@@ -84,20 +83,17 @@ export const SetRow = ({
     }
   }, [showRestTimer, restTime, isTimerActive, onRestTimerComplete]);
   
-  const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
+  const displayWeight = weightUnit ? convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit) : weight;
   
-  // Common grid layout that works for both states
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-12 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
-        {/* Set Number - 1 column */}
         <div className="col-span-1 text-center font-medium text-gray-400">
           #{setNumber}
         </div>
         
         {isEditing ? (
           <>
-            {/* Weight Input Group - 5 columns */}
             <div className="col-span-5 flex items-center gap-1">
               <button 
                 onClick={() => onWeightIncrement(-1)} 
@@ -119,7 +115,6 @@ export const SetRow = ({
               </button>
             </div>
             
-            {/* Reps Input Group - 4 columns */}
             <div className="col-span-4 flex items-center gap-1">
               <button 
                 onClick={() => onRepsIncrement(-1)} 
@@ -141,7 +136,6 @@ export const SetRow = ({
               </button>
             </div>
             
-            {/* Action Buttons - 2 columns */}
             <div className="col-span-2 flex justify-end gap-2">
               <Button
                 size="icon"
@@ -161,7 +155,6 @@ export const SetRow = ({
           </>
         ) : (
           <>
-            {/* Weight Display - 5 columns */}
             <div className="col-span-5">
               <button 
                 onClick={onEdit}
@@ -172,7 +165,6 @@ export const SetRow = ({
               </button>
             </div>
             
-            {/* Reps Display - 4 columns */}
             <div className="col-span-4">
               <button 
                 onClick={onEdit}
@@ -183,7 +175,6 @@ export const SetRow = ({
               </button>
             </div>
             
-            {/* Action Buttons - 2 columns */}
             <div className="col-span-2 flex justify-end gap-2">
               {completed ? (
                 <Button
@@ -214,7 +205,6 @@ export const SetRow = ({
         )}
       </div>
       
-      {/* Rest Timer */}
       {showRestTimer && (
         <div className="flex justify-end px-2">
           <RestTimerControls
