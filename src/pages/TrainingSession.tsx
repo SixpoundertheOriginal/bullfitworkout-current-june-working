@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -91,12 +90,12 @@ const SetRow = ({
   const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
   
   return (
-    <div className={`flex items-center justify-between py-2 border-b border-gray-800 transition-all duration-200 ${completed ? 'bg-gray-800/30' : ''}`}>
-      <div className="w-8 text-center font-medium text-gray-400">#{setNumber}</div>
+    <div className={`grid grid-cols-12 items-center py-2 border-b border-gray-800 transition-all duration-200 ${completed ? 'bg-gray-800/30' : ''}`}>
+      <div className="col-span-1 text-center font-medium text-gray-400">#{setNumber}</div>
       
       {isEditing ? (
         <>
-          <div className="flex-1 px-2">
+          <div className="col-span-4 px-2">
             <div className="flex items-center">
               <button 
                 onClick={() => onWeightIncrement(-1)} 
@@ -118,7 +117,7 @@ const SetRow = ({
               </button>
             </div>
           </div>
-          <div className="flex-1 px-2">
+          <div className="col-span-4 px-2">
             <div className="flex items-center">
               <button 
                 onClick={() => onRepsIncrement(-1)} 
@@ -140,17 +139,16 @@ const SetRow = ({
               </button>
             </div>
           </div>
-          {/* Fix: Adjust button container to ensure buttons stay within boundaries */}
-          <div className="flex gap-1 mr-1">
+          <div className="col-span-3 flex gap-1 justify-end pr-2">
             <button
               onClick={onSave}
-              className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100 hover:bg-blue-600"
             >
               <Save size={14} />
             </button>
             <button
               onClick={onRemove}
-              className="w-7 h-7 rounded-full flex items-center justify-center bg-red-600/70 text-red-100"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-red-600/70 text-red-100 hover:bg-red-600"
             >
               <Trash2 size={14} />
             </button>
@@ -158,7 +156,7 @@ const SetRow = ({
         </>
       ) : (
         <>
-          <div className="flex-1 px-2">
+          <div className="col-span-4 px-2">
             <button 
               onClick={onEdit}
               className="flex gap-1 items-baseline hover:bg-gray-800 px-2 py-1 rounded w-full"
@@ -167,7 +165,7 @@ const SetRow = ({
               <span className="text-xs text-gray-400">{globalWeightUnit}</span>
             </button>
           </div>
-          <div className="flex-1 px-2">
+          <div className="col-span-4 px-2">
             <button 
               onClick={onEdit}
               className="flex gap-1 items-baseline hover:bg-gray-800 px-2 py-1 rounded w-full"
@@ -176,11 +174,11 @@ const SetRow = ({
               <span className="text-xs text-gray-400">reps</span>
             </button>
           </div>
-          <div className="flex gap-1 mr-1">
+          <div className="col-span-3 flex gap-1 justify-end pr-2">
             {completed ? (
               <button
                 onClick={onEdit}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-gray-600"
               >
                 <Edit size={16} />
               </button>
@@ -194,7 +192,7 @@ const SetRow = ({
             )}
             <button
               onClick={onRemove}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white transform transition-all duration-200"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
             >
               <Trash2 size={16} />
             </button>
