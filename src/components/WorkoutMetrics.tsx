@@ -27,14 +27,18 @@ export const WorkoutMetrics = ({
   // Add a ref to track previous showRestTimer state
   const prevShowRestTimerRef = useRef(showRestTimer);
   
+  // Add a reset counter to force timer resets
+  const [resetCounter, setResetCounter] = React.useState(0);
+  
   // Effect to detect changes in showRestTimer
   useEffect(() => {
     // Log state changes for debugging
     if (prevShowRestTimerRef.current !== showRestTimer) {
       console.log(`Rest timer state changed: ${prevShowRestTimerRef.current} -> ${showRestTimer}`);
       
-      // Generate a unique identifier for this timer activation for debugging
+      // If timer becomes active, increment the reset counter
       if (showRestTimer) {
+        setResetCounter(prev => prev + 1);
         console.log(`New rest timer activation at: ${new Date().toISOString()}`);
       }
     }
@@ -82,7 +86,8 @@ export const WorkoutMetrics = ({
         <div className="flex flex-col items-center">
           <TopRestTimer 
             isActive={showRestTimer} 
-            onComplete={onRestTimerComplete} 
+            onComplete={onRestTimerComplete}
+            resetSignal={resetCounter} 
           />
         </div>
       </div>

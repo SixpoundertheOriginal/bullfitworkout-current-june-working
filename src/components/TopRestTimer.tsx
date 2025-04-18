@@ -6,26 +6,28 @@ import { RestTimerControls } from './RestTimerControls';
 interface TopRestTimerProps {
   isActive: boolean;
   onComplete: () => void;
+  resetSignal: number; // Add a reset signal prop to force resets
 }
 
-export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
+export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(true);
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
 
-  // Reset timer whenever isActive changes to true
+  // Reset timer whenever isActive changes to true OR resetSignal changes
   React.useEffect(() => {
     if (isActive) {
       setElapsedTime(0);
       setIsTimerActive(true);
+      console.log(`Timer reset with signal: ${resetSignal}`);
     } else {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
       setElapsedTime(0);
     }
-  }, [isActive]);
+  }, [isActive, resetSignal]);
 
   React.useEffect(() => {
     if (isTimerActive && isActive) {
