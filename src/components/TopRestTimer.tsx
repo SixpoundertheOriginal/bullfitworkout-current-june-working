@@ -5,17 +5,21 @@ import { RestTimerControls } from './RestTimerControls';
 
 interface TopRestTimerProps {
   isActive: boolean;
+  onComplete: () => void;
 }
 
-export const TopRestTimer = ({ isActive }: TopRestTimerProps) => {
+export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
   const [restTime, setRestTime] = React.useState(90);
   const [isTimerActive, setIsTimerActive] = React.useState(true);
+  const [hasCompleted, setHasCompleted] = React.useState(false);
   const timerRef = React.useRef<NodeJS.Timeout>();
 
   React.useEffect(() => {
     if (isActive) {
+      // Reset timer state when it becomes active again
       setRestTime(90);
       setIsTimerActive(true);
+      setHasCompleted(false);
     }
   }, [isActive]);
 
@@ -25,8 +29,14 @@ export const TopRestTimer = ({ isActive }: TopRestTimerProps) => {
         setRestTime(prev => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
-            if (navigator.vibrate) {
-              navigator.vibrate(200);
+            
+            // Only trigger completion once
+            if (!hasCompleted) {
+              setHasCompleted(true);
+              if (navigator.vibrate) {
+                navigator.vibrate(200);
+              }
+              onComplete();
             }
             return 0;
           }
@@ -38,7 +48,7 @@ export const TopRestTimer = ({ isActive }: TopRestTimerProps) => {
         if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
-  }, [restTime, isTimerActive, isActive]);
+  }, [restTime, isTimerActive, isActive, hasCompleted, onComplete]);
 
   if (!isActive) return null;
 
@@ -51,8 +61,17 @@ export const TopRestTimer = ({ isActive }: TopRestTimerProps) => {
         isActive={isTimerActive}
         onPause={() => setIsTimerActive(false)}
         onResume={() => setIsTimerActive(true)}
-        onReset={() => setRestTime(90)}
-        onSkip={() => setRestTime(0)}
+        onReset={() => {
+          setRestTime(90);
+          setHasCompleted(false);
+        }}
+        onSkip={() => {
+          setRestTime(0);
+          if (!hasCompleted) {
+            setHasCompleted(true);
+            onComplete();
+          }
+        }}
       />
     </div>
   );

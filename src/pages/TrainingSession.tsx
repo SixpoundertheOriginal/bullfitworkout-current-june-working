@@ -285,6 +285,7 @@ const TrainingSession = () => {
           color: "white",
           border: "1px solid rgba(120, 120, 120, 0.3)",
         },
+        id: `set-complete-${exerciseName}-${setIndex}`,
       });
     }
   };
@@ -446,6 +447,17 @@ const TrainingSession = () => {
     navigate("/workout-complete", { state: { workoutData } });
   };
   
+  const handleRestTimerComplete = () => {
+    toast.success("Rest complete! Continue your workout.", {
+      style: {
+        backgroundColor: "rgba(20, 20, 20, 0.9)",
+        color: "white",
+        border: "1px solid rgba(120, 120, 120, 0.3)",
+      },
+      id: "rest-complete-toast",
+    });
+  };
+  
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-gray-800 bg-black/95 backdrop-blur-sm">
@@ -456,7 +468,10 @@ const TrainingSession = () => {
           <ArrowLeft size={24} />
         </button>
         <div className="flex items-center gap-4">
-          <TopRestTimer isActive={showRestTimer} />
+          <TopRestTimer 
+            isActive={showRestTimer} 
+            onComplete={handleRestTimerComplete}
+          />
           <h1 className="title-large">{trainingType}</h1>
         </div>
         <WeightUnitToggle variant="badge" />
@@ -523,16 +538,7 @@ const TrainingSession = () => {
       <RestTimer 
         isVisible={showRestTimer}
         onClose={() => setShowRestTimer(false)}
-        onComplete={() => {
-          toast.success("Rest complete! Continue your workout.", {
-            style: {
-              backgroundColor: "rgba(20, 20, 20, 0.9)",
-              color: "white",
-              border: "1px solid rgba(120, 120, 120, 0.3)",
-            },
-          });
-          setShowRestTimer(false);
-        }}
+        onComplete={handleRestTimerComplete}
       />
     </div>
   );

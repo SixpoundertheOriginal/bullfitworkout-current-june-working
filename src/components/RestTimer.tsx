@@ -20,6 +20,7 @@ export const RestTimer = ({
 }: RestTimerProps) => {
   const [timeLeft, setTimeLeft] = useState(defaultTime);
   const [isActive, setIsActive] = useState(true);
+  const [hasCompleted, setHasCompleted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Progress percentage calculation
@@ -29,6 +30,7 @@ export const RestTimer = ({
     if (isVisible) {
       setTimeLeft(defaultTime);
       setIsActive(true);
+      setHasCompleted(false);
     }
   }, [isVisible, defaultTime]);
 
@@ -37,7 +39,8 @@ export const RestTimer = ({
       timerRef.current = setTimeout(() => {
         setTimeLeft(prev => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && !hasCompleted) {
+      setHasCompleted(true);
       if (onComplete) onComplete();
       
       // Optional: Provide haptic feedback if available
@@ -49,7 +52,7 @@ export const RestTimer = ({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [timeLeft, isActive, onComplete]);
+  }, [timeLeft, isActive, onComplete, hasCompleted]);
 
   const toggleTimer = () => {
     setIsActive(!isActive);
@@ -58,6 +61,7 @@ export const RestTimer = ({
   const resetTimer = () => {
     setTimeLeft(defaultTime);
     setIsActive(true);
+    setHasCompleted(false);
   };
 
   const formatTime = (seconds: number) => {
