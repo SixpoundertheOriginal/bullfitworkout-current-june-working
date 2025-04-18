@@ -566,12 +566,6 @@ const TrainingSession = () => {
           Complete Workout
         </Button>
       </main>
-      
-      <RestTimer 
-        isVisible={showRestTimer}
-        onClose={() => setShowRestTimer(false)}
-        onComplete={handleRestTimerComplete}
-      />
     </div>
   );
 };

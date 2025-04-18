@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
 
 interface RestTimerProps {
   onComplete?: () => void;
-  maxTime?: number; // in seconds
+  maxTime?: number;
   isVisible: boolean;
   onClose: () => void;
 }
 
 export const RestTimer = ({ 
   onComplete, 
-  maxTime = 300, // 5 minutes max by default
+  maxTime = 300,
   isVisible, 
   onClose 
 }: RestTimerProps) => {
@@ -22,7 +22,6 @@ export const RestTimer = ({
   const [isActive, setIsActive] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Progress percentage calculation
   const progressPercentage = Math.min((elapsedTime / maxTime) * 100, 100);
 
   useEffect(() => {
@@ -63,7 +62,6 @@ export const RestTimer = ({
 
   return (
     <div className={cn(
-      "fixed bottom-24 left-1/2 z-50 transform -translate-x-1/2 w-72",
       "bg-gray-900 border border-gray-800 rounded-lg shadow-xl",
       "transition-all duration-300 ease-in-out",
       "animate-fade-in"
