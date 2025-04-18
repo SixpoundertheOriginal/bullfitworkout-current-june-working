@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -59,4 +58,37 @@
   }
 }
 
-/* ... keep existing code (animations and additional styles) */
+/* Animation classes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Additional styles */
+.mono-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.title-large {
+  @apply text-3xl font-bold tracking-tight;
+}
+
+.title-small {
+  @apply text-xl font-semibold tracking-tight;
+}
+
+.workout-number-input {
+  @apply bg-gray-700 border border-gray-600 text-white h-11 px-2 text-center 
+         rounded font-medium min-w-[60px] max-w-[80px] shadow-inner shadow-black/20
+         focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500;
+}
