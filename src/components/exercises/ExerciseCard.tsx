@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -175,8 +176,11 @@ export const ExerciseCard = ({
             {sets.map((set, index) => (
               <SetRow 
                 key={index}
-                {...set}
                 setNumber={index + 1}
+                weight={set.weight}
+                reps={set.reps}
+                completed={set.completed}
+                isEditing={set.isEditing || false} // Ensure isEditing is always provided, defaulting to false if not present
                 onComplete={() => handleCompleteSet(index)}
                 onEdit={() => onEditSet(exercise, index)}
                 onSave={() => onSaveSet(exercise, index)}

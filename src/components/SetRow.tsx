@@ -12,7 +12,7 @@ interface SetRowProps {
   weight: number;
   reps: number;
   completed: boolean;
-  isEditing: boolean;
+  isEditing: boolean; // This is required in the interface
   onComplete: () => void;
   onEdit: () => void;
   onSave: () => void;
