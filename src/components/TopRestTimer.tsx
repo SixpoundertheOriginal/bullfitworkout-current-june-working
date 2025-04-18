@@ -14,25 +14,33 @@ export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
 
+  // Reset timer whenever it becomes active
   React.useEffect(() => {
     if (isActive) {
-      // Reset timer state when it becomes active again
       setElapsedTime(0);
       setIsTimerActive(true);
+    } else {
+      // Clear the timer when it becomes inactive
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      setElapsedTime(0);
     }
   }, [isActive]);
 
   React.useEffect(() => {
     if (isTimerActive && isActive) {
       timerRef.current = setTimeout(() => {
-        setElapsedTime(prev => prev + 1);
+        if (elapsedTime < maxTime) {
+          setElapsedTime(prev => prev + 1);
+        }
       }, 1000);
 
       return () => {
         if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
-  }, [elapsedTime, isTimerActive, isActive]);
+  }, [elapsedTime, isTimerActive, isActive, maxTime]);
 
   if (!isActive) return null;
 
