@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -90,113 +91,124 @@ const SetRow = ({
   const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
   
   return (
-    <div className={`grid grid-cols-12 md:grid-cols-12 items-center py-3 border-b border-gray-800 transition-all duration-200 ${completed ? 'bg-gray-800/30' : ''} gap-2 px-2`}>
+    <div className={`grid grid-cols-12 items-center py-3 border-b border-gray-800 transition-all duration-200 ${completed ? 'bg-gray-800/30' : ''} gap-2 px-2`}>
+      {/* Set Number - Consistent across states */}
       <div className="col-span-2 md:col-span-1 text-center font-medium text-gray-400">
         #{setNumber}
       </div>
       
       {isEditing ? (
         <>
-          <div className="col-span-5 md:col-span-4">
-            <div className="flex items-center justify-start gap-1">
+          {/* Weight Input - Edit mode */}
+          <div className="col-span-5 md:col-span-4 flex items-center">
+            <div className="flex items-center justify-start gap-1 w-full">
               <button 
                 onClick={() => onWeightIncrement(-1)} 
-                className="p-2 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
-                <MinusCircle size={isMobile ? 20 : 16} />
+                <MinusCircle size={isMobile ? 18 : 16} />
               </button>
               <Input 
                 type="number"
                 value={weight}
                 onChange={onWeightChange}
-                className="workout-number-input text-center min-w-[60px] md:min-w-[70px]"
+                className="workout-number-input text-center min-w-[50px] md:min-w-[60px]"
               />
               <button 
                 onClick={() => onWeightIncrement(1)} 
-                className="p-2 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
-                <PlusCircle size={isMobile ? 20 : 16} />
+                <PlusCircle size={isMobile ? 18 : 16} />
               </button>
             </div>
           </div>
-          <div className="col-span-5 md:col-span-4">
-            <div className="flex items-center justify-start gap-1">
+          
+          {/* Reps Input - Edit mode */}
+          <div className="col-span-5 md:col-span-4 flex items-center">
+            <div className="flex items-center justify-start gap-1 w-full">
               <button 
                 onClick={() => onRepsIncrement(-1)} 
-                className="p-2 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
-                <MinusCircle size={isMobile ? 20 : 16} />
+                <MinusCircle size={isMobile ? 18 : 16} />
               </button>
               <Input 
                 type="number"
                 value={reps}
                 onChange={onRepsChange}
-                className="workout-number-input text-center min-w-[60px] md:min-w-[70px]"
+                className="workout-number-input text-center min-w-[50px] md:min-w-[60px]"
               />
               <button 
                 onClick={() => onRepsIncrement(1)} 
-                className="p-2 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
-                <PlusCircle size={isMobile ? 20 : 16} />
+                <PlusCircle size={isMobile ? 18 : 16} />
               </button>
             </div>
           </div>
-          <div className="col-span-12 md:col-span-3 flex gap-2 justify-end items-center mt-2 md:mt-0">
+          
+          {/* Action Buttons - Edit mode */}
+          <div className="col-span-12 md:col-span-3 flex justify-end items-center gap-2 mt-2 md:mt-0">
             <button
               onClick={onSave}
-              className="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100 hover:bg-blue-600"
+              className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100 hover:bg-blue-600"
             >
-              <Save size={isMobile ? 20 : 16} />
+              <Save size={isMobile ? 18 : 16} />
             </button>
             <button
               onClick={onRemove}
-              className="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center bg-red-600/70 text-red-100 hover:bg-red-600"
+              className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-red-600/70 text-red-100 hover:bg-red-600"
             >
-              <Trash2 size={isMobile ? 20 : 16} />
+              <Trash2 size={isMobile ? 18 : 16} />
             </button>
           </div>
         </>
       ) : (
         <>
-          <div className="col-span-5 md:col-span-4">
+          {/* Weight Display - View mode */}
+          <div className="col-span-5 md:col-span-4 flex items-center">
             <button 
               onClick={onEdit}
-              className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded w-full min-h-[44px]"
+              className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded w-full min-h-[40px]"
             >
               <span className="font-medium">{displayWeight}</span>
               <span className="text-xs text-gray-400">{globalWeightUnit}</span>
             </button>
           </div>
-          <div className="col-span-5 md:col-span-4">
+          
+          {/* Reps Display - View mode */}
+          <div className="col-span-5 md:col-span-4 flex items-center">
             <button 
               onClick={onEdit}
-              className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded w-full min-h-[44px]"
+              className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded w-full min-h-[40px]"
             >
               <span className="font-medium">{reps}</span>
               <span className="text-xs text-gray-400">reps</span>
             </button>
           </div>
-          <div className="col-span-12 md:col-span-3 flex gap-2 justify-end items-center mt-2 md:mt-0">
+          
+          {/* Action Buttons - View mode */}
+          <div className="col-span-12 md:col-span-3 flex justify-end items-center gap-2 mt-2 md:mt-0">
             {completed ? (
               <button
                 onClick={onEdit}
-                className="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-gray-600"
+                className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-gray-600"
               >
-                <Edit size={isMobile ? 20 : 16} />
+                <Edit size={isMobile ? 18 : 16} />
               </button>
             ) : (
               <button 
                 onClick={onComplete} 
-                className="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white transform transition-all duration-200 hover:scale-105 active:scale-95"
+                className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <Check size={isMobile ? 20 : 16} />
+                <Check size={isMobile ? 18 : 16} />
               </button>
             )}
             <button
               onClick={onRemove}
-              className="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
+              className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
             >
-              <Trash2 size={isMobile ? 20 : 16} />
+              <Trash2 size={isMobile ? 18 : 16} />
             </button>
           </div>
         </>

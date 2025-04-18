@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -51,10 +52,11 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   
-  /* Update workout number input styles to ensure proper containment */
+  /* Updated workout number input styles for better mobile experience */
   .workout-number-input {
-    @apply bg-gray-700 border border-gray-600 text-white h-9 px-2 mx-1 text-center 
-           rounded font-medium min-w-[50px] max-w-[60px] shadow-inner shadow-black/20;
+    @apply bg-gray-700 border border-gray-600 text-white h-9 px-2 text-center 
+           rounded font-medium min-w-[40px] max-w-[60px] shadow-inner shadow-black/20
+           focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500;
   }
 }
 
@@ -88,7 +90,8 @@
 }
 
 .workout-number-input {
-  @apply bg-gray-700 border border-gray-600 text-white h-11 px-2 text-center 
-         rounded font-medium min-w-[60px] max-w-[80px] shadow-inner shadow-black/20
+  @apply bg-gray-700 border border-gray-600 text-white h-9 px-2 text-center 
+         rounded font-medium min-w-[40px] max-w-[60px] shadow-inner shadow-black/20
          focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500;
 }
+
