@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -45,6 +44,7 @@ import { convertWeight, formatWeightWithUnit, WeightUnit } from "@/utils/unitCon
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
+import { SetRow } from "@/components/SetRow";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -67,154 +67,6 @@ const exerciseHistoryData = {
     { date: "Mar 31", weight: 0, reps: 7, sets: 3 },
     { date: "Mar 24", weight: 0, reps: 6, sets: 3 },
   ],
-};
-
-const SetRow = ({ 
-  setNumber, 
-  weight, 
-  reps, 
-  completed, 
-  onComplete, 
-  onEdit, 
-  onRemove, 
-  isEditing, 
-  onSave, 
-  onWeightChange, 
-  onRepsChange,
-  onWeightIncrement,
-  onRepsIncrement,
-  weightUnit
-}) => {
-  const { weightUnit: globalWeightUnit } = useWeightUnit();
-  const isMobile = useIsMobile();
-  
-  const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
-  
-  return (
-    <div className={`grid grid-cols-12 items-center py-3 border-b border-gray-800 transition-all duration-200 ${completed ? 'bg-gray-800/30' : ''} gap-2 px-2`}>
-      {/* Set Number - Consistent across states */}
-      <div className="col-span-2 md:col-span-1 text-center font-medium text-gray-400">
-        #{setNumber}
-      </div>
-      
-      {isEditing ? (
-        <>
-          {/* Weight Input - Edit mode */}
-          <div className="col-span-5 md:col-span-4 flex items-center">
-            <div className="flex items-center justify-start gap-1 w-full">
-              <button 
-                onClick={() => onWeightIncrement(-1)} 
-                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
-              >
-                <MinusCircle size={isMobile ? 18 : 16} />
-              </button>
-              <Input 
-                type="number"
-                value={weight}
-                onChange={onWeightChange}
-                className="workout-number-input text-center min-w-[50px] md:min-w-[60px]"
-              />
-              <button 
-                onClick={() => onWeightIncrement(1)} 
-                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
-              >
-                <PlusCircle size={isMobile ? 18 : 16} />
-              </button>
-            </div>
-          </div>
-          
-          {/* Reps Input - Edit mode */}
-          <div className="col-span-5 md:col-span-4 flex items-center">
-            <div className="flex items-center justify-start gap-1 w-full">
-              <button 
-                onClick={() => onRepsIncrement(-1)} 
-                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
-              >
-                <MinusCircle size={isMobile ? 18 : 16} />
-              </button>
-              <Input 
-                type="number"
-                value={reps}
-                onChange={onRepsChange}
-                className="workout-number-input text-center min-w-[50px] md:min-w-[60px]"
-              />
-              <button 
-                onClick={() => onRepsIncrement(1)} 
-                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full min-w-[36px] min-h-[36px] flex items-center justify-center"
-              >
-                <PlusCircle size={isMobile ? 18 : 16} />
-              </button>
-            </div>
-          </div>
-          
-          {/* Action Buttons - Edit mode */}
-          <div className="col-span-12 md:col-span-3 flex justify-end items-center gap-2 mt-2 md:mt-0">
-            <button
-              onClick={onSave}
-              className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100 hover:bg-blue-600"
-            >
-              <Save size={isMobile ? 18 : 16} />
-            </button>
-            <button
-              onClick={onRemove}
-              className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-red-600/70 text-red-100 hover:bg-red-600"
-            >
-              <Trash2 size={isMobile ? 18 : 16} />
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Weight Display - View mode */}
-          <div className="col-span-5 md:col-span-4 flex items-center">
-            <button 
-              onClick={onEdit}
-              className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded w-full min-h-[40px]"
-            >
-              <span className="font-medium">{displayWeight}</span>
-              <span className="text-xs text-gray-400">{globalWeightUnit}</span>
-            </button>
-          </div>
-          
-          {/* Reps Display - View mode */}
-          <div className="col-span-5 md:col-span-4 flex items-center">
-            <button 
-              onClick={onEdit}
-              className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded w-full min-h-[40px]"
-            >
-              <span className="font-medium">{reps}</span>
-              <span className="text-xs text-gray-400">reps</span>
-            </button>
-          </div>
-          
-          {/* Action Buttons - View mode */}
-          <div className="col-span-12 md:col-span-3 flex justify-end items-center gap-2 mt-2 md:mt-0">
-            {completed ? (
-              <button
-                onClick={onEdit}
-                className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-gray-600"
-              >
-                <Edit size={isMobile ? 18 : 16} />
-              </button>
-            ) : (
-              <button 
-                onClick={onComplete} 
-                className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white transform transition-all duration-200 hover:scale-105 active:scale-95"
-              >
-                <Check size={isMobile ? 18 : 16} />
-              </button>
-            )}
-            <button
-              onClick={onRemove}
-              className="min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
-            >
-              <Trash2 size={isMobile ? 18 : 16} />
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
 };
 
 const ExerciseCard = ({ 
@@ -257,6 +109,18 @@ const ExerciseCard = ({
   
   const completedSetsCount = sets.filter(set => set.completed).length;
   const completionPercentage = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
+  
+  const [activeRestTimer, setActiveRestTimer] = React.useState<number | null>(null);
+  
+  const handleCompleteSet = (index: number) => {
+    onCompleteSet(exercise, index);
+    setActiveRestTimer(index);
+    
+    // Provide subtle haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+  };
   
   return (
     <Card className={`bg-gray-900 border-gray-800 mb-4 transform transition-all duration-300 ${isActive ? "ring-1 ring-purple-500 scale-[1.01]" : ""}`}>
@@ -303,11 +167,7 @@ const ExerciseCard = ({
               reps={set.reps}
               completed={set.completed}
               isEditing={set.isEditing}
-              onComplete={() => {
-                onCompleteSet(exercise, index);
-                if (navigator.vibrate) navigator.vibrate(50);
-                onShowRestTimer();
-              }}
+              onComplete={() => handleCompleteSet(index)}
               onEdit={() => onEditSet(exercise, index)}
               onSave={() => onSaveSet(exercise, index)}
               onRemove={() => onRemoveSet(exercise, index)}
@@ -316,6 +176,8 @@ const ExerciseCard = ({
               onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
               onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
               weightUnit="lb"
+              showRestTimer={activeRestTimer === index}
+              onRestTimerComplete={() => setActiveRestTimer(null)}
             />
           ))}
           
