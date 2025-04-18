@@ -518,41 +518,54 @@ const TrainingSession = () => {
         className="sticky top-[73px] z-10 mx-4 mt-4"
       />
       
-      <main className="flex-1 overflow-auto px-4 py-6 pb-24">
-        <div className="mb-8 rounded-xl p-6 bg-gradient-to-r from-purple-600 to-pink-500">
-          {Object.keys(exercises || {}).map((exerciseName) => (
-            <ExerciseCard
-              key={exerciseName}
-              exercise={exerciseName}
-              sets={exercises[exerciseName] || []}
-              onAddSet={handleAddSet}
-              onCompleteSet={handleCompleteSet}
-              onRemoveSet={handleRemoveSet}
-              onEditSet={handleEditSet}
-              onSaveSet={handleSaveSet}
-              onWeightChange={handleSetWeightChange}
-              onRepsChange={handleSetRepsChange}
-              onWeightIncrement={handleWeightIncrement}
-              onRepsIncrement={handleRepsIncrement}
-              isActive={exerciseName === currentExercise}
-              onShowRestTimer={() => setShowRestTimer(true)}
-            />
-          ))}
+      <main className="flex-1 px-4 py-6 pb-24 space-y-6">
+        {Object.keys(exercises).length > 0 ? (
+          <div className="space-y-6">
+            {Object.keys(exercises || {}).map((exerciseName) => (
+              <ExerciseCard
+                key={exerciseName}
+                exercise={exerciseName}
+                sets={exercises[exerciseName] || []}
+                onAddSet={handleAddSet}
+                onCompleteSet={handleCompleteSet}
+                onRemoveSet={handleRemoveSet}
+                onEditSet={handleEditSet}
+                onSaveSet={handleSaveSet}
+                onWeightChange={handleSetWeightChange}
+                onRepsChange={handleSetRepsChange}
+                onWeightIncrement={handleWeightIncrement}
+                onRepsIncrement={handleRepsIncrement}
+                isActive={exerciseName === currentExercise}
+                onShowRestTimer={() => setShowRestTimer(true)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-400">
+            <p>No exercises added yet. Add your first exercise below.</p>
+          </div>
+        )}
+
+        <div className="relative mt-8 pt-8">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-gray-800" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-black px-3 text-lg font-medium text-gray-400">
+              Add Exercise
+            </span>
+          </div>
         </div>
 
-        <div className="mb-6 bg-gray-900/80 backdrop-blur-sm p-4 rounded-lg border border-gray-800">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="title-small">Add Exercise</h3>
-          </div>
-          <form onSubmit={handleAddExercise} className="flex flex-col gap-3">
+        <div className="rounded-xl bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-4">
+          <form onSubmit={handleAddExercise} className="space-y-4">
             <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
             <Button 
               type="submit" 
-              variant="secondary" 
-              className="font-medium bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white"
               disabled={!newExerciseName.trim()}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
-              <Plus size={16} />
+              <PlusCircle className="mr-2 h-5 w-5" />
               Add Exercise
             </Button>
           </form>
@@ -561,7 +574,7 @@ const TrainingSession = () => {
         <Button 
           ref={startButtonRef}
           onClick={finishWorkout}
-          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-heading font-medium shadow-lg transform transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] mb-10"
+          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-medium shadow-lg"
         >
           Complete Workout
         </Button>
