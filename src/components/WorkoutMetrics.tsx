@@ -1,15 +1,17 @@
 
 import React from "react";
-import { Timer, Dumbbell, BarChart3, Heart } from "lucide-react";
+import { Timer, Dumbbell, BarChart3 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { TopRestTimer } from "./TopRestTimer";
 
 interface WorkoutMetricsProps {
   time: number;
   exerciseCount: number;
   completedSets: number;
   totalSets: number;
-  heartRate: number;
+  showRestTimer: boolean;
+  onRestTimerComplete: () => void;
   className?: string;
 }
 
@@ -17,8 +19,9 @@ export const WorkoutMetrics = ({
   time, 
   exerciseCount, 
   completedSets, 
-  totalSets, 
-  heartRate,
+  totalSets,
+  showRestTimer,
+  onRestTimerComplete,
   className 
 }: WorkoutMetricsProps) => {
   const formatTime = (seconds: number) => {
@@ -56,14 +59,9 @@ export const WorkoutMetrics = ({
           </div>
           <span className="text-xs text-gray-400 font-medium">Sets</span>
         </div>
-        
+
         <div className="flex flex-col items-center">
-          <Heart className={cn(
-            "mb-1 transition-transform", 
-            heartRate > 120 ? "text-red-500 animate-pulse" : "text-red-400"
-          )} size={20} />
-          <span className="text-lg font-mono transition-all duration-300 ease-in-out">{heartRate}</span>
-          <span className="text-xs text-gray-400 font-medium">BPM</span>
+          <TopRestTimer isActive={showRestTimer} onComplete={onRestTimerComplete} />
         </div>
       </div>
       

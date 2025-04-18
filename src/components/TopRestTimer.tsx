@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Timer } from 'lucide-react';
 import { RestTimerControls } from './RestTimerControls';
@@ -42,11 +41,18 @@ export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
     }
   }, [elapsedTime, isTimerActive, isActive, maxTime]);
 
-  if (!isActive) return null;
+  if (!isActive) {
+    return (
+      <div className="flex items-center gap-2">
+        <Timer size={20} className="text-purple-400 mb-1" />
+        <span className="text-xs text-gray-400 font-medium">Rest</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-gray-900/90 backdrop-blur-sm border border-gray-800 rounded-lg">
-      <Timer size={16} className="text-purple-400" />
+    <div className="flex flex-col items-center">
+      <Timer size={20} className="text-purple-400 mb-1 animate-pulse" />
       <RestTimerControls
         elapsedTime={elapsedTime}
         maxTime={maxTime}
@@ -58,7 +64,9 @@ export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
           setElapsedTime(0);
           onComplete();
         }}
+        compact={true}
       />
+      <span className="text-xs text-gray-400 font-medium">Rest</span>
     </div>
   );
 };

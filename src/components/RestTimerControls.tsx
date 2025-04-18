@@ -13,13 +13,8 @@ interface RestTimerControlsProps {
   onReset: () => void;
   onSkip: () => void;
   className?: string;
+  compact?: boolean;
 }
-
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
 
 export const RestTimerControls = ({
   elapsedTime,
@@ -30,8 +25,17 @@ export const RestTimerControls = ({
   onReset,
   onSkip,
   className = "",
+  compact = false,
 }: RestTimerControlsProps) => {
   const progress = Math.min((elapsedTime / maxTime) * 100, 100);
+
+  if (compact) {
+    return (
+      <div className={`flex flex-col items-center ${className}`}>
+        <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>

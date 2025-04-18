@@ -249,11 +249,6 @@ const TrainingSession = () => {
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
   const [time, setTime] = useState(0);
-  const [newExerciseName, setNewExerciseName] = useState("");
-  const [heartRate, setHeartRate] = useState(75);
-  const [currentExercise, setCurrentExercise] = useState("");
-  const [startTime, setStartTime] = useState(new Date());
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
   const startButtonRef = useRef<HTMLButtonElement>(null);
   const mainStartButtonVisible = useElementVisibility(startButtonRef, {
@@ -275,10 +270,6 @@ const TrainingSession = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(prev => prev + 1);
-      setHeartRate(prev => {
-        const change = Math.floor(Math.random() * 5) - 2;
-        return Math.max(70, Math.min(160, prev + change));
-      });
     }, 1000);
     
     return () => clearInterval(timer);
@@ -507,10 +498,6 @@ const TrainingSession = () => {
           <ArrowLeft size={24} />
         </button>
         <div className="flex items-center gap-4">
-          <TopRestTimer 
-            isActive={showRestTimer} 
-            onComplete={handleRestTimerComplete}
-          />
           <h1 className="title-large">{trainingType}</h1>
         </div>
         <WeightUnitToggle variant="badge" />
@@ -521,7 +508,8 @@ const TrainingSession = () => {
         exerciseCount={Object.keys(exercises).length}
         completedSets={completedSets}
         totalSets={totalSets}
-        heartRate={heartRate}
+        showRestTimer={showRestTimer}
+        onRestTimerComplete={handleRestTimerComplete}
         className="sticky top-[73px] z-10 mx-4 mt-4"
       />
       
