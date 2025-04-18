@@ -56,6 +56,7 @@ export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimer
       <div className="flex items-center gap-2">
         <Timer size={20} className="text-purple-400 mb-1" />
         <span className="text-xs text-gray-400 font-medium">Rest</span>
+        <span className="text-xs text-gray-400 font-mono ml-1">00:00</span>
       </div>
     );
   }

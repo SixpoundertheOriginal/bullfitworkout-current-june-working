@@ -575,7 +575,7 @@ const TrainingSession = () => {
           </div>
         )}
 
-        <div className="relative mt-8 pt-8">
+        <div className="relative mt-8 pt-8 hidden">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-full border-t border-gray-800" />
           </div>
