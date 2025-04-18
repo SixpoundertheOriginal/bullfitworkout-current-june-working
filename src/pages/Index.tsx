@@ -289,7 +289,11 @@ const Index = () => {
       <nav className="grid grid-cols-4 border-t border-gray-800 bg-black">
         <NavButton icon={<Clock size={20} />} label="Today" active onClick={() => navigate('/')} />
         <NavButton icon={<BarChart3 size={20} />} label="Progress" onClick={() => navigate('/progress')} />
-        <NavButton icon={<Moon size={20} />} label="Recovery" onClick={() => navigate('/recovery')} />
+        <NavButton 
+          icon={<Zap size={20} />} 
+          label="Training" 
+          onClick={() => navigate('/workout-details')} 
+        />
         <NavButton 
           icon={<UserIcon size={20} />} 
           label="Profile" 
