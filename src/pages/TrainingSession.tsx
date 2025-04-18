@@ -414,9 +414,7 @@ const TrainingSession = () => {
       setExercises({
         ...exercises,
         [newExerciseName]: [
-          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false },
-          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false },
-          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false },
+          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false }
         ]
       });
       setCurrentExercise(newExerciseName);
