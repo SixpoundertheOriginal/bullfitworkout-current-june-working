@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TopRestTimer } from '@/components/TopRestTimer';
 
 interface LocationState {
   trainingType?: string;
@@ -116,7 +117,6 @@ const ExerciseCard = ({
     onCompleteSet(exercise, index);
     setActiveRestTimer(index);
     
-    // Provide subtle haptic feedback
     if (navigator.vibrate) {
       navigator.vibrate(50);
     }
@@ -274,6 +274,11 @@ const TrainingSession = () => {
     if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
       updatedExercises[exerciseName][setIndex].completed = true;
       setExercises(updatedExercises);
+      setShowRestTimer(true);
+      
+      if (navigator.vibrate) {
+        navigator.vibrate([50]);
+      }
       
       toast.success(`${exerciseName}: Set ${setIndex + 1} logged successfully`, {
         style: {
@@ -451,7 +456,10 @@ const TrainingSession = () => {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 className="title-large">{trainingType}</h1>
+        <div className="flex items-center gap-4">
+          <TopRestTimer isActive={showRestTimer} />
+          <h1 className="title-large">{trainingType}</h1>
+        </div>
         <WeightUnitToggle variant="badge" />
       </header>
 
