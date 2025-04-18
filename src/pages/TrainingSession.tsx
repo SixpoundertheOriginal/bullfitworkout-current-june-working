@@ -182,9 +182,19 @@ const ExerciseCard = ({
           
           <button 
             onClick={() => onAddSet(exercise)}
-            className="w-full mt-3 py-2 flex items-center justify-center text-sm bg-gray-800 hover:bg-gray-750 rounded-md text-gray-300 font-medium transition-colors hover:bg-gray-700"
+            className="w-full mt-3 py-3 flex items-center justify-center text-sm 
+              bg-gradient-to-r from-purple-600 to-pink-500 
+              hover:from-purple-700 hover:to-pink-600 
+              text-white font-medium rounded-full 
+              transition-all duration-300 
+              transform hover:scale-[1.02] active:scale-[0.98] 
+              shadow-lg hover:shadow-xl 
+              group"
           >
-            <Plus size={16} className="mr-1" />
+            <PlusCircle 
+              size={24} 
+              className="mr-2 group-hover:rotate-90 transition-transform duration-300" 
+            />
             Add Set
           </button>
         </div>
@@ -379,7 +389,7 @@ const TrainingSession = () => {
     if (!exercises[exerciseName]) return;
     
     const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseIndex]) {
       const currentReps = updatedExercises[exerciseName][setIndex].reps;
       updatedExercises[exerciseName][setIndex].reps = Math.max(0, currentReps + increment);
       setExercises(updatedExercises);
