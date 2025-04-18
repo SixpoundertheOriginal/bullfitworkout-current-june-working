@@ -21,6 +21,7 @@ import { UserProfile } from "@/components/UserProfile";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
+import { WorkoutCard } from "@/components/WorkoutCard";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -84,6 +85,8 @@ const Index = () => {
             
           return {
             ...workout,
+            exerciseCount: exerciseNames.length,
+            setCount: workout.exercise_sets ? workout.exercise_sets.length : 0,
             tags: [workout.training_type, ...exerciseNames.slice(0, 2)]
           };
         });
@@ -258,10 +261,13 @@ const Index = () => {
                 {workoutSessions.map((workout) => (
                   <WorkoutCard 
                     key={workout.id}
+                    id={workout.id}
+                    name={workout.name}
                     type={workout.training_type} 
-                    date={formatWorkoutDate(workout.start_time)} 
-                    duration={formatDuration(workout.duration)} 
-                    tags={workout.tags || [workout.training_type]} 
+                    date={workout.start_time}
+                    duration={workout.duration}
+                    exerciseCount={workout.exerciseCount}
+                    setCount={workout.setCount}
                   />
                 ))}
               </div>
@@ -437,37 +443,6 @@ const NavButton = ({
       {icon}
       <span className="text-xs mt-1">{label}</span>
     </button>
-  );
-};
-
-const WorkoutCard = ({ type, date, duration, tags }) => {
-  return (
-    <Card className="bg-gray-900 border-gray-800">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="training-type-primary">{type}</h3>
-            <div className="training-metadata">
-              <Calendar size={14} className="mr-1" />
-              <span>{date}</span>
-              <Clock size={14} className="ml-3 mr-1" />
-              <span>{duration}</span>
-            </div>
-          </div>
-          <div className="training-type-tag">
-            Completed
-          </div>
-        </div>
-        
-        <div className="mt-3 flex flex-wrap gap-2">
-          {tags.map((tag, index) => (
-            <span key={index} className="training-type-tag text-xs">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 };
 
