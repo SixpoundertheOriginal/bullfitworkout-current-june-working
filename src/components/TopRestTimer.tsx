@@ -13,38 +13,18 @@ export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
   const [isTimerActive, setIsTimerActive] = React.useState(true);
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
-  
-  // Key change: We need to track the previous isActive state to detect changes
-  const prevIsActiveRef = React.useRef(isActive);
-  
-  // Add a timeActivatedAt ref to track when the timer was last activated
-  const timeActivatedAtRef = React.useRef<number | null>(null);
 
-  console.log(`TopRestTimer render - isActive: ${isActive}, prevIsActive: ${prevIsActiveRef.current}`);
-
-  // Reset timer whenever it becomes active or when isActive changes from false to true
+  // Reset timer whenever isActive changes to true
   React.useEffect(() => {
-    console.log(`TopRestTimer effect - isActive changed to: ${isActive}`);
-    
-    // If timer is becoming active
     if (isActive) {
-      // Reset the timer regardless of previous state
       setElapsedTime(0);
       setIsTimerActive(true);
-      timeActivatedAtRef.current = Date.now();
-      console.log('Timer reset and activated at:', new Date().toISOString());
-    } else if (!isActive) {
-      // Clear the timer when it becomes inactive
+    } else {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
       setElapsedTime(0);
-      timeActivatedAtRef.current = null;
-      console.log('Timer deactivated');
     }
-    
-    // Update the previous isActive ref
-    prevIsActiveRef.current = isActive;
   }, [isActive]);
 
   React.useEffect(() => {
