@@ -256,6 +256,11 @@ const TrainingSession = () => {
     rootMargin: '-100px'
   });
 
+  const [startTime, setStartTime] = useState(new Date());
+  const [currentExercise, setCurrentExercise] = useState("");
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [newExerciseName, setNewExerciseName] = useState("");
+
   const locationState = location.state as LocationState | null;
   const [trainingType, setTrainingType] = useState(
     locationState?.trainingType || "Training Session"
