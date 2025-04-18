@@ -52,41 +52,11 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   
-  /* Add new workout number input styles */
+  /* Update workout number input styles to ensure proper containment */
   .workout-number-input {
     @apply bg-gray-700 border border-gray-600 text-white h-9 px-2 mx-1 text-center 
-           rounded font-medium min-w-[60px] shadow-inner shadow-black/20;
+           rounded font-medium min-w-[50px] max-w-[60px] shadow-inner shadow-black/20;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.mono-text {
-  @apply font-mono font-medium;
-}
-
-.title-large {
-  @apply text-xl font-heading font-semibold;
-}
-
-.title-small {
-  @apply text-lg font-heading font-medium;
-}
+/* ... keep existing code (animations and additional styles) */

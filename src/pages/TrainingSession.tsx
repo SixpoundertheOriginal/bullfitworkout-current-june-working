@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -139,18 +140,19 @@ const SetRow = ({
               </button>
             </div>
           </div>
-          <div className="flex gap-1">
+          {/* Fix: Adjust button container to ensure buttons stay within boundaries */}
+          <div className="flex gap-1 mr-1">
             <button
               onClick={onSave}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100"
+              className="w-7 h-7 rounded-full flex items-center justify-center bg-blue-600/70 text-blue-100"
             >
-              <Save size={16} />
+              <Save size={14} />
             </button>
             <button
               onClick={onRemove}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-red-600/70 text-red-100"
+              className="w-7 h-7 rounded-full flex items-center justify-center bg-red-600/70 text-red-100"
             >
-              <Trash2 size={16} />
+              <Trash2 size={14} />
             </button>
           </div>
         </>
@@ -174,7 +176,7 @@ const SetRow = ({
               <span className="text-xs text-gray-400">reps</span>
             </button>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 mr-1">
             {completed ? (
               <button
                 onClick={onEdit}
