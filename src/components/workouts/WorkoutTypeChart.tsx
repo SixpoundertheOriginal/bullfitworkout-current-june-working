@@ -48,6 +48,14 @@ export const WorkoutTypeChart = ({ data, className = "" }: WorkoutTypeChartProps
     );
   };
   
+  // Create a chart config object for the ChartContainer
+  const chartConfig = {
+    workout: {
+      label: "Workout Types",
+      color: "#8B5CF6"
+    }
+  };
+  
   return (
     <Card className={`bg-gray-900 border-gray-800 ${className}`}>
       <CardHeader className="pb-2">
@@ -55,7 +63,7 @@ export const WorkoutTypeChart = ({ data, className = "" }: WorkoutTypeChartProps
       </CardHeader>
       <CardContent>
         <div className="h-60">
-          <ChartContainer>
+          <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

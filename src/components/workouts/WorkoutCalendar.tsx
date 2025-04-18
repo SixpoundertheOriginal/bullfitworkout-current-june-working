@@ -127,7 +127,7 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
               return (
                 <div 
                   {...props} 
-                  className={`${props.className} ${extraClass}`}
+                  className={`${props.className || ''} ${extraClass}`}
                 />
               );
             }
