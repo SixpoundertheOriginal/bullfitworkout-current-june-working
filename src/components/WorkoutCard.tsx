@@ -41,13 +41,14 @@ export const WorkoutCard = ({
   });
   
   const handleClick = () => {
+    console.log("Workout card clicked, navigating to:", `/workout-details/${id}`);
     navigate(`/workout-details/${id}`);
   };
   
   return (
     <Card 
       className={cn(
-        "bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800/70 transition-colors",
+        "bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800/70 transition-colors hover:shadow-md active:bg-gray-800",
         className
       )}
       onClick={handleClick}
@@ -82,3 +83,4 @@ export const WorkoutCard = ({
     </Card>
   );
 };
+

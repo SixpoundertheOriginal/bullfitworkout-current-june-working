@@ -47,6 +47,8 @@ export const WorkoutHistory = ({ limit = 5, className = "" }: WorkoutHistoryProp
     );
   }
   
+  console.log("Rendering workout history cards:", workouts.map(w => ({id: w.id, name: w.name})));
+  
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
@@ -73,3 +75,4 @@ export const WorkoutHistory = ({ limit = 5, className = "" }: WorkoutHistoryProp
     </div>
   );
 };
+
