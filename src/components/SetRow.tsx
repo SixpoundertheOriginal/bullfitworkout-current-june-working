@@ -49,6 +49,12 @@ export const SetRow = ({
   // Convert weight for display purposes
   const displayWeight = weight > 0 ? convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit) : 0;
   
+  // Enhanced click handler to ensure reset is triggered
+  const handleSetComplete = () => {
+    // Call the provided onComplete callback
+    onComplete();
+  };
+  
   return (
     <div className="grid grid-cols-12 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
       <div className="col-span-1 text-center font-medium text-gray-400">
@@ -150,7 +156,7 @@ export const SetRow = ({
             ) : (
               <Button 
                 size="icon"
-                onClick={onComplete}
+                onClick={handleSetComplete}
                 className="h-11 w-11 bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <Check size={isMobile ? 20 : 18} />

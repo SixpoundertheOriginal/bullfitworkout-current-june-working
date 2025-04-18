@@ -24,28 +24,17 @@ export const WorkoutMetrics = ({
   onRestTimerComplete,
   className 
 }: WorkoutMetricsProps) => {
-  // Add a ref to track previous showRestTimer state
-  const prevShowRestTimerRef = useRef(showRestTimer);
-  
   // Add a reset counter to force timer resets
   const [resetCounter, setResetCounter] = React.useState(0);
   
-  // Effect to detect changes in showRestTimer
+  // Effect to detect changes in showRestTimer and force reset
   useEffect(() => {
-    // Log state changes for debugging
-    if (prevShowRestTimerRef.current !== showRestTimer) {
-      console.log(`Rest timer state changed: ${prevShowRestTimerRef.current} -> ${showRestTimer}`);
-      
-      // If timer becomes active, increment the reset counter
-      if (showRestTimer) {
-        setResetCounter(prev => prev + 1);
-        console.log(`New rest timer activation at: ${new Date().toISOString()}`);
-      }
+    if (showRestTimer) {
+      // Increment the reset counter each time the timer should show
+      setResetCounter(prev => prev + 1);
+      console.log(`Reset timer triggered: ${resetCounter + 1}`);
     }
-    
-    // Update the ref
-    prevShowRestTimerRef.current = showRestTimer;
-  }, [showRestTimer]);
+  }, [showRestTimer]); // Only depend on showRestTimer status
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

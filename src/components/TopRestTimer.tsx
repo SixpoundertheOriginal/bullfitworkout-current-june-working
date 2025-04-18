@@ -1,12 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Timer } from 'lucide-react';
 import { RestTimerControls } from './RestTimerControls';
 
 interface TopRestTimerProps {
   isActive: boolean;
   onComplete: () => void;
-  resetSignal: number; // Add a reset signal prop to force resets
+  resetSignal: number; // Signal to force timer reset
 }
 
 export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimerProps) => {
@@ -15,21 +15,29 @@ export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimer
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
 
-  // Reset timer whenever isActive changes to true OR resetSignal changes
-  React.useEffect(() => {
-    if (isActive) {
+  // Reset timer whenever resetSignal changes
+  useEffect(() => {
+    if (isActive && resetSignal > 0) {
+      console.log(`Timer reset with signal: ${resetSignal}`);
       setElapsedTime(0);
       setIsTimerActive(true);
-      console.log(`Timer reset with signal: ${resetSignal}`);
+    }
+  }, [resetSignal, isActive]);
+  
+  // Handle activation/deactivation
+  useEffect(() => {
+    if (isActive) {
+      setIsTimerActive(true);
     } else {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
       setElapsedTime(0);
     }
-  }, [isActive, resetSignal]);
+  }, [isActive]);
 
-  React.useEffect(() => {
+  // Timer tick effect
+  useEffect(() => {
     if (isTimerActive && isActive) {
       timerRef.current = setTimeout(() => {
         if (elapsedTime < maxTime) {
