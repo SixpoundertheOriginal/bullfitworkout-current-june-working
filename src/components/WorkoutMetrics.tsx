@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Timer, Dumbbell, BarChart3 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,20 @@ export const WorkoutMetrics = ({
   onRestTimerComplete,
   className 
 }: WorkoutMetricsProps) => {
+  // Add a ref to track previous showRestTimer state
+  const prevShowRestTimerRef = useRef(showRestTimer);
+  
+  // Effect to detect changes in showRestTimer
+  useEffect(() => {
+    // Log state changes for debugging
+    if (prevShowRestTimerRef.current !== showRestTimer) {
+      console.log(`Rest timer state changed: ${prevShowRestTimerRef.current} -> ${showRestTimer}`);
+    }
+    
+    // Update the ref
+    prevShowRestTimerRef.current = showRestTimer;
+  }, [showRestTimer]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -61,7 +75,10 @@ export const WorkoutMetrics = ({
         </div>
 
         <div className="flex flex-col items-center">
-          <TopRestTimer isActive={showRestTimer} onComplete={onRestTimerComplete} />
+          <TopRestTimer 
+            isActive={showRestTimer} 
+            onComplete={onRestTimerComplete} 
+          />
         </div>
       </div>
       

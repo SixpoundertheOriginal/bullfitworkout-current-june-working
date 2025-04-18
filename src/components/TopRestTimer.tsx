@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Timer } from 'lucide-react';
 import { RestTimerControls } from './RestTimerControls';
@@ -12,19 +13,26 @@ export const TopRestTimer = ({ isActive, onComplete }: TopRestTimerProps) => {
   const [isTimerActive, setIsTimerActive] = React.useState(true);
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
+  
+  // Key change: We need to track the previous isActive state to detect changes
+  const prevIsActiveRef = React.useRef(isActive);
 
-  // Reset timer whenever it becomes active
+  // Reset timer whenever it becomes active or when isActive changes from false to true
   React.useEffect(() => {
-    if (isActive) {
+    // If timer is becoming active or was previously inactive and now active
+    if (isActive && (!prevIsActiveRef.current || prevIsActiveRef.current !== isActive)) {
       setElapsedTime(0);
       setIsTimerActive(true);
-    } else {
+    } else if (!isActive) {
       // Clear the timer when it becomes inactive
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
       setElapsedTime(0);
     }
+    
+    // Update the previous isActive ref
+    prevIsActiveRef.current = isActive;
   }, [isActive]);
 
   React.useEffect(() => {
