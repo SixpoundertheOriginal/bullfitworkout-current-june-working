@@ -7,61 +7,50 @@ import { cn } from "@/lib/utils";
 
 interface RestTimerProps {
   onComplete?: () => void;
-  defaultTime?: number; // in seconds
+  maxTime?: number; // in seconds
   isVisible: boolean;
   onClose: () => void;
 }
 
 export const RestTimer = ({ 
   onComplete, 
-  defaultTime = 60, 
+  maxTime = 300, // 5 minutes max by default
   isVisible, 
   onClose 
 }: RestTimerProps) => {
-  const [timeLeft, setTimeLeft] = useState(defaultTime);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const [hasCompleted, setHasCompleted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Progress percentage calculation
-  const progressPercentage = ((defaultTime - timeLeft) / defaultTime) * 100;
+  const progressPercentage = Math.min((elapsedTime / maxTime) * 100, 100);
 
   useEffect(() => {
     if (isVisible) {
-      setTimeLeft(defaultTime);
+      setElapsedTime(0);
       setIsActive(true);
-      setHasCompleted(false);
     }
-  }, [isVisible, defaultTime]);
+  }, [isVisible]);
 
   useEffect(() => {
-    if (isActive && timeLeft > 0) {
+    if (isActive) {
       timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => prev - 1);
+        setElapsedTime(prev => prev + 1);
       }, 1000);
-    } else if (timeLeft === 0 && !hasCompleted) {
-      setHasCompleted(true);
-      if (onComplete) onComplete();
-      
-      // Optional: Provide haptic feedback if available
-      if (navigator.vibrate) {
-        navigator.vibrate(200);
-      }
     }
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [timeLeft, isActive, onComplete, hasCompleted]);
+  }, [elapsedTime, isActive]);
 
   const toggleTimer = () => {
     setIsActive(!isActive);
   };
 
   const resetTimer = () => {
-    setTimeLeft(defaultTime);
+    setElapsedTime(0);
     setIsActive(true);
-    setHasCompleted(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -94,7 +83,7 @@ export const RestTimer = ({
       
       <div className="p-4">
         <div className="text-center mb-3">
-          <span className="text-3xl font-mono">{formatTime(timeLeft)}</span>
+          <span className="text-3xl font-mono">{formatTime(elapsedTime)}</span>
         </div>
         
         <Progress 

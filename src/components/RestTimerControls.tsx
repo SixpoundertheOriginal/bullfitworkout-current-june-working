@@ -5,8 +5,8 @@ import { Timer, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface RestTimerControlsProps {
-  timeLeft: number;
-  totalTime: number;
+  elapsedTime: number;
+  maxTime: number;
   isActive: boolean;
   onPause: () => void;
   onResume: () => void;
@@ -22,8 +22,8 @@ const formatTime = (seconds: number) => {
 };
 
 export const RestTimerControls = ({
-  timeLeft,
-  totalTime,
+  elapsedTime,
+  maxTime,
   isActive,
   onPause,
   onResume,
@@ -31,13 +31,13 @@ export const RestTimerControls = ({
   onSkip,
   className = "",
 }: RestTimerControlsProps) => {
-  const progress = ((totalTime - timeLeft) / totalTime) * 100;
+  const progress = Math.min((elapsedTime / maxTime) * 100, 100);
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>
       <div className="relative flex items-center justify-center">
         <CircularProgress value={progress} className="w-16 h-16" />
-        <span className="absolute font-mono text-sm">{formatTime(timeLeft)}</span>
+        <span className="absolute font-mono text-sm">{formatTime(elapsedTime)}</span>
       </div>
       
       <div className="flex gap-2">
