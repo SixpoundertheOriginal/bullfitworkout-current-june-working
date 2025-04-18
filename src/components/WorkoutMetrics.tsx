@@ -32,6 +32,11 @@ export const WorkoutMetrics = ({
     // Log state changes for debugging
     if (prevShowRestTimerRef.current !== showRestTimer) {
       console.log(`Rest timer state changed: ${prevShowRestTimerRef.current} -> ${showRestTimer}`);
+      
+      // Generate a unique identifier for this timer activation for debugging
+      if (showRestTimer) {
+        console.log(`New rest timer activation at: ${new Date().toISOString()}`);
+      }
     }
     
     // Update the ref

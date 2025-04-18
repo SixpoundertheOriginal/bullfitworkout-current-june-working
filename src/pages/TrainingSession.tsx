@@ -306,7 +306,13 @@ const TrainingSession = () => {
     if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
       updatedExercises[exerciseName][setIndex].completed = true;
       setExercises(updatedExercises);
-      setShowRestTimer(true);
+      
+      // Force the rest timer to reset by toggling it off and on
+      setShowRestTimer(false);
+      setTimeout(() => {
+        setShowRestTimer(true);
+        console.log("Rest timer activated after set completion");
+      }, 10); // Short delay to ensure state updates correctly
       
       const currentSets = updatedExercises[exerciseName];
       const currentVolume = calculateSetVolume(currentSets, weightUnit);
