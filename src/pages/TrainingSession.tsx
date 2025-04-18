@@ -389,7 +389,7 @@ const TrainingSession = () => {
     if (!exercises[exerciseName]) return;
     
     const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseIndex]) {
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
       const currentReps = updatedExercises[exerciseName][setIndex].reps;
       updatedExercises[exerciseName][setIndex].reps = Math.max(0, currentReps + increment);
       setExercises(updatedExercises);
