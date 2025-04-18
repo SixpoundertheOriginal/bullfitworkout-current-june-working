@@ -19,6 +19,7 @@ import {
   Weight
 } from "lucide-react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LocationState {
   trainingType?: string;
@@ -84,6 +85,7 @@ const SetRow = ({
   weightUnit
 }) => {
   const { weightUnit: globalWeightUnit } = useWeightUnit();
+  const isMobile = useIsMobile();
   
   const displayWeight = weightUnit ? convertWeight(weight, weightUnit, globalWeightUnit) : weight;
   
@@ -97,21 +99,21 @@ const SetRow = ({
             <div className="flex items-center">
               <button 
                 onClick={() => onWeightIncrement(-1)} 
-                className="p-1 text-gray-400 hover:text-white"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full"
               >
-                <MinusCircle size={16} />
+                <MinusCircle size={isMobile ? 18 : 16} />
               </button>
               <Input 
                 type="number"
                 value={weight}
                 onChange={onWeightChange}
-                className="bg-gray-800 border-gray-700 text-white h-8 px-2 mx-1 text-center"
+                className="workout-number-input"
               />
               <button 
                 onClick={() => onWeightIncrement(1)} 
-                className="p-1 text-gray-400 hover:text-white"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full"
               >
-                <PlusCircle size={16} />
+                <PlusCircle size={isMobile ? 18 : 16} />
               </button>
             </div>
           </div>
@@ -119,21 +121,21 @@ const SetRow = ({
             <div className="flex items-center">
               <button 
                 onClick={() => onRepsIncrement(-1)} 
-                className="p-1 text-gray-400 hover:text-white"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full"
               >
-                <MinusCircle size={16} />
+                <MinusCircle size={isMobile ? 18 : 16} />
               </button>
               <Input 
                 type="number"
                 value={reps}
                 onChange={onRepsChange}
-                className="bg-gray-800 border-gray-700 text-white h-8 px-2 mx-1 text-center"
+                className="workout-number-input"
               />
               <button 
                 onClick={() => onRepsIncrement(1)} 
-                className="p-1 text-gray-400 hover:text-white"
+                className="p-1 text-gray-400 hover:text-white bg-gray-800 rounded-full"
               >
-                <PlusCircle size={16} />
+                <PlusCircle size={isMobile ? 18 : 16} />
               </button>
             </div>
           </div>

@@ -51,6 +51,12 @@
   .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+  
+  /* Add new workout number input styles */
+  .workout-number-input {
+    @apply bg-gray-700 border border-gray-600 text-white h-9 px-2 mx-1 text-center 
+           rounded font-medium min-w-[60px] shadow-inner shadow-black/20;
+  }
 }
 
 @keyframes fadeIn {
