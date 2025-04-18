@@ -104,7 +104,8 @@ const ExerciseCard = ({
   onWeightIncrement,
   onRepsIncrement,
   isActive,
-  onShowRestTimer
+  onShowRestTimer,
+  onResetRestTimer
 }) => {
   const { weightUnit } = useWeightUnit();
   const { exercises: dbExercises } = useExercises();
@@ -141,10 +142,7 @@ const ExerciseCard = ({
       navigator.vibrate(50);
     }
     
-    setShowRestTimer(false);
-    setTimeout(() => {
-      setShowRestTimer(true);
-    }, 10);
+    onResetRestTimer();
     
     if (navigator.vibrate) {
       navigator.vibrate([50]);
@@ -516,6 +514,13 @@ const TrainingSession = () => {
     });
   };
   
+  const resetRestTimer = () => {
+    setShowRestTimer(false);
+    setTimeout(() => {
+      setShowRestTimer(true);
+    }, 10);
+  };
+  
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-gray-800 bg-black/95 backdrop-blur-sm">
@@ -560,6 +565,7 @@ const TrainingSession = () => {
                 onRepsIncrement={handleRepsIncrement}
                 isActive={exerciseName === currentExercise}
                 onShowRestTimer={() => setShowRestTimer(true)}
+                onResetRestTimer={resetRestTimer}
               />
             ))}
           </div>
