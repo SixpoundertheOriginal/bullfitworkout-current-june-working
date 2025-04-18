@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils"
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     // Special styling for number inputs in workout interface
+    // Fix: Extract className from props before destructuring
     const isWorkoutNumberInput = type === "number" && 
-      (props.className?.includes("bg-gray-800") || props.className?.includes("bg-gray-900"));
+      (className?.includes("bg-gray-800") || className?.includes("bg-gray-900"));
     
     return (
       <input
