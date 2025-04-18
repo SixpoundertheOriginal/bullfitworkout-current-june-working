@@ -46,6 +46,7 @@ import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { SetRow } from "@/components/SetRow";
+import { useExercises } from "@/hooks/useExercises";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -70,6 +71,25 @@ const exerciseHistoryData = {
   ],
 };
 
+const getPreviousSessionData = (exerciseName) => {
+  const history = exerciseHistoryData[exerciseName] || [];
+  if (history.length > 0) {
+    return history[0];
+  }
+  
+  return { date: "N/A", weight: 0, reps: 0, sets: 0 };
+};
+
+const calculateSetVolume = (sets, weightUnit) => {
+  return sets.reduce((total, set) => {
+    if (set.completed) {
+      const weightInCurrentUnit = convertWeight(set.weight, "lb", weightUnit);
+      return total + (weightInCurrentUnit * set.reps);
+    }
+    return total;
+  }, 0);
+};
+
 const ExerciseCard = ({ 
   exercise, 
   sets, 
@@ -86,9 +106,10 @@ const ExerciseCard = ({
   onShowRestTimer
 }) => {
   const { weightUnit } = useWeightUnit();
-  const history = exerciseHistoryData[exercise] || [];
-  const previousSession = history[0] || { weight: 0, reps: 0, sets: 0 };
-  const olderSession = history[1] || previousSession;
+  const { exercises: dbExercises } = useExercises();
+  
+  const previousSession = getPreviousSessionData(exercise);
+  const olderSession = exerciseHistoryData[exercise]?.[1] || previousSession;
   
   const previousSessionWeight = convertWeight(previousSession.weight, "lb", weightUnit);
   
@@ -96,15 +117,10 @@ const ExerciseCard = ({
   const percentChange = olderSession.weight ? ((weightDiff / olderSession.weight) * 100).toFixed(1) : "0";
   const isImproved = weightDiff > 0;
   
-  const currentVolume = sets.reduce((total, set) => {
-    if (set.completed) {
-      const weightInCurrentUnit = convertWeight(set.weight, "lb", weightUnit);
-      return total + (weightInCurrentUnit * set.reps);
-    }
-    return total;
-  }, 0);
+  const currentVolume = calculateSetVolume(sets, weightUnit);
   
   const previousVolume = previousSessionWeight * previousSession.reps * previousSession.sets;
+  
   const volumeDiff = (currentVolume - previousVolume);
   const volumePercentChange = previousVolume ? ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
   
@@ -122,6 +138,11 @@ const ExerciseCard = ({
       navigator.vibrate(50);
     }
   };
+  
+  console.log(`Exercise: ${exercise}`);
+  console.log(`Current volume: ${currentVolume}`);
+  console.log(`Previous volume: ${previousVolume}`);
+  console.log(`Sets:`, sets);
   
   return (
     <Card className={`bg-gray-900 border-gray-800 mb-4 transform transition-all duration-300 ${isActive ? "ring-1 ring-purple-500 scale-[1.01]" : ""}`}>
@@ -176,7 +197,7 @@ const ExerciseCard = ({
               onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
               onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
               onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
-              weightUnit="lb"
+              weightUnit={weightUnit}
             />
           ))}
           
@@ -207,7 +228,7 @@ const ExerciseCard = ({
             </div>
           </div>
           <Progress 
-            value={currentVolume > 0 ? (currentVolume / Math.max(previousVolume, 1)) * 100 : 0} 
+            value={currentVolume > 0 && previousVolume > 0 ? (currentVolume / Math.max(previousVolume, 1)) * 100 : 0} 
             className={`h-1.5 bg-gray-800 ${currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
           />
         </div>

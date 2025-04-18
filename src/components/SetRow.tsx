@@ -43,7 +43,9 @@ export const SetRow = ({
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
   
-  const displayWeight = weightUnit ? convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit) : weight;
+  // Use the passed weightUnit if available, otherwise use the global one
+  const displayUnit = weightUnit || globalWeightUnit;
+  const displayWeight = convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit);
   
   return (
     <div className="grid grid-cols-12 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
