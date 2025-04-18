@@ -140,6 +140,24 @@ const ExerciseCard = ({
     if (navigator.vibrate) {
       navigator.vibrate(50);
     }
+    
+    setShowRestTimer(false);
+    setTimeout(() => {
+      setShowRestTimer(true);
+    }, 10);
+    
+    if (navigator.vibrate) {
+      navigator.vibrate([50]);
+    }
+    
+    toast.success(`${exercise}: Set ${index + 1} logged successfully`, {
+      style: {
+        backgroundColor: "rgba(20, 20, 20, 0.9)",
+        color: "white",
+        border: "1px solid rgba(120, 120, 120, 0.3)",
+      },
+      id: `set-complete-${exercise}-${index}`,
+    });
   };
   
   console.log(`Exercise: ${exercise}`);
@@ -315,6 +333,11 @@ const TrainingSession = () => {
       if (navigator.vibrate) {
         navigator.vibrate([50]);
       }
+      
+      setShowRestTimer(false);
+      setTimeout(() => {
+        setShowRestTimer(true);
+      }, 10);
       
       toast.success(`${exerciseName}: Set ${setIndex + 1} logged successfully`, {
         style: {
