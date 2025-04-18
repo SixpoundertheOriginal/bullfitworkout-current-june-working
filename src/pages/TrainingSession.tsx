@@ -563,10 +563,18 @@ const TrainingSession = () => {
             <Button 
               type="submit" 
               disabled={!newExerciseName.trim()}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              className="w-full group"
             >
-              <PlusCircle className="mr-2 h-5 w-5" />
-              Add Exercise
+              <div className="flex items-center justify-center w-16 h-16 rounded-full 
+                bg-gradient-to-r from-purple-600 to-pink-500 
+                shadow-lg transition-all duration-300 
+                group-hover:scale-105 group-active:scale-95">
+                <PlusCircle 
+                  className="text-white" 
+                  size={32} 
+                />
+              </div>
+              <span className="sr-only">Add Exercise</span>
             </Button>
           </form>
         </div>
