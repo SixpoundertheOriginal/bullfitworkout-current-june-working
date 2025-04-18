@@ -83,8 +83,9 @@ const getPreviousSessionData = (exerciseName) => {
 const calculateSetVolume = (sets, weightUnit) => {
   return sets.reduce((total, set) => {
     if (set.completed) {
-      const weightInCurrentUnit = convertWeight(set.weight, "lb", weightUnit);
-      return total + (weightInCurrentUnit * set.reps);
+      if (set.weight > 0 && set.reps > 0) {
+        return total + (set.weight * set.reps);
+      }
     }
     return total;
   }, 0);
@@ -119,10 +120,12 @@ const ExerciseCard = ({
   
   const currentVolume = calculateSetVolume(sets, weightUnit);
   
-  const previousVolume = previousSessionWeight * previousSession.reps * previousSession.sets;
+  const previousVolume = previousSession.weight > 0 ? 
+    previousSessionWeight * previousSession.reps * previousSession.sets : 0;
   
   const volumeDiff = (currentVolume - previousVolume);
-  const volumePercentChange = previousVolume ? ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
+  const volumePercentChange = previousVolume > 0 ? 
+    ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
   
   const completedSetsCount = sets.filter(set => set.completed).length;
   const completionPercentage = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
@@ -142,6 +145,8 @@ const ExerciseCard = ({
   console.log(`Exercise: ${exercise}`);
   console.log(`Current volume: ${currentVolume}`);
   console.log(`Previous volume: ${previousVolume}`);
+  console.log(`Volume diff: ${volumeDiff}`);
+  console.log(`Volume % change: ${volumePercentChange}`);
   console.log(`Sets:`, sets);
   
   return (
@@ -228,7 +233,8 @@ const ExerciseCard = ({
             </div>
           </div>
           <Progress 
-            value={currentVolume > 0 && previousVolume > 0 ? (currentVolume / Math.max(previousVolume, 1)) * 100 : 0} 
+            value={currentVolume > 0 && previousVolume > 0 ? 
+              Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200) : 0} 
             className={`h-1.5 bg-gray-800 ${currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
           />
         </div>
@@ -305,6 +311,10 @@ const TrainingSession = () => {
       updatedExercises[exerciseName][setIndex].completed = true;
       setExercises(updatedExercises);
       setShowRestTimer(true);
+      
+      const currentSets = updatedExercises[exerciseName];
+      const currentVolume = calculateSetVolume(currentSets, weightUnit);
+      console.log(`Set ${setIndex + 1} completed. New volume: ${currentVolume} ${weightUnit}`);
       
       if (navigator.vibrate) {
         navigator.vibrate([50]);
