@@ -122,12 +122,12 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
             workout: Object.keys(workoutDates).map(d => new Date(d)),
           }}
           components={{
-            Day: ({ date, ...props }) => {
+            Day: ({ date, ...dayProps }) => {
               const extraClass = dayClassName(date);
               return (
                 <div 
-                  {...props} 
-                  className={`${props.className || ''} ${extraClass}`}
+                  {...dayProps}
+                  className={`${dayProps.className || ''} ${extraClass}`}
                 />
               );
             }
