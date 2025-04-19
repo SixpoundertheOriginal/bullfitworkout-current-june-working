@@ -73,48 +73,60 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   };
 
   return (
-    <div className="flex flex-wrap gap-4 justify-center">
-      {DEFAULT_TRAINING_TYPES.map((type) => (
-        <Button
-          key={type.name}
-          onClick={() => onSelect(type.name)}
-          variant="icon-circle"
-          size="lg"
-          iconOnly
-          icon={type.icon}
-          className={cn(
-            "bg-gradient-to-br text-white",
-            type.gradient,
-            selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
-            "group relative"
-          )}
-        >
-          <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-            {type.name}
-          </span>
-        </Button>
-      ))}
-      
-      {customTypes?.map((type) => (
-        <Button
-          key={type.id}
-          onClick={() => onSelect(type.name)}
-          variant="icon-circle"
-          size="lg"
-          iconOnly
-          icon={type.icon}
-          className={cn(
-            "bg-gradient-to-br text-white",
-            `from-[${type.color_start}] to-[${type.color_end}]`,
-            selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
-            "group relative"
-          )}
-        >
-          <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-            {type.name}
-          </span>
-        </Button>
-      ))}
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-4 justify-center">
+        {DEFAULT_TRAINING_TYPES.map((type) => (
+          <Button
+            key={type.name}
+            onClick={() => onSelect(type.name)}
+            variant="icon-circle"
+            size="lg"
+            iconOnly
+            icon={type.icon}
+            className={cn(
+              "bg-gradient-to-br text-white",
+              type.gradient,
+              selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
+              "group relative"
+            )}
+          >
+            <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              {type.name}
+            </span>
+          </Button>
+        ))}
+        
+        {customTypes?.map((type) => (
+          <Button
+            key={type.id}
+            onClick={() => onSelect(type.name)}
+            variant="icon-circle"
+            size="lg"
+            iconOnly
+            icon={type.icon}
+            className={cn(
+              "bg-gradient-to-br text-white",
+              `from-[${type.color_start}] to-[${type.color_end}]`,
+              selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
+              "group relative"
+            )}
+          >
+            <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+              {type.name}
+            </span>
+          </Button>
+        ))}
+      </div>
+
+      {/* Add the selected type label */}
+      {selectedType && (
+        <div className="flex items-center justify-center py-2 text-center">
+          <div className="px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
+            <span className="text-sm text-white/80">Selected Training Type: </span>
+            <span className="font-medium text-white">{selectedType}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
