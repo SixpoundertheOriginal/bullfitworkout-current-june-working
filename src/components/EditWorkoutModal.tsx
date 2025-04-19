@@ -66,16 +66,13 @@ export function EditWorkoutModal({ workout, open, onOpenChange, onSave }: EditWo
     setDate(newDate);
     
     if (formData && newDate) {
-      // Keep the time part from the original date, only update the date part
       const originalDate = new Date(formData.start_time);
       newDate.setHours(originalDate.getHours());
       newDate.setMinutes(originalDate.getMinutes());
       newDate.setSeconds(originalDate.getSeconds());
       
-      // Update both start and end time with the new date part
       const newStartTime = newDate.toISOString();
       
-      // Calculate new end time based on duration
       const endDate = new Date(newDate);
       endDate.setMinutes(endDate.getMinutes() + formData.duration);
       const newEndTime = endDate.toISOString();
@@ -92,10 +89,8 @@ export function EditWorkoutModal({ workout, open, onOpenChange, onSave }: EditWo
     if (formData) {
       const newDuration = parseInt(e.target.value, 10) || 0;
       
-      // Update duration
       const updatedData = { ...formData, duration: newDuration };
       
-      // Recalculate end_time based on new duration
       const startDate = new Date(updatedData.start_time);
       const endDate = new Date(startDate);
       endDate.setMinutes(startDate.getMinutes() + newDuration);
@@ -160,7 +155,7 @@ export function EditWorkoutModal({ workout, open, onOpenChange, onSave }: EditWo
                   {Object.keys(trainingTypes).map((type) => (
                     <SelectItem key={type} value={type}>
                       <div className="flex items-center">
-                        <TrainingTypeTag type={type as keyof typeof trainingTypes} size="sm" />
+                        <TrainingTypeTag type={type} size="sm" />
                         <span className="ml-2">{type}</span>
                       </div>
                     </SelectItem>

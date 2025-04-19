@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +47,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 
 interface WorkoutDetails {
   id: string;
@@ -83,22 +91,18 @@ const WorkoutDetailsPage = () => {
   const { stats, loading: statsLoading } = useWorkoutStats();
   const { data: historyData, isLoading: historyLoading } = useWorkoutHistory(25);
   
-  // For single workout details
   const [workoutDetails, setWorkoutDetails] = useState<WorkoutDetails | null>(null);
   const [exerciseSets, setExerciseSets] = useState<ExerciseSet[]>([]);
   const [loading, setLoading] = useState(workoutId ? true : false);
   
-  // For editing
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [exerciseSetModalOpen, setExerciseSetModalOpen] = useState(false);
   const [currentExercise, setCurrentExercise] = useState<string>("");
   const [exerciseSetsToEdit, setExerciseSetsToEdit] = useState<ExerciseSet[]>([]);
   
-  // For adding new exercise
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState<string>("");
   
-  // For deleting exercise
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<string>("");
   
@@ -109,7 +113,6 @@ const WorkoutDetailsPage = () => {
       try {
         setLoading(true);
         
-        // Fetch workout details
         const { data: workout, error: workoutError } = await supabase
           .from('workout_sessions')
           .select('*')
@@ -124,7 +127,6 @@ const WorkoutDetailsPage = () => {
         
         setWorkoutDetails(workout);
         
-        // Fetch exercise sets for this workout
         const { data: sets, error: setsError } = await supabase
           .from('exercise_sets')
           .select('*')
@@ -148,21 +150,18 @@ const WorkoutDetailsPage = () => {
     fetchWorkoutDetails();
   }, [workoutId, user, navigate]);
   
-  // If dateFilter is present, we need to show the history tab
   useEffect(() => {
     if (dateFilter) {
       setActiveTab("history");
     }
   }, [dateFilter]);
   
-  // When workoutId changes, update the active tab
   useEffect(() => {
     if (workoutId) {
       setActiveTab("details");
     }
   }, [workoutId]);
   
-  // Main overview page content
   const renderOverviewTab = () => {
     if (statsLoading) {
       return (
@@ -174,7 +173,6 @@ const WorkoutDetailsPage = () => {
     
     return (
       <div className="grid grid-cols-1 gap-4">
-        {/* Top row stats cards */}
         <div className="grid grid-cols-2 gap-4">
           <StatsCard 
             title="Total Workouts" 
@@ -188,7 +186,6 @@ const WorkoutDetailsPage = () => {
           />
         </div>
         
-        {/* Main content */}
         <WorkoutSummary stats={stats} />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -201,7 +198,6 @@ const WorkoutDetailsPage = () => {
     );
   };
   
-  // History tab content
   const renderHistoryTab = () => {
     return (
       <div>
@@ -220,7 +216,6 @@ const WorkoutDetailsPage = () => {
     );
   };
   
-  // Handle workout editing
   const handleSaveWorkoutEdit = async (updatedWorkout: WorkoutDetails) => {
     if (!workoutId) return;
     
@@ -242,7 +237,6 @@ const WorkoutDetailsPage = () => {
     }
   };
   
-  // Handle exercise set editing
   const handleEditExercise = (exerciseName: string) => {
     const setsForExercise = exerciseSets.filter(set => set.exercise_name === exerciseName);
     setCurrentExercise(exerciseName);
@@ -256,7 +250,6 @@ const WorkoutDetailsPage = () => {
     try {
       const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
       
-      // Update the state with the new sets
       const otherSets = exerciseSets.filter(set => set.exercise_name !== currentExercise);
       setExerciseSets([...otherSets, ...updated]);
     } catch (error) {
@@ -265,23 +258,21 @@ const WorkoutDetailsPage = () => {
     }
   };
   
-  // Handle adding new exercise
-  const handleAddExercise = async () => {
-    if (!workoutId || !newExerciseName) return;
+  const handleAddExercise = async (exerciseName: string) => {
+    if (!workoutId) return;
     
     try {
-      const newSets = await addExerciseToWorkout(workoutId, newExerciseName, 3);
+      const newSets = await addExerciseToWorkout(workoutId, exerciseName, 3);
       setExerciseSets([...exerciseSets, ...newSets]);
-      setAddExerciseModalOpen(false);
-      setNewExerciseName("");
-      toast.success(`Added ${newExerciseName} to workout`);
+      toast.success(`Added ${exerciseName} to workout`);
+      return Promise.resolve();
     } catch (error) {
       console.error("Error adding exercise:", error);
       toast.error("Failed to add exercise");
+      return Promise.reject(error);
     }
   };
   
-  // Handle deleting an exercise
   const handleDeleteClick = (exerciseName: string) => {
     setExerciseToDelete(exerciseName);
     setDeleteAlertOpen(true);
@@ -303,12 +294,10 @@ const WorkoutDetailsPage = () => {
     }
   };
   
-  // Handler for exercise selection in autocomplete
   const handleSelectExercise = (exercise: any) => {
     setNewExerciseName(exercise.name);
   };
   
-  // If we're on a specific workout details view and loading
   if (workoutId && loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -357,7 +346,6 @@ const WorkoutDetailsPage = () => {
           </Tabs>
         )}
         
-        {/* Show workout details if we have a workoutId */}
         {workoutId && workoutDetails && (
           <div className="mb-6">
             <Card className="bg-gray-900 border-gray-800 mb-6">
@@ -393,7 +381,6 @@ const WorkoutDetailsPage = () => {
                   </div>
                 </div>
                 
-                {/* Exercise list */}
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-md font-medium">Exercises</h3>
@@ -463,7 +450,6 @@ const WorkoutDetailsPage = () => {
                   )}
                 </div>
                 
-                {/* Notes Section */}
                 {workoutDetails.notes && (
                   <div className="mt-4 bg-gray-800/50 p-3 rounded">
                     <h3 className="text-sm font-medium mb-1">Notes</h3>
@@ -476,17 +462,13 @@ const WorkoutDetailsPage = () => {
         )}
       </main>
       
-      {/* Edit workout details modal */}
-      {workoutDetails && (
-        <EditWorkoutModal
-          workout={workoutDetails}
-          open={editModalOpen}
-          onOpenChange={setEditModalOpen}
-          onSave={handleSaveWorkoutEdit}
-        />
-      )}
+      <EditWorkoutModal
+        workout={workoutDetails}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onSave={handleSaveWorkoutEdit}
+      />
       
-      {/* Edit exercise sets modal */}
       <EditExerciseSetModal
         sets={exerciseSetsToEdit}
         exerciseName={currentExercise}
@@ -495,38 +477,12 @@ const WorkoutDetailsPage = () => {
         onSave={handleSaveExerciseSets}
       />
       
-      {/* Add exercise dialog */}
-      <Dialog open={addExerciseModalOpen} onOpenChange={setAddExerciseModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-800 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-white">Add Exercise</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Select an exercise to add to your workout.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setAddExerciseModalOpen(false)}
-              className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddExercise}
-              disabled={!newExerciseName}
-              className="bg-purple-600 text-white hover:bg-purple-700"
-            >
-              Add Exercise
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddExerciseDialog
+        open={addExerciseModalOpen}
+        onOpenChange={setAddExerciseModalOpen}
+        onAddExercise={handleAddExercise}
+      />
       
-      {/* Delete exercise confirmation */}
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
           <AlertDialogHeader>
