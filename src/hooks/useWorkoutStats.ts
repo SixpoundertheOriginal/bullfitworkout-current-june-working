@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -78,6 +77,28 @@ export interface TimePatternStats {
   };
 }
 
+// Add new interface for exercise volume tracking
+export interface ExerciseVolumeHistory {
+  exercise_name: string;
+  workouts: {
+    date: string;
+    volume: number;
+    sets: number;
+    avgWeight: number;
+  }[];
+  trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+  percentChange: number;
+}
+
+// Add muscle group tracking to workout stats
+export interface MuscleGroupDistribution {
+  group: string;
+  volume: number;
+  frequency: number;
+  percentage: number;
+}
+
+// Extend WorkoutStats to include advanced metrics
 export interface WorkoutStats {
   totalWorkouts: number;
   totalDuration: number;
@@ -95,6 +116,17 @@ export interface WorkoutStats {
   recommendedType: string | null;
   recommendedDuration: number | null;
   recommendedTags: string[];
+  
+  // Advanced analytics
+  exerciseVolumeHistory: ExerciseVolumeHistory[];
+  muscleGroups: MuscleGroupDistribution[];
+  progressMetrics: {
+    volumeChange: number;
+    volumeChangePercentage: number;
+    strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+    frequencyChange: number;
+    consistencyScore: number;
+  };
 }
 
 export function useWorkoutStats(limit: number = 50) {
@@ -133,7 +165,18 @@ export function useWorkoutStats(limit: number = 50) {
     },
     recommendedType: null,
     recommendedDuration: null,
-    recommendedTags: []
+    recommendedTags: [],
+    
+    // Initialize new analytics
+    exerciseVolumeHistory: [],
+    muscleGroups: [],
+    progressMetrics: {
+      volumeChange: 0,
+      volumeChangePercentage: 0,
+      strengthTrend: 'stable',
+      frequencyChange: 0,
+      consistencyScore: 0
+    },
   });
 
   useEffect(() => {
@@ -508,6 +551,173 @@ export function useWorkoutStats(limit: number = 50) {
           }).slice(0, 3);
         }
         
+        // New: Calculate exercise volume history and trends
+        const exerciseVolumeHistory: ExerciseVolumeHistory[] = [];
+        const exerciseNames = Object.keys(exerciseData);
+        
+        if (exerciseNames.length > 0 && workouts.length > 1) {
+          // Group exercise sets by workout and exercise
+          const workoutExercises: Record<string, Record<string, ExerciseSet[]>> = {};
+          
+          exerciseSets?.forEach(set => {
+            if (!workoutExercises[set.workout_id]) {
+              workoutExercises[set.workout_id] = {};
+            }
+            
+            if (!workoutExercises[set.workout_id][set.exercise_name]) {
+              workoutExercises[set.workout_id][set.exercise_name] = [];
+            }
+            
+            workoutExercises[set.workout_id][set.exercise_name].push(set);
+          });
+          
+          // Create volume history for top exercises
+          for (const exerciseName of exerciseNames) {
+            const workoutData = [];
+            
+            for (const workout of workouts) {
+              const sets = workoutExercises[workout.id]?.[exerciseName] || [];
+              if (sets.length > 0) {
+                let volume = 0;
+                let totalWeight = 0;
+                
+                sets.forEach(set => {
+                  if (set.completed) {
+                    volume += set.weight * set.reps;
+                    totalWeight += set.weight;
+                  }
+                });
+                
+                workoutData.push({
+                  date: new Date(workout.start_time).toISOString().split('T')[0],
+                  volume,
+                  sets: sets.length,
+                  avgWeight: sets.length > 0 ? totalWeight / sets.length : 0
+                });
+              }
+            }
+            
+            // Only include exercises that have been done more than once
+            if (workoutData.length > 1) {
+              // Calculate trend
+              workoutData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              
+              const firstVolume = workoutData[0].volume;
+              const lastVolume = workoutData[workoutData.length - 1].volume;
+              const percentChange = firstVolume > 0 
+                ? ((lastVolume - firstVolume) / firstVolume) * 100 
+                : 0;
+              
+              // Determine trend based on recent workouts
+              let trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating' = 'stable';
+              
+              if (percentChange > 5) {
+                trend = 'increasing';
+              } else if (percentChange < -5) {
+                trend = 'decreasing';
+              } else {
+                // Check for fluctuation
+                let fluctuationCount = 0;
+                for (let i = 1; i < workoutData.length; i++) {
+                  if (
+                    (workoutData[i].volume > workoutData[i-1].volume * 1.1) ||
+                    (workoutData[i].volume < workoutData[i-1].volume * 0.9)
+                  ) {
+                    fluctuationCount++;
+                  }
+                }
+                
+                if (fluctuationCount > workoutData.length / 3) {
+                  trend = 'fluctuating';
+                }
+              }
+              
+              exerciseVolumeHistory.push({
+                exercise_name: exerciseName,
+                workouts: workoutData,
+                trend,
+                percentChange
+              });
+            }
+          }
+        }
+        
+        // New: Calculate muscle group distribution
+        // This is a simplified approach since we don't have muscle group data in this example
+        const muscleGroups: MuscleGroupDistribution[] = [];
+        // In a real implementation, you would map exercises to muscle groups and calculate volume per group
+        
+        // New: Calculate progress metrics
+        const progressMetrics = {
+          volumeChange: 0,
+          volumeChangePercentage: 0,
+          strengthTrend: 'stable' as const,
+          frequencyChange: 0,
+          consistencyScore: 0
+        };
+        
+        // Calculate volume change if there are at least 2 workouts
+        if (workouts.length >= 2) {
+          // Get volumes for first and last workout
+          const sortedWorkouts = [...workouts].sort(
+            (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          );
+          
+          // Get volume for earliest and latest workout
+          const firstWorkout = sortedWorkouts[0];
+          const lastWorkout = sortedWorkouts[sortedWorkouts.length - 1];
+          
+          let firstWorkoutVolume = 0;
+          let lastWorkoutVolume = 0;
+          
+          exerciseSets?.forEach(set => {
+            if (set.completed) {
+              if (set.workout_id === firstWorkout.id) {
+                firstWorkoutVolume += set.weight * set.reps;
+              } else if (set.workout_id === lastWorkout.id) {
+                lastWorkoutVolume += set.weight * set.reps;
+              }
+            }
+          });
+          
+          progressMetrics.volumeChange = lastWorkoutVolume - firstWorkoutVolume;
+          progressMetrics.volumeChangePercentage = firstWorkoutVolume > 0 
+            ? (progressMetrics.volumeChange / firstWorkoutVolume) * 100 
+            : 0;
+            
+          // Determine overall strength trend based on all tracked exercises
+          if (progressMetrics.volumeChangePercentage > 10) {
+            progressMetrics.strengthTrend = 'increasing';
+          } else if (progressMetrics.volumeChangePercentage < -10) {
+            progressMetrics.strengthTrend = 'decreasing';
+          } else {
+            progressMetrics.strengthTrend = 'stable';
+          }
+          
+          // Calculate workout frequency change (workouts per week)
+          // This would need timestamps spanning multiple weeks to be accurate
+          
+          // Calculate consistency score (0-100)
+          // Simplified version: percentage of days with workouts in the last 30 days
+          if (lastWorkoutDate) {
+            const lastDate = new Date(lastWorkoutDate);
+            const thirtyDaysAgo = new Date(lastDate);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            // Count unique workout days in the last 30 days
+            const recentWorkouts = workouts.filter(
+              w => new Date(w.start_time) >= thirtyDaysAgo && new Date(w.start_time) <= lastDate
+            );
+            
+            // Get unique dates
+            const uniqueDates = new Set(
+              recentWorkouts.map(w => new Date(w.start_time).toISOString().split('T')[0])
+            );
+            
+            progressMetrics.consistencyScore = (uniqueDates.size / 30) * 100;
+          }
+        }
+        
         setStats({
           totalWorkouts,
           totalDuration,
@@ -522,7 +732,10 @@ export function useWorkoutStats(limit: number = 50) {
           timePatterns,
           recommendedType,
           recommendedDuration,
-          recommendedTags
+          recommendedTags,
+          exerciseVolumeHistory,
+          muscleGroups,
+          progressMetrics
         });
       } catch (error) {
         console.error('Error fetching workout stats:', error);

@@ -24,6 +24,35 @@ export const WorkoutSummary = ({ stats, className = "" }: WorkoutSummaryProps) =
     return `${mins} min`;
   };
   
+  // Helper to get progress trend information
+  const getProgressTrend = () => {
+    if (!stats.progressMetrics) return null;
+    
+    const { volumeChangePercentage, strengthTrend } = stats.progressMetrics;
+    
+    if (Math.abs(volumeChangePercentage) < 3) {
+      return { text: "Maintaining", color: "text-blue-400" };
+    }
+    
+    if (strengthTrend === 'increasing') {
+      return { 
+        text: `Up ${Math.round(volumeChangePercentage)}%`, 
+        color: "text-green-400" 
+      };
+    }
+    
+    if (strengthTrend === 'decreasing') {
+      return { 
+        text: `Down ${Math.round(Math.abs(volumeChangePercentage))}%`, 
+        color: "text-red-400" 
+      };
+    }
+    
+    return { text: "Fluctuating", color: "text-yellow-400" };
+  };
+  
+  const progressTrend = getProgressTrend();
+  
   return (
     <Card className={`bg-gray-900 border-gray-800 ${className}`}>
       <CardHeader className="pb-2">
@@ -58,6 +87,32 @@ export const WorkoutSummary = ({ stats, className = "" }: WorkoutSummaryProps) =
             <p className="text-xs text-gray-400">Avg Min</p>
           </div>
         </div>
+        
+        {stats.progressMetrics && progressTrend && (
+          <div className="mt-4 bg-gray-800 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Overall Progress</span>
+              <span className={`text-sm font-medium ${progressTrend.color}`}>
+                {progressTrend.text}
+              </span>
+            </div>
+            
+            {stats.progressMetrics.consistencyScore > 0 && (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>Consistency</span>
+                  <span>{Math.round(stats.progressMetrics.consistencyScore)}%</span>
+                </div>
+                <div className="h-1.5 bg-gray-700 rounded-full mt-1 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-purple-600 to-pink-600"
+                    style={{ width: `${stats.progressMetrics.consistencyScore}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         
         {stats.streakDays > 0 && (
           <div className="mt-4 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-lg p-3">

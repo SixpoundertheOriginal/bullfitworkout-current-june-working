@@ -34,6 +34,7 @@ import { WorkoutCalendar } from "@/components/workouts/WorkoutCalendar";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { EditWorkoutModal } from "@/components/EditWorkoutModal";
 import { EditExerciseSetModal } from "@/components/EditExerciseSetModal";
+import { WorkoutMetricsSummary } from "@/components/workouts/WorkoutMetricsSummary";
 import { updateWorkout, updateExerciseSets, addExerciseToWorkout, removeExerciseFromWorkout } from "@/services/workoutService";
 import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
 import { toast } from "@/components/ui/sonner";
@@ -380,6 +381,10 @@ const WorkoutDetailsPage = () => {
                     </Button>
                   </div>
                 </div>
+                
+                {exerciseSets.length > 0 && (
+                  <WorkoutMetricsSummary exerciseSets={exerciseSets} className="mb-4" />
+                )}
                 
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-3">
