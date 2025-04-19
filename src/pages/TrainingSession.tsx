@@ -49,6 +49,7 @@ import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { SetRow } from "@/components/SetRow";
 import { useExercises } from "@/hooks/useExercises";
 import { cn } from "@/lib/utils";
+import { AddExerciseBar } from "@/components/AddExerciseBar";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -486,10 +487,21 @@ const TrainingSession = () => {
     setNewExerciseName(exercise.name);
   };
   
-  const handleAddExercise = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleAddExercise = () => {
+    console.log("Add exercise button clicked");
+    console.log("Selected exercise:", selectedExercise);
+    console.log("New exercise name:", newExerciseName);
     
-    if (!newExerciseName.trim()) return;
+    if (!newExerciseName.trim()) {
+      toast.error("Please select an exercise first", {
+        style: {
+          backgroundColor: "rgba(220, 38, 38, 0.9)",
+          color: "white",
+          border: "1px solid rgba(239, 68, 68, 0.3)",
+        },
+      });
+      return;
+    }
     
     if (!exercises[newExerciseName]) {
       const defaultWeight = selectedExercise?.metadata?.default_weight || 0;
@@ -498,12 +510,20 @@ const TrainingSession = () => {
       setExercises({
         ...exercises,
         [newExerciseName]: [
-          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false }
+          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false, restTime: 60 }
         ]
       });
       setCurrentExercise(newExerciseName);
       setNewExerciseName("");
       setSelectedExercise(null);
+      
+      toast.success(`${newExerciseName} added to your workout`, {
+        style: {
+          backgroundColor: "rgba(20, 20, 20, 0.9)",
+          color: "white",
+          border: "1px solid rgba(120, 120, 120, 0.3)",
+        },
+      });
     } else {
       toast.error("This exercise is already in your workout", {
         style: {
@@ -626,26 +646,6 @@ const TrainingSession = () => {
           </div>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 via-gray-900/95 to-gray-900/0">
-          <Button 
-            onClick={handleAddExercise}
-            className={cn(
-              "w-full py-6 text-lg font-medium rounded-xl",
-              "bg-gradient-to-r from-purple-600 to-pink-500",
-              "hover:from-purple-700 hover:to-pink-600",
-              "transform transition-all duration-300",
-              "hover:scale-[1.02] active:scale-[0.98]",
-              "shadow-lg hover:shadow-purple-500/25",
-              "border border-purple-500/20"
-            )}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Plus className="w-5 h-5" />
-              <span>Add Exercise</span>
-            </div>
-          </Button>
-        </div>
-
         {Object.keys(exercises).length > 0 && (
           <div className="flex flex-col items-center justify-center text-center mt-8">
             <Button 
@@ -664,9 +664,12 @@ const TrainingSession = () => {
             </Button>
           </div>
         )}
-
-        {/* Removing the exercise autocomplete section from the bottom */}
       </main>
+      
+      <AddExerciseBar
+        onSelectExercise={handleSelectExercise}
+        onAddExercise={handleAddExercise}
+      />
     </div>
   );
 };
