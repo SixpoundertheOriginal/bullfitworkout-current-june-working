@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { Timer } from 'lucide-react';
-import { RestTimerControls } from './RestTimerControls';
 import { cn } from '@/lib/utils';
 
 interface TopRestTimerProps {
@@ -68,22 +67,25 @@ export const TopRestTimer = ({
     return (
       <div className="flex flex-col items-center gap-1">
         <Timer size={20} className="text-purple-400 mb-1" />
-        <span className="text-xs text-gray-400 font-medium">Rest</span>
-        <span className="text-sm font-mono text-gray-500">00:00</span>
+        <span className="text-sm font-mono text-gray-400">Rest</span>
+        <span className="text-lg font-mono text-white">00:00</span>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center">
-      <Timer size={20} className={cn(
-        "text-purple-400 mb-1",
-        isTimerActive && "animate-pulse"
-      )} />
+      <Timer 
+        size={20} 
+        className={cn(
+          "text-purple-400 mb-1",
+          isTimerActive && "animate-pulse"
+        )} 
+      />
       <span className="text-lg font-mono text-white">
         {formatTime(elapsedTime)}
       </span>
-      <span className="text-xs text-gray-400 font-medium mt-1">Rest</span>
+      <span className="text-sm text-gray-400 font-medium mt-1">Rest</span>
     </div>
   );
 };

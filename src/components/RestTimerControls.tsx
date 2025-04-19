@@ -39,7 +39,14 @@ export const RestTimerControls = ({
   if (compact) {
     return (
       <div className={cn("flex flex-col items-center gap-1", className)}>
-        <span className="font-mono text-white text-lg">{formatTime(elapsedTime)}</span>
+        <Timer size={20} className={cn(
+          "text-purple-400 mb-1",
+          isActive && "animate-pulse"
+        )} />
+        <span className="text-lg font-mono text-white">
+          {formatTime(elapsedTime)}
+        </span>
+        <span className="text-xs text-gray-400 font-medium">Rest</span>
       </div>
     );
   }
@@ -47,7 +54,10 @@ export const RestTimerControls = ({
   return (
     <div className={cn("flex items-center gap-4", className)}>
       <div className="relative flex items-center justify-center">
-        <CircularProgress value={progress} className="w-16 h-16 [&>circle]:text-purple-500/20 [&>circle:last-child]:text-purple-500" />
+        <CircularProgress 
+          value={progress} 
+          className="w-16 h-16 [&>circle]:text-purple-500/20 [&>circle:last-child]:text-purple-500" 
+        />
         <span className="absolute font-mono text-white text-sm">{formatTime(elapsedTime)}</span>
       </div>
       
