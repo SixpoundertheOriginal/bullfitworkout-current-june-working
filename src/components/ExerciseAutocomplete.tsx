@@ -102,6 +102,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
 
     createExercise({
       ...newExercise,
+      user_id: "",
       instructions: newExercise.instructions || {},
       is_compound: Boolean(newExercise.is_compound),
       primary_muscle_groups: newExercise.primary_muscle_groups || [],
