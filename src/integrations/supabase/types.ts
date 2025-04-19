@@ -1040,10 +1040,11 @@ export type Database = {
       task_status: "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE" | "ARCHIVED"
       training_type:
         | "Strength"
+        | "Hypertrophy"
         | "Cardio"
         | "Calisthenics"
+        | "Stretching"
         | "Yoga"
-        | "Martial Arts"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1163,10 +1164,11 @@ export const Constants = {
       task_status: ["BACKLOG", "TODO", "IN_PROGRESS", "DONE", "ARCHIVED"],
       training_type: [
         "Strength",
+        "Hypertrophy",
         "Cardio",
         "Calisthenics",
+        "Stretching",
         "Yoga",
-        "Martial Arts",
       ],
     },
   },
