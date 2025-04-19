@@ -1,6 +1,6 @@
 
 import React from "react";
-import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check } from "lucide-react";
+import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWeightUnit } from "@/context/WeightUnitContext";
@@ -11,8 +11,9 @@ interface SetRowProps {
   setNumber: number;
   weight: number;
   reps: number;
+  restTime?: number; // New prop for rest time
   completed: boolean;
-  isEditing: boolean; // This is required in the interface
+  isEditing: boolean;
   onComplete: () => void;
   onEdit: () => void;
   onSave: () => void;
@@ -28,6 +29,7 @@ export const SetRow = ({
   setNumber,
   weight,
   reps,
+  restTime,
   completed,
   isEditing,
   onComplete,
@@ -43,20 +45,22 @@ export const SetRow = ({
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
   
-  // Use the passed weightUnit if available, otherwise use the global one
   const displayUnit = weightUnit || globalWeightUnit;
-  
-  // Convert weight for display purposes
   const displayWeight = weight > 0 ? convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit) : 0;
   
-  // Enhanced click handler to ensure reset is triggered
+  const formatRestTime = (seconds?: number) => {
+    if (!seconds) return "--:--";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   const handleSetComplete = () => {
-    // Call the provided onComplete callback
     onComplete();
   };
   
   return (
-    <div className="grid grid-cols-12 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
+    <div className="grid grid-cols-14 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
       <div className="col-span-1 text-center font-medium text-gray-400">
         #{setNumber}
       </div>
@@ -105,6 +109,12 @@ export const SetRow = ({
             </button>
           </div>
           
+          {/* Rest time column (read-only in edit mode) */}
+          <div className="col-span-2 flex items-center justify-center gap-2 text-gray-400">
+            <Timer size={16} />
+            <span className="font-mono text-sm">{formatRestTime(restTime)}</span>
+          </div>
+          
           <div className="col-span-2 flex justify-end gap-2">
             <Button
               size="icon"
@@ -142,6 +152,14 @@ export const SetRow = ({
               <span className="font-medium">{reps}</span>
               <span className="text-xs text-gray-400">reps</span>
             </button>
+          </div>
+          
+          {/* Rest time column */}
+          <div className="col-span-2 flex items-center justify-center gap-2">
+            <Timer size={16} className="text-purple-400" />
+            <span className="font-mono text-sm">
+              {formatRestTime(restTime)}
+            </span>
           </div>
           
           <div className="col-span-2 flex justify-end gap-2">
