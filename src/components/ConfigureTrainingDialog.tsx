@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -58,35 +59,6 @@ export function ConfigureTrainingDialog({
     onOpenChange(false);
   };
 
-  const getRecommendedTypes = () => {
-    const types = stats.workoutTypes.slice(0, 3).map(wt => wt.type);
-    const commonTypes = ["Running", "Strength", "Yoga"];
-    return [...new Set([...types, ...commonTypes])].slice(0, 4);
-  };
-
-  const getCommonTags = () => {
-    const defaultTags = ["Cardio", "Strength", "Flexibility", "Recovery", "Outdoors"];
-    
-    if (loading || !stats.tags || stats.tags.length === 0) {
-      return defaultTags;
-    }
-    
-    const topTags = stats.tags.slice(0, 5).map(t => t.name);
-    return [...new Set([...topTags, ...defaultTags])].slice(0, 5);
-  };
-
-  const applyQuickSetup = (preset: "morning" | "fullbody") => {
-    if (preset === "morning") {
-      setTrainingType("Running");
-      setSelectedTags(["Cardio", "Morning"]);
-      setDuration(30);
-    } else {
-      setTrainingType("Strength");
-      setSelectedTags(["Strength", "Full Body"]);
-      setDuration(45);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 overflow-hidden max-w-md bg-gray-900 border-0">
@@ -96,17 +68,6 @@ export function ConfigureTrainingDialog({
           </div>
 
           <div className="space-y-8">
-            <div>
-              <label className="block text-base font-medium mb-2">Quick Setup</label>
-              <QuickSetupTemplates
-                onSelect={({ trainingType, tags, duration }) => {
-                  setTrainingType(trainingType);
-                  setSelectedTags(tags);
-                  setDuration(duration);
-                }}
-              />
-            </div>
-
             <div>
               <div className="flex justify-between items-center mb-4">
                 <label className="block text-base font-medium">Training Type</label>
@@ -132,6 +93,17 @@ export function ConfigureTrainingDialog({
               value={duration} 
               onChange={setDuration}
             />
+
+            <div>
+              <label className="block text-base font-medium mb-2">Quick Setup</label>
+              <QuickSetupTemplates
+                onSelect={({ trainingType, tags, duration }) => {
+                  setTrainingType(trainingType);
+                  setSelectedTags(tags);
+                  setDuration(duration);
+                }}
+              />
+            </div>
 
             <Button 
               onClick={handleStartTraining}
