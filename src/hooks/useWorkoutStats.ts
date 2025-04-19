@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { ExerciseSet } from "@/types/exercise";
 
 // Define an interface for the workout data structure from Supabase
 interface WorkoutSession {
@@ -98,6 +99,15 @@ export interface MuscleGroupDistribution {
   percentage: number;
 }
 
+// Updated ProgressMetrics interface with correct types
+export interface ProgressMetrics {
+  volumeChange: number;
+  volumeChangePercentage: number;
+  strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+  frequencyChange: number;
+  consistencyScore: number;
+}
+
 // Extend WorkoutStats to include advanced metrics
 export interface WorkoutStats {
   totalWorkouts: number;
@@ -120,13 +130,7 @@ export interface WorkoutStats {
   // Advanced analytics
   exerciseVolumeHistory: ExerciseVolumeHistory[];
   muscleGroups: MuscleGroupDistribution[];
-  progressMetrics: {
-    volumeChange: number;
-    volumeChangePercentage: number;
-    strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
-    frequencyChange: number;
-    consistencyScore: number;
-  };
+  progressMetrics: ProgressMetrics;
 }
 
 export function useWorkoutStats(limit: number = 50) {
@@ -648,10 +652,10 @@ export function useWorkoutStats(limit: number = 50) {
         // In a real implementation, you would map exercises to muscle groups and calculate volume per group
         
         // New: Calculate progress metrics
-        const progressMetrics = {
+        const progressMetrics: ProgressMetrics = {
           volumeChange: 0,
           volumeChangePercentage: 0,
-          strengthTrend: 'stable' as const,
+          strengthTrend: 'stable',
           frequencyChange: 0,
           consistencyScore: 0
         };
