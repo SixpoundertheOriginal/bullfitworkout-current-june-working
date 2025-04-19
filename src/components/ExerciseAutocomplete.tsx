@@ -59,6 +59,8 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
   
   const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id'>>({
     name: "",
+    created_at: new Date().toISOString(),
+    user_id: "",
     description: "",
     primary_muscle_groups: [],
     secondary_muscle_groups: [],
@@ -68,12 +70,13 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     instructions: {},
     is_compound: false,
     tips: [],
-    variations: []
+    variations: [],
+    metadata: {}
   });
   
-  const [tempMuscleGroup, setTempMuscleGroup] = useState("");
-  const [tempEquipment, setTempEquipment] = useState("");
-  const [tempSecondaryMuscle, setTempSecondaryMuscle] = useState("");
+  const [tempMuscleGroup, setTempMuscleGroup] = useState<MuscleGroup | "">("");
+  const [tempEquipment, setTempEquipment] = useState<EquipmentType | "">("");
+  const [tempSecondaryMuscle, setTempSecondaryMuscle] = useState<MuscleGroup | "">("");
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
@@ -110,6 +113,8 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     
     setNewExercise({
       name: "",
+      created_at: new Date().toISOString(),
+      user_id: "",
       description: "",
       primary_muscle_groups: [],
       secondary_muscle_groups: [],
@@ -119,7 +124,8 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
       instructions: {},
       is_compound: false,
       tips: [],
-      variations: []
+      variations: [],
+      metadata: {}
     });
   };
 

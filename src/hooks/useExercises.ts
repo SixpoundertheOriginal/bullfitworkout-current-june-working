@@ -33,8 +33,29 @@ export function useExercises() {
 
       console.log("Fetched exercises data:", data);
       
-      // Normalize exercise data with weight unit conversions if needed
+      // Normalize and convert database results to Exercise type
       const normalizedExercises = (data || []).map(exercise => {
+        // Transform database fields to match our Exercise interface
+        const transformedExercise: Exercise = {
+          id: exercise.id,
+          name: exercise.name,
+          created_at: exercise.created_at,
+          user_id: exercise.created_by || user.id, // Use created_by as user_id if available
+          description: exercise.description || "",
+          primary_muscle_groups: exercise.primary_muscle_groups || [],
+          secondary_muscle_groups: exercise.secondary_muscle_groups || [],
+          equipment_type: exercise.equipment_type || [],
+          movement_pattern: exercise.movement_pattern || "push",
+          difficulty: exercise.difficulty || "beginner",
+          instructions: exercise.instructions || {},
+          is_compound: Boolean(exercise.is_compound),
+          tips: exercise.tips || [],
+          variations: exercise.variations || [],
+          metadata: {
+            ...(exercise.metadata || {}),
+          }
+        };
+          
         // If exercise has default weights in metadata, convert them to current unit preference
         if (exercise.metadata && typeof exercise.metadata === 'object') {
           const metadata = exercise.metadata as Record<string, any>;
@@ -48,20 +69,18 @@ export function useExercises() {
             );
             
             // Create a new object reference to trigger renders when unit changes
-            return {
-              ...exercise,
-              metadata: {
-                ...metadata,
-                normalized_weight: convertedWeight,
-                display_unit: weightUnit
-              }
+            transformedExercise.metadata = {
+              ...transformedExercise.metadata,
+              normalized_weight: convertedWeight,
+              display_unit: weightUnit
             };
           }
         }
-        return exercise;
+        
+        return transformedExercise;
       });
       
-      return normalizedExercises as Exercise[];
+      return normalizedExercises;
     } catch (error) {
       console.error("Exception in fetchExercises:", error);
       return [];
@@ -104,8 +123,27 @@ export function useExercises() {
       throw error;
     }
 
-    console.log("Exercise created successfully:", data);
-    return data as Exercise;
+    // Transform the returned data to match our Exercise interface
+    const transformedExercise: Exercise = {
+      id: data.id,
+      name: data.name,
+      created_at: data.created_at,
+      user_id: data.created_by || user.id,
+      description: data.description || "",
+      primary_muscle_groups: data.primary_muscle_groups || [],
+      secondary_muscle_groups: data.secondary_muscle_groups || [],
+      equipment_type: data.equipment_type || [],
+      movement_pattern: data.movement_pattern || "push",
+      difficulty: data.difficulty || "beginner",
+      instructions: data.instructions || {},
+      is_compound: Boolean(data.is_compound),
+      tips: data.tips || [],
+      variations: data.variations || [],
+      metadata: data.metadata || {}
+    };
+
+    console.log("Exercise created successfully:", transformedExercise);
+    return transformedExercise;
   };
 
   const exercisesQuery = useQuery({
