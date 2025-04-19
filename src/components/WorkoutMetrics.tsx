@@ -110,7 +110,7 @@ export const WorkoutMetrics = ({
             isActive={showRestTimer} 
             onComplete={onRestTimerComplete}
             resetSignal={resetCounter}
-            onTimeUpdate={onTimeUpdate}
+            onTimeUpdate={onRestTimeUpdate}
             onManualStart={onManualRestStart}
           />
         </div>
