@@ -612,7 +612,7 @@ const TrainingSession = () => {
     });
   };
 
-  const metrics = useWorkoutMetrics(exercises, time, weightUnit);
+  const { metrics, exerciseGroups } = useWorkoutMetrics(exercises, time, weightUnit);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
