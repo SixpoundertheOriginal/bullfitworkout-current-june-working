@@ -220,12 +220,58 @@ export const WorkoutMetrics = ({
       <div className="px-4 py-2">
         <div className="flex justify-between text-xs font-medium mb-1">
           <span className="text-gray-400">Progress</span>
-          <span className="text-violet-400">{Math.round(completionPercentage)}%</span>
+          <span 
+            className={cn(
+              "transition-colors duration-300",
+              completionPercentage >= 75 ? "text-emerald-400" :
+              completionPercentage >= 50 ? "text-teal-400" :
+              completionPercentage >= 25 ? "text-sky-400" :
+              "text-violet-400"
+            )}
+          >
+            {Math.round(completionPercentage)}%
+          </span>
         </div>
-        <Progress 
-          value={completionPercentage} 
-          className="h-1.5 bg-gray-800/50 overflow-hidden rounded-full [&>div]:bg-gradient-to-r [&>div]:from-violet-500 [&>div]:to-fuchsia-500"
-        />
+        <div className="relative">
+          <Progress 
+            value={completionPercentage} 
+            className={cn(
+              "h-2 bg-gray-800/50 overflow-hidden rounded-full transition-all duration-300",
+              "[&>div]:bg-gradient-to-r",
+              completionPercentage >= 75 ? "[&>div]:from-teal-500 [&>div]:to-emerald-500" :
+              completionPercentage >= 50 ? "[&>div]:from-sky-500 [&>div]:to-teal-500" :
+              completionPercentage >= 25 ? "[&>div]:from-violet-500 [&>div]:to-sky-500" :
+              "[&>div]:from-violet-500 [&>div]:to-fuchsia-500"
+            )}
+          />
+          
+          <div className="absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-1 pointer-events-none">
+            {Array.from({ length: totalSets }).map((_, index) => {
+              const isCompleted = index < completedSets;
+              const position = `${(index / (totalSets - 1)) * 100}%`;
+              
+              return (
+                <div 
+                  key={index}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-300 transform",
+                    isCompleted ? 
+                      cn(
+                        "bg-white shadow-lg scale-100",
+                        index === completedSets - 1 && "animate-pulse"
+                      ) : 
+                      "bg-gray-700 scale-75"
+                  )}
+                  style={{
+                    position: 'absolute',
+                    left: position,
+                    transform: `translate(-50%, -50%) scale(${isCompleted ? 1 : 0.75})`
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
