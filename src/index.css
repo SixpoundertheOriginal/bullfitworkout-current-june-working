@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -93,6 +95,18 @@
   .timer-button {
     @apply p-2 rounded-full hover:bg-gray-800 transition-colors 
            disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .mono-text {
+    @apply font-mono text-base tracking-tight;
+  }
+  
+  .title-large {
+    @apply text-3xl font-sans font-bold tracking-tight;
+  }
+  
+  .title-small {
+    @apply text-xl font-sans font-semibold tracking-tight;
   }
 }
 
