@@ -610,7 +610,7 @@ const TrainingSession = () => {
         className="sticky top-[73px] z-10 mx-4 mt-4"
       />
       
-      <main className="flex-1 px-4 py-6 pb-24 space-y-6">
+      <main className="flex-1 px-4 py-6 pb-40 space-y-6">
         {Object.keys(exercises).length > 0 ? (
           <div className="space-y-6">
             {Object.keys(exercises || {}).map((exerciseName) => (

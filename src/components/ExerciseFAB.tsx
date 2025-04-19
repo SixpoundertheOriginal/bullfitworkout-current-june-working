@@ -20,7 +20,7 @@ export const ExerciseFAB = ({ onClick, className, visible = true }: ExerciseFABP
       iconOnly
       onClick={onClick}
       className={cn(
-        "fixed bottom-6 right-6 z-50",
+        "fixed bottom-24 right-6 z-50", // Raised position to avoid overlapping with AddExerciseBar
         "transform transition-all duration-300 ease-in-out",
         "bg-gradient-to-r from-purple-600 to-pink-500",
         "hover:from-purple-700 hover:to-pink-600",
