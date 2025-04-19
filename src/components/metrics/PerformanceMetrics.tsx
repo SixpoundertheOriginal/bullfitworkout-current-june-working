@@ -10,7 +10,8 @@ interface PerformanceMetricsProps {
 export const PerformanceMetrics = ({ className }: PerformanceMetricsProps) => {
   return (
     <div className={cn(
-      "space-y-4 bg-gray-900/70 p-4 rounded-xl border border-gray-800", 
+      "space-y-4 bg-gray-900/70 p-4 rounded-xl border border-gray-800 relative", 
+      "z-10", // Added explicit z-index
       className
     )}>
       <div className="flex items-center gap-2 mb-2">

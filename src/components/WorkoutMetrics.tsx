@@ -82,7 +82,7 @@ export const WorkoutMetrics = ({
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   return (
-    <div className={className}>
+    <div className={cn("relative", className)}>
       <div className="grid grid-cols-4 gap-3 p-4">
         <MetricCard
           icon={Clock}
@@ -150,7 +150,7 @@ export const WorkoutMetrics = ({
         </div>
       </div>
       
-      <div className="px-4 py-2">
+      <div className="px-4 py-2 z-0 relative">
         <PerformanceMetrics />
       </div>
     </div>
