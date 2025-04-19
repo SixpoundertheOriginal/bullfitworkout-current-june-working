@@ -7,6 +7,7 @@ export type TrainingType = 'Strength' | 'Hypertrophy' | 'Cardio' | 'Calisthenics
 interface TrainingTypeTagProps {
   type: TrainingType;
   className?: string;
+  size?: 'sm' | 'default';
   variant?: 'default' | 'large';
 }
 
@@ -19,10 +20,11 @@ const typeStyles: Record<TrainingType, string> = {
   'Yoga': 'bg-green-500/20 text-green-200 border-green-500/30 hover:bg-green-500/30'
 };
 
-export const TrainingTypeTag = ({ type, className, variant = 'default' }: TrainingTypeTagProps) => {
+export const TrainingTypeTag = ({ type, className, size = 'default', variant = 'default' }: TrainingTypeTagProps) => {
   return (
     <span className={cn(
       "inline-flex items-center rounded-full border transition-colors",
+      size === 'sm' ? "px-2 py-0.5 text-xs font-medium" : 
       variant === 'default' ? "px-2.5 py-0.5 text-xs font-medium" : "px-4 py-2 text-sm font-semibold",
       typeStyles[type],
       className

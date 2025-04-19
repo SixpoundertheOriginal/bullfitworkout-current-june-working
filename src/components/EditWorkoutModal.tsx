@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Dialog,
@@ -12,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrainingTypeTag, trainingTypes } from "@/components/TrainingTypeTag";
+import { TrainingTypeTag, trainingTypes, TrainingType } from "@/components/TrainingTypeTag";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -152,7 +153,7 @@ export function EditWorkoutModal({ workout, open, onOpenChange, onSave }: EditWo
                   <SelectValue placeholder="Select training type" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                  {Object.keys(trainingTypes).map((type) => (
+                  {trainingTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       <div className="flex items-center">
                         <TrainingTypeTag type={type} size="sm" />
