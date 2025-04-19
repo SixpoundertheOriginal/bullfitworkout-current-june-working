@@ -1,9 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Timer, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
 
 interface TopRestTimerProps {
   isActive: boolean;
@@ -23,14 +22,17 @@ export const TopRestTimer = ({
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
   const maxTime = 300; // 5 minutes max
-  const timerRef = React.useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTickRef = useRef<number>(0);
 
   // This effect handles the reset signal
   useEffect(() => {
     if (resetSignal > 0) {
       console.log("Reset signal received in TopRestTimer:", resetSignal);
+      clearTimerInterval();
       setElapsedTime(0);
       setIsTimerActive(true);
+      startTimerInterval();
     }
   }, [resetSignal]);
   
@@ -39,42 +41,59 @@ export const TopRestTimer = ({
     console.log("TopRestTimer: isActive changed:", isActive);
     if (isActive) {
       setIsTimerActive(true);
+      startTimerInterval();
     } else {
       setIsTimerActive(false);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      clearTimerInterval();
       setElapsedTime(0);
     }
 
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      clearTimerInterval();
     };
   }, [isActive]);
 
-  // This effect handles the timer countdown
-  useEffect(() => {
-    if (isTimerActive && isActive) {
-      console.log("TopRestTimer: Timer is active, counting up from", elapsedTime);
-      timerRef.current = setTimeout(() => {
-        if (elapsedTime < maxTime) {
-          setElapsedTime(prev => {
-            const newTime = prev + 1;
-            if (onTimeUpdate) onTimeUpdate(newTime);
-            return newTime;
-          });
-        } else {
-          onComplete();
-        }
-      }, 1000);
-
-      return () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-      };
+  const clearTimerInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-  }, [elapsedTime, isTimerActive, isActive, maxTime, onTimeUpdate, onComplete]);
+  };
+
+  const startTimerInterval = () => {
+    clearTimerInterval(); // Ensure no duplicate timers
+    
+    lastTickRef.current = Date.now();
+    intervalRef.current = setInterval(() => {
+      const now = Date.now();
+      const deltaSeconds = Math.floor((now - lastTickRef.current) / 1000);
+      
+      if (deltaSeconds >= 1) {
+        lastTickRef.current = now;
+        
+        setElapsedTime(prev => {
+          const newTime = prev + deltaSeconds;
+          
+          if (newTime >= maxTime) {
+            clearTimerInterval();
+            setIsTimerActive(false);
+            if (onComplete) onComplete();
+            return maxTime;
+          }
+          
+          if (onTimeUpdate) onTimeUpdate(newTime);
+          return newTime;
+        });
+      }
+    }, 250); // Check more frequently for smoother updates
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearTimerInterval();
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -84,8 +103,10 @@ export const TopRestTimer = ({
 
   const handleManualStart = () => {
     console.log("Manually starting rest timer");
+    clearTimerInterval();
+    setElapsedTime(0);
     setIsTimerActive(true);
-    setElapsedTime(0); // Reset the timer when manually started
+    startTimerInterval();
     if (onManualStart) onManualStart();
   };
 

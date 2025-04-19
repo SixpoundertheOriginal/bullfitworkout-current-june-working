@@ -1,10 +1,9 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { CircularProgress } from "./ui/circular-progress";
 import { Timer, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
 
 interface RestTimerControlsProps {
   elapsedTime: number;
@@ -36,6 +35,7 @@ export const RestTimerControls = ({
   compact = false,
 }: RestTimerControlsProps) => {
   const progress = Math.min((elapsedTime / maxTime) * 100, 100);
+  const toastObserverRef = useRef<MutationObserver | null>(null);
   
   useEffect(() => {
     console.log("RestTimerControls useEffect:", { elapsedTime, isActive, progress });
@@ -49,26 +49,33 @@ export const RestTimerControls = ({
     };
     
     // Create a MutationObserver to watch for toast elements
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node instanceof HTMLElement && 
-                (node.classList.contains('toast') || 
-                 node.getAttribute('role') === 'status' || 
-                 node.getAttribute('data-sonner-toast') === 'true')) {
-              resetOnToast();
-            }
-          });
-        }
+    if (!toastObserverRef.current) {
+      toastObserverRef.current = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.addedNodes.length > 0) {
+            mutation.addedNodes.forEach((node) => {
+              if (node instanceof HTMLElement && 
+                  (node.classList.contains('toast') || 
+                   node.getAttribute('role') === 'status' || 
+                   node.getAttribute('data-sonner-toast') === 'true')) {
+                if (node.textContent && node.textContent.includes("logged successfully")) {
+                  resetOnToast();
+                }
+              }
+            });
+          }
+        });
       });
-    });
-    
-    // Start observing the document body
-    observer.observe(document.body, { childList: true, subtree: true });
+      
+      // Start observing the document body
+      toastObserverRef.current.observe(document.body, { childList: true, subtree: true });
+    }
     
     return () => {
-      observer.disconnect();
+      if (toastObserverRef.current) {
+        toastObserverRef.current.disconnect();
+        toastObserverRef.current = null;
+      }
     };
   }, [elapsedTime, isActive, progress, onReset]);
   

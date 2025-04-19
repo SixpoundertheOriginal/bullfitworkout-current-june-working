@@ -20,7 +20,8 @@ export const RestTimer = ({
 }: RestTimerProps) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTickRef = useRef<number>(0);
   
   const progressPercentage = Math.min((elapsedTime / maxTime) * 100, 100);
 
@@ -28,20 +29,61 @@ export const RestTimer = ({
     if (isVisible) {
       setElapsedTime(0);
       setIsActive(true);
+      startTimerInterval();
+    } else {
+      clearTimerInterval();
     }
-  }, [isVisible]);
+    
+    return () => {
+      clearTimerInterval();
+    };
+  }, [isVisible, maxTime]);
 
   useEffect(() => {
     if (isActive) {
-      timerRef.current = setTimeout(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
+      startTimerInterval();
+    } else {
+      clearTimerInterval();
     }
-
+    
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimerInterval();
     };
-  }, [elapsedTime, isActive]);
+  }, [isActive, maxTime]);
+
+  const clearTimerInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const startTimerInterval = () => {
+    clearTimerInterval(); // Ensure no duplicate timers
+    
+    lastTickRef.current = Date.now();
+    intervalRef.current = setInterval(() => {
+      const now = Date.now();
+      const deltaSeconds = Math.floor((now - lastTickRef.current) / 1000);
+      
+      if (deltaSeconds >= 1) {
+        lastTickRef.current = now;
+        
+        setElapsedTime(prev => {
+          const newTime = prev + deltaSeconds;
+          
+          if (newTime >= maxTime) {
+            clearTimerInterval();
+            setIsActive(false);
+            if (onComplete) onComplete();
+            return maxTime;
+          }
+          
+          return newTime;
+        });
+      }
+    }, 250); // Check more frequently for smoother updates
+  };
 
   const toggleTimer = () => {
     setIsActive(!isActive);
@@ -50,6 +92,11 @@ export const RestTimer = ({
   const resetTimer = () => {
     setElapsedTime(0);
     setIsActive(true);
+    
+    if (isActive) {
+      clearTimerInterval();
+      startTimerInterval();
+    }
   };
 
   const formatTime = (seconds: number) => {
