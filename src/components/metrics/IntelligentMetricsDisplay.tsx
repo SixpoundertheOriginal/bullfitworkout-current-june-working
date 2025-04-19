@@ -20,12 +20,10 @@ export const IntelligentMetricsDisplay = ({
   efficiency,
   className
 }: IntelligentMetricsDisplayProps) => {
-  // Calculate volume data for each exercise
   const volumeData = Object.entries(exercises || {}).map(([exerciseName, sets]) => {
     const currentVolume = sets.reduce((total, set) => total + calculateSetVolume(set), 0);
     const completedSets = sets.filter(set => set.completed);
     
-    // Calculate trend based on set progression
     const setVolumes = completedSets.map(set => calculateSetVolume(set));
     const firstSetVolume = setVolumes[0] || 0;
     const lastSetVolume = setVolumes[setVolumes.length - 1] || 0;
@@ -41,18 +39,27 @@ export const IntelligentMetricsDisplay = ({
       trend,
       percentChange
     };
-  }).sort((a, b) => b.volume - a.volume); // Sort by volume descending
+  }).sort((a, b) => b.volume - a.volume);
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn(
+      "space-y-4 opacity-0 translate-y-4",
+      "animate-[enter_0.4s_ease-out_forwards]",
+      className
+    )}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {volumeData.map((data, index) => (
           <ExerciseVolumeCard
-            key={index}
+            key={data.exerciseName}
             exerciseName={data.exerciseName}
             volume={data.volume}
             trend={data.trend}
             percentChange={data.percentChange}
+            className="animate-[fadeIn_0.3s_ease-out_forwards]"
+            style={{
+              animationDelay: `${index * 0.1}s`,
+              opacity: 0
+            }}
           />
         ))}
       </div>

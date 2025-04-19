@@ -9,6 +9,7 @@ interface ExerciseVolumeCardProps {
   trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
   percentChange: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const ExerciseVolumeCard = ({
@@ -16,7 +17,8 @@ export const ExerciseVolumeCard = ({
   volume,
   trend,
   percentChange,
-  className
+  className,
+  style
 }: ExerciseVolumeCardProps) => {
   const getTrendColor = () => {
     switch (trend) {
@@ -43,11 +45,17 @@ export const ExerciseVolumeCard = ({
   };
 
   return (
-    <div className={cn(
-      "p-4 rounded-xl border border-gray-800 bg-gray-900/50",
-      "hover:bg-gray-900/80 transition-all duration-200",
-      className
-    )}>
+    <div 
+      className={cn(
+        "p-4 rounded-xl border border-gray-800",
+        "bg-gray-900/50 backdrop-blur-sm",
+        "hover:bg-gray-900/80 transition-all duration-200",
+        "hover:border-gray-700 hover:shadow-lg",
+        "transform hover:-translate-y-0.5",
+        className
+      )}
+      style={style}
+    >
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3 className="text-sm font-medium text-gray-200">{exerciseName}</h3>
@@ -55,7 +63,7 @@ export const ExerciseVolumeCard = ({
             {volume.toLocaleString()}
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 bg-gray-800/50 px-2 py-1 rounded-full">
           {getTrendIcon()}
           <span className={cn("text-sm font-medium", getTrendColor())}>
             {percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%
