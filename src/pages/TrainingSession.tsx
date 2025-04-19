@@ -618,37 +618,8 @@ const TrainingSession = () => {
           </div>
         )}
 
-        <div className="relative mt-8 pt-8 hidden">
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-gray-800" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-black px-3 text-lg font-medium text-gray-400">
-              Add Exercise
-            </span>
-          </div>
-        </div>
-
         <div className="rounded-xl bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-4">
-          <form onSubmit={handleAddExercise} className="space-y-4">
-            <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
-            <Button 
-              type="submit" 
-              disabled={!newExerciseName.trim()}
-              className="w-full group"
-            >
-              <div className="flex items-center justify-center w-16 h-16 rounded-full 
-                bg-gradient-to-r from-purple-600 to-pink-500 
-                shadow-lg transition-all duration-300 
-                group-hover:scale-105 group-active:scale-95">
-                <PlusCircle 
-                  className="text-white" 
-                  size={32} 
-                />
-              </div>
-              <span className="sr-only">Add Exercise</span>
-            </Button>
-          </form>
+          <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
         </div>
         
         <Button 
@@ -659,6 +630,11 @@ const TrainingSession = () => {
           Complete Workout
         </Button>
       </main>
+
+      <ExerciseFAB 
+        onClick={handleAddExercise} 
+        visible={mainStartButtonVisible}
+      />
     </div>
   );
 };
