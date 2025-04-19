@@ -22,6 +22,7 @@ import { TrainingTypeTag, trainingTypes } from "@/components/TrainingTypeTag";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TopRestTimer } from '@/components/TopRestTimer';
+import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 
 interface LocationState {
   trainingType?: string;
@@ -652,14 +653,38 @@ const TrainingSession = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="p-6 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm">
-              <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                No exercises added yet
-              </p>
-              <p className="text-gray-400 mt-2">Add your first exercise below</p>
-            </div>
-          </div>
+          <EmptyWorkoutState 
+            onTemplateSelect={(templateType) => {
+              const templateExercises = {
+                "Push": ["Bench Press", "Shoulder Press", "Tricep Extensions"],
+                "Pull": ["Pull-ups", "Barbell Rows", "Bicep Curls"],
+                "Legs": ["Squats", "Deadlifts", "Leg Press"],
+                "Full Body": ["Bench Press", "Pull-ups", "Squats", "Shoulder Press"]
+              };
+
+              const exercises = templateExercises[templateType] || [];
+              
+              const newExercises = {};
+              exercises.forEach(exercise => {
+                newExercises[exercise] = [
+                  { weight: 0, reps: 0, completed: false, isEditing: false, restTime: 60 }
+                ];
+              });
+
+              setExercises(newExercises);
+              if (exercises.length > 0) {
+                setCurrentExercise(exercises[0]);
+              }
+
+              toast.success(`${templateType} template added to your workout`, {
+                style: {
+                  backgroundColor: "rgba(20, 20, 20, 0.9)",
+                  color: "white",
+                  border: "1px solid rgba(120, 120, 120, 0.3)",
+                },
+              });
+            }} 
+          />
         )}
 
         {Object.keys(exercises).length > 0 && (
