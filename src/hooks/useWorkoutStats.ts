@@ -218,7 +218,7 @@ export function useWorkoutStats(limit: number = 50) {
           tags: Set<string>;
         }> = {};
         
-        // Extract all tags used across workouts
+        // Extract all tags used across workouts - handle case where tags might not exist
         const allTags = workouts.flatMap(w => w.tags || []).filter(Boolean);
         const tagMap: Record<string, {
           count: number;
@@ -238,6 +238,7 @@ export function useWorkoutStats(limit: number = 50) {
             hour >= 11 && hour < 17 ? 'afternoon' :
             hour >= 17 && hour < 22 ? 'evening' : 'night';
           
+          // Handle case where tags might not exist
           const tags = workout.tags || [];
           tags.forEach(tag => {
             if (!tag) return;
@@ -282,6 +283,7 @@ export function useWorkoutStats(limit: number = 50) {
         exerciseSets?.forEach(set => {
           const name = set.exercise_name;
           const workout = workouts.find(w => w.id === set.workout_id);
+          // Handle case where tags might not exist
           const tags = workout?.tags || [];
           
           if (!exerciseData[name]) {
