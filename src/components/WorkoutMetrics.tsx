@@ -3,7 +3,6 @@ import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { MetricCard } from "./metrics/MetricCard";
-import { PerformanceMetrics } from "./metrics/PerformanceMetrics";
 import { TopRestTimer } from "./TopRestTimer";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { cn } from "@/lib/utils";
@@ -147,10 +146,6 @@ export const WorkoutMetrics = ({
             </Button>
           )}
         </div>
-      </div>
-      
-      <div className="px-4 py-2">
-        <PerformanceMetrics />
       </div>
     </div>
   );
