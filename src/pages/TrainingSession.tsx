@@ -589,55 +589,82 @@ const TrainingSession = () => {
         className="sticky top-[73px] z-10 mx-4 mt-4"
       />
       
-      <main className="flex-1 px-4 py-6 pb-24 space-y-6">
-        {Object.keys(exercises).length > 0 ? (
-          <div className="space-y-6">
-            {Object.keys(exercises || {}).map((exerciseName) => (
-              <ExerciseCard
-                key={exerciseName}
-                exercise={exerciseName}
-                sets={exercises[exerciseName] || []}
-                onAddSet={handleAddSet}
-                onCompleteSet={handleCompleteSet}
-                onRemoveSet={handleRemoveSet}
-                onEditSet={handleEditSet}
-                onSaveSet={handleSaveSet}
-                onWeightChange={handleSetWeightChange}
-                onRepsChange={handleSetRepsChange}
-                onRestTimeChange={handleSetRestTimeChange}
-                onWeightIncrement={handleWeightIncrement}
-                onRepsIncrement={handleRepsIncrement}
-                onRestTimeIncrement={handleRestTimeIncrement}
-                isActive={exerciseName === currentExercise}
-                onShowRestTimer={() => setShowRestTimer(true)}
-                onResetRestTimer={resetRestTimer}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="p-6 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm">
-              <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                No exercises added yet
-              </p>
-              <p className="text-gray-400 mt-2">Add your first exercise below</p>
+      <main className="flex-1 px-4 py-6 pb-24 space-y-6 flex flex-col justify-between">
+        <div className="flex-grow">
+          {Object.keys(exercises).length > 0 ? (
+            <div className="space-y-6">
+              {Object.keys(exercises || {}).map((exerciseName) => (
+                <ExerciseCard
+                  key={exerciseName}
+                  exercise={exerciseName}
+                  sets={exercises[exerciseName] || []}
+                  onAddSet={handleAddSet}
+                  onCompleteSet={handleCompleteSet}
+                  onRemoveSet={handleRemoveSet}
+                  onEditSet={handleEditSet}
+                  onSaveSet={handleSaveSet}
+                  onWeightChange={handleSetWeightChange}
+                  onRepsChange={handleSetRepsChange}
+                  onRestTimeChange={handleSetRestTimeChange}
+                  onWeightIncrement={handleWeightIncrement}
+                  onRepsIncrement={handleRepsIncrement}
+                  onRestTimeIncrement={handleRestTimeIncrement}
+                  isActive={exerciseName === currentExercise}
+                  onShowRestTimer={() => setShowRestTimer(true)}
+                  onResetRestTimer={resetRestTimer}
+                />
+              ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-12">
+              <div className="p-6 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm">
+                <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                  No exercises added yet
+                </p>
+                <p className="text-gray-400 mt-2">Add your first exercise below</p>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-col items-center justify-center text-center space-y-4">
+          {Object.keys(exercises).length > 0 ? (
+            <Button 
+              ref={startButtonRef}
+              onClick={finishWorkout}
+              className="w-64 h-64 rounded-full text-lg bg-gradient-to-r from-purple-600 to-pink-500 
+                hover:from-purple-700 hover:to-pink-600 font-medium shadow-2xl hover:shadow-purple-500/50
+                transform transition-all duration-300 active:scale-[0.98] 
+                flex flex-col items-center justify-center space-y-2 
+                border border-purple-500/20"
+            >
+              <div className="bg-white/20 rounded-full p-3 mb-2">
+                <Weight size={32} className="text-white" />
+              </div>
+              <span className="text-white text-xl">Complete Workout</span>
+            </Button>
+          ) : (
+            <div className="opacity-50 pointer-events-none">
+              <Button 
+                disabled
+                className="w-64 h-64 rounded-full text-lg bg-gradient-to-r from-purple-600/30 to-pink-500/30 
+                  font-medium shadow-xl 
+                  flex flex-col items-center justify-center space-y-2 
+                  border border-purple-500/10"
+              >
+                <div className="bg-white/10 rounded-full p-3 mb-2">
+                  <Weight size={32} className="text-white/50" />
+                </div>
+                <span className="text-white/50 text-xl">Complete Workout</span>
+              </Button>
+              <p className="text-white/50 mt-4">Add exercises to enable workout completion</p>
+            </div>
+          )}
+        </div>
 
         <div className="rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 shadow-lg">
           <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
         </div>
-        
-        <Button 
-          ref={startButtonRef}
-          onClick={finishWorkout}
-          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 
-            font-medium shadow-lg hover:shadow-purple-500/25 border border-purple-500/20
-            transform transition-all duration-300 active:scale-[0.98]"
-        >
-          Complete Workout
-        </Button>
       </main>
 
       <ExerciseFAB 
