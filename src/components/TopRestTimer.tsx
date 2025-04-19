@@ -1,6 +1,8 @@
+
 import React, { useEffect } from 'react';
 import { Timer } from 'lucide-react';
 import { RestTimerControls } from './RestTimerControls';
+import { cn } from '@/lib/utils';
 
 interface TopRestTimerProps {
   isActive: boolean;
@@ -20,16 +22,13 @@ export const TopRestTimer = ({
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
 
-  // Reset timer whenever resetSignal changes
   useEffect(() => {
     if (isActive && resetSignal > 0) {
-      console.log(`Timer reset with signal: ${resetSignal}`);
       setElapsedTime(0);
       setIsTimerActive(true);
     }
   }, [resetSignal, isActive]);
   
-  // Handle activation/deactivation
   useEffect(() => {
     if (isActive) {
       setIsTimerActive(true);
@@ -41,14 +40,12 @@ export const TopRestTimer = ({
     }
   }, [isActive]);
 
-  // Timer tick effect
   useEffect(() => {
     if (isTimerActive && isActive) {
       timerRef.current = setTimeout(() => {
         if (elapsedTime < maxTime) {
           setElapsedTime(prev => {
             const newTime = prev + 1;
-            // Notify parent of time update
             onTimeUpdate?.(newTime);
             return newTime;
           });
@@ -61,33 +58,32 @@ export const TopRestTimer = ({
     }
   }, [elapsedTime, isTimerActive, isActive, maxTime, onTimeUpdate]);
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (!isActive) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col items-center gap-1">
         <Timer size={20} className="text-purple-400 mb-1" />
         <span className="text-xs text-gray-400 font-medium">Rest</span>
-        <span className="text-xs text-gray-400 font-mono ml-1">00:00</span>
+        <span className="text-sm font-mono text-gray-500">00:00</span>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center">
-      <Timer size={20} className="text-purple-400 mb-1 animate-pulse" />
-      <RestTimerControls
-        elapsedTime={elapsedTime}
-        maxTime={maxTime}
-        isActive={isTimerActive}
-        onPause={() => setIsTimerActive(false)}
-        onResume={() => setIsTimerActive(true)}
-        onReset={() => setElapsedTime(0)}
-        onSkip={() => {
-          setElapsedTime(0);
-          onComplete();
-        }}
-        compact={true}
-      />
-      <span className="text-xs text-gray-400 font-medium">Rest</span>
+      <Timer size={20} className={cn(
+        "text-purple-400 mb-1",
+        isTimerActive && "animate-pulse"
+      )} />
+      <span className="text-lg font-mono text-white">
+        {formatTime(elapsedTime)}
+      </span>
+      <span className="text-xs text-gray-400 font-medium mt-1">Rest</span>
     </div>
   );
 };

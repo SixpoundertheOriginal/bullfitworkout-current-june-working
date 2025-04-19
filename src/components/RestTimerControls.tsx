@@ -3,6 +3,7 @@ import React from "react";
 import { CircularProgress } from "./ui/circular-progress";
 import { Timer, X, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface RestTimerControlsProps {
   elapsedTime: number;
@@ -16,7 +17,6 @@ interface RestTimerControlsProps {
   compact?: boolean;
 }
 
-// Create the formatTime function
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -38,24 +38,24 @@ export const RestTimerControls = ({
 
   if (compact) {
     return (
-      <div className={`flex flex-col items-center ${className}`}>
-        <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
+      <div className={cn("flex flex-col items-center gap-1", className)}>
+        <span className="font-mono text-white text-lg">{formatTime(elapsedTime)}</span>
       </div>
     );
   }
 
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
+    <div className={cn("flex items-center gap-4", className)}>
       <div className="relative flex items-center justify-center">
-        <CircularProgress value={progress} className="w-16 h-16" />
-        <span className="absolute font-mono text-sm">{formatTime(elapsedTime)}</span>
+        <CircularProgress value={progress} className="w-16 h-16 [&>circle]:text-purple-500/20 [&>circle:last-child]:text-purple-500" />
+        <span className="absolute font-mono text-white text-sm">{formatTime(elapsedTime)}</span>
       </div>
       
       <div className="flex gap-2">
         <Button
           variant="outline" 
           size="icon"
-          className="bg-gray-800/50 border-gray-700 hover:bg-gray-700"
+          className="bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
           onClick={isActive ? onPause : onResume}
         >
           {isActive ? <Pause size={18} /> : <Play size={18} />}
@@ -63,7 +63,7 @@ export const RestTimerControls = ({
         <Button
           variant="outline"
           size="icon" 
-          className="bg-gray-800/50 border-gray-700 hover:bg-gray-700"
+          className="bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
           onClick={onSkip}
         >
           <X size={18} />

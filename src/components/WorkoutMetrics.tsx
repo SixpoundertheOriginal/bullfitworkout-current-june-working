@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { Timer, Dumbbell, BarChart3 } from "lucide-react";
+import { Timer, Dumbbell, BarChart3, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { TopRestTimer } from "./TopRestTimer";
@@ -12,7 +12,7 @@ interface WorkoutMetricsProps {
   totalSets: number;
   showRestTimer: boolean;
   onRestTimerComplete: () => void;
-  onRestTimeUpdate?: (time: number) => void; // Add this prop
+  onRestTimeUpdate?: (time: number) => void;
   className?: string;
 }
 
@@ -26,17 +26,13 @@ export const WorkoutMetrics = ({
   onRestTimeUpdate,
   className 
 }: WorkoutMetricsProps) => {
-  // Add a reset counter to force timer resets
   const [resetCounter, setResetCounter] = React.useState(0);
   
-  // Effect to detect changes in showRestTimer and force reset
   useEffect(() => {
     if (showRestTimer) {
-      // Increment the reset counter each time the timer should show
       setResetCounter(prev => prev + 1);
-      console.log(`Reset timer triggered: ${resetCounter + 1}`);
     }
-  }, [showRestTimer]); // Only depend on showRestTimer status
+  }, [showRestTimer]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -48,31 +44,26 @@ export const WorkoutMetrics = ({
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-4 bg-gray-900/95 backdrop-blur-sm p-4 rounded-md shadow-lg">
-        <div className="flex flex-col items-center">
-          <div className="relative">
-            <Timer className="text-purple-400 mb-1" size={20} />
-            <div className="absolute -right-1 -top-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-          </div>
-          <span className="text-lg font-mono transition-all duration-300 ease-in-out">{formatTime(time)}</span>
-          <span className="text-xs text-gray-400 font-medium">Time</span>
-        </div>
+      <div className="grid grid-cols-4 bg-gray-900/95 backdrop-blur-sm p-4 rounded-xl border border-gray-800/40 shadow-lg">
+        <MetricItem
+          icon={<Clock className="text-purple-400" size={20} />}
+          value={formatTime(time)}
+          label="Time"
+          pulseIcon
+        />
         
-        <div className="flex flex-col items-center">
-          <Dumbbell className="text-purple-400 mb-1" size={20} />
-          <span className="text-lg font-mono transition-all duration-300 ease-in-out">{exerciseCount}</span>
-          <span className="text-xs text-gray-400 font-medium">Exercises</span>
-        </div>
+        <MetricItem
+          icon={<Dumbbell className="text-purple-400" size={20} />}
+          value={exerciseCount.toString()}
+          label="Exercises"
+        />
         
-        <div className="flex flex-col items-center">
-          <BarChart3 className="text-purple-400 mb-1" size={20} />
-          <div className="flex items-baseline">
-            <span className="text-lg font-mono transition-all duration-300 ease-in-out">{completedSets}</span>
-            <span className="text-xs text-gray-500">/</span>
-            <span className="text-sm text-gray-500">{totalSets}</span>
-          </div>
-          <span className="text-xs text-gray-400 font-medium">Sets</span>
-        </div>
+        <MetricItem
+          icon={<BarChart3 className="text-purple-400" size={20} />}
+          value={`${completedSets}/${totalSets}`}
+          label="Sets"
+          valueClassName="flex items-baseline gap-1 text-lg font-mono"
+        />
 
         <div className="flex flex-col items-center">
           <TopRestTimer 
@@ -85,9 +76,9 @@ export const WorkoutMetrics = ({
       </div>
       
       <div className="px-4 py-2 mt-1">
-        <div className="flex justify-between text-xs text-gray-400 mb-1">
-          <span>Progress</span>
-          <span>{Math.round(completionPercentage)}%</span>
+        <div className="flex justify-between text-xs font-medium mb-1">
+          <span className="text-gray-400">Progress</span>
+          <span className="text-purple-400">{Math.round(completionPercentage)}%</span>
         </div>
         <Progress 
           value={completionPercentage} 
@@ -97,3 +88,35 @@ export const WorkoutMetrics = ({
     </div>
   );
 };
+
+interface MetricItemProps {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  pulseIcon?: boolean;
+  valueClassName?: string;
+}
+
+const MetricItem: React.FC<MetricItemProps> = ({
+  icon,
+  value,
+  label,
+  pulseIcon,
+  valueClassName
+}) => (
+  <div className="flex flex-col items-center">
+    <div className={cn("relative mb-1", pulseIcon && "animate-pulse")}>
+      {icon}
+      {pulseIcon && (
+        <div className="absolute -right-1 -top-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+      )}
+    </div>
+    <span className={cn(
+      "text-lg font-mono text-white transition-all duration-300 ease-in-out",
+      valueClassName
+    )}>
+      {value}
+    </span>
+    <span className="text-xs text-gray-400 font-medium">{label}</span>
+  </div>
+);
