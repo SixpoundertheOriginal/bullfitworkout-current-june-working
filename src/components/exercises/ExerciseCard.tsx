@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ interface ExerciseHistoryData {
     weight: number;
     reps: number;
     sets: number;
+    exerciseGroup?: string;
   }[];
 }
 
@@ -38,26 +40,27 @@ interface ExerciseCardProps {
   onResetRestTimer: () => void;
 }
 
+// Sample exercise history data with exercise groups
 const exerciseHistoryData: ExerciseHistoryData = {
   "Bench Press": [
-    { date: "Apr 10", weight: 135, reps: 10, sets: 3 },
-    { date: "Apr 3", weight: 130, reps: 10, sets: 3 },
-    { date: "Mar 27", weight: 125, reps: 8, sets: 3 },
+    { date: "Apr 10", weight: 135, reps: 10, sets: 3, exerciseGroup: "chest" },
+    { date: "Apr 3", weight: 130, reps: 10, sets: 3, exerciseGroup: "chest" },
+    { date: "Mar 27", weight: 125, reps: 8, sets: 3, exerciseGroup: "chest" },
   ],
   "Squats": [
-    { date: "Apr 9", weight: 185, reps: 8, sets: 3 },
-    { date: "Apr 2", weight: 175, reps: 8, sets: 3 },
-    { date: "Mar 26", weight: 165, reps: 8, sets: 3 },
+    { date: "Apr 9", weight: 185, reps: 8, sets: 3, exerciseGroup: "legs" },
+    { date: "Apr 2", weight: 175, reps: 8, sets: 3, exerciseGroup: "legs" },
+    { date: "Mar 26", weight: 165, reps: 8, sets: 3, exerciseGroup: "legs" },
   ],
   "Deadlift": [
-    { date: "Apr 8", weight: 225, reps: 5, sets: 3 },
-    { date: "Apr 1", weight: 215, reps: 5, sets: 3 },
-    { date: "Mar 25", weight: 205, reps: 5, sets: 3 },
+    { date: "Apr 8", weight: 225, reps: 5, sets: 3, exerciseGroup: "back" },
+    { date: "Apr 1", weight: 215, reps: 5, sets: 3, exerciseGroup: "back" },
+    { date: "Mar 25", weight: 205, reps: 5, sets: 3, exerciseGroup: "back" },
   ],
   "Pull-ups": [
-    { date: "Apr 7", weight: 0, reps: 8, sets: 3 },
-    { date: "Mar 31", weight: 0, reps: 7, sets: 3 },
-    { date: "Mar 24", weight: 0, reps: 6, sets: 3 },
+    { date: "Apr 7", weight: 0, reps: 8, sets: 3, exerciseGroup: "back" },
+    { date: "Mar 31", weight: 0, reps: 7, sets: 3, exerciseGroup: "back" },
+    { date: "Mar 24", weight: 0, reps: 6, sets: 3, exerciseGroup: "back" },
   ],
 };
 
@@ -67,7 +70,7 @@ const getPreviousSessionData = (exerciseName: string) => {
     return history[0];
   }
   
-  return { date: "N/A", weight: 0, reps: 0, sets: 0 };
+  return { date: "N/A", weight: 0, reps: 0, sets: 0, exerciseGroup: "" };
 };
 
 const ExerciseCard = ({ 
@@ -116,6 +119,10 @@ const ExerciseCard = ({
   const volumeDiff = currentVolume > 0 && previousVolume > 0 ? (currentVolume - previousVolume) : 0;
   const volumePercentChange = previousVolume > 0 ? ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
 
+  // Check if this exercise has a group and if there's previous session data with the same group
+  const exerciseGroup = previousSession?.exerciseGroup || "";
+  const hasSameGroupData = exerciseGroup && previousVolume > 0;
+
   return (
     <Card className={`relative overflow-hidden transition-all duration-300 ${
       isActive ? "ring-2 ring-purple-500/50" : "ring-1 ring-gray-800"
@@ -158,6 +165,7 @@ const ExerciseCard = ({
                 onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
                 onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(exercise, index, value) : undefined}
                 weightUnit={weightUnit}
+                currentVolume={set.weight * set.reps}
               />
             ))}
           </div>
@@ -169,7 +177,7 @@ const ExerciseCard = ({
                 <span className="font-mono">{currentVolume.toFixed(1)} {weightUnit}</span>
               </div>
               
-              {previousVolume > 0 && (
+              {hasSameGroupData && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">vs Previous Session</span>
                   <span className={`font-mono ${volumeDiff >= 0 ? "text-green-400" : "text-red-400"}`}>
@@ -179,7 +187,7 @@ const ExerciseCard = ({
               )}
             </div>
 
-            {previousVolume > 0 && (
+            {hasSameGroupData && (
               <Progress 
                 value={currentVolume > 0 ? 
                   Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200) : 0} 

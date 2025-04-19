@@ -80,3 +80,60 @@ export const getTrendIndicator = (
   if (percentChange < -5) return 'decreasing';
   return 'stable';
 };
+
+// Helper function to get exercise group
+export const getExerciseGroup = (exerciseName: string): string => {
+  // This would ideally come from a database table that maps exercises to muscle groups
+  const exerciseGroups: Record<string, string> = {
+    // Chest exercises
+    "Bench Press": "chest",
+    "Incline Bench Press": "chest",
+    "Decline Bench Press": "chest",
+    "Dumbbell Flyes": "chest",
+    "Cable Flyes": "chest",
+    "Push-ups": "chest",
+    
+    // Back exercises
+    "Pull-ups": "back",
+    "Chin-ups": "back",
+    "Lat Pulldowns": "back",
+    "Rows": "back",
+    "Deadlift": "back",
+    
+    // Leg exercises
+    "Squats": "legs",
+    "Leg Press": "legs",
+    "Lunges": "legs",
+    "Leg Extensions": "legs",
+    "Leg Curls": "legs",
+    "Calf Raises": "legs",
+    
+    // Arm exercises
+    "Bicep Curls": "arms",
+    "Tricep Extensions": "arms",
+    "Hammer Curls": "arms",
+    "Skull Crushers": "arms",
+    
+    // Shoulder exercises
+    "Overhead Press": "shoulders",
+    "Lateral Raises": "shoulders",
+    "Front Raises": "shoulders",
+    "Rear Delt Flyes": "shoulders",
+    
+    // Core exercises
+    "Planks": "core",
+    "Crunches": "core",
+    "Russian Twists": "core",
+    "Leg Raises": "core"
+  };
+  
+  return exerciseGroups[exerciseName] || "";
+};
+
+// Helper function to compare exercise groups
+export const isSameExerciseGroup = (exercise1: string, exercise2: string): boolean => {
+  const group1 = getExerciseGroup(exercise1);
+  const group2 = getExerciseGroup(exercise2);
+  
+  return group1 !== "" && group1 === group2;
+};
