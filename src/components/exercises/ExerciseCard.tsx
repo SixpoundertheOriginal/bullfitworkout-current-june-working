@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -140,6 +139,10 @@ export const ExerciseCard = ({
   console.log(`Volume diff: ${volumeDiff}`);
   console.log(`Volume % change: ${volumePercentChange}`);
   console.log(`Sets:`, sets);
+
+  const calculateCurrentSetVolume = (set: { weight: number; reps: number }) => {
+    return set.weight * set.reps;
+  };
   
   return (
     <Card className={`relative overflow-hidden transition-all duration-300 ${
@@ -197,6 +200,7 @@ export const ExerciseCard = ({
                 onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
                 onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(exercise, index, value) : undefined}
                 weightUnit={weightUnit}
+                currentVolume={calculateCurrentSetVolume(set)}
               />
             ))}
           </div>

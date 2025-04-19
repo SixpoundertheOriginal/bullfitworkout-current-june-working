@@ -24,6 +24,7 @@ interface SetRowProps {
   onRepsIncrement: (value: number) => void;
   onRestTimeIncrement?: (value: number) => void;
   weightUnit: string;
+  currentVolume?: number;
 }
 
 export const SetRow = ({
@@ -44,6 +45,7 @@ export const SetRow = ({
   onRepsIncrement,
   onRestTimeIncrement,
   weightUnit,
+  currentVolume,
 }: SetRowProps) => {
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
@@ -64,8 +66,8 @@ export const SetRow = ({
   };
   
   return (
-    <div className="grid grid-cols-12 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
-      <div className="col-span-1 text-center font-medium text-gray-400">
+    <div className="grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
+      <div className="text-center font-medium text-gray-400">
         #{setNumber}
       </div>
       
@@ -158,41 +160,36 @@ export const SetRow = ({
         </>
       ) : (
         <>
-          <div className="col-span-3">
-            <button 
-              onClick={onEdit}
-              className="w-full flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]"
-            >
-              <span className="font-medium">{displayWeight}</span>
-              <span className="text-xs text-gray-400">{globalWeightUnit}</span>
-            </button>
+          <div className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]">
+            <span className="font-medium">{displayWeight}</span>
+            <span className="text-xs text-gray-400">{globalWeightUnit}</span>
           </div>
           
-          <div className="col-span-3">
-            <button 
-              onClick={onEdit}
-              className="w-full flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]"
-            >
-              <span className="font-medium">{reps}</span>
-              <span className="text-xs text-gray-400">reps</span>
-            </button>
+          <div className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]">
+            <span className="font-medium">{reps}</span>
+            <span className="text-xs text-gray-400">reps</span>
           </div>
           
-          <div className="col-span-3 flex items-center justify-center gap-2 text-gray-400">
+          <div className="flex items-center justify-start gap-2 text-gray-400">
             <Timer size={16} className="text-purple-400" />
             <span className="font-mono text-sm">
               {formatRestTime(restTime)}
             </span>
+            {currentVolume && (
+              <span className="ml-2 text-sm text-emerald-400">
+                Vol: {currentVolume} {weightUnit}
+              </span>
+            )}
           </div>
           
-          <div className="col-span-2 flex justify-end gap-2">
+          <div className="flex justify-end gap-2">
             {completed ? (
               <Button
                 size="icon"
                 onClick={onEdit}
                 className="h-11 w-11 bg-gray-700 text-gray-300 hover:bg-gray-600"
               >
-                <Edit size={isMobile ? 20 : 18} />
+                <Edit size={20} />
               </Button>
             ) : (
               <Button 
@@ -200,7 +197,7 @@ export const SetRow = ({
                 onClick={handleSetComplete}
                 className="h-11 w-11 bg-gray-800 text-gray-400 hover:bg-green-700 hover:text-white transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <Check size={isMobile ? 20 : 18} />
+                <Check size={20} />
               </Button>
             )}
             <Button
@@ -208,7 +205,7 @@ export const SetRow = ({
               onClick={onRemove}
               className="h-11 w-11 bg-gray-700 text-gray-300 hover:bg-red-700 hover:text-white"
             >
-              <Trash2 size={isMobile ? 20 : 18} />
+              <Trash2 size={20} />
             </Button>
           </div>
         </>
