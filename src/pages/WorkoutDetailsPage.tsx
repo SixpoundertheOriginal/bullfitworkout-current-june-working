@@ -16,7 +16,11 @@ import {
   History,
   Loader2, 
   Sparkles,
-  Zap
+  Zap,
+  Edit,
+  PlusCircle,
+  Trash2,
+  ClipboardEdit
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +33,21 @@ import { TopExercisesTable } from "@/components/workouts/TopExercisesTable";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
 import { WorkoutCalendar } from "@/components/workouts/WorkoutCalendar";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
+import { EditWorkoutModal } from "@/components/EditWorkoutModal";
+import { EditExerciseSetModal } from "@/components/EditExerciseSetModal";
+import { updateWorkout, updateExerciseSets, addExerciseToWorkout, removeExerciseFromWorkout } from "@/services/workoutService";
+import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
+import { toast } from "@/components/ui/sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface WorkoutDetails {
   id: string;
@@ -44,6 +63,7 @@ interface WorkoutDetails {
 interface ExerciseSet {
   id: string;
   exercise_name: string;
+  workout_id: string;
   weight: number;
   reps: number;
   set_number: number;
@@ -57,6 +77,7 @@ const WorkoutDetailsPage = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { weightUnit } = useWeightUnit();
   
   const [activeTab, setActiveTab] = useState<string>(workoutId ? "details" : "overview");
   const { stats, loading: statsLoading } = useWorkoutStats();
@@ -66,6 +87,20 @@ const WorkoutDetailsPage = () => {
   const [workoutDetails, setWorkoutDetails] = useState<WorkoutDetails | null>(null);
   const [exerciseSets, setExerciseSets] = useState<ExerciseSet[]>([]);
   const [loading, setLoading] = useState(workoutId ? true : false);
+  
+  // For editing
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [exerciseSetModalOpen, setExerciseSetModalOpen] = useState(false);
+  const [currentExercise, setCurrentExercise] = useState<string>("");
+  const [exerciseSetsToEdit, setExerciseSetsToEdit] = useState<ExerciseSet[]>([]);
+  
+  // For adding new exercise
+  const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState<string>("");
+  
+  // For deleting exercise
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [exerciseToDelete, setExerciseToDelete] = useState<string>("");
   
   useEffect(() => {
     if (!user || !workoutId) return;
@@ -185,7 +220,95 @@ const WorkoutDetailsPage = () => {
     );
   };
   
-  // If we're on a specific workout details view
+  // Handle workout editing
+  const handleSaveWorkoutEdit = async (updatedWorkout: WorkoutDetails) => {
+    if (!workoutId) return;
+    
+    try {
+      const data = {
+        name: updatedWorkout.name,
+        training_type: updatedWorkout.training_type,
+        start_time: updatedWorkout.start_time,
+        end_time: updatedWorkout.end_time,
+        duration: updatedWorkout.duration,
+        notes: updatedWorkout.notes
+      };
+      
+      const updated = await updateWorkout(workoutId, data);
+      setWorkoutDetails(updated);
+    } catch (error) {
+      console.error("Error updating workout:", error);
+      throw error;
+    }
+  };
+  
+  // Handle exercise set editing
+  const handleEditExercise = (exerciseName: string) => {
+    const setsForExercise = exerciseSets.filter(set => set.exercise_name === exerciseName);
+    setCurrentExercise(exerciseName);
+    setExerciseSetsToEdit(setsForExercise);
+    setExerciseSetModalOpen(true);
+  };
+  
+  const handleSaveExerciseSets = async (updatedSets: ExerciseSet[]) => {
+    if (!workoutId || !currentExercise) return;
+    
+    try {
+      const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
+      
+      // Update the state with the new sets
+      const otherSets = exerciseSets.filter(set => set.exercise_name !== currentExercise);
+      setExerciseSets([...otherSets, ...updated]);
+    } catch (error) {
+      console.error("Error updating exercise sets:", error);
+      throw error;
+    }
+  };
+  
+  // Handle adding new exercise
+  const handleAddExercise = async () => {
+    if (!workoutId || !newExerciseName) return;
+    
+    try {
+      const newSets = await addExerciseToWorkout(workoutId, newExerciseName, 3);
+      setExerciseSets([...exerciseSets, ...newSets]);
+      setAddExerciseModalOpen(false);
+      setNewExerciseName("");
+      toast.success(`Added ${newExerciseName} to workout`);
+    } catch (error) {
+      console.error("Error adding exercise:", error);
+      toast.error("Failed to add exercise");
+    }
+  };
+  
+  // Handle deleting an exercise
+  const handleDeleteClick = (exerciseName: string) => {
+    setExerciseToDelete(exerciseName);
+    setDeleteAlertOpen(true);
+  };
+  
+  const handleDeleteExercise = async () => {
+    if (!workoutId || !exerciseToDelete) return;
+    
+    try {
+      await removeExerciseFromWorkout(workoutId, exerciseToDelete);
+      setExerciseSets(exerciseSets.filter(set => set.exercise_name !== exerciseToDelete));
+      toast.success(`Removed ${exerciseToDelete} from workout`);
+    } catch (error) {
+      console.error("Error removing exercise:", error);
+      toast.error("Failed to remove exercise");
+    } finally {
+      setDeleteAlertOpen(false);
+      setExerciseToDelete("");
+    }
+  };
+  
+  // Handler for exercise selection in autocomplete
+  const handleSelectExercise = (exercise: any) => {
+    setNewExerciseName(exercise.name);
+  };
+  
+  // If we're on a specific workout details view and loading
   if (workoutId && loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -255,14 +378,35 @@ const WorkoutDetailsPage = () => {
                       <span className="font-mono">{workoutDetails.duration} min</span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="text-purple-400 border-purple-400/30">
-                    {workoutDetails.training_type}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="text-purple-400 border-purple-400/30">
+                      {workoutDetails.training_type}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditModalOpen(true)}
+                      className="text-gray-400 hover:text-white hover:bg-gray-800"
+                    >
+                      <Edit size={18} />
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Exercise list */}
                 <div className="mt-6">
-                  <h3 className="text-md font-medium mb-2">Exercises</h3>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-md font-medium">Exercises</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setAddExerciseModalOpen(true)}
+                      className="text-sm flex items-center text-gray-400 hover:text-white"
+                    >
+                      <PlusCircle size={16} className="mr-1" />
+                      Add Exercise
+                    </Button>
+                  </div>
                   
                   {exerciseSets.length > 0 ? (
                     <div className="space-y-4">
@@ -271,7 +415,27 @@ const WorkoutDetailsPage = () => {
                         
                         return (
                           <div key={exerciseName} className="bg-gray-800/50 rounded-lg p-3">
-                            <h4 className="font-medium text-sm mb-2">{exerciseName}</h4>
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className="font-medium text-sm">{exerciseName}</h4>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditExercise(exerciseName)}
+                                  className="h-7 w-7 text-gray-400 hover:text-white hover:bg-gray-700"
+                                >
+                                  <ClipboardEdit size={14} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteClick(exerciseName)}
+                                  className="h-7 w-7 text-gray-400 hover:text-red-400 hover:bg-gray-700"
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              </div>
+                            </div>
                             <div className="grid grid-cols-4 gap-1 text-xs text-gray-400">
                               <div>Set</div>
                               <div className="text-right">Weight</div>
@@ -311,6 +475,79 @@ const WorkoutDetailsPage = () => {
           </div>
         )}
       </main>
+      
+      {/* Edit workout details modal */}
+      {workoutDetails && (
+        <EditWorkoutModal
+          workout={workoutDetails}
+          open={editModalOpen}
+          onOpenChange={setEditModalOpen}
+          onSave={handleSaveWorkoutEdit}
+        />
+      )}
+      
+      {/* Edit exercise sets modal */}
+      <EditExerciseSetModal
+        sets={exerciseSetsToEdit}
+        exerciseName={currentExercise}
+        open={exerciseSetModalOpen}
+        onOpenChange={setExerciseSetModalOpen}
+        onSave={handleSaveExerciseSets}
+      />
+      
+      {/* Add exercise dialog */}
+      <Dialog open={addExerciseModalOpen} onOpenChange={setAddExerciseModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-white">Add Exercise</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Select an exercise to add to your workout.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAddExerciseModalOpen(false)}
+              className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddExercise}
+              disabled={!newExerciseName}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
+              Add Exercise
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete exercise confirmation */}
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Remove Exercise</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to remove {exerciseToDelete}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteExercise}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
