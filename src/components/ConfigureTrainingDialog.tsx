@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { TrainingTypeSelector } from "./training/TrainingTypeSelector";
 import { AddCustomTrainingType } from "./training/AddCustomTrainingType";
+import { WorkoutTagPicker } from "./training/WorkoutTagPicker";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -108,21 +109,11 @@ export function ConfigureTrainingDialog({
 
             <div>
               <label className="block text-base font-medium mb-2">Tags</label>
-              <div className="flex flex-wrap gap-2">
-                {getCommonTags().map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-1.5 rounded-full text-sm ${
-                      selectedTags.includes(tag)
-                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                        : "bg-gray-800 text-gray-300 border border-gray-700"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
+              <WorkoutTagPicker
+                selectedTags={selectedTags}
+                onToggleTag={handleTagToggle}
+                trainingType={trainingType}
+              />
             </div>
 
             <div>
