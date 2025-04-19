@@ -1,3 +1,4 @@
+
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -160,12 +161,18 @@ export const SetRow = ({
         </>
       ) : (
         <>
-          <div className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]">
+          <div 
+            className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
+            onClick={onEdit}
+          >
             <span className="font-medium">{displayWeight}</span>
             <span className="text-xs text-gray-400">{globalWeightUnit}</span>
           </div>
           
-          <div className="flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]">
+          <div 
+            className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
+            onClick={onEdit}
+          >
             <span className="font-medium">{reps}</span>
             <span className="text-xs text-gray-400">reps</span>
           </div>
