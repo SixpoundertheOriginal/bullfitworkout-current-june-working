@@ -4,7 +4,7 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { TrainingTypeTag } from "@/components/TrainingTypeTag"
+import { TrainingTypeTag, TrainingType } from "@/components/TrainingTypeTag"
 
 const Select = SelectPrimitive.Root
 
@@ -116,31 +116,45 @@ const SelectItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
     trainingType?: boolean;
   }
->(({ className, children, trainingType, ...props }, ref) => (
-  <SelectPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      !trainingType && "hover:bg-gray-800",
-      className
-    )}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
+>(({ className, children, trainingType, ...props }, ref) => {
+  const trainingTypes: TrainingType[] = [
+    'Strength', 
+    'Hypertrophy', 
+    'Cardio', 
+    'Calisthenics', 
+    'Stretching', 
+    'Yoga'
+  ];
 
-    <SelectPrimitive.ItemText>
-      {trainingType ? (
-        <TrainingTypeTag type={children as any} variant="large" />
-      ) : (
-        children
+  // Ensure the children is a valid training type
+  const isValidTrainingType = trainingTypes.includes(children as TrainingType);
+
+  return (
+    <SelectPrimitive.Item
+      ref={ref}
+      className={cn(
+        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        !trainingType && "hover:bg-gray-800",
+        className
       )}
-    </SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
-))
+      {...props}
+    >
+      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        <SelectPrimitive.ItemIndicator>
+          <Check className="h-4 w-4" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+
+      <SelectPrimitive.ItemText>
+        {trainingType && isValidTrainingType ? (
+          <TrainingTypeTag type={children as TrainingType} variant="large" />
+        ) : (
+          children
+        )}
+      </SelectPrimitive.ItemText>
+    </SelectPrimitive.Item>
+  )
+})
 SelectItem.displayName = SelectPrimitive.Item.displayName
 
 const SelectSeparator = React.forwardRef<
@@ -167,3 +181,4 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
+
