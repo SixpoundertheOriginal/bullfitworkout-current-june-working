@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +6,7 @@ import { MetricCard } from "./metrics/MetricCard";
 import { PerformanceMetrics } from "./metrics/PerformanceMetrics";
 import { TopRestTimer } from "./TopRestTimer";
 import { CircularProgress } from "@/components/ui/circular-progress";
+import { IntelligentMetricsDisplay } from "./metrics/IntelligentMetricsDisplay";
 import { cn } from "@/lib/utils";
 
 interface WorkoutMetricsProps {
@@ -81,6 +81,21 @@ export const WorkoutMetrics = ({
 
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
+  const mockVolumeData = [
+    {
+      exerciseName: "Bench Press",
+      volume: 3200,
+      trend: "increasing" as const,
+      percentChange: 5.2
+    },
+    {
+      exerciseName: "Squat",
+      volume: 4800,
+      trend: "stable" as const,
+      percentChange: 0.5
+    }
+  ];
+
   return (
     <div className={className}>
       <div className="grid grid-cols-4 gap-3 p-4">
@@ -151,6 +166,12 @@ export const WorkoutMetrics = ({
       </div>
       
       <div className="px-4 py-2">
+        <IntelligentMetricsDisplay
+          volumeData={mockVolumeData}
+          intensity={80}
+          efficiency={75}
+          className="mb-4"
+        />
         <PerformanceMetrics
           volume={75}
           intensity={80}
