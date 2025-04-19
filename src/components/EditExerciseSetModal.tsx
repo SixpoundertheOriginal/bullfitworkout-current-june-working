@@ -54,25 +54,29 @@ export function EditExerciseSetModal({
 
   const handleWeightChange = (index: number, value: string) => {
     const updatedSets = [...formSets];
-    updatedSets[index].weight = Number(value) || 0;
+    const numValue = parseFloat(value);
+    updatedSets[index].weight = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
     setFormSets(updatedSets);
   };
 
   const handleRepsChange = (index: number, value: string) => {
     const updatedSets = [...formSets];
-    updatedSets[index].reps = Number(value) || 0;
+    const numValue = parseInt(value, 10);
+    updatedSets[index].reps = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
     setFormSets(updatedSets);
   };
 
   const handleWeightIncrement = (index: number, increment: number) => {
     const updatedSets = [...formSets];
-    updatedSets[index].weight = Math.max(0, updatedSets[index].weight + increment);
+    const newWeight = Math.max(0, updatedSets[index].weight + increment);
+    updatedSets[index].weight = newWeight;
     setFormSets(updatedSets);
   };
 
   const handleRepsIncrement = (index: number, increment: number) => {
     const updatedSets = [...formSets];
-    updatedSets[index].reps = Math.max(0, updatedSets[index].reps + increment);
+    const newReps = Math.max(0, updatedSets[index].reps + increment);
+    updatedSets[index].reps = newReps;
     setFormSets(updatedSets);
   };
 
@@ -155,6 +159,7 @@ export function EditExerciseSetModal({
                   </button>
                   <Input 
                     type="number"
+                    min="0"
                     value={set.weight}
                     onChange={(e) => handleWeightChange(index, e.target.value)}
                     className="workout-number-input text-center flex-1 h-10 bg-gray-800 border-gray-700 text-white"
@@ -178,6 +183,7 @@ export function EditExerciseSetModal({
                   </button>
                   <Input 
                     type="number"
+                    min="0"
                     value={set.reps}
                     onChange={(e) => handleRepsChange(index, e.target.value)}
                     className="workout-number-input text-center flex-1 h-10 bg-gray-800 border-gray-700 text-white"
@@ -198,6 +204,7 @@ export function EditExerciseSetModal({
                     variant="destructive"
                     onClick={() => handleRemoveSet(index)}
                     className="h-10 w-10"
+                    disabled={formSets.length <= 1}
                   >
                     <MinusCircle size={16} />
                   </Button>

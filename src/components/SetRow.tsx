@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,6 +64,20 @@ export const SetRow = ({
     console.log("Set complete button clicked");
     onComplete();
   };
+
+  const handleWeightIncrement = (increment: number) => {
+    onWeightIncrement(increment);
+  };
+  
+  const handleRepsIncrement = (increment: number) => {
+    onRepsIncrement(increment);
+  };
+
+  const handleRestTimeIncrement = (increment: number) => {
+    if (onRestTimeIncrement) {
+      onRestTimeIncrement(increment);
+    }
+  };
   
   return (
     <div className="grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
@@ -76,19 +89,22 @@ export const SetRow = ({
         <>
           <div className="col-span-3 flex items-center gap-1">
             <button 
-              onClick={() => onWeightIncrement(-1)} 
+              type="button"
+              onClick={() => handleWeightIncrement(-1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
             >
               <MinusCircle size={isMobile ? 20 : 18} />
             </button>
             <Input 
               type="number"
+              min="0"
               value={weight}
               onChange={onWeightChange}
               className="workout-number-input text-center flex-1"
             />
             <button 
-              onClick={() => onWeightIncrement(1)} 
+              type="button"
+              onClick={() => handleWeightIncrement(1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
             >
               <PlusCircle size={isMobile ? 20 : 18} />
@@ -97,19 +113,22 @@ export const SetRow = ({
           
           <div className="col-span-3 flex items-center gap-1">
             <button 
-              onClick={() => onRepsIncrement(-1)} 
+              type="button"
+              onClick={() => handleRepsIncrement(-1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
             >
               <MinusCircle size={isMobile ? 20 : 18} />
             </button>
             <Input 
               type="number"
+              min="0"
               value={reps}
               onChange={onRepsChange}
               className="workout-number-input text-center flex-1"
             />
             <button 
-              onClick={() => onRepsIncrement(1)} 
+              type="button"
+              onClick={() => handleRepsIncrement(1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
             >
               <PlusCircle size={isMobile ? 20 : 18} />
@@ -119,7 +138,8 @@ export const SetRow = ({
           <div className="col-span-3 flex items-center gap-1">
             {onRestTimeIncrement && (
               <button 
-                onClick={() => onRestTimeIncrement(-5)} 
+                type="button"
+                onClick={() => handleRestTimeIncrement(-5)} 
                 className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
               >
                 <MinusCircle size={isMobile ? 20 : 18} />
@@ -127,6 +147,7 @@ export const SetRow = ({
             )}
             <Input 
               type="number"
+              min="0"
               value={restTime || 60}
               onChange={onRestTimeChange}
               disabled={!onRestTimeChange}
@@ -134,7 +155,8 @@ export const SetRow = ({
             />
             {onRestTimeIncrement && (
               <button 
-                onClick={() => onRestTimeIncrement(5)} 
+                type="button"
+                onClick={() => handleRestTimeIncrement(5)} 
                 className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
               >
                 <PlusCircle size={isMobile ? 20 : 18} />
