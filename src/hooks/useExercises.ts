@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Exercise } from "@/types/exercise";
+import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from "@/types/exercise";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
 import { useWeightUnit } from "@/context/WeightUnitContext";
@@ -35,6 +35,14 @@ export function useExercises() {
       
       // Normalize and convert database results to Exercise type
       const normalizedExercises = (data || []).map(exercise => {
+        // Ensure correct typing for muscle groups, equipment, etc.
+        const primaryMuscleGroups = exercise.primary_muscle_groups as MuscleGroup[] || [];
+        const secondaryMuscleGroups = exercise.secondary_muscle_groups as MuscleGroup[] || [];
+        const equipmentType = exercise.equipment_type as EquipmentType[] || [];
+        const movementPattern = exercise.movement_pattern as MovementPattern || "push";
+        const difficulty = exercise.difficulty as Difficulty || "beginner";
+        const instructions = exercise.instructions as Record<string, any> || {};
+        
         // Transform database fields to match our Exercise interface
         const transformedExercise: Exercise = {
           id: exercise.id,
@@ -42,12 +50,12 @@ export function useExercises() {
           created_at: exercise.created_at,
           user_id: exercise.created_by || user.id, // Use created_by as user_id if available
           description: exercise.description || "",
-          primary_muscle_groups: exercise.primary_muscle_groups || [],
-          secondary_muscle_groups: exercise.secondary_muscle_groups || [],
-          equipment_type: exercise.equipment_type || [],
-          movement_pattern: exercise.movement_pattern || "push",
-          difficulty: exercise.difficulty || "beginner",
-          instructions: exercise.instructions || {},
+          primary_muscle_groups: primaryMuscleGroups,
+          secondary_muscle_groups: secondaryMuscleGroups,
+          equipment_type: equipmentType,
+          movement_pattern: movementPattern,
+          difficulty: difficulty,
+          instructions: instructions,
           is_compound: Boolean(exercise.is_compound),
           tips: exercise.tips || [],
           variations: exercise.variations || [],
@@ -97,12 +105,14 @@ export function useExercises() {
       ...exercise,
       is_custom: true,
       created_by: user.id,
-      instructions: exercise.instructions || {},
+      primary_muscle_groups: exercise.primary_muscle_groups as MuscleGroup[],
+      secondary_muscle_groups: exercise.secondary_muscle_groups as MuscleGroup[],
+      equipment_type: exercise.equipment_type as EquipmentType[],
+      movement_pattern: exercise.movement_pattern as MovementPattern,
+      difficulty: exercise.difficulty as Difficulty,
+      instructions: exercise.instructions as Record<string, any>,
       is_compound: exercise.is_compound !== undefined ? exercise.is_compound : false,
       description: exercise.description || "",
-      primary_muscle_groups: exercise.primary_muscle_groups || [],
-      secondary_muscle_groups: exercise.secondary_muscle_groups || [],
-      equipment_type: exercise.equipment_type || [],
       // Add weight unit information to metadata if relevant
       metadata: {
         ...(exercise.metadata || {}),
@@ -130,12 +140,12 @@ export function useExercises() {
       created_at: data.created_at,
       user_id: data.created_by || user.id,
       description: data.description || "",
-      primary_muscle_groups: data.primary_muscle_groups || [],
-      secondary_muscle_groups: data.secondary_muscle_groups || [],
-      equipment_type: data.equipment_type || [],
-      movement_pattern: data.movement_pattern || "push",
-      difficulty: data.difficulty || "beginner",
-      instructions: data.instructions || {},
+      primary_muscle_groups: data.primary_muscle_groups as MuscleGroup[] || [],
+      secondary_muscle_groups: data.secondary_muscle_groups as MuscleGroup[] || [],
+      equipment_type: data.equipment_type as EquipmentType[] || [],
+      movement_pattern: data.movement_pattern as MovementPattern || "push",
+      difficulty: data.difficulty as Difficulty || "beginner",
+      instructions: data.instructions as Record<string, any> || {},
       is_compound: Boolean(data.is_compound),
       tips: data.tips || [],
       variations: data.variations || [],

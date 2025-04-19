@@ -7,7 +7,6 @@ import { MetricCard } from "./metrics/MetricCard";
 import { PerformanceMetrics } from "./metrics/PerformanceMetrics";
 import { TopRestTimer } from "./TopRestTimer";
 import { CircularProgress } from "@/components/ui/circular-progress";
-import { IntelligentMetricsDisplay } from "./metrics/IntelligentMetricsDisplay";
 import { cn } from "@/lib/utils";
 
 interface WorkoutMetricsProps {

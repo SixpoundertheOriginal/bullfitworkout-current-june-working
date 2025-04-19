@@ -43,10 +43,12 @@ export const IntelligentMetricsDisplay = ({
 
   return (
     <div className={cn(
-      "space-y-4 opacity-0 translate-y-4",
-      "animate-[enter_0.4s_ease-out_forwards]",
+      "space-y-4",
+      "bg-gray-900/50 p-4 rounded-xl border border-gray-800 mb-4",
       className
     )}>
+      <h3 className="text-sm font-medium text-gray-300 mb-3">Workout Progress</h3>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {volumeData.map((data, index) => (
           <ExerciseVolumeCard
@@ -64,7 +66,7 @@ export const IntelligentMetricsDisplay = ({
         ))}
       </div>
       
-      <div className="flex flex-wrap gap-4 justify-around items-center">
+      <div className="flex flex-wrap gap-4 justify-around items-center mt-4">
         <WorkoutIntensityGauge intensity={intensity} />
         <WorkoutEfficiencyScore score={efficiency} />
       </div>

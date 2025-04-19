@@ -20,7 +20,7 @@ export const PerformanceMetrics = ({
   className
 }: PerformanceMetricsProps) => {
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4 bg-gray-900/70 p-4 rounded-xl border border-gray-800", className)}>
       <div className="flex items-center gap-2 mb-2">
         <BarChart3 className="text-purple-400" size={20} />
         <h3 className="text-sm font-medium text-gray-300">Performance Metrics</h3>

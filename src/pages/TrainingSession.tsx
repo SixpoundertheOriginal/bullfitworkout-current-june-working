@@ -317,7 +317,7 @@ const TrainingSession = () => {
   
   const handleAddSet = (exerciseName: string) => {
     const exerciseSets = exercises[exerciseName] || [];
-    const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0, restTime: 60 };
+    const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0, restTime: 60, workout_id: '', exercise_name: '', set_number: 0, completed: false };
     
     setExercises({
       ...exercises,
@@ -329,7 +329,7 @@ const TrainingSession = () => {
           restTime: lastSet.restTime || 60,
           completed: false, 
           isEditing: false,
-          set_number: 1,
+          set_number: exerciseSets.length + 1,
           exercise_name: exerciseName,
           workout_id: ''
         }
@@ -512,12 +512,22 @@ const TrainingSession = () => {
       const defaultWeight = selectedExercise?.metadata?.default_weight || 0;
       const defaultReps = selectedExercise?.metadata?.default_reps || 0;
       
+      const newSet: ExerciseSet = {
+        weight: defaultWeight, 
+        reps: defaultReps, 
+        completed: false, 
+        isEditing: false, 
+        restTime: 60,
+        exercise_name: newExerciseName,
+        set_number: 1,
+        workout_id: ''
+      };
+      
       setExercises({
         ...exercises,
-        [newExerciseName]: [
-          { weight: defaultWeight, reps: defaultReps, completed: false, isEditing: false, restTime: 60 }
-        ]
+        [newExerciseName]: [newSet]
       });
+      
       setCurrentExercise(newExerciseName);
       setNewExerciseName("");
       setSelectedExercise(null);
