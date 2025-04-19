@@ -22,7 +22,7 @@ interface ExerciseHistoryData {
 
 interface ExerciseCardProps {
   exercise: string;
-  sets: { weight: number; reps: number; completed: boolean; isEditing?: boolean }[];
+  sets: { weight: number; reps: number; restTime?: number; completed: boolean; isEditing?: boolean }[];
   onAddSet: (exerciseName: string) => void;
   onCompleteSet: (exerciseName: string, setIndex: number) => void;
   onRemoveSet: (exerciseName: string, setIndex: number) => void;
@@ -30,8 +30,10 @@ interface ExerciseCardProps {
   onSaveSet: (exerciseName: string, setIndex: number) => void;
   onWeightChange: (exerciseName: string, setIndex: number, value: string) => void;
   onRepsChange: (exerciseName: string, setIndex: number, value: string) => void;
+  onRestTimeChange?: (exerciseName: string, setIndex: number, value: string) => void;
   onWeightIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
   onRepsIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
+  onRestTimeIncrement?: (exerciseName: string, setIndex: number, increment: number) => void;
   isActive: boolean;
   onShowRestTimer: () => void;
 }
@@ -89,8 +91,10 @@ export const ExerciseCard = ({
   onSaveSet, 
   onWeightChange, 
   onRepsChange,
+  onRestTimeChange,
   onWeightIncrement,
   onRepsIncrement,
+  onRestTimeIncrement,
   isActive,
   onShowRestTimer
 }: ExerciseCardProps) => {
@@ -179,16 +183,19 @@ export const ExerciseCard = ({
                 setNumber={index + 1}
                 weight={set.weight}
                 reps={set.reps}
+                restTime={set.restTime}
                 completed={set.completed}
-                isEditing={set.isEditing || false} // Ensure isEditing is always provided, defaulting to false if not present
+                isEditing={set.isEditing || false}
                 onComplete={() => handleCompleteSet(index)}
                 onEdit={() => onEditSet(exercise, index)}
                 onSave={() => onSaveSet(exercise, index)}
                 onRemove={() => onRemoveSet(exercise, index)}
                 onWeightChange={(e) => onWeightChange(exercise, index, e.target.value)}
                 onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
+                onRestTimeChange={onRestTimeChange ? (e) => onRestTimeChange(exercise, index, e.target.value) : undefined}
                 onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
                 onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
+                onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(exercise, index, value) : undefined}
                 weightUnit={weightUnit}
               />
             ))}

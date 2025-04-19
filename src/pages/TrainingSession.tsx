@@ -102,8 +102,10 @@ const ExerciseCard = ({
   onSaveSet, 
   onWeightChange, 
   onRepsChange, 
+  onRestTimeChange,
   onWeightIncrement,
   onRepsIncrement,
+  onRestTimeIncrement,
   isActive,
   onShowRestTimer,
   onResetRestTimer
@@ -199,6 +201,7 @@ const ExerciseCard = ({
           <div className="w-8 text-center">Set</div>
           <div className="flex-1 px-2">Weight ({weightUnit})</div>
           <div className="flex-1 px-2">Reps</div>
+          <div className="flex-1 px-2">Rest</div>
           <div className="w-20"></div>
         </div>
         
@@ -209,6 +212,7 @@ const ExerciseCard = ({
               setNumber={index + 1}
               weight={set.weight}
               reps={set.reps}
+              restTime={set.restTime}
               completed={set.completed}
               isEditing={set.isEditing}
               onComplete={() => handleCompleteSet(index)}
@@ -217,8 +221,10 @@ const ExerciseCard = ({
               onRemove={() => onRemoveSet(exercise, index)}
               onWeightChange={(e) => onWeightChange(exercise, index, e.target.value)}
               onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
+              onRestTimeChange={(e) => onRestTimeChange && onRestTimeChange(exercise, index, e.target.value)}
               onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
               onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
+              onRestTimeIncrement={(value) => onRestTimeIncrement && onRestTimeIncrement(exercise, index, value)}
               weightUnit={weightUnit}
             />
           ))}
@@ -283,7 +289,7 @@ const TrainingSession = () => {
     locationState?.trainingType || "Training Session"
   );
   
-  const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; completed: boolean; isEditing?: boolean }[]>>({});
+  const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; restTime?: number; completed: boolean; isEditing?: boolean }[]>>({});
   
   useEffect(() => {
     setStartTime(new Date());
@@ -305,13 +311,19 @@ const TrainingSession = () => {
   
   const handleAddSet = (exerciseName: string) => {
     const exerciseSets = exercises[exerciseName] || [];
-    const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0 };
+    const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0, restTime: 60 };
     
     setExercises({
       ...exercises,
       [exerciseName]: [
         ...exerciseSets,
-        { weight: lastSet.weight, reps: lastSet.reps, completed: false, isEditing: false }
+        { 
+          weight: lastSet.weight, 
+          reps: lastSet.reps, 
+          restTime: lastSet.restTime || 60,
+          completed: false, 
+          isEditing: false 
+        }
       ]
     });
   };
@@ -422,6 +434,16 @@ const TrainingSession = () => {
       setExercises(updatedExercises);
     }
   };
+  
+  const handleSetRestTimeChange = (exerciseName: string, setIndex: number, value: string) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      updatedExercises[exerciseName][setIndex].restTime = Number(value) || 60;
+      setExercises(updatedExercises);
+    }
+  };
 
   const handleWeightIncrement = (exerciseName: string, setIndex: number, increment: number) => {
     if (!exercises[exerciseName]) return;
@@ -441,6 +463,17 @@ const TrainingSession = () => {
     if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
       const currentReps = updatedExercises[exerciseName][setIndex].reps;
       updatedExercises[exerciseName][setIndex].reps = Math.max(0, currentReps + increment);
+      setExercises(updatedExercises);
+    }
+  };
+  
+  const handleRestTimeIncrement = (exerciseName: string, setIndex: number, increment: number) => {
+    if (!exercises[exerciseName]) return;
+    
+    const updatedExercises = { ...exercises };
+    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
+      const currentRestTime = updatedExercises[exerciseName][setIndex].restTime || 60;
+      updatedExercises[exerciseName][setIndex].restTime = Math.max(0, currentRestTime + increment);
       setExercises(updatedExercises);
     }
   };
@@ -563,8 +596,10 @@ const TrainingSession = () => {
                 onSaveSet={handleSaveSet}
                 onWeightChange={handleSetWeightChange}
                 onRepsChange={handleSetRepsChange}
+                onRestTimeChange={handleSetRestTimeChange}
                 onWeightIncrement={handleWeightIncrement}
                 onRepsIncrement={handleRepsIncrement}
+                onRestTimeIncrement={handleRestTimeIncrement}
                 isActive={exerciseName === currentExercise}
                 onShowRestTimer={() => setShowRestTimer(true)}
                 onResetRestTimer={resetRestTimer}

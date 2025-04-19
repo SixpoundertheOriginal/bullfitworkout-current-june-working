@@ -20,8 +20,10 @@ interface SetRowProps {
   onRemove: () => void;
   onWeightChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRepsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRestTimeChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onWeightIncrement: (value: number) => void;
   onRepsIncrement: (value: number) => void;
+  onRestTimeIncrement?: (value: number) => void;
   weightUnit: string;
 }
 
@@ -29,7 +31,7 @@ export const SetRow = ({
   setNumber,
   weight,
   reps,
-  restTime,
+  restTime = 60,
   completed,
   isEditing,
   onComplete,
@@ -38,8 +40,10 @@ export const SetRow = ({
   onRemove,
   onWeightChange,
   onRepsChange,
+  onRestTimeChange,
   onWeightIncrement,
   onRepsIncrement,
+  onRestTimeIncrement,
   weightUnit,
 }: SetRowProps) => {
   const { weightUnit: globalWeightUnit } = useWeightUnit();
@@ -60,14 +64,14 @@ export const SetRow = ({
   };
   
   return (
-    <div className="grid grid-cols-14 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
+    <div className="grid grid-cols-12 items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
       <div className="col-span-1 text-center font-medium text-gray-400">
         #{setNumber}
       </div>
       
       {isEditing ? (
         <>
-          <div className="col-span-5 flex items-center gap-1">
+          <div className="col-span-3 flex items-center gap-1">
             <button 
               onClick={() => onWeightIncrement(-1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
@@ -88,7 +92,7 @@ export const SetRow = ({
             </button>
           </div>
           
-          <div className="col-span-4 flex items-center gap-1">
+          <div className="col-span-3 flex items-center gap-1">
             <button 
               onClick={() => onRepsIncrement(-1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
@@ -109,9 +113,30 @@ export const SetRow = ({
             </button>
           </div>
           
-          <div className="col-span-2 flex items-center justify-center gap-2 text-gray-400">
-            <Timer size={16} />
-            <span className="font-mono text-sm">{formatRestTime(restTime)}</span>
+          <div className="col-span-3 flex items-center gap-1">
+            {onRestTimeIncrement && (
+              <button 
+                onClick={() => onRestTimeIncrement(-5)} 
+                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+              >
+                <MinusCircle size={isMobile ? 20 : 18} />
+              </button>
+            )}
+            <Input 
+              type="number"
+              value={restTime || 60}
+              onChange={onRestTimeChange}
+              disabled={!onRestTimeChange}
+              className="workout-number-input text-center flex-1"
+            />
+            {onRestTimeIncrement && (
+              <button 
+                onClick={() => onRestTimeIncrement(5)} 
+                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+              >
+                <PlusCircle size={isMobile ? 20 : 18} />
+              </button>
+            )}
           </div>
           
           <div className="col-span-2 flex justify-end gap-2">
@@ -133,7 +158,7 @@ export const SetRow = ({
         </>
       ) : (
         <>
-          <div className="col-span-5">
+          <div className="col-span-3">
             <button 
               onClick={onEdit}
               className="w-full flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]"
@@ -143,7 +168,7 @@ export const SetRow = ({
             </button>
           </div>
           
-          <div className="col-span-4">
+          <div className="col-span-3">
             <button 
               onClick={onEdit}
               className="w-full flex gap-1 items-center hover:bg-gray-800 px-3 py-2 rounded min-h-[44px]"
@@ -153,7 +178,7 @@ export const SetRow = ({
             </button>
           </div>
           
-          <div className="col-span-2 flex items-center justify-center gap-2">
+          <div className="col-span-3 flex items-center justify-center gap-2 text-gray-400">
             <Timer size={16} className="text-purple-400" />
             <span className="font-mono text-sm">
               {formatRestTime(restTime)}
