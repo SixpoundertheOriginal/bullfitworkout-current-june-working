@@ -17,7 +17,7 @@ export const TopRestTimer = ({
   onTimeUpdate 
 }: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
-  const [isTimerActive, setIsTimerActive] = React.useState(true);
+  const [isTimerActive, setIsTimerActive] = React.useState(false);
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
 
@@ -32,9 +32,11 @@ export const TopRestTimer = ({
   
   // This effect handles activation state changes
   useEffect(() => {
+    console.log("isActive changed:", isActive);
     if (isActive) {
       setIsTimerActive(true);
     } else {
+      setIsTimerActive(false);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
@@ -45,6 +47,7 @@ export const TopRestTimer = ({
   // This effect handles the timer countdown
   useEffect(() => {
     if (isTimerActive && isActive) {
+      console.log("Timer is active, counting up from", elapsedTime);
       timerRef.current = setTimeout(() => {
         if (elapsedTime < maxTime) {
           setElapsedTime(prev => {
