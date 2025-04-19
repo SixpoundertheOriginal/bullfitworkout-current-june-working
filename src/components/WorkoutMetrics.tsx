@@ -1,10 +1,12 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { MetricCard } from "./metrics/MetricCard";
 import { PerformanceMetrics } from "./metrics/PerformanceMetrics";
 import { TopRestTimer } from "./TopRestTimer";
+import { CircularProgress } from "@/components/ui/circular-progress";
 import { cn } from "@/lib/utils";
 
 interface WorkoutMetricsProps {
@@ -30,7 +32,7 @@ export const WorkoutMetrics = ({
   onManualRestStart,
   className 
 }: WorkoutMetricsProps) => {
-  const [resetCounter, setResetCounter] = React.useState(0);
+  const [resetCounter, setResetCounter] = useState(0);
   
   useEffect(() => {
     if (showRestTimer) {
