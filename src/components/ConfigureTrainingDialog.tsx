@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -10,6 +9,8 @@ import { WorkoutTagPicker } from "./training/WorkoutTagPicker";
 import { DurationSelector } from "./training/DurationSelector";
 import { QuickSetupTemplates } from "./training/QuickSetupTemplates";
 import { cn } from "@/lib/utils";
+import { useWorkoutRecommendations } from "@/hooks/useWorkoutRecommendations";
+import { Progress } from "@/components/ui/progress";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -45,6 +46,15 @@ export function ConfigureTrainingDialog({
   const [duration, setDuration] = useState(30);
   const { stats, loading } = useWorkoutStats();
   const [bgGradient, setBgGradient] = useState(getGradientByType("default"));
+  const { data: recommendation, isLoading: loadingRecommendation } = useWorkoutRecommendations();
+
+  useEffect(() => {
+    if (recommendation && !trainingType) {
+      setTrainingType(recommendation.trainingType);
+      setDuration(recommendation.duration);
+      setSelectedTags(recommendation.tags);
+    }
+  }, [recommendation]);
 
   useEffect(() => {
     setBgGradient(getGradientByType(trainingType));
@@ -88,6 +98,17 @@ export function ConfigureTrainingDialog({
         <div className="p-6 space-y-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">Configure Training</h2>
+            {recommendation && (
+              <div className="flex items-center gap-2">
+                <Progress 
+                  value={recommendation.confidence * 100}
+                  className="w-20 h-2 bg-gray-700"
+                />
+                <span className="text-xs text-gray-400">
+                  {Math.round(recommendation.confidence * 100)}% match
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-8">
@@ -118,7 +139,9 @@ export function ConfigureTrainingDialog({
             />
 
             <div>
-              <label className="block text-base font-medium mb-2 text-white/90">Quick Setup</label>
+              <label className="block text-base font-medium mb-2 text-white/90">
+                Quick Setup Templates
+              </label>
               <QuickSetupTemplates
                 onSelect={({ trainingType, tags, duration }) => {
                   setTrainingType(trainingType);

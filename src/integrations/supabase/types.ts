@@ -466,6 +466,51 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_progress: {
+        Row: {
+          goal_id: string
+          id: string
+          notes: string | null
+          recorded_at: string
+          user_id: string
+          value: number
+          workout_id: string | null
+        }
+        Insert: {
+          goal_id: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          user_id: string
+          value: number
+          workout_id?: string | null
+        }
+        Update: {
+          goal_id?: string
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          user_id?: string
+          value?: number
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_progress_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "user_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_progress_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           access_token: string | null
@@ -947,6 +992,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_goals: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          description: string | null
+          goal_type: string
+          id: string
+          last_updated: string | null
+          measurement_unit: string | null
+          recurrence: string | null
+          start_date: string
+          start_value: number | null
+          status: string | null
+          target_date: string | null
+          target_value: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          goal_type: string
+          id?: string
+          last_updated?: string | null
+          measurement_unit?: string | null
+          recurrence?: string | null
+          start_date?: string
+          start_value?: number | null
+          status?: string | null
+          target_date?: string | null
+          target_value: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          goal_type?: string
+          id?: string
+          last_updated?: string | null
+          measurement_unit?: string | null
+          recurrence?: string | null
+          start_date?: string
+          start_value?: number | null
+          status?: string | null
+          target_date?: string | null
+          target_value?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_metrics: {
         Row: {
           body_fat_percentage: number | null
@@ -996,6 +1098,7 @@ export type Database = {
           height: number | null
           height_unit: string | null
           id: string
+          training_preferences: Json | null
           updated_at: string
           weight: number | null
           weight_unit: string | null
@@ -1009,6 +1112,7 @@ export type Database = {
           height?: number | null
           height_unit?: string | null
           id: string
+          training_preferences?: Json | null
           updated_at?: string
           weight?: number | null
           weight_unit?: string | null
@@ -1022,6 +1126,7 @@ export type Database = {
           height?: number | null
           height_unit?: string | null
           id?: string
+          training_preferences?: Json | null
           updated_at?: string
           weight?: number | null
           weight_unit?: string | null
