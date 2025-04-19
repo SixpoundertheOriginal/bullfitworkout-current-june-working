@@ -42,6 +42,7 @@ const tagCategories = {
     }
   },
   default: {
+    pattern: /.*/i, // Add a default pattern that matches everything
     colors: {
       base: "bg-gray-500/20",
       border: "border-gray-700",
