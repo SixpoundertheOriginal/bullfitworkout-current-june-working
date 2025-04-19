@@ -7,6 +7,7 @@ import { TrainingTypeSelector } from "./training/TrainingTypeSelector";
 import { AddCustomTrainingType } from "./training/AddCustomTrainingType";
 import { WorkoutTagPicker } from "./training/WorkoutTagPicker";
 import { DurationSelector } from "./training/DurationSelector";
+import { QuickSetupTemplates } from "./training/QuickSetupTemplates";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -96,6 +97,17 @@ export function ConfigureTrainingDialog({
 
           <div className="space-y-8">
             <div>
+              <label className="block text-base font-medium mb-2">Quick Setup</label>
+              <QuickSetupTemplates
+                onSelect={({ trainingType, tags, duration }) => {
+                  setTrainingType(trainingType);
+                  setSelectedTags(tags);
+                  setDuration(duration);
+                }}
+              />
+            </div>
+
+            <div>
               <div className="flex justify-between items-center mb-4">
                 <label className="block text-base font-medium">Training Type</label>
                 <AddCustomTrainingType />
@@ -120,34 +132,6 @@ export function ConfigureTrainingDialog({
               value={duration} 
               onChange={setDuration}
             />
-
-            <div>
-              <label className="block text-base font-medium mb-2">Quick Setup</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => {
-                    setTrainingType("Running");
-                    setSelectedTags(["Cardio", "Morning"]);
-                    setDuration(30);
-                  }}
-                  className="bg-gray-800 rounded-lg p-3 text-left hover:bg-gray-750 transition-colors border border-gray-700"
-                >
-                  <h4 className="font-medium text-sm">Morning Cardio</h4>
-                  <p className="text-gray-400 text-xs mt-1">30min running session</p>
-                </button>
-                <button
-                  onClick={() => {
-                    setTrainingType("Strength");
-                    setSelectedTags(["Strength", "Full Body"]);
-                    setDuration(45);
-                  }}
-                  className="bg-gray-800 rounded-lg p-3 text-left hover:bg-gray-750 transition-colors border border-gray-700"
-                >
-                  <h4 className="font-medium text-sm">Full Body</h4>
-                  <p className="text-gray-400 text-xs mt-1">45min strength workout</p>
-                </button>
-              </div>
-            </div>
 
             <Button 
               onClick={handleStartTraining}

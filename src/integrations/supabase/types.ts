@@ -632,6 +632,54 @@ export type Database = {
           },
         ]
       }
+      quick_setup_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number
+          id: string
+          is_system_generated: boolean | null
+          name: string
+          suggested_exercises: string[] | null
+          tags: string[] | null
+          time_of_day: string | null
+          training_type: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          id?: string
+          is_system_generated?: boolean | null
+          name: string
+          suggested_exercises?: string[] | null
+          tags?: string[] | null
+          time_of_day?: string | null
+          training_type: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          id?: string
+          is_system_generated?: boolean | null
+          name?: string
+          suggested_exercises?: string[] | null
+          tags?: string[] | null
+          time_of_day?: string | null
+          training_type?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subtasks: {
         Row: {
           completed: boolean
