@@ -35,6 +35,7 @@ interface ExerciseCardProps {
   onRestTimeIncrement?: (exerciseName: string, setIndex: number, increment: number) => void;
   isActive: boolean;
   onShowRestTimer: () => void;
+  onResetRestTimer: () => void;
 }
 
 const exerciseHistoryData: ExerciseHistoryData = {
@@ -69,34 +70,24 @@ const getPreviousSessionData = (exerciseName: string) => {
   return { date: "N/A", weight: 0, reps: 0, sets: 0 };
 };
 
-const calculateSetVolume = (sets: { weight: number; reps: number; completed: boolean }[], weightUnit: string) => {
-  return sets.reduce((total, set) => {
-    if (set.completed) {
-      if (set.weight > 0 && set.reps > 0) {
-        return total + (set.weight * set.reps);
-      }
-    }
-    return total;
-  }, 0);
-};
-
-export const ExerciseCard = ({ 
+const ExerciseCard = ({ 
   exercise, 
-  sets, 
-  onAddSet, 
-  onCompleteSet, 
-  onRemoveSet, 
-  onEditSet, 
-  onSaveSet, 
-  onWeightChange, 
+  sets,
+  onAddSet,
+  onCompleteSet,
+  onRemoveSet,
+  onEditSet,
+  onSaveSet,
+  onWeightChange,
   onRepsChange,
   onRestTimeChange,
   onWeightIncrement,
   onRepsIncrement,
   onRestTimeIncrement,
   isActive,
-  onShowRestTimer
-}: ExerciseCardProps) => {
+  onShowRestTimer,
+  onResetRestTimer
+}) => {
   const { weightUnit } = useWeightUnit();
   const { exercises: dbExercises } = useExercises();
   
@@ -108,42 +99,23 @@ export const ExerciseCard = ({
   const weightDiff = previousSession.weight - olderSession.weight;
   const percentChange = olderSession.weight ? ((weightDiff / olderSession.weight) * 100).toFixed(1) : "0";
   const isImproved = weightDiff > 0;
-  
-  const currentVolume = calculateSetVolume(sets, weightUnit);
-  
-  const previousVolume = previousSession.weight > 0 ? 
-    previousSessionWeight * previousSession.reps * previousSession.sets : 0;
-  
-  const volumeDiff = (currentVolume - previousVolume);
-  const volumePercentChange = previousVolume > 0 ? 
-    ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
-  
-  const completedSetsCount = sets.filter(set => set.completed).length;
-  const completionPercentage = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
-  
-  const [activeRestTimer, setActiveRestTimer] = React.useState<number | null>(null);
-  
-  const handleCompleteSet = (index: number) => {
-    onCompleteSet(exercise, index);
-    setActiveRestTimer(index);
-    onShowRestTimer();
-    
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
-    }
-  };
-  
-  console.log(`Exercise: ${exercise}`);
-  console.log(`Current volume: ${currentVolume}`);
-  console.log(`Previous volume: ${previousVolume}`);
-  console.log(`Volume diff: ${volumeDiff}`);
-  console.log(`Volume % change: ${volumePercentChange}`);
-  console.log(`Sets:`, sets);
 
-  const calculateCurrentSetVolume = (set: { weight: number; reps: number }) => {
-    return set.weight * set.reps;
+  const calculateCurrentVolume = (sets: { weight: number; reps: number; completed: boolean }[]) => {
+    return sets.reduce((total, set) => {
+      if (set.completed && set.weight > 0 && set.reps > 0) {
+        return total + (set.weight * set.reps);
+      }
+      return total;
+    }, 0);
   };
+
+  const currentVolume = calculateCurrentVolume(sets);
+  const previousVolume = previousSession.weight > 0 ? 
+    (convertWeight(previousSession.weight, "lb", weightUnit) * previousSession.reps * previousSession.sets) : 0;
   
+  const volumeDiff = currentVolume > 0 && previousVolume > 0 ? (currentVolume - previousVolume) : 0;
+  const volumePercentChange = previousVolume > 0 ? ((volumeDiff / previousVolume) * 100).toFixed(1) : "0";
+
   return (
     <Card className={`relative overflow-hidden transition-all duration-300 ${
       isActive ? "ring-2 ring-purple-500/50" : "ring-1 ring-gray-800"
@@ -161,23 +133,9 @@ export const ExerciseCard = ({
         
         <div className="px-4 pb-4">
           <Progress 
-            value={completionPercentage} 
+            value={0}
             className="h-1.5 mb-6 bg-gray-800/50 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
           />
-          
-          <div className="flex items-center justify-between mb-4">
-            <Badge 
-              variant="outline"
-              className={`flex items-center gap-1 ${
-                volumeDiff >= 0 
-                  ? "text-green-300 border-green-500/30" 
-                  : "text-red-300 border-red-500/30"
-              }`}
-            >
-              {volumeDiff >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              <span className="font-mono">{Math.abs(parseFloat(volumePercentChange))}%</span>
-            </Badge>
-          </div>
 
           <div className="space-y-2">
             {sets.map((set, index) => (
@@ -189,7 +147,7 @@ export const ExerciseCard = ({
                 restTime={set.restTime}
                 completed={set.completed}
                 isEditing={set.isEditing || false}
-                onComplete={() => handleCompleteSet(index)}
+                onComplete={() => onCompleteSet(exercise, index)}
                 onEdit={() => onEditSet(exercise, index)}
                 onSave={() => onSaveSet(exercise, index)}
                 onRemove={() => onRemoveSet(exercise, index)}
@@ -200,29 +158,41 @@ export const ExerciseCard = ({
                 onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
                 onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(exercise, index, value) : undefined}
                 weightUnit={weightUnit}
-                currentVolume={calculateCurrentSetVolume(set)}
               />
             ))}
           </div>
 
-          <Button 
-            onClick={() => onAddSet(exercise)}
-            className="w-full mt-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
-          >
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Add Set
-          </Button>
-          
-          <div className="mt-4 pt-4 border-t border-gray-800">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400 font-medium">Volume vs last session</span>
-              <span className={`font-mono ${volumeDiff >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit}
-              </span>
+          <div className="mt-4 pt-3 border-t border-gray-800">
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Current Volume</span>
+                <span className="font-mono">{currentVolume.toFixed(1)} {weightUnit}</span>
+              </div>
+              
+              {previousVolume > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">vs Previous Session</span>
+                  <span className={`font-mono ${volumeDiff >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
+                  </span>
+                </div>
+              )}
             </div>
+
+            {previousVolume > 0 && (
+              <Progress 
+                value={currentVolume > 0 ? 
+                  Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200) : 0} 
+                className={`h-1.5 mt-2 bg-gray-800 ${
+                  currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"
+                }`}
+              />
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
 };
+
+export default ExerciseCard;
