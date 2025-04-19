@@ -1,9 +1,9 @@
-
 import React, { useEffect } from "react";
-import { Timer, Dumbbell, BarChart3, Clock } from "lucide-react";
+import { Timer, Dumbbell, BarChart3, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { TopRestTimer } from "./TopRestTimer";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
 interface WorkoutMetricsProps {
@@ -78,33 +78,39 @@ export const WorkoutMetrics = ({
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-4 gap-2 p-4">
+      <div className="grid grid-cols-4 gap-3 p-4">
         <MetricItem
-          icon={<Clock className="text-purple-400" size={24} />}
+          icon={<Clock className="text-sky-400" size={24} />}
           value={formatTime(time)}
           label="Time"
-          backgroundClass="from-purple-500/20 to-pink-500/20"
+          backgroundClass="from-sky-500/20 to-blue-500/20"
           pulseIcon
         />
         
         <MetricItem
-          icon={<Dumbbell className="text-purple-400" size={24} />}
+          icon={<Dumbbell className="text-emerald-400" size={24} />}
           value={exerciseCount.toString()}
           label="Exercises"
-          backgroundClass="from-purple-500/20 to-pink-500/20"
+          backgroundClass="from-emerald-500/20 to-teal-500/20"
         />
         
         <MetricItem
-          icon={<BarChart3 className="text-purple-400" size={24} />}
+          icon={<BarChart3 className="text-violet-400" size={24} />}
           value={`${completedSets}/${totalSets}`}
           label="Sets"
-          backgroundClass="from-purple-500/20 to-pink-500/20"
+          backgroundClass="from-violet-500/20 to-purple-500/20"
           valueClassName="flex items-baseline gap-1 text-lg font-mono"
         />
 
-        <MetricItem
-          icon={<Timer className="text-purple-400" size={24} />}
-          customContent={
+        <div className={cn(
+          "flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-br border border-white/5 backdrop-blur-xl relative",
+          "from-orange-500/20 to-red-500/20"
+        )}>
+          <div className="flex flex-col items-center">
+            <Timer size={24} className={cn(
+              "text-orange-400 mb-2",
+              showRestTimer && "animate-pulse"
+            )} />
             <TopRestTimer 
               isActive={showRestTimer} 
               onComplete={onRestTimerComplete}
@@ -112,20 +118,30 @@ export const WorkoutMetrics = ({
               onTimeUpdate={onRestTimeUpdate}
               onManualStart={onManualRestStart}
             />
-          }
-          label="Rest"
-          backgroundClass="from-purple-500/20 to-pink-500/20"
-        />
+            <span className="text-sm text-gray-400 font-medium mt-1">Rest</span>
+          </div>
+          
+          {!showRestTimer && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onManualRestStart}
+              className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-100"
+            >
+              <Play size={14} className="mr-1" /> Start Timer
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="px-4 py-2">
         <div className="flex justify-between text-xs font-medium mb-1">
           <span className="text-gray-400">Progress</span>
-          <span className="text-purple-400">{Math.round(completionPercentage)}%</span>
+          <span className="text-violet-400">{Math.round(completionPercentage)}%</span>
         </div>
         <Progress 
           value={completionPercentage} 
-          className="h-1.5 bg-gray-800/50 overflow-hidden rounded-full [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
+          className="h-1.5 bg-gray-800/50 overflow-hidden rounded-full [&>div]:bg-gradient-to-r [&>div]:from-violet-500 [&>div]:to-fuchsia-500"
         />
       </div>
     </div>
@@ -158,7 +174,7 @@ const MetricItem: React.FC<MetricItemProps> = ({
     <div className={cn("relative mb-2", pulseIcon && "animate-pulse")}>
       {icon}
       {pulseIcon && (
-        <div className="absolute -right-1 -top-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+        <div className="absolute -right-1 -top-1 w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
       )}
     </div>
     {customContent ? (
