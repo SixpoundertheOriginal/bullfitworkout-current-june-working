@@ -208,9 +208,8 @@ const WorkoutComplete = () => {
         });
         
         if (!navigatePending.pending) {
-          setTimeout(() => {
-            navigate('/');
-          }, 2000);
+          // We'll let the user navigate manually instead of automatic redirect
+          // This prevents unexpected navigation when viewing workout details
         }
         
         return workoutSession.id;
