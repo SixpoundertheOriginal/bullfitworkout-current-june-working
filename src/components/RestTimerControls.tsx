@@ -35,6 +35,8 @@ export const RestTimerControls = ({
   compact = false,
 }: RestTimerControlsProps) => {
   const progress = Math.min((elapsedTime / maxTime) * 100, 100);
+  
+  console.log("RestTimerControls rendered:", { elapsedTime, isActive, progress });
 
   if (compact) {
     return (

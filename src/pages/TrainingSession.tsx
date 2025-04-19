@@ -344,6 +344,7 @@ const TrainingSession = () => {
         navigator.vibrate([50]);
       }
       
+      console.log("Set completed, activating rest timer");
       setShowRestTimer(false);
       setTimeout(() => {
         setShowRestTimer(true);
@@ -571,6 +572,7 @@ const TrainingSession = () => {
   };
   
   const resetRestTimer = () => {
+    console.log("Resetting rest timer");
     setShowRestTimer(false);
     setTimeout(() => {
       setShowRestTimer(true);
@@ -578,6 +580,7 @@ const TrainingSession = () => {
   };
   
   const handleRestTimeUpdate = (time: number) => {
+    console.log("Rest time updated:", time);
     setCurrentRestTime(time);
   };
 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +59,7 @@ export const SetRow = ({
   };
   
   const handleSetComplete = () => {
+    console.log("Set complete button clicked");
     onComplete();
   };
   

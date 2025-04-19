@@ -52,7 +52,7 @@ export const TopRestTimer = ({
         if (elapsedTime < maxTime) {
           setElapsedTime(prev => {
             const newTime = prev + 1;
-            onTimeUpdate?.(newTime);
+            if (onTimeUpdate) onTimeUpdate(newTime);
             return newTime;
           });
         } else {
