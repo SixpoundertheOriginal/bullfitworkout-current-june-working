@@ -1,11 +1,11 @@
-
 import React, { useState } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { TrainingTypeSelector } from "./training/TrainingTypeSelector";
+import { AddCustomTrainingType } from "./training/AddCustomTrainingType";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -58,7 +58,6 @@ export function ConfigureTrainingDialog({
 
   const getRecommendedTypes = () => {
     const types = stats.workoutTypes.slice(0, 3).map(wt => wt.type);
-    // Ensure we have at least these common types
     const commonTypes = ["Running", "Strength", "Yoga"];
     return [...new Set([...types, ...commonTypes])].slice(0, 4);
   };
@@ -94,38 +93,17 @@ export function ConfigureTrainingDialog({
             <h2 className="text-xl font-bold text-white">Configure Training</h2>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <label className="block text-base font-medium mb-2">Training Type</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="e.g., Running, Yoga, HIIT..."
-                  value={trainingType}
-                  onChange={(e) => setTrainingType(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-                {trainingType && (
-                  <button
-                    onClick={() => setTrainingType("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  >
-                    <X size={16} className="text-gray-400" />
-                  </button>
-                )}
+              <div className="flex justify-between items-center mb-4">
+                <label className="block text-base font-medium">Training Type</label>
+                <AddCustomTrainingType />
               </div>
               
-              <div className="mt-2 flex flex-wrap gap-2">
-                {getRecommendedTypes().map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setTrainingType(type)}
-                    className="px-3 py-1 rounded-full text-sm bg-gray-800 text-white hover:bg-gray-700"
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
+              <TrainingTypeSelector
+                selectedType={trainingType}
+                onSelect={setTrainingType}
+              />
             </div>
 
             <div>

@@ -222,6 +222,42 @@ export type Database = {
           },
         ]
       }
+      custom_training_types: {
+        Row: {
+          color_end: string
+          color_start: string
+          created_at: string
+          icon: string
+          id: string
+          name: string
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          color_end?: string
+          color_start?: string
+          created_at?: string
+          icon: string
+          id?: string
+          name: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          color_end?: string
+          color_start?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_settings: {
         Row: {
           created_at: string
