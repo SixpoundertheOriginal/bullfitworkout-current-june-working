@@ -51,10 +51,10 @@ export function AddCustomTrainingType() {
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2"
+        className="gap-2 text-white/80 hover:text-white hover:bg-white/10"
       >
         <PlusCircle className="h-4 w-4" />
         Add Custom Type

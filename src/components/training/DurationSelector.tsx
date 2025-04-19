@@ -43,7 +43,7 @@ export function DurationSelector({ value, onChange }: DurationSelectorProps) {
           max={120}
           step={5}
           onValueChange={handleSliderChange}
-          className="[&>span]:bg-purple-500"
+          className="[&>span]:bg-purple-500 [&_.slider-thumb]:focus:ring-2 [&_.slider-thumb]:focus:ring-purple-500/50"
         />
         
         {avgDuration > 0 && (

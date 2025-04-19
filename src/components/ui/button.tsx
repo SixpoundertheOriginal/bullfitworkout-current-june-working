@@ -16,6 +16,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         gradient: "bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow-lg hover:shadow-purple-500/25",
+        "icon-circle": "rounded-full bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105 focus:ring-offset-background",
       },
       shape: {
         default: "rounded-md",
@@ -27,6 +28,7 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10 p-2",
+        "icon-lg": "h-20 w-20 p-4",
       },
       iconPosition: {
         left: "[&_svg]:ml-0 [&_svg]:mr-2",
@@ -54,7 +56,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, shape, iconPosition, icon, children, iconOnly = false, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
-    const effectiveSize = iconOnly ? "icon" : size
+    const effectiveSize = iconOnly ? (size === "lg" ? "icon-lg" : "icon") : size
     const effectiveIconPosition = iconOnly ? "none" : iconPosition
 
     return (

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Weight } from "lucide-react";
@@ -5,6 +6,7 @@ import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -14,32 +16,29 @@ interface TrainingTypeSelectorProps {
 type DefaultTrainingType = {
   name: string;
   icon: React.ReactNode;
-  gradient: {
-    from: string;
-    to: string;
-  };
+  gradient: string;
 }
 
 const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   {
     name: "Strength",
     icon: <Dumbbell className="h-6 w-6" />,
-    gradient: { from: "#9b87f5", to: "#6E59A5" }
+    gradient: "from-purple-600 to-purple-700"
   },
   {
     name: "Cardio",
     icon: <Bike className="h-6 w-6" />,
-    gradient: { from: "#f87171", to: "#dc2626" }
+    gradient: "from-red-500 to-red-600"
   },
   {
     name: "Yoga",
-    icon: <Weight className="h-6 w-6" rotate={45} />,
-    gradient: { from: "#22c55e", to: "#16a34a" }
+    icon: <Weight className="h-6 w-6 rotate-45" />,
+    gradient: "from-green-500 to-green-600"
   },
   {
     name: "Calisthenics",
     icon: <Weight className="h-6 w-6" />,
-    gradient: { from: "#60a5fa", to: "#2563eb" }
+    gradient: "from-blue-500 to-blue-600"
   }
 ];
 
@@ -73,56 +72,48 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     return "sm";
   };
 
-  const sizeClasses = {
-    sm: "h-16 w-16",
-    md: "h-20 w-20",
-    lg: "h-24 w-24"
-  };
-
   return (
     <div className="flex flex-wrap gap-4 justify-center">
-      {DEFAULT_TRAINING_TYPES.map((type) => {
-        const size = "md";
-        return (
-          <button
-            key={type.name}
-            onClick={() => onSelect(type.name)}
-            className={cn(
-              "relative rounded-full transition-all duration-300 flex items-center justify-center",
-              "h-20 w-20",
-              selectedType === type.name ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-gray-900" : "",
-              "hover:scale-110 group"
-            )}
-            style={{
-              background: `linear-gradient(135deg, ${type.gradient.from}, ${type.gradient.to})`
-            }}
-          >
-            {type.icon}
-            <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-              {type.name}
-            </span>
-          </button>
-        );
-      })}
+      {DEFAULT_TRAINING_TYPES.map((type) => (
+        <Button
+          key={type.name}
+          onClick={() => onSelect(type.name)}
+          variant="icon-circle"
+          size="lg"
+          iconOnly
+          icon={type.icon}
+          className={cn(
+            "bg-gradient-to-br text-white",
+            type.gradient,
+            selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
+            "group relative"
+          )}
+        >
+          <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            {type.name}
+          </span>
+        </Button>
+      ))}
       
       {customTypes?.map((type) => (
-        <button
+        <Button
           key={type.id}
           onClick={() => onSelect(type.name)}
+          variant="icon-circle"
+          size="lg"
+          iconOnly
+          icon={type.icon}
           className={cn(
-            "relative h-20 w-20 rounded-full transition-all duration-300 flex items-center justify-center",
-            selectedType === type.name ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-gray-900" : "",
-            "hover:scale-110 group"
+            "bg-gradient-to-br text-white",
+            `from-[${type.color_start}] to-[${type.color_end}]`,
+            selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
+            "group relative"
           )}
-          style={{
-            background: `linear-gradient(135deg, ${type.color_start}, ${type.color_end})`
-          }}
         >
-          {type.icon}
           <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
             {type.name}
           </span>
-        </button>
+        </Button>
       ))}
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
@@ -9,7 +8,6 @@ interface WorkoutTagPickerProps {
   trainingType?: string;
 }
 
-// Tag category colors and mappings
 const tagCategories = {
   strength: {
     pattern: /(strength|muscle|lifting|power|gains)/i,
@@ -42,7 +40,7 @@ const tagCategories = {
     }
   },
   default: {
-    pattern: /.*/i, // Add a default pattern that matches everything
+    pattern: /.*/i,
     colors: {
       base: "bg-gray-500/20",
       border: "border-gray-700",
@@ -56,7 +54,6 @@ const tagCategories = {
 export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: WorkoutTagPickerProps) {
   const { stats } = useWorkoutStats();
   
-  // Get the current hour for time-based suggestions
   const currentHour = new Date().getHours();
   
   const getTagCategory = (tag: string) => {
@@ -75,7 +72,6 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
   const getSuggestedTags = () => {
     let suggestions = new Set<string>();
     
-    // Add tags based on training type
     if (trainingType?.toLowerCase().includes('strength')) {
       suggestions.add('Strength');
       suggestions.add('Muscle');
@@ -86,7 +82,6 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
       suggestions.add('HIIT');
     }
     
-    // Add time-based tags
     if (currentHour >= 5 && currentHour < 11) {
       suggestions.add('Morning');
       suggestions.add('Energy');
@@ -97,7 +92,6 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
       suggestions.add('After Work');
     }
     
-    // Add historical tags if available
     if (stats.tags) {
       stats.tags.slice(0, 5).forEach(tag => suggestions.add(tag.name));
     }
@@ -120,7 +114,7 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
               onClick={() => onToggleTag(tag)}
               className={cn(
                 "px-3 py-1.5 rounded-full text-sm transition-all duration-200",
-                "border border-opacity-50 outline-none",
+                "border border-opacity-50 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background",
                 colors.base,
                 colors.border,
                 colors.text,
