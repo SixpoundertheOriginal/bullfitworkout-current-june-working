@@ -50,19 +50,30 @@ export function useWorkoutRecommendations() {
 
       // Adjust based on user preferences if available
       if (profile?.training_preferences) {
-        // Cast the training_preferences to our interface
-        const prefs = profile.training_preferences as TrainingPreferences;
-        
-        if (prefs.preferred_time === timeOfDay && prefs.preferred_duration) {
-          recommendation.duration = prefs.preferred_duration;
-          recommendation.confidence += 0.2;
-        }
-        
-        if (prefs.preferred_types?.length > 0) {
-          // Check if current recommendation matches any preferred types
-          if (prefs.preferred_types.includes(recommendation.trainingType)) {
-            recommendation.confidence += 0.3;
+        try {
+          // Safely convert to TrainingPreferences with a proper type check
+          const prefsData = profile.training_preferences as Record<string, any>;
+          
+          // Check if the data actually matches our expected structure
+          const prefs: TrainingPreferences = {
+            preferred_time: typeof prefsData.preferred_time === 'string' ? prefsData.preferred_time : null,
+            preferred_duration: typeof prefsData.preferred_duration === 'number' ? prefsData.preferred_duration : null,
+            preferred_types: Array.isArray(prefsData.preferred_types) ? prefsData.preferred_types : null
+          };
+          
+          if (prefs.preferred_time === timeOfDay && prefs.preferred_duration) {
+            recommendation.duration = prefs.preferred_duration;
+            recommendation.confidence += 0.2;
           }
+          
+          if (prefs.preferred_types?.length > 0) {
+            // Check if current recommendation matches any preferred types
+            if (prefs.preferred_types.includes(recommendation.trainingType)) {
+              recommendation.confidence += 0.3;
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing training preferences:", error);
         }
       }
 
