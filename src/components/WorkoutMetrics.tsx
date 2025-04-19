@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Timer, Dumbbell, BarChart3, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -196,7 +197,6 @@ export const WorkoutMetrics = ({
                   onTimeUpdate={onRestTimeUpdate}
                   onManualStart={onManualRestStart}
                 />
-                <span className="text-sm text-gray-400 font-medium mt-1">Rest</span>
                 
                 {!showRestTimer && (
                   <Button

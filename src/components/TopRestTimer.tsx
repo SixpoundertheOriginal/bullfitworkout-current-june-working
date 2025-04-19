@@ -132,7 +132,6 @@ export const TopRestTimer = ({
       <span className="text-lg font-mono text-white">
         {formatTime(elapsedTime)}
       </span>
-      <span className="text-sm text-gray-400 font-medium mt-1">Rest</span>
       
       {!isTimerActive && (
         <Button 
