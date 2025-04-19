@@ -1,20 +1,23 @@
 
 import React, { useEffect } from 'react';
-import { Timer } from 'lucide-react';
+import { Timer, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface TopRestTimerProps {
   isActive: boolean;
   onComplete: () => void;
   resetSignal: number;
   onTimeUpdate?: (time: number) => void;
+  onManualStart?: () => void;
 }
 
 export const TopRestTimer = ({ 
   isActive, 
   onComplete, 
   resetSignal,
-  onTimeUpdate 
+  onTimeUpdate,
+  onManualStart
 }: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
@@ -72,6 +75,12 @@ export const TopRestTimer = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleManualStart = () => {
+    console.log("Manually starting rest timer");
+    setIsTimerActive(true);
+    if (onManualStart) onManualStart();
+  };
+
   if (!isActive) {
     return (
       <div className="flex flex-col items-center gap-1">
@@ -95,6 +104,17 @@ export const TopRestTimer = ({
         {formatTime(elapsedTime)}
       </span>
       <span className="text-sm text-gray-400 font-medium mt-1">Rest</span>
+      
+      {!isTimerActive && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2 bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
+          onClick={handleManualStart}
+        >
+          <Play size={14} className="mr-1" /> Start
+        </Button>
+      )}
     </div>
   );
 };

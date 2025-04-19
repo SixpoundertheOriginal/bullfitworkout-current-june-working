@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Timer, Dumbbell, BarChart3, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -13,6 +12,7 @@ interface WorkoutMetricsProps {
   showRestTimer: boolean;
   onRestTimerComplete: () => void;
   onRestTimeUpdate?: (time: number) => void;
+  onManualRestStart?: () => void;
   className?: string;
 }
 
@@ -24,6 +24,7 @@ export const WorkoutMetrics = ({
   showRestTimer,
   onRestTimerComplete,
   onRestTimeUpdate,
+  onManualRestStart,
   className 
 }: WorkoutMetricsProps) => {
   const [resetCounter, setResetCounter] = React.useState(0);
@@ -73,6 +74,7 @@ export const WorkoutMetrics = ({
             onComplete={onRestTimerComplete}
             resetSignal={resetCounter}
             onTimeUpdate={onRestTimeUpdate}
+            onManualStart={onManualRestStart}
           />
         </div>
       </div>

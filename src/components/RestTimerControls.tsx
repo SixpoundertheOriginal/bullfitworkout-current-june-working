@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { CircularProgress } from "./ui/circular-progress";
 import { Timer, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,10 @@ export const RestTimerControls = ({
 }: RestTimerControlsProps) => {
   const progress = Math.min((elapsedTime / maxTime) * 100, 100);
   
+  useEffect(() => {
+    console.log("RestTimerControls useEffect:", { elapsedTime, isActive, progress });
+  }, [elapsedTime, isActive, progress]);
+  
   console.log("RestTimerControls rendered:", { elapsedTime, isActive, progress });
 
   if (compact) {
@@ -49,6 +53,16 @@ export const RestTimerControls = ({
           {formatTime(elapsedTime)}
         </span>
         <span className="text-xs text-gray-400 font-medium">Rest</span>
+        {!isActive && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-1 bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
+            onClick={onResume}
+          >
+            <Play size={14} className="mr-1" /> Start
+          </Button>
+        )}
       </div>
     );
   }

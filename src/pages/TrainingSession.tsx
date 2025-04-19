@@ -345,10 +345,8 @@ const TrainingSession = () => {
       }
       
       console.log("Set completed, activating rest timer");
-      setShowRestTimer(false);
-      setTimeout(() => {
-        setShowRestTimer(true);
-      }, 10);
+      setShowRestTimer(true);
+      resetRestTimer();
       
       const currentSets = updatedExercises[exerciseName];
       const currentVolume = calculateSetVolume(currentSets, weightUnit);
@@ -584,6 +582,20 @@ const TrainingSession = () => {
     setCurrentRestTime(time);
   };
 
+  const handleManualRestStart = () => {
+    console.log("Manual rest timer start requested");
+    setShowRestTimer(true);
+    resetRestTimer();
+    
+    toast.info("Rest timer started manually", {
+      style: {
+        backgroundColor: "rgba(20, 20, 20, 0.9)",
+        color: "white",
+        border: "1px solid rgba(120, 120, 120, 0.3)",
+      },
+    });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
       <header className="sticky top-0 z-10 flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
@@ -610,6 +622,7 @@ const TrainingSession = () => {
         showRestTimer={showRestTimer}
         onRestTimerComplete={handleRestTimerComplete}
         onRestTimeUpdate={handleRestTimeUpdate}
+        onManualRestStart={handleManualRestStart}
         className="sticky top-[73px] z-10 mx-4 mt-4"
       />
       
