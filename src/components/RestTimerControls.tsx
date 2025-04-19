@@ -4,6 +4,7 @@ import { CircularProgress } from "./ui/circular-progress";
 import { Timer, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface RestTimerControlsProps {
   elapsedTime: number;
@@ -38,7 +39,38 @@ export const RestTimerControls = ({
   
   useEffect(() => {
     console.log("RestTimerControls useEffect:", { elapsedTime, isActive, progress });
-  }, [elapsedTime, isActive, progress]);
+    
+    // Listen for toast events to reset timer
+    const resetOnToast = () => {
+      console.log("RestTimerControls: Toast detected, resetting timer");
+      if (isActive) {
+        onReset();
+      }
+    };
+    
+    // Create a MutationObserver to watch for toast elements
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement && 
+                (node.classList.contains('toast') || 
+                 node.getAttribute('role') === 'status' || 
+                 node.getAttribute('data-sonner-toast') === 'true')) {
+              resetOnToast();
+            }
+          });
+        }
+      });
+    });
+    
+    // Start observing the document body
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [elapsedTime, isActive, progress, onReset]);
   
   console.log("RestTimerControls rendered:", { elapsedTime, isActive, progress });
 
@@ -58,7 +90,10 @@ export const RestTimerControls = ({
             variant="outline"
             size="sm"
             className="mt-1 bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
-            onClick={onResume}
+            onClick={() => {
+              onResume();
+              onReset(); // Reset the timer when manually started
+            }}
           >
             <Play size={14} className="mr-1" /> Start
           </Button>
@@ -82,7 +117,14 @@ export const RestTimerControls = ({
           variant="outline" 
           size="icon"
           className="bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
-          onClick={isActive ? onPause : onResume}
+          onClick={() => {
+            if (isActive) {
+              onPause();
+            } else {
+              onResume();
+              onReset(); // Reset the timer when manually started
+            }
+          }}
         >
           {isActive ? <Pause size={18} /> : <Play size={18} />}
         </Button>

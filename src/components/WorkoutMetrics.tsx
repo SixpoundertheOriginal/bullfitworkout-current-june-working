@@ -1,8 +1,10 @@
+
 import React, { useEffect } from "react";
 import { Timer, Dumbbell, BarChart3, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { TopRestTimer } from "./TopRestTimer";
+import { toast } from "@/hooks/use-toast";
 
 interface WorkoutMetricsProps {
   time: number;
@@ -31,10 +33,45 @@ export const WorkoutMetrics = ({
   
   // Effect to reset the timer whenever showRestTimer changes to true
   useEffect(() => {
+    console.log("WorkoutMetrics: showRestTimer changed to", showRestTimer);
     if (showRestTimer) {
-      console.log("Incrementing reset counter. Current value:", resetCounter);
+      console.log("WorkoutMetrics: Incrementing reset counter. Current value:", resetCounter);
       setResetCounter(prev => prev + 1);
     }
+  }, [showRestTimer]);
+
+  // Listen for toast events to reset timer
+  useEffect(() => {
+    const handleToastReset = () => {
+      // Listen for 'set-complete' toasts
+      console.log("WorkoutMetrics: Checking if we need to reset timer based on toast");
+      if (showRestTimer) {
+        console.log("WorkoutMetrics: Resetting timer due to set complete toast");
+        setResetCounter(prev => prev + 1);
+      }
+    };
+
+    // Set up event listener for when sonner toast appears
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement && 
+                (node.classList.contains('toast') || 
+                 node.getAttribute('role') === 'status' || 
+                 node.getAttribute('data-sonner-toast') === 'true')) {
+              if (node.textContent && node.textContent.includes("logged successfully")) {
+                handleToastReset();
+              }
+            }
+          });
+        }
+      });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => observer.disconnect();
   }, [showRestTimer]);
 
   const formatTime = (seconds: number) => {
@@ -73,7 +110,7 @@ export const WorkoutMetrics = ({
             isActive={showRestTimer} 
             onComplete={onRestTimerComplete}
             resetSignal={resetCounter}
-            onTimeUpdate={onRestTimeUpdate}
+            onTimeUpdate={onTimeUpdate}
             onManualStart={onManualRestStart}
           />
         </div>

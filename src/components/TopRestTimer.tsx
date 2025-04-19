@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Timer, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 interface TopRestTimerProps {
   isActive: boolean;
@@ -27,7 +28,7 @@ export const TopRestTimer = ({
   // This effect handles the reset signal
   useEffect(() => {
     if (resetSignal > 0) {
-      console.log("Reset signal received:", resetSignal);
+      console.log("Reset signal received in TopRestTimer:", resetSignal);
       setElapsedTime(0);
       setIsTimerActive(true);
     }
@@ -35,7 +36,7 @@ export const TopRestTimer = ({
   
   // This effect handles activation state changes
   useEffect(() => {
-    console.log("isActive changed:", isActive);
+    console.log("TopRestTimer: isActive changed:", isActive);
     if (isActive) {
       setIsTimerActive(true);
     } else {
@@ -45,12 +46,18 @@ export const TopRestTimer = ({
       }
       setElapsedTime(0);
     }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, [isActive]);
 
   // This effect handles the timer countdown
   useEffect(() => {
     if (isTimerActive && isActive) {
-      console.log("Timer is active, counting up from", elapsedTime);
+      console.log("TopRestTimer: Timer is active, counting up from", elapsedTime);
       timerRef.current = setTimeout(() => {
         if (elapsedTime < maxTime) {
           setElapsedTime(prev => {
@@ -78,6 +85,7 @@ export const TopRestTimer = ({
   const handleManualStart = () => {
     console.log("Manually starting rest timer");
     setIsTimerActive(true);
+    setElapsedTime(0); // Reset the timer when manually started
     if (onManualStart) onManualStart();
   };
 
