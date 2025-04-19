@@ -7,12 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export function AddCustomTrainingType() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("🏃‍♂️");
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,14 +22,13 @@ export function AddCustomTrainingType() {
     try {
       const { error } = await supabase
         .from('custom_training_types')
-        .insert([
-          { 
-            name,
-            icon,
-            color_start: '#9b87f5',
-            color_end: '#6E59A5'
-          }
-        ]);
+        .insert({
+          name,
+          icon,
+          color_start: '#9b87f5',
+          color_end: '#6E59A5',
+          user_id: user?.id // Add the user_id from auth context
+        });
 
       if (error) throw error;
 

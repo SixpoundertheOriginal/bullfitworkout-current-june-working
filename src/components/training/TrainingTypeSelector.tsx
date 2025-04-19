@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Running, Yoga, Weight } from "lucide-react";
+import { Dumbbell, Bike, Weight } from "lucide-react"; // Changed from Running, Yoga to icons that exist
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,12 +29,12 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   },
   {
     name: "Cardio",
-    icon: <Running className="h-6 w-6" />,
+    icon: <Bike className="h-6 w-6" />, // Changed from Running to Bike
     gradient: { from: "#f87171", to: "#dc2626" }
   },
   {
     name: "Yoga",
-    icon: <Yoga className="h-6 w-6" />,
+    icon: <Weight className="h-6 w-6" rotate={45} />, // Changed Yoga to Weight with rotation
     gradient: { from: "#22c55e", to: "#16a34a" }
   },
   {
