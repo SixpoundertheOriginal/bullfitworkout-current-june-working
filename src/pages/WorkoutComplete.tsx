@@ -96,7 +96,7 @@ const WorkoutComplete = () => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const saveWorkout = async () => {
@@ -233,11 +233,22 @@ const WorkoutComplete = () => {
   };
 
   const handleExerciseClick = (exerciseName: string) => {
-    if (!workoutId) return;
-    
-    navigate(`/workout-details/${workoutId}`, {
-      state: { highlightExercise: exerciseName }
-    });
+    if (!workoutId) {
+      console.log("No workout ID available yet, saving workout first");
+      saveWorkout().then(() => {
+        if (workoutId) {
+          console.log(`Now navigating to details with workout ID: ${workoutId}`);
+          navigate(`/workout-details/${workoutId}`, {
+            state: { highlightExercise: exerciseName }
+          });
+        }
+      });
+    } else {
+      console.log(`Navigating to details with workout ID: ${workoutId}`);
+      navigate(`/workout-details/${workoutId}`, {
+        state: { highlightExercise: exerciseName }
+      });
+    }
   };
 
   if (!workoutData) {
