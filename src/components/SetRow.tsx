@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ interface SetRowProps {
   setNumber: number;
   weight: number;
   reps: number;
-  restTime?: number; // New prop for rest time
+  restTime?: number;
   completed: boolean;
   isEditing: boolean;
   onComplete: () => void;
@@ -109,7 +108,6 @@ export const SetRow = ({
             </button>
           </div>
           
-          {/* Rest time column (read-only in edit mode) */}
           <div className="col-span-2 flex items-center justify-center gap-2 text-gray-400">
             <Timer size={16} />
             <span className="font-mono text-sm">{formatRestTime(restTime)}</span>
@@ -154,7 +152,6 @@ export const SetRow = ({
             </button>
           </div>
           
-          {/* Rest time column */}
           <div className="col-span-2 flex items-center justify-center gap-2">
             <Timer size={16} className="text-purple-400" />
             <span className="font-mono text-sm">
