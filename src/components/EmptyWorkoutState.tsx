@@ -57,11 +57,11 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-gradient-to-br from-purple-500/20 to-transparent 
           rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
         
-        <h3 className="text-xl font-sans font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent relative">
+        <h3 className="font-sans text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent relative">
           No exercises added yet
         </h3>
         
-        <p className="text-gray-400 mt-2 mb-6 relative font-sans">
+        <p className="text-gray-400 mt-2 mb-6 relative font-sans text-base">
           Start with a template or add your first exercise below
         </p>
 
@@ -75,13 +75,13 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
               onClick={() => onTemplateSelect(template.name)}
             >
               <div className="flex items-center justify-between w-full">
-                <span className="font-medium">{template.name}</span>
+                <span className="font-medium font-sans">{template.name}</span>
                 <Plus 
                   size={16} 
                   className="text-purple-400 group-hover/button:rotate-90 transition-transform duration-300" 
                 />
               </div>
-              <p className="text-xs text-gray-400 font-normal">
+              <p className="text-xs text-gray-400 font-normal font-sans">
                 {template.exercises.join(" • ")}
               </p>
             </Button>
