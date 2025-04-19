@@ -11,6 +11,13 @@ interface WorkoutRecommendation {
   confidence: number;
 }
 
+// Define the structure of the training preferences
+interface TrainingPreferences {
+  preferred_time: string | null;
+  preferred_duration: number | null;
+  preferred_types: string[] | null;
+}
+
 export function useWorkoutRecommendations() {
   const { user } = useAuth();
   const { stats } = useWorkoutStats();
@@ -43,7 +50,9 @@ export function useWorkoutRecommendations() {
 
       // Adjust based on user preferences if available
       if (profile?.training_preferences) {
-        const prefs = profile.training_preferences;
+        // Cast the training_preferences to our interface
+        const prefs = profile.training_preferences as TrainingPreferences;
+        
         if (prefs.preferred_time === timeOfDay && prefs.preferred_duration) {
           recommendation.duration = prefs.preferred_duration;
           recommendation.confidence += 0.2;
