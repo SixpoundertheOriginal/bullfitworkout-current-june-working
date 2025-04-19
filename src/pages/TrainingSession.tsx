@@ -561,17 +561,19 @@ const TrainingSession = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-gray-800 bg-black/95 backdrop-blur-sm">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
+      <header className="sticky top-0 z-10 flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
         <button 
           onClick={() => navigate('/')}
-          className="p-2 rounded-full hover:bg-gray-900 transition-colors"
+          className="p-2 rounded-full hover:bg-gray-800/50 transition-colors"
         >
           <ArrowLeft size={24} />
         </button>
         <div className="flex items-center gap-4">
           <TrainingTypeTag type={trainingType as any} />
-          <h1 className="title-large">{trainingType}</h1>
+          <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+            {trainingType}
+          </h1>
         </div>
         <WeightUnitToggle variant="badge" />
       </header>
@@ -613,19 +615,26 @@ const TrainingSession = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
-            <p>No exercises added yet. Add your first exercise below.</p>
+          <div className="text-center py-12">
+            <div className="p-6 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm">
+              <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                No exercises added yet
+              </p>
+              <p className="text-gray-400 mt-2">Add your first exercise below</p>
+            </div>
           </div>
         )}
 
-        <div className="rounded-xl bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-4">
+        <div className="rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50 p-4 shadow-lg">
           <ExerciseAutocomplete onSelectExercise={handleSelectExercise} />
         </div>
         
         <Button 
           ref={startButtonRef}
           onClick={finishWorkout}
-          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-medium shadow-lg"
+          className="w-full py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 
+            font-medium shadow-lg hover:shadow-purple-500/25 border border-purple-500/20
+            transform transition-all duration-300 active:scale-[0.98]"
         >
           Complete Workout
         </Button>
