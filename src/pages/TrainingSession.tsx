@@ -24,6 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { TopRestTimer } from '@/components/TopRestTimer';
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { useWorkoutMetrics } from "@/hooks/useWorkoutMetrics";
+import { IntelligentMetricsDisplay } from "@/components/metrics/IntelligentMetricsDisplay";
 
 interface LocationState {
   trainingType?: string;
@@ -294,7 +295,7 @@ const TrainingSession = () => {
     locationState?.trainingType || "Training Session"
   );
   
-  const [exercises, setExercises] = useState<Record<string, { weight: number; reps: number; restTime?: number; completed: boolean; isEditing?: boolean }[]>>({});
+  const [exercises, setExercises] = useState<Record<string, ExerciseSet[]>>({});
   
   useEffect(() => {
     setStartTime(new Date());
@@ -327,7 +328,10 @@ const TrainingSession = () => {
           reps: lastSet.reps, 
           restTime: lastSet.restTime || 60,
           completed: false, 
-          isEditing: false 
+          isEditing: false,
+          set_number: 1,
+          exercise_name: exerciseName,
+          workout_id: ''
         }
       ]
     });
@@ -598,7 +602,6 @@ const TrainingSession = () => {
     });
   };
 
-  const { weightUnit } = useWeightUnit();
   const metrics = useWorkoutMetrics(exercises, time, weightUnit);
 
   return (
@@ -693,10 +696,19 @@ const TrainingSession = () => {
 
               const exercises = templateExercises[templateType] || [];
               
-              const newExercises = {};
+              const newExercises: Record<string, ExerciseSet[]> = {};
               exercises.forEach(exercise => {
                 newExercises[exercise] = [
-                  { weight: 0, reps: 0, completed: false, isEditing: false, restTime: 60 }
+                  { 
+                    weight: 0, 
+                    reps: 0, 
+                    completed: false, 
+                    isEditing: false, 
+                    restTime: 60,
+                    set_number: 1,
+                    exercise_name: exercise,
+                    workout_id: ''
+                  }
                 ];
               });
 

@@ -21,7 +21,7 @@ export const IntelligentMetricsDisplay = ({
   className
 }: IntelligentMetricsDisplayProps) => {
   // Calculate volume data for each exercise
-  const volumeData = Object.entries(exercises).map(([exerciseName, sets]) => {
+  const volumeData = Object.entries(exercises || {}).map(([exerciseName, sets]) => {
     const currentVolume = sets.reduce((total, set) => total + calculateSetVolume(set), 0);
     const completedSets = sets.filter(set => set.completed);
     
