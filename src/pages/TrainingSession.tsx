@@ -23,6 +23,7 @@ import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TopRestTimer } from '@/components/TopRestTimer';
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
+import { useWorkoutMetrics } from "@/hooks/useWorkoutMetrics";
 
 interface LocationState {
   trainingType?: string;
@@ -597,6 +598,9 @@ const TrainingSession = () => {
     });
   };
 
+  const { weightUnit } = useWeightUnit();
+  const metrics = useWorkoutMetrics(exercises, time, weightUnit);
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
       <header className="sticky top-0 z-10 flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
@@ -617,9 +621,9 @@ const TrainingSession = () => {
 
       <WorkoutMetrics 
         time={time}
-        exerciseCount={Object.keys(exercises).length}
-        completedSets={completedSets}
-        totalSets={totalSets}
+        exerciseCount={metrics.exerciseCount}
+        completedSets={metrics.completedSets}
+        totalSets={metrics.totalSets}
         showRestTimer={showRestTimer}
         onRestTimerComplete={handleRestTimerComplete}
         onRestTimeUpdate={handleRestTimeUpdate}
@@ -629,29 +633,54 @@ const TrainingSession = () => {
       
       <main className="flex-1 px-4 py-6 pb-40 space-y-6">
         {Object.keys(exercises).length > 0 ? (
-          <div className="space-y-6">
-            {Object.keys(exercises || {}).map((exerciseName) => (
-              <ExerciseCard
-                key={exerciseName}
-                exercise={exerciseName}
-                sets={exercises[exerciseName] || []}
-                onAddSet={handleAddSet}
-                onCompleteSet={handleCompleteSet}
-                onRemoveSet={handleRemoveSet}
-                onEditSet={handleEditSet}
-                onSaveSet={handleSaveSet}
-                onWeightChange={handleSetWeightChange}
-                onRepsChange={handleSetRepsChange}
-                onRestTimeChange={handleSetRestTimeChange}
-                onWeightIncrement={handleWeightIncrement}
-                onRepsIncrement={handleRepsIncrement}
-                onRestTimeIncrement={handleRestTimeIncrement}
-                isActive={exerciseName === currentExercise}
-                onShowRestTimer={() => setShowRestTimer(true)}
-                onResetRestTimer={resetRestTimer}
+          <>
+            <div className="space-y-6">
+              <IntelligentMetricsDisplay
+                exercises={exercises}
+                intensity={metrics.performance.intensity}
+                efficiency={metrics.performance.efficiency}
               />
-            ))}
-          </div>
+              
+              {Object.keys(exercises || {}).map((exerciseName) => (
+                <ExerciseCard
+                  key={exerciseName}
+                  exercise={exerciseName}
+                  sets={exercises[exerciseName] || []}
+                  onAddSet={handleAddSet}
+                  onCompleteSet={handleCompleteSet}
+                  onRemoveSet={handleRemoveSet}
+                  onEditSet={handleEditSet}
+                  onSaveSet={handleSaveSet}
+                  onWeightChange={handleSetWeightChange}
+                  onRepsChange={handleSetRepsChange}
+                  onRestTimeChange={handleSetRestTimeChange}
+                  onWeightIncrement={handleWeightIncrement}
+                  onRepsIncrement={handleRepsIncrement}
+                  onRestTimeIncrement={handleRestTimeIncrement}
+                  isActive={exerciseName === currentExercise}
+                  onShowRestTimer={() => setShowRestTimer(true)}
+                  onResetRestTimer={resetRestTimer}
+                />
+              ))}
+            </div>
+            
+            <div className="flex flex-col items-center justify-center text-center mt-8">
+              <Button 
+                ref={startButtonRef}
+                onClick={finishWorkout}
+                className="w-64 h-64 rounded-full text-lg bg-gradient-to-r from-purple-600 to-pink-500 
+                  hover:from-purple-700 hover:to-pink-600 font-medium shadow-2xl hover:shadow-purple-500/50
+                  transform transition-all duration-300 active:scale-[0.98] 
+                  flex flex-col items-center justify-center space-y-2 
+                  border border-purple-500/20"
+              >
+                <div className="bg-white/20 rounded-full p-3 mb-2">
+                  <Weight size={32} className="text-white" />
+                </div>
+                <span className="text-white text-xl">Complete Workout</span>
+              </Button>
+            </div>
+          </>
         ) : (
           <EmptyWorkoutState 
             onTemplateSelect={(templateType) => {
@@ -685,25 +714,6 @@ const TrainingSession = () => {
               });
             }} 
           />
-        )}
-
-        {Object.keys(exercises).length > 0 && (
-          <div className="flex flex-col items-center justify-center text-center mt-8">
-            <Button 
-              ref={startButtonRef}
-              onClick={finishWorkout}
-              className="w-64 h-64 rounded-full text-lg bg-gradient-to-r from-purple-600 to-pink-500 
-                hover:from-purple-700 hover:to-pink-600 font-medium shadow-2xl hover:shadow-purple-500/50
-                transform transition-all duration-300 active:scale-[0.98] 
-                flex flex-col items-center justify-center space-y-2 
-                border border-purple-500/20"
-            >
-              <div className="bg-white/20 rounded-full p-3 mb-2">
-                <Weight size={32} className="text-white" />
-              </div>
-              <span className="text-white text-xl">Complete Workout</span>
-            </Button>
-          </div>
         )}
       </main>
       
