@@ -160,11 +160,12 @@ export function EditExerciseSetModal({
                   <Input 
                     type="number"
                     min="0"
+                    step="any"
                     value={set.weight}
                     onChange={(e) => handleWeightChange(index, e.target.value)}
                     className="workout-number-input text-center flex-1 h-10 bg-gray-800 border-gray-700 text-white"
                     onBlur={(e) => {
-                      if (Number(e.target.value) < 0) {
+                      if (parseFloat(e.target.value) < 0 || e.target.value === '') {
                         handleWeightChange(index, "0");
                       }
                     }}
@@ -189,11 +190,12 @@ export function EditExerciseSetModal({
                   <Input 
                     type="number"
                     min="0"
+                    step="1"
                     value={set.reps}
                     onChange={(e) => handleRepsChange(index, e.target.value)}
                     className="workout-number-input text-center flex-1 h-10 bg-gray-800 border-gray-700 text-white"
                     onBlur={(e) => {
-                      if (Number(e.target.value) < 0) {
+                      if (parseInt(e.target.value) < 0 || e.target.value === '') {
                         handleRepsChange(index, "0");
                       }
                     }}

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,40 +61,33 @@ export const SetRow = ({
   };
   
   const handleSetComplete = () => {
-    console.log("Set complete button clicked");
     onComplete();
   };
 
   const handleWeightIncrement = (increment: number) => {
-    console.log(`Incrementing weight by ${increment}`);
     onWeightIncrement(increment);
   };
   
   const handleRepsIncrement = (increment: number) => {
-    console.log(`Incrementing reps by ${increment}`);
     onRepsIncrement(increment);
   };
 
   const handleRestTimeIncrement = (increment: number) => {
     if (onRestTimeIncrement) {
-      console.log(`Incrementing rest time by ${increment}`);
       onRestTimeIncrement(increment);
     }
   };
 
   const handleManualWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Manual weight change:", e.target.value);
     onWeightChange(e);
   };
 
   const handleManualRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Manual reps change:", e.target.value);
     onRepsChange(e);
   };
 
   const handleManualRestTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onRestTimeChange) {
-      console.log("Manual rest time change:", e.target.value);
       onRestTimeChange(e);
     }
   };
@@ -119,12 +111,13 @@ export const SetRow = ({
             <Input 
               type="number"
               min="0"
+              step="any"
               value={weight}
               onChange={handleManualWeightChange}
               className="workout-number-input text-center flex-1"
               onBlur={(e) => {
                 // Ensure weight is never negative
-                if (Number(e.target.value) < 0) {
+                if (parseFloat(e.target.value) < 0 || e.target.value === '') {
                   handleManualWeightChange({
                     target: { value: "0" }
                   } as React.ChangeEvent<HTMLInputElement>);
@@ -151,12 +144,13 @@ export const SetRow = ({
             <Input 
               type="number"
               min="0"
+              step="1"
               value={reps}
               onChange={handleManualRepsChange}
               className="workout-number-input text-center flex-1"
               onBlur={(e) => {
                 // Ensure reps is never negative
-                if (Number(e.target.value) < 0) {
+                if (parseInt(e.target.value) < 0 || e.target.value === '') {
                   handleManualRepsChange({
                     target: { value: "0" }
                   } as React.ChangeEvent<HTMLInputElement>);
@@ -185,16 +179,19 @@ export const SetRow = ({
             <Input 
               type="number"
               min="0"
+              step="5"
               value={restTime || 60}
               onChange={handleManualRestTimeChange}
               disabled={!onRestTimeChange}
               className="workout-number-input text-center flex-1"
               onBlur={(e) => {
                 // Ensure rest time is never negative
-                if (Number(e.target.value) < 0 && onRestTimeChange) {
-                  handleManualRestTimeChange({
-                    target: { value: "0" }
-                  } as React.ChangeEvent<HTMLInputElement>);
+                if (parseInt(e.target.value) < 0 || e.target.value === '') {
+                  if (onRestTimeChange) {
+                    handleManualRestTimeChange({
+                      target: { value: "0" }
+                    } as React.ChangeEvent<HTMLInputElement>);
+                  }
                 }
               }}
             />

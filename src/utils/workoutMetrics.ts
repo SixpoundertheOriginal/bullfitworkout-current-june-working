@@ -23,9 +23,11 @@ export const calculateWorkoutMetrics = (
       if (set.completed && set.weight > 0 && set.reps > 0) {
         totalVolume += set.weight * set.reps;
         // Calculate intensity based on weight relative to max weight for the exercise
-        const maxWeight = Math.max(...sets.map(s => s.weight));
-        totalIntensity += (set.weight / maxWeight) * 100;
-        setCount++;
+        const maxWeight = Math.max(...sets.map(s => s.weight > 0 ? s.weight : 0));
+        if (maxWeight > 0) {
+          totalIntensity += (set.weight / maxWeight) * 100;
+          setCount++;
+        }
       }
     });
   });
