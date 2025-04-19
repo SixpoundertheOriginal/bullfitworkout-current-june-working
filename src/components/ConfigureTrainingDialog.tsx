@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { TrainingTypeSelector } from "./training/TrainingTypeSelector";
 import { AddCustomTrainingType } from "./training/AddCustomTrainingType";
 import { WorkoutTagPicker } from "./training/WorkoutTagPicker";
+import { DurationSelector } from "./training/DurationSelector";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -116,53 +116,31 @@ export function ConfigureTrainingDialog({
               />
             </div>
 
-            <div>
-              <label className="block text-base font-medium mb-2">Duration (minutes)</label>
-              <ToggleGroup 
-                type="single" 
-                value={duration.toString()} 
-                onValueChange={(value) => setDuration(parseInt(value || "30"))}
-                className="justify-between"
-              >
-                <ToggleGroupItem 
-                  value="15" 
-                  className="w-1/4 data-[state=on]:bg-purple-600 text-white"
-                >
-                  15
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="30" 
-                  className="w-1/4 data-[state=on]:bg-purple-600 text-white"
-                >
-                  30
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="45" 
-                  className="w-1/4 data-[state=on]:bg-purple-600 text-white"
-                >
-                  45
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="60" 
-                  className="w-1/4 data-[state=on]:bg-purple-600 text-white"
-                >
-                  60
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
+            <DurationSelector 
+              value={duration} 
+              onChange={setDuration}
+            />
 
             <div>
               <label className="block text-base font-medium mb-2">Quick Setup</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => applyQuickSetup("morning")}
+                  onClick={() => {
+                    setTrainingType("Running");
+                    setSelectedTags(["Cardio", "Morning"]);
+                    setDuration(30);
+                  }}
                   className="bg-gray-800 rounded-lg p-3 text-left hover:bg-gray-750 transition-colors border border-gray-700"
                 >
                   <h4 className="font-medium text-sm">Morning Cardio</h4>
                   <p className="text-gray-400 text-xs mt-1">30min running session</p>
                 </button>
                 <button
-                  onClick={() => applyQuickSetup("fullbody")}
+                  onClick={() => {
+                    setTrainingType("Strength");
+                    setSelectedTags(["Strength", "Full Body"]);
+                    setDuration(45);
+                  }}
                   className="bg-gray-800 rounded-lg p-3 text-left hover:bg-gray-750 transition-colors border border-gray-700"
                 >
                   <h4 className="font-medium text-sm">Full Body</h4>
