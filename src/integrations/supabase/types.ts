@@ -175,7 +175,7 @@ export type Database = {
           rating: number | null
           start_time: string
           template_id: string | null
-          training_type: string
+          training_type: Database["public"]["Enums"]["training_type"]
           user_id: string
         }
         Insert: {
@@ -192,7 +192,7 @@ export type Database = {
           rating?: number | null
           start_time: string
           template_id?: string | null
-          training_type: string
+          training_type: Database["public"]["Enums"]["training_type"]
           user_id: string
         }
         Update: {
@@ -209,7 +209,7 @@ export type Database = {
           rating?: number | null
           start_time?: string
           template_id?: string | null
-          training_type?: string
+          training_type?: Database["public"]["Enums"]["training_type"]
           user_id?: string
         }
         Relationships: [
@@ -994,7 +994,7 @@ export type Database = {
           is_favorite: boolean | null
           name: string
           tags: string[] | null
-          training_type: string
+          training_type: Database["public"]["Enums"]["training_type"]
           updated_at: string
         }
         Insert: {
@@ -1007,7 +1007,7 @@ export type Database = {
           is_favorite?: boolean | null
           name: string
           tags?: string[] | null
-          training_type: string
+          training_type: Database["public"]["Enums"]["training_type"]
           updated_at?: string
         }
         Update: {
@@ -1020,7 +1020,7 @@ export type Database = {
           is_favorite?: boolean | null
           name?: string
           tags?: string[] | null
-          training_type?: string
+          training_type?: Database["public"]["Enums"]["training_type"]
           updated_at?: string
         }
         Relationships: []
@@ -1038,6 +1038,12 @@ export type Database = {
     Enums: {
       task_priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT"
       task_status: "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE" | "ARCHIVED"
+      training_type:
+        | "Strength"
+        | "Cardio"
+        | "Calisthenics"
+        | "Yoga"
+        | "Martial Arts"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1155,6 +1161,13 @@ export const Constants = {
     Enums: {
       task_priority: ["LOW", "MEDIUM", "HIGH", "URGENT"],
       task_status: ["BACKLOG", "TODO", "IN_PROGRESS", "DONE", "ARCHIVED"],
+      training_type: [
+        "Strength",
+        "Cardio",
+        "Calisthenics",
+        "Yoga",
+        "Martial Arts",
+      ],
     },
   },
 } as const

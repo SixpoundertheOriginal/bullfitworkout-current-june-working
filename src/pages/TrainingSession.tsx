@@ -18,6 +18,7 @@ import {
   PlusCircle,
   Weight
 } from "lucide-react";
+import { TrainingTypeTag, trainingTypes } from "@/components/TrainingTypeTag";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TopRestTimer } from '@/components/TopRestTimer';
@@ -531,6 +532,7 @@ const TrainingSession = () => {
           <ArrowLeft size={24} />
         </button>
         <div className="flex items-center gap-4">
+          <TrainingTypeTag type={trainingType as any} />
           <h1 className="title-large">{trainingType}</h1>
         </div>
         <WeightUnitToggle variant="badge" />
