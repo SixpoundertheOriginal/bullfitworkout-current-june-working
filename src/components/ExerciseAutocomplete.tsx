@@ -48,9 +48,10 @@ import {
 
 interface ExerciseAutocompleteProps {
   onSelectExercise: (exercise: Exercise) => void;
+  className?: string;
 }
 
-export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteProps) {
+export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -64,8 +65,8 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     equipment_type: [],
     movement_pattern: "push",
     difficulty: "beginner",
-    instructions: {}, // Required field
-    is_compound: false, // Required field
+    instructions: {},
+    is_compound: false,
     tips: [],
     variations: []
   });
@@ -180,7 +181,7 @@ export function ExerciseAutocomplete({ onSelectExercise }: ExerciseAutocompleteP
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("flex items-center gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
