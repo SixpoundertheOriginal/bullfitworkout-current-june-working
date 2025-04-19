@@ -151,12 +151,7 @@ export const WorkoutMetrics = ({
       </div>
       
       <div className="px-4 py-2">
-        <PerformanceMetrics
-          volume={75}
-          intensity={80}
-          density={65}
-          efficiency={70}
-        />
+        <PerformanceMetrics />
       </div>
     </div>
   );
