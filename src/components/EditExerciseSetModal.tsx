@@ -55,14 +55,14 @@ export function EditExerciseSetModal({
   const handleWeightChange = (index: number, value: string) => {
     const updatedSets = [...formSets];
     const numValue = parseFloat(value);
-    updatedSets[index].weight = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
+    updatedSets[index].weight = !isNaN(numValue) ? Math.max(0, numValue) : 0;
     setFormSets(updatedSets);
   };
 
   const handleRepsChange = (index: number, value: string) => {
     const updatedSets = [...formSets];
     const numValue = parseInt(value, 10);
-    updatedSets[index].reps = !isNaN(numValue) && numValue >= 0 ? numValue : 0;
+    updatedSets[index].reps = !isNaN(numValue) ? Math.max(0, numValue) : 0;
     setFormSets(updatedSets);
   };
 
@@ -163,6 +163,11 @@ export function EditExerciseSetModal({
                     value={set.weight}
                     onChange={(e) => handleWeightChange(index, e.target.value)}
                     className="workout-number-input text-center flex-1 h-10 bg-gray-800 border-gray-700 text-white"
+                    onBlur={(e) => {
+                      if (Number(e.target.value) < 0) {
+                        handleWeightChange(index, "0");
+                      }
+                    }}
                   />
                   <button 
                     type="button"
@@ -187,6 +192,11 @@ export function EditExerciseSetModal({
                     value={set.reps}
                     onChange={(e) => handleRepsChange(index, e.target.value)}
                     className="workout-number-input text-center flex-1 h-10 bg-gray-800 border-gray-700 text-white"
+                    onBlur={(e) => {
+                      if (Number(e.target.value) < 0) {
+                        handleRepsChange(index, "0");
+                      }
+                    }}
                   />
                   <button 
                     type="button"

@@ -70,5 +70,12 @@ export const useWorkoutMetrics = (
     setExerciseGroups(Object.values(groupsMap));
   }, [exercises, time, weightUnit]);
 
-  return { metrics, exerciseGroups };
+  return { 
+    metrics, 
+    exerciseGroups,
+    exerciseCount: metrics.exerciseCount,
+    completedSets: metrics.completedSets,
+    totalSets: metrics.totalSets,
+    performance: metrics.performance
+  };
 };
