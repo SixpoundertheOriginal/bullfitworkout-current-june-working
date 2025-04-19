@@ -1,7 +1,6 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Weight } from "lucide-react"; // Changed from Running, Yoga to icons that exist
+import { Dumbbell, Bike, Weight } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,12 +28,12 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   },
   {
     name: "Cardio",
-    icon: <Bike className="h-6 w-6" />, // Changed from Running to Bike
+    icon: <Bike className="h-6 w-6" />,
     gradient: { from: "#f87171", to: "#dc2626" }
   },
   {
     name: "Yoga",
-    icon: <Weight className="h-6 w-6" rotate={45} />, // Changed Yoga to Weight with rotation
+    icon: <Weight className="h-6 w-6" rotate={45} />,
     gradient: { from: "#22c55e", to: "#16a34a" }
   },
   {
@@ -62,7 +61,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     enabled: !!user
   });
 
-  // Get workout type statistics for sizing
   const getTypeSize = (typeName: string) => {
     const typeStats = stats.workoutTypes.find(t => t.type === typeName);
     if (!typeStats) return "md";
@@ -84,14 +82,14 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   return (
     <div className="flex flex-wrap gap-4 justify-center">
       {DEFAULT_TRAINING_TYPES.map((type) => {
-        const size = getTypeSize(type.name);
+        const size = "md";
         return (
           <button
             key={type.name}
             onClick={() => onSelect(type.name)}
             className={cn(
               "relative rounded-full transition-all duration-300 flex items-center justify-center",
-              sizeClasses[size as keyof typeof sizeClasses],
+              "h-20 w-20",
               selectedType === type.name ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-gray-900" : "",
               "hover:scale-110 group"
             )}
@@ -112,7 +110,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           key={type.id}
           onClick={() => onSelect(type.name)}
           className={cn(
-            "relative h-16 w-16 rounded-full transition-all duration-300 flex items-center justify-center",
+            "relative h-20 w-20 rounded-full transition-all duration-300 flex items-center justify-center",
             selectedType === type.name ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-gray-900" : "",
             "hover:scale-110 group"
           )}
