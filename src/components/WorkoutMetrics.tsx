@@ -33,9 +33,7 @@ export const WorkoutMetrics = ({
   
   // Effect to reset the timer whenever showRestTimer changes to true
   useEffect(() => {
-    console.log("WorkoutMetrics: showRestTimer changed to", showRestTimer);
     if (showRestTimer) {
-      console.log("WorkoutMetrics: Incrementing reset counter. Current value:", resetCounter);
       setResetCounter(prev => prev + 1);
     }
   }, [showRestTimer]);
@@ -43,15 +41,11 @@ export const WorkoutMetrics = ({
   // Listen for toast events to reset timer
   useEffect(() => {
     const handleToastReset = () => {
-      // Listen for 'set-complete' toasts
-      console.log("WorkoutMetrics: Checking if we need to reset timer based on toast");
       if (showRestTimer) {
-        console.log("WorkoutMetrics: Resetting timer due to set complete toast");
         setResetCounter(prev => prev + 1);
       }
     };
 
-    // Set up event listener for when sonner toast appears
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.addedNodes.length > 0) {
@@ -84,46 +78,54 @@ export const WorkoutMetrics = ({
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-4 bg-gray-900/95 backdrop-blur-sm p-4 rounded-xl border border-gray-800/40 shadow-lg">
+      <div className="grid grid-cols-4 gap-2 p-4">
         <MetricItem
-          icon={<Clock className="text-purple-400" size={20} />}
+          icon={<Clock className="text-purple-400" size={24} />}
           value={formatTime(time)}
           label="Time"
+          backgroundClass="from-purple-500/20 to-pink-500/20"
           pulseIcon
         />
         
         <MetricItem
-          icon={<Dumbbell className="text-purple-400" size={20} />}
+          icon={<Dumbbell className="text-purple-400" size={24} />}
           value={exerciseCount.toString()}
           label="Exercises"
+          backgroundClass="from-purple-500/20 to-pink-500/20"
         />
         
         <MetricItem
-          icon={<BarChart3 className="text-purple-400" size={20} />}
+          icon={<BarChart3 className="text-purple-400" size={24} />}
           value={`${completedSets}/${totalSets}`}
           label="Sets"
+          backgroundClass="from-purple-500/20 to-pink-500/20"
           valueClassName="flex items-baseline gap-1 text-lg font-mono"
         />
 
-        <div className="flex flex-col items-center">
-          <TopRestTimer 
-            isActive={showRestTimer} 
-            onComplete={onRestTimerComplete}
-            resetSignal={resetCounter}
-            onTimeUpdate={onRestTimeUpdate}
-            onManualStart={onManualRestStart}
-          />
-        </div>
+        <MetricItem
+          icon={<Timer className="text-purple-400" size={24} />}
+          customContent={
+            <TopRestTimer 
+              isActive={showRestTimer} 
+              onComplete={onRestTimerComplete}
+              resetSignal={resetCounter}
+              onTimeUpdate={onRestTimeUpdate}
+              onManualStart={onManualRestStart}
+            />
+          }
+          label="Rest"
+          backgroundClass="from-purple-500/20 to-pink-500/20"
+        />
       </div>
       
-      <div className="px-4 py-2 mt-1">
+      <div className="px-4 py-2">
         <div className="flex justify-between text-xs font-medium mb-1">
           <span className="text-gray-400">Progress</span>
           <span className="text-purple-400">{Math.round(completionPercentage)}%</span>
         </div>
         <Progress 
           value={completionPercentage} 
-          className="h-1.5 bg-gray-800 [&>div]:bg-gradient-to-r [&>div]:from-purple-600 [&>div]:to-pink-500"
+          className="h-1.5 bg-gray-800/50 overflow-hidden rounded-full [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
         />
       </div>
     </div>
@@ -132,10 +134,12 @@ export const WorkoutMetrics = ({
 
 interface MetricItemProps {
   icon: React.ReactNode;
-  value: string;
+  value?: string;
   label: string;
   pulseIcon?: boolean;
   valueClassName?: string;
+  backgroundClass?: string;
+  customContent?: React.ReactNode;
 }
 
 const MetricItem: React.FC<MetricItemProps> = ({
@@ -143,21 +147,32 @@ const MetricItem: React.FC<MetricItemProps> = ({
   value,
   label,
   pulseIcon,
-  valueClassName
+  valueClassName,
+  backgroundClass,
+  customContent
 }) => (
-  <div className="flex flex-col items-center">
-    <div className={cn("relative mb-1", pulseIcon && "animate-pulse")}>
+  <div className={cn(
+    "flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-br border border-white/5 backdrop-blur-xl",
+    backgroundClass
+  )}>
+    <div className={cn("relative mb-2", pulseIcon && "animate-pulse")}>
       {icon}
       {pulseIcon && (
         <div className="absolute -right-1 -top-1 w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
       )}
     </div>
-    <span className={cn(
-      "text-lg font-mono text-white transition-all duration-300 ease-in-out",
-      valueClassName
-    )}>
-      {value}
-    </span>
-    <span className="text-xs text-gray-400 font-medium">{label}</span>
+    {customContent ? (
+      customContent
+    ) : (
+      <>
+        <span className={cn(
+          "text-xl font-mono text-white font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent",
+          valueClassName
+        )}>
+          {value}
+        </span>
+        <span className="text-sm text-gray-400 font-medium mt-1">{label}</span>
+      </>
+    )}
   </div>
 );
