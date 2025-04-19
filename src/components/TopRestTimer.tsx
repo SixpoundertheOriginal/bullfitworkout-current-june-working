@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Timer } from 'lucide-react';
 import { RestTimerControls } from './RestTimerControls';
@@ -6,10 +5,16 @@ import { RestTimerControls } from './RestTimerControls';
 interface TopRestTimerProps {
   isActive: boolean;
   onComplete: () => void;
-  resetSignal: number; // Signal to force timer reset
+  resetSignal: number;
+  onTimeUpdate?: (time: number) => void;
 }
 
-export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimerProps) => {
+export const TopRestTimer = ({ 
+  isActive, 
+  onComplete, 
+  resetSignal,
+  onTimeUpdate 
+}: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(true);
   const maxTime = 300; // 5 minutes max
@@ -41,7 +46,12 @@ export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimer
     if (isTimerActive && isActive) {
       timerRef.current = setTimeout(() => {
         if (elapsedTime < maxTime) {
-          setElapsedTime(prev => prev + 1);
+          setElapsedTime(prev => {
+            const newTime = prev + 1;
+            // Notify parent of time update
+            onTimeUpdate?.(newTime);
+            return newTime;
+          });
         }
       }, 1000);
 
@@ -49,7 +59,7 @@ export const TopRestTimer = ({ isActive, onComplete, resetSignal }: TopRestTimer
         if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
-  }, [elapsedTime, isTimerActive, isActive, maxTime]);
+  }, [elapsedTime, isTimerActive, isActive, maxTime, onTimeUpdate]);
 
   if (!isActive) {
     return (

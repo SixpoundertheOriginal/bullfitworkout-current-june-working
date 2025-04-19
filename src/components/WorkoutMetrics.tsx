@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { Timer, Dumbbell, BarChart3 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ interface WorkoutMetricsProps {
   totalSets: number;
   showRestTimer: boolean;
   onRestTimerComplete: () => void;
+  onRestTimeUpdate?: (time: number) => void; // Add this prop
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export const WorkoutMetrics = ({
   totalSets,
   showRestTimer,
   onRestTimerComplete,
+  onRestTimeUpdate,
   className 
 }: WorkoutMetricsProps) => {
   // Add a reset counter to force timer resets
@@ -76,7 +78,8 @@ export const WorkoutMetrics = ({
           <TopRestTimer 
             isActive={showRestTimer} 
             onComplete={onRestTimerComplete}
-            resetSignal={resetCounter} 
+            resetSignal={resetCounter}
+            onTimeUpdate={onRestTimeUpdate}
           />
         </div>
       </div>

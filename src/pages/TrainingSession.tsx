@@ -283,6 +283,7 @@ const TrainingSession = () => {
   const [currentExercise, setCurrentExercise] = useState("");
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [newExerciseName, setNewExerciseName] = useState("");
+  const [currentRestTime, setCurrentRestTime] = useState(0);
 
   const locationState = location.state as LocationState | null;
   const [trainingType, setTrainingType] = useState(
@@ -334,12 +335,8 @@ const TrainingSession = () => {
     const updatedExercises = { ...exercises };
     if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
       updatedExercises[exerciseName][setIndex].completed = true;
+      updatedExercises[exerciseName][setIndex].restTime = currentRestTime;
       setExercises(updatedExercises);
-      setShowRestTimer(true);
-      
-      const currentSets = updatedExercises[exerciseName];
-      const currentVolume = calculateSetVolume(currentSets, weightUnit);
-      console.log(`Set ${setIndex + 1} completed. New volume: ${currentVolume} ${weightUnit}`);
       
       if (navigator.vibrate) {
         navigator.vibrate([50]);
@@ -349,6 +346,10 @@ const TrainingSession = () => {
       setTimeout(() => {
         setShowRestTimer(true);
       }, 10);
+      
+      const currentSets = updatedExercises[exerciseName];
+      const currentVolume = calculateSetVolume(currentSets, weightUnit);
+      console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s. New volume: ${currentVolume} ${weightUnit}`);
       
       toast.success(`${exerciseName}: Set ${setIndex + 1} logged successfully`, {
         style: {
@@ -555,6 +556,10 @@ const TrainingSession = () => {
     }, 10);
   };
   
+  const handleRestTimeUpdate = (time: number) => {
+    setCurrentRestTime(time);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-gray-800 bg-black/95 backdrop-blur-sm">
@@ -578,6 +583,7 @@ const TrainingSession = () => {
         totalSets={totalSets}
         showRestTimer={showRestTimer}
         onRestTimerComplete={handleRestTimerComplete}
+        onRestTimeUpdate={handleRestTimeUpdate}
         className="sticky top-[73px] z-10 mx-4 mt-4"
       />
       
