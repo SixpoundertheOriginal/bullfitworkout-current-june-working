@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -150,7 +149,7 @@ export const WorkoutMetrics = ({
         </div>
       </div>
       
-      <div className="px-4 py-2 z-0 relative">
+      <div className="px-4 py-2">
         <PerformanceMetrics />
       </div>
     </div>
