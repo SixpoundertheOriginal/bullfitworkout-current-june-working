@@ -16,39 +16,53 @@ const truncateText = (text: string, maxLength: number = 30) => {
 export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) {
   const { exercises } = useExercises();
   
+  // Safe filter functions with null checks
+  const filterByMovementPattern = (pattern: string) => {
+    return exercises
+      .filter(e => e.movement_pattern === pattern)
+      .slice(0, 3)
+      .map(e => truncateText(e.name));
+  };
+  
+  const filterByMuscleGroups = (muscleGroups: string[]) => {
+    return exercises
+      .filter(e => {
+        // Safely check if primary_muscle_groups exists and has the 'some' method
+        return e.primary_muscle_groups && 
+               Array.isArray(e.primary_muscle_groups) && 
+               e.primary_muscle_groups.some(m => muscleGroups.includes(m));
+      })
+      .slice(0, 3)
+      .map(e => truncateText(e.name));
+  };
+  
+  const filterByCompound = () => {
+    return exercises
+      .filter(e => e.is_compound)
+      .slice(0, 4)
+      .map(e => truncateText(e.name));
+  };
+  
   const templates = [
     {
       name: "Push",
       description: "Chest, shoulders, triceps",
-      exercises: exercises
-        .filter(e => e.movement_pattern === 'push')
-        .slice(0, 3)
-        .map(e => truncateText(e.name))
+      exercises: filterByMovementPattern('push')
     },
     {
       name: "Pull",
       description: "Back, biceps, rear delts",
-      exercises: exercises
-        .filter(e => e.movement_pattern === 'pull')
-        .slice(0, 3)
-        .map(e => truncateText(e.name))
+      exercises: filterByMovementPattern('pull')
     },
     {
       name: "Legs",
       description: "Quads, hamstrings, calves",
-      exercises: exercises
-        .filter(e => e.primary_muscle_groups.some(m => 
-          ['Quadriceps', 'Hamstrings', 'Calves'].includes(m)))
-        .slice(0, 3)
-        .map(e => truncateText(e.name))
+      exercises: filterByMuscleGroups(['Quadriceps', 'Hamstrings', 'Calves'])
     },
     {
       name: "Full Body",
       description: "Complete body workout",
-      exercises: exercises
-        .filter(e => e.is_compound)
-        .slice(0, 4)
-        .map(e => truncateText(e.name))
+      exercises: filterByCompound()
     },
   ];
 

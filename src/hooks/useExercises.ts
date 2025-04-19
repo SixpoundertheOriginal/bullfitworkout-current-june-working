@@ -24,8 +24,18 @@ export const useExercises = () => {
       return data.map((exercise): Exercise => ({
         id: exercise.id,
         name: exercise.name,
-        category: exercise.category || '',
-        equipment: exercise.equipment || '',
+        created_at: exercise.created_at || '',
+        user_id: exercise.user_id || '',
+        description: exercise.description || '',
+        primary_muscle_groups: exercise.primary_muscle_groups || [],
+        secondary_muscle_groups: exercise.secondary_muscle_groups || [],
+        equipment_type: exercise.equipment_type || [],
+        movement_pattern: exercise.movement_pattern || 'push',
+        difficulty: exercise.difficulty || 'beginner',
+        instructions: exercise.instructions || {},
+        is_compound: exercise.is_compound || false,
+        tips: exercise.tips || [],
+        variations: exercise.variations || [],
         metadata: exercise.metadata as ExerciseMetadata || {}
       }));
     }
