@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 
-type TrainingType = 'Strength' | 'Cardio' | 'Calisthenics' | 'Yoga' | 'Martial Arts';
+export type TrainingType = 'Strength' | 'Cardio' | 'Calisthenics' | 'Yoga' | 'Martial Arts';
 
 interface TrainingTypeTagProps {
   type: TrainingType;
@@ -37,4 +37,6 @@ export const trainingTypes: TrainingType[] = [
   'Martial Arts'
 ];
 
-export type { TrainingType };
+export function isValidTrainingType(type: string): type is TrainingType {
+  return trainingTypes.includes(type as TrainingType);
+}

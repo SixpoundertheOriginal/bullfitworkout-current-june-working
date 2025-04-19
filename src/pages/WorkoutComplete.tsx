@@ -26,6 +26,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recha
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
+import { TrainingType, isValidTrainingType, trainingTypes } from "@/components/TrainingTypeTag";
 
 interface ExerciseSet {
   weight: number;
@@ -106,10 +107,15 @@ const WorkoutComplete = () => {
     setSaving(true);
     
     try {
+      // Validate training type before saving
+      const trainingTypeValue = isValidTrainingType(workoutData.trainingType) 
+        ? workoutData.trainingType 
+        : 'Strength'; // Default to Strength if invalid
+      
       console.log("Saving workout with data:", {
         user_id: user.id,
         name: workoutData.name || workoutData.trainingType,
-        training_type: workoutData.trainingType,
+        training_type: trainingTypeValue,
         start_time: workoutData.startTime.toISOString(),
         end_time: workoutData.endTime.toISOString(),
         duration: workoutData.duration,
@@ -121,7 +127,7 @@ const WorkoutComplete = () => {
         .insert({
           user_id: user.id,
           name: workoutData.name || workoutData.trainingType,
-          training_type: workoutData.trainingType,
+          training_type: trainingTypeValue,
           start_time: workoutData.startTime.toISOString(),
           end_time: workoutData.endTime.toISOString(),
           duration: workoutData.duration,
@@ -163,12 +169,17 @@ const WorkoutComplete = () => {
         }
         
         if (saveAsTemplate) {
+          // Validate training type for template too
+          const validTrainingType = isValidTrainingType(workoutData.trainingType)
+            ? workoutData.trainingType
+            : 'Strength';
+          
           const { error: templateError } = await supabase
             .from('workout_templates')
             .insert({
               name: templateName || `${workoutData.trainingType} Template`,
               description: `Created from workout on ${new Date().toLocaleDateString()}`,
-              training_type: workoutData.trainingType,
+              training_type: validTrainingType,
               exercises: JSON.stringify(workoutData.exercises),
               created_by: user.id,
               estimated_duration: workoutData.duration
