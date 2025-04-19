@@ -62,6 +62,10 @@ const WorkoutComplete = () => {
     completed: false,
     error: false
   });
+  const [navigatePending, setNavigatePending] = useState<{
+    pending: boolean;
+    exerciseName: string | null;
+  }>({ pending: false, exerciseName: null });
 
   useEffect(() => {
     if (location.state?.workoutData) {
@@ -74,6 +78,16 @@ const WorkoutComplete = () => {
       navigate("/");
     }
   }, [location.state, navigate]);
+  
+  useEffect(() => {
+    if (navigatePending.pending && workoutId && navigatePending.exerciseName) {
+      console.log(`Now navigating to details with workout ID: ${workoutId}`);
+      navigate(`/workout-details/${workoutId}`, {
+        state: { highlightExercise: navigatePending.exerciseName }
+      });
+      setNavigatePending({ pending: false, exerciseName: null });
+    }
+  }, [navigatePending, workoutId, navigate]);
 
   const totalVolume = workoutData ? Object.keys(workoutData.exercises).reduce((total, exercise) => {
     return total + workoutData.exercises[exercise].reduce((exerciseTotal, set) => {
@@ -100,7 +114,7 @@ const WorkoutComplete = () => {
   };
 
   const saveWorkout = async () => {
-    if (!workoutData || !user) return;
+    if (!workoutData || !user) return null;
     
     setSaving(true);
     
@@ -193,10 +207,16 @@ const WorkoutComplete = () => {
           description: "Your workout has been successfully recorded"
         });
         
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
+        if (!navigatePending.pending) {
+          setTimeout(() => {
+            navigate('/');
+          }, 2000);
+        }
+        
+        return workoutSession.id;
       }
+      
+      return null;
     } catch (error) {
       console.error("Error saving workout:", error);
       setSavingStats({
@@ -208,6 +228,8 @@ const WorkoutComplete = () => {
         description: "There was a problem saving your workout data",
         style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
       });
+      
+      return null;
     } finally {
       setSaving(false);
     }
@@ -232,17 +254,11 @@ const WorkoutComplete = () => {
     });
   };
 
-  const handleExerciseClick = (exerciseName: string) => {
+  const handleExerciseClick = async (exerciseName: string) => {
     if (!workoutId) {
       console.log("No workout ID available yet, saving workout first");
-      saveWorkout().then(() => {
-        if (workoutId) {
-          console.log(`Now navigating to details with workout ID: ${workoutId}`);
-          navigate(`/workout-details/${workoutId}`, {
-            state: { highlightExercise: exerciseName }
-          });
-        }
-      });
+      setNavigatePending({ pending: true, exerciseName });
+      await saveWorkout();
     } else {
       console.log(`Navigating to details with workout ID: ${workoutId}`);
       navigate(`/workout-details/${workoutId}`, {
