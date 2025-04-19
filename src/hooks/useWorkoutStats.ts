@@ -3,6 +3,21 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
+// Define an interface for the workout data structure from Supabase
+interface WorkoutSession {
+  id: string;
+  user_id: string;
+  name: string;
+  training_type: string;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  tags?: string[]; // Added tags as optional property
+}
+
 export interface WorkoutTypeStats {
   type: string;
   count: number;
@@ -143,8 +158,11 @@ export function useWorkoutStats(limit: number = 50) {
           return;
         }
         
+        // Cast the workouts to the WorkoutSession type
+        const typedWorkouts = workouts as WorkoutSession[];
+        
         // Fetch exercise sets for these workouts
-        const workoutIds = workouts.map(w => w.id);
+        const workoutIds = typedWorkouts.map(w => w.id);
         const { data: exerciseSets, error: setsError } = await supabase
           .from('exercise_sets')
           .select('*')
@@ -153,10 +171,10 @@ export function useWorkoutStats(limit: number = 50) {
         if (setsError) throw setsError;
         
         // Calculate basic stats
-        const totalWorkouts = workouts.length;
-        const totalDuration = workouts.reduce((sum, w) => sum + w.duration, 0);
+        const totalWorkouts = typedWorkouts.length;
+        const totalDuration = typedWorkouts.reduce((sum, w) => sum + w.duration, 0);
         const avgDuration = totalDuration / totalWorkouts;
-        const lastWorkoutDate = workouts[0]?.start_time || null;
+        const lastWorkoutDate = typedWorkouts[0]?.start_time || null;
         
         // Calculate workout types distribution with time of day analysis
         const typeCount: Record<string, { 
@@ -169,7 +187,7 @@ export function useWorkoutStats(limit: number = 50) {
           totalDuration: number;
         }> = {};
         
-        workouts.forEach(workout => {
+        typedWorkouts.forEach(workout => {
           const type = workout.training_type;
           const hour = new Date(workout.start_time).getHours();
           const timeOfDay = 
@@ -219,7 +237,7 @@ export function useWorkoutStats(limit: number = 50) {
         }> = {};
         
         // Extract all tags used across workouts - handle case where tags might not exist
-        const allTags = workouts.flatMap(w => w.tags || []).filter(Boolean);
+        const allTags = typedWorkouts.flatMap(w => w.tags || []).filter(Boolean);
         const tagMap: Record<string, {
           count: number;
           types: Set<string>;
@@ -231,7 +249,7 @@ export function useWorkoutStats(limit: number = 50) {
         }> = {};
         
         // Process tags from workouts
-        workouts.forEach(workout => {
+        typedWorkouts.forEach(workout => {
           const hour = new Date(workout.start_time).getHours();
           const timeOfDay = 
             hour >= 5 && hour < 11 ? 'morning' :
@@ -282,7 +300,7 @@ export function useWorkoutStats(limit: number = 50) {
         // Process exercise sets
         exerciseSets?.forEach(set => {
           const name = set.exercise_name;
-          const workout = workouts.find(w => w.id === set.workout_id);
+          const workout = typedWorkouts.find(w => w.id === set.workout_id);
           // Handle case where tags might not exist
           const tags = workout?.tags || [];
           
@@ -371,7 +389,7 @@ export function useWorkoutStats(limit: number = 50) {
           friday: 0, saturday: 0, sunday: 0 
         };
         
-        workouts.forEach(workout => {
+        typedWorkouts.forEach(workout => {
           const date = new Date(workout.start_time);
           const hour = date.getHours();
           const day = dayNames[date.getDay()];
@@ -404,9 +422,9 @@ export function useWorkoutStats(limit: number = 50) {
         
         // Calculate workout streak
         let streakDays = 0;
-        if (workouts.length > 0) {
+        if (typedWorkouts.length > 0) {
           // Convert dates to YYYY-MM-DD format for comparison
-          const workoutDates = workouts.map(w => 
+          const workoutDates = typedWorkouts.map(w => 
             new Date(w.start_time).toISOString().split('T')[0]
           );
           
