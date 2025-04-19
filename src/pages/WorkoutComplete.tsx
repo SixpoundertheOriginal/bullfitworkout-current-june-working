@@ -69,7 +69,6 @@ const WorkoutComplete = () => {
     } else {
       toast("No workout data found", {
         description: "Please complete a workout session first",
-        // Using the correct variant format for sonner
         style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
       });
       navigate("/");
@@ -106,10 +105,9 @@ const WorkoutComplete = () => {
     setSaving(true);
     
     try {
-      // Validate training type before saving
       const trainingTypeValue = isValidTrainingType(workoutData.trainingType) 
         ? workoutData.trainingType 
-        : 'Strength'; // Default to Strength if invalid
+        : 'Strength';
       
       console.log("Saving workout with data:", {
         user_id: user.id,
@@ -168,7 +166,6 @@ const WorkoutComplete = () => {
         }
         
         if (saveAsTemplate) {
-          // Validate training type for template too
           const validTrainingType = isValidTrainingType(workoutData.trainingType)
             ? workoutData.trainingType
             : 'Strength';
@@ -209,7 +206,6 @@ const WorkoutComplete = () => {
       
       toast("Error saving workout", {
         description: "There was a problem saving your workout data",
-        // Using the correct style format for sonner instead of variant
         style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
       });
     } finally {
@@ -233,6 +229,14 @@ const WorkoutComplete = () => {
         name: exercise,
         volume: Math.round(totalExerciseVolume * 10) / 10
       };
+    });
+  };
+
+  const handleExerciseClick = (exerciseName: string) => {
+    if (!workoutId) return;
+    
+    navigate(`/workout-details/${workoutId}`, {
+      state: { highlightExercise: exerciseName }
     });
   };
 
@@ -376,7 +380,11 @@ const WorkoutComplete = () => {
         <div className="mb-6">
           <h3 className="title-small mb-3">Exercises Completed</h3>
           {Object.keys(workoutData?.exercises || {}).map((exercise) => (
-            <div key={exercise} className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-3">
+            <div 
+              key={exercise} 
+              className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-3 cursor-pointer hover:bg-gray-800/70 transition-all duration-200"
+              onClick={() => handleExerciseClick(exercise)}
+            >
               <div className="flex justify-between items-center">
                 <div>
                   <h4 className="font-medium">{exercise}</h4>
