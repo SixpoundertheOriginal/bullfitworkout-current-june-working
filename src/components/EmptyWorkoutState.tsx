@@ -9,6 +9,10 @@ interface EmptyWorkoutStateProps {
   onTemplateSelect: (type: string) => void;
 }
 
+const truncateText = (text: string, maxLength: number = 30) => {
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+};
+
 export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) {
   const { exercises } = useExercises();
   
@@ -19,7 +23,7 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
       exercises: exercises
         .filter(e => e.movement_pattern === 'push')
         .slice(0, 3)
-        .map(e => e.name)
+        .map(e => truncateText(e.name))
     },
     {
       name: "Pull",
@@ -27,7 +31,7 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
       exercises: exercises
         .filter(e => e.movement_pattern === 'pull')
         .slice(0, 3)
-        .map(e => e.name)
+        .map(e => truncateText(e.name))
     },
     {
       name: "Legs",
@@ -36,7 +40,7 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
         .filter(e => e.primary_muscle_groups.some(m => 
           ['Quadriceps', 'Hamstrings', 'Calves'].includes(m)))
         .slice(0, 3)
-        .map(e => e.name)
+        .map(e => truncateText(e.name))
     },
     {
       name: "Full Body",
@@ -44,7 +48,7 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
       exercises: exercises
         .filter(e => e.is_compound)
         .slice(0, 4)
-        .map(e => e.name)
+        .map(e => truncateText(e.name))
     },
   ];
 
@@ -75,13 +79,13 @@ export function EmptyWorkoutState({ onTemplateSelect }: EmptyWorkoutStateProps) 
               onClick={() => onTemplateSelect(template.name)}
             >
               <div className="flex items-center justify-between w-full">
-                <span className="font-medium font-sans">{template.name}</span>
+                <span className="font-medium font-sans text-white">{template.name}</span>
                 <Plus 
                   size={16} 
                   className="text-purple-400 group-hover/button:rotate-90 transition-transform duration-300" 
                 />
               </div>
-              <p className="text-xs text-gray-400 font-normal font-sans">
+              <p className="text-xs text-gray-300 font-normal font-sans truncate w-full">
                 {template.exercises.join(" • ")}
               </p>
             </Button>
