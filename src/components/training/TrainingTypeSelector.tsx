@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Weight } from "lucide-react";
+import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,23 +22,23 @@ type DefaultTrainingType = {
 const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   {
     name: "Strength",
-    icon: <Dumbbell className="h-6 w-6" />,
-    gradient: "from-purple-600 to-purple-700"
+    icon: <Dumbbell className="h-7 w-7" />,
+    gradient: "from-purple-500 via-purple-600 to-purple-700"
   },
   {
     name: "Cardio",
-    icon: <Bike className="h-6 w-6" />,
-    gradient: "from-red-500 to-red-600"
+    icon: <Bike className="h-7 w-7" />,
+    gradient: "from-red-400 via-red-500 to-red-600"
   },
   {
     name: "Yoga",
-    icon: <Weight className="h-6 w-6 rotate-45" />,
-    gradient: "from-green-500 to-green-600"
+    icon: <Heart className="h-7 w-7" />,
+    gradient: "from-green-400 via-green-500 to-green-600"
   },
   {
     name: "Calisthenics",
-    icon: <Weight className="h-6 w-6" />,
-    gradient: "from-blue-500 to-blue-600"
+    icon: <Activity className="h-7 w-7" />,
+    gradient: "from-blue-400 via-blue-500 to-blue-600"
   }
 ];
 
@@ -84,10 +84,11 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
             iconOnly
             icon={type.icon}
             className={cn(
-              "bg-gradient-to-br text-white",
+              "bg-gradient-to-br text-white shadow-lg transition-all duration-300",
               type.gradient,
-              selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
-              "group relative"
+              selectedType === type.name && "ring-4 ring-purple-500/50 ring-offset-4 ring-offset-background scale-110",
+              "hover:scale-105 active:scale-95",
+              "group relative rounded-[1.5rem]"
             )}
           >
             <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
@@ -118,10 +119,9 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         ))}
       </div>
 
-      {/* Add the selected type label */}
       {selectedType && (
         <div className="flex items-center justify-center py-2 text-center">
-          <div className="px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
+          <div className="px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm border border-white/10">
             <span className="text-sm text-white/80">Selected Training Type: </span>
             <span className="font-medium text-white">{selectedType}</span>
           </div>
