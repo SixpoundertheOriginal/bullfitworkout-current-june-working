@@ -1,7 +1,7 @@
 
 import React from "react";
 import { CircularProgress } from "./ui/circular-progress";
-import { Timer, X, Play, Pause } from "lucide-react";
+import { Timer, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,7 @@ export const RestTimerControls = ({
           className="bg-gray-800/50 border-gray-700 hover:bg-gray-700 text-white"
           onClick={onSkip}
         >
-          <X size={18} />
+          <Timer size={18} />
         </Button>
       </div>
     </div>

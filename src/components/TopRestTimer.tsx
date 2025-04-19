@@ -21,13 +21,16 @@ export const TopRestTimer = ({
   const maxTime = 300; // 5 minutes max
   const timerRef = React.useRef<NodeJS.Timeout>();
 
+  // This effect handles the reset signal
   useEffect(() => {
-    if (isActive && resetSignal > 0) {
+    if (resetSignal > 0) {
+      console.log("Reset signal received:", resetSignal);
       setElapsedTime(0);
       setIsTimerActive(true);
     }
-  }, [resetSignal, isActive]);
+  }, [resetSignal]);
   
+  // This effect handles activation state changes
   useEffect(() => {
     if (isActive) {
       setIsTimerActive(true);
@@ -39,6 +42,7 @@ export const TopRestTimer = ({
     }
   }, [isActive]);
 
+  // This effect handles the timer countdown
   useEffect(() => {
     if (isTimerActive && isActive) {
       timerRef.current = setTimeout(() => {
@@ -48,6 +52,8 @@ export const TopRestTimer = ({
             onTimeUpdate?.(newTime);
             return newTime;
           });
+        } else {
+          onComplete();
         }
       }, 1000);
 
@@ -55,7 +61,7 @@ export const TopRestTimer = ({
         if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
-  }, [elapsedTime, isTimerActive, isActive, maxTime, onTimeUpdate]);
+  }, [elapsedTime, isTimerActive, isActive, maxTime, onTimeUpdate, onComplete]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

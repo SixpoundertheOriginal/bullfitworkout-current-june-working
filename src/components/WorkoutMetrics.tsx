@@ -28,8 +28,10 @@ export const WorkoutMetrics = ({
 }: WorkoutMetricsProps) => {
   const [resetCounter, setResetCounter] = React.useState(0);
   
+  // Effect to reset the timer whenever showRestTimer changes to true
   useEffect(() => {
     if (showRestTimer) {
+      console.log("Incrementing reset counter. Current value:", resetCounter);
       setResetCounter(prev => prev + 1);
     }
   }, [showRestTimer]);
