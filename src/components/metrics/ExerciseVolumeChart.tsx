@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   BarChart,
@@ -94,7 +95,7 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
                     <div className="bg-white/90 rounded-md p-3 shadow-lg border border-gray-200 text-gray-900">
                       <div className="font-semibold mb-1">{name}</div>
                       <div className="text-sm">
-                        Volume: {formattedValue} {weightUnit}
+                        {formattedValue} {weightUnit}
                       </div>
                     </div>
                   );
