@@ -64,12 +64,11 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
   
   // Custom day content renderer that adds the workout-based styling
   const CustomDayContent = (props: DayContentProps) => {
-    const { date, ...contentProps } = props;
-    const extraClass = dayClassName(date);
+    const extraClass = dayClassName(props.date);
     
     return (
       <div className={`${extraClass || ''}`}>
-        <DayContent {...contentProps} />
+        <DayContent {...props} />
       </div>
     );
   };
