@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { TrainingTypeSelector } from "./training/TrainingTypeSelector";
 import { AddCustomTrainingType } from "./training/AddCustomTrainingType";
@@ -72,8 +71,7 @@ export function ConfigureTrainingDialog({
 
   const handleStartTraining = () => {
     if (!trainingType) {
-      toast({
-        title: "Training type required",
+      toast("Training type required", {
         description: "Please select a training type to continue",
         variant: "destructive",
       });
