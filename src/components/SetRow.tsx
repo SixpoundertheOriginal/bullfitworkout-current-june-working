@@ -106,14 +106,14 @@ export const SetRow = ({
   };
 
   return (
-    <div className="grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
+    <div className={`${isEditing ? 'py-2' : 'py-3'} grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 px-2 border-b border-gray-800 transition-all duration-200`}>
       <div className="text-center font-medium text-gray-400">
         #{setNumber}
       </div>
       
       {isEditing ? (
         <>
-          <div className="col-span-3 flex items-center gap-1">
+          <div className="col-span-2 flex items-center gap-1">
             <button 
               type="button"
               onClick={() => onWeightIncrement(-1)} 
@@ -155,7 +155,7 @@ export const SetRow = ({
           </div>
           
           {isIsometric ? (
-            <div className="col-span-3 flex items-center gap-1">
+            <div className="col-span-2 flex items-center gap-1">
               <button 
                 type="button"
                 onClick={() => onDurationIncrement?.(-5)} 
@@ -181,7 +181,7 @@ export const SetRow = ({
               </button>
             </div>
           ) : (
-            <div className="col-span-3 flex items-center gap-1">
+            <div className="col-span-2 flex items-center gap-1">
               <button 
                 type="button"
                 onClick={() => onRepsIncrement(-1)} 
@@ -208,7 +208,7 @@ export const SetRow = ({
             </div>
           )}
           
-          <div className="col-span-3 flex items-center gap-1">
+          <div className="col-span-2 flex items-center gap-1">
             {onRestTimeIncrement && (
               <button 
                 type="button"

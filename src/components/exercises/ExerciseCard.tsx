@@ -144,7 +144,7 @@ const ExerciseCard = ({
             className="h-1.5 mb-6 bg-gray-800/50 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
           />
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             {sets.map((set, index) => (
               <SetRow 
                 key={index}
@@ -198,6 +198,24 @@ const ExerciseCard = ({
               />
             )}
           </div>
+
+          <Button
+            onClick={() => onAddSet(exercise)}
+            className="w-full mt-4 py-3 flex items-center justify-center text-sm 
+              bg-gradient-to-r from-purple-600 to-pink-500 
+              hover:from-purple-700 hover:to-pink-600 
+              text-white font-medium rounded-full 
+              transition-all duration-300 
+              transform hover:scale-[1.02] active:scale-[0.98] 
+              shadow-lg hover:shadow-xl 
+              group"
+          >
+            <PlusCircle 
+              size={24} 
+              className="mr-2 group-hover:rotate-90 transition-transform duration-300" 
+            />
+            Add Set
+          </Button>
         </div>
       </CardContent>
     </Card>
