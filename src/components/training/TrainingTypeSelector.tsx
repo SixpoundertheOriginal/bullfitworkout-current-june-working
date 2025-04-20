@@ -17,23 +17,27 @@ type DefaultTrainingType = {
   name: string;
   icon: React.ReactNode;
   gradient: string;
+  bgColor: string;
 }
 
 const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   {
     name: "Strength",
     icon: <Dumbbell className="h-7 w-7" />,
-    gradient: "from-purple-500 via-purple-600 to-purple-700"
+    gradient: "from-purple-500 via-purple-600 to-purple-700",
+    bgColor: "bg-purple-500"
   },
   {
     name: "Cardio",
     icon: <Bike className="h-7 w-7" />,
-    gradient: "from-red-400 via-red-500 to-red-600"
+    gradient: "from-red-400 via-red-500 to-red-600",
+    bgColor: "bg-red-500"
   },
   {
     name: "Yoga",
     icon: <Heart className="h-7 w-7" />,
-    gradient: "from-green-400 via-green-500 to-green-600"
+    gradient: "from-green-400 via-green-500 to-green-600",
+    bgColor: "bg-green-500"
   },
   {
     name: "Calisthenics",
@@ -54,7 +58,8 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
         <path d="M10 18v3" stroke="currentColor" />
       </svg>
     ),
-    gradient: "from-blue-400 via-blue-500 to-blue-600"
+    gradient: "from-blue-400 via-blue-500 to-blue-600",
+    bgColor: "bg-blue-500"
   }
 ];
 
@@ -92,52 +97,63 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     <div className="space-y-4">
       <div className="flex flex-wrap gap-4 justify-center">
         {DEFAULT_TRAINING_TYPES.map((type) => (
-          <Button
+          <button
             key={type.name}
             onClick={() => onSelect(type.name)}
-            variant="icon-circle"
-            size="lg"
-            iconOnly
-            icon={type.icon}
             className={cn(
-              "bg-gradient-to-br text-white shadow-lg transition-all duration-300",
+              "w-20 h-20 rounded-2xl flex items-center justify-center",
+              "transition-all duration-300 text-white",
+              "bg-gradient-to-br shadow-lg border border-white/10",
               type.gradient,
-              selectedType === type.name && "ring-4 ring-purple-500/50 ring-offset-4 ring-offset-background scale-110",
+              selectedType === type.name && [
+                "scale-105", 
+                "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
+              ],
               "hover:scale-105 active:scale-95",
-              "group relative rounded-[1.5rem]"
+              "relative"
             )}
           >
-            <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            {type.icon}
+            <span className={cn(
+              "absolute -bottom-6 text-sm transition-opacity",
+              selectedType === type.name ? "opacity-100 font-medium text-white" : "opacity-70 text-gray-400"
+            )}>
               {type.name}
             </span>
-          </Button>
+          </button>
         ))}
         
         {customTypes?.map((type) => (
-          <Button
+          <button
             key={type.id}
             onClick={() => onSelect(type.name)}
-            variant="icon-circle"
-            size="lg"
-            iconOnly
-            icon={type.icon}
             className={cn(
-              "bg-gradient-to-br text-white",
+              "w-20 h-20 rounded-2xl flex items-center justify-center",
+              "transition-all duration-300 text-white",
+              "bg-gradient-to-br shadow-lg border border-white/10",
               `from-[${type.color_start}] to-[${type.color_end}]`,
-              selectedType === type.name && "ring-4 ring-purple-500 ring-offset-4 ring-offset-background",
-              "group relative"
+              selectedType === type.name && [
+                "scale-105", 
+                "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
+              ],
+              "hover:scale-105 active:scale-95",
+              "relative"
             )}
           >
-            <span className="absolute -bottom-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            {type.icon}
+            <span className={cn(
+              "absolute -bottom-6 text-sm transition-opacity",
+              selectedType === type.name ? "opacity-100 font-medium text-white" : "opacity-70 text-gray-400"
+            )}>
               {type.name}
             </span>
-          </Button>
+          </button>
         ))}
       </div>
 
       {selectedType && (
         <div className="flex items-center justify-center py-2 text-center">
-          <div className="px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm border border-white/10">
+          <div className="px-4 py-2 bg-black/20 rounded-full backdrop-blur-sm border border-white/10">
             <span className="text-sm text-white/80">Selected Training Type: </span>
             <span className="font-medium text-white">{selectedType}</span>
           </div>

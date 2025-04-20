@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { TrainingTypeSelector } from "./training/TrainingTypeSelector";
 import { AddCustomTrainingType } from "./training/AddCustomTrainingType";
