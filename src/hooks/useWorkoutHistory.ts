@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -116,7 +115,6 @@ export function useWorkoutHistory(limit: number = 10, dateFilter: string | null 
   });
 }
 
-// Add a new function to fetch workout dates for the calendar
 export function useWorkoutDates(year: number, month: number) {
   const { user } = useAuth();
   
@@ -126,9 +124,10 @@ export function useWorkoutDates(year: number, month: number) {
     }
     
     try {
-      // Get first and last day of the requested month
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
+      // Create date objects for the first and last day of the month
+      // Making sure to use UTC dates to avoid timezone issues
+      const firstDay = new Date(Date.UTC(year, month, 1));
+      const lastDay = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
       
       console.log("Fetching workout dates for calendar:", {
         year,
@@ -155,6 +154,7 @@ export function useWorkoutDates(year: number, month: number) {
       const dateMap: Record<string, number> = {};
       
       data?.forEach(workout => {
+        // Convert the date to local timezone and extract the date part
         const dateString = new Date(workout.start_time).toISOString().split('T')[0];
         
         if (!dateMap[dateString]) {
