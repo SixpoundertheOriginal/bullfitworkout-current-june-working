@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -171,21 +170,21 @@ const ExerciseCard = ({
           </div>
 
           <div className="mt-4 pt-3 border-t border-gray-800">
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Current Volume</span>
-                <span className="font-mono">{currentVolume.toFixed(1)} {weightUnit}</span>
-              </div>
-              
-              {hasSameGroupData && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">vs Previous Session</span>
-                  <span className={`font-mono ${volumeDiff >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
-                  </span>
-                </div>
-              )}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Current Volume</span>
+              <span className="font-mono">
+                {currentVolume.toFixed(1)} {weightUnit}
+              </span>
             </div>
+            
+            {hasSameGroupData && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">vs Previous Session</span>
+                <span className={`font-mono ${volumeDiff >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
+                </span>
+              </div>
+            )}
 
             {hasSameGroupData && (
               <Progress 
