@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -31,6 +32,7 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     const workoutCount = workoutDates[dateString] || 0;
     
     if (workoutCount > 0) {
+      console.log(`Navigating to: /training?tab=history&date=${dateString}`);
       navigate(`/training?tab=history&date=${dateString}`);
     }
   };

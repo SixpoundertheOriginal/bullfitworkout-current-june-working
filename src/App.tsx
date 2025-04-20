@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import WorkoutComplete from "./pages/WorkoutComplete";
 import WorkoutDetailsPage from "./pages/WorkoutDetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import Auth from "./pages/Auth";
+import Training from "./pages/Training";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { WeightUnitProvider } from "@/context/WeightUnitContext";
 
@@ -36,6 +38,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+      <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
       <Route path="/training-session" element={<ProtectedRoute><TrainingSession /></ProtectedRoute>} />
       <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
       <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />

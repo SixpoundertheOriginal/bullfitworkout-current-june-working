@@ -2,9 +2,11 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CalendarDays, Clock, Dumbbell } from "lucide-react";
+import { Loader2, CalendarDays, Clock, Dumbbell, ArrowLeft } from "lucide-react";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface DailyWorkoutSummaryProps {
   date: string;
@@ -14,8 +16,17 @@ interface DailyWorkoutSummaryProps {
 export const DailyWorkoutSummary = ({ date, onClose }: DailyWorkoutSummaryProps) => {
   const { data, isLoading } = useWorkoutHistory(undefined, date);
   const workouts = data?.workouts || [];
+  const navigate = useNavigate();
   
   const formattedDate = format(new Date(date), 'MMMM d, yyyy');
+  
+  const handleBack = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/training?tab=calendar');
+    }
+  };
   
   if (isLoading) {
     return (
@@ -33,6 +44,15 @@ export const DailyWorkoutSummary = ({ date, onClose }: DailyWorkoutSummaryProps)
             <CalendarDays className="h-5 w-5 text-purple-400" />
             {formattedDate}
           </CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleBack} 
+            className="flex items-center gap-1 text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
