@@ -1,97 +1,40 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
-import { toast } from "@/components/ui/sonner";
+import { useWorkoutDates } from "@/hooks/useWorkoutHistory";
 import { Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 interface WorkoutCalendarProps {
   className?: string;
 }
 
-type WorkoutDates = {
-  [date: string]: { count: number; ids: string[] };
-};
-
 export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  
-  const [workoutDates, setWorkoutDates] = useState<WorkoutDates>({});
-  const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState<Date>(new Date());
   
-  useEffect(() => {
-    const fetchWorkoutDates = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        console.log("Fetching workout dates for calendar...");
-        
-        // Get first and last day of the current month
-        const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
-        const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-        
-        const { data, error } = await supabase
-          .from('workout_sessions')
-          .select('id, start_time')
-          .eq('user_id', user.id)
-          .gte('start_time', firstDay.toISOString())
-          .lte('start_time', lastDay.toISOString())
-          .order('start_time', { ascending: false });
-          
-        if (error) {
-          console.error("Error fetching workout dates:", error.message);
-          throw error;
-        }
-        
-        console.log(`Found ${data?.length || 0} workouts for the month:`, data);
-        
-        // Group workouts by date
-        const dateMap: WorkoutDates = {};
-        
-        data?.forEach(workout => {
-          const dateString = new Date(workout.start_time).toISOString().split('T')[0];
-          
-          if (!dateMap[dateString]) {
-            dateMap[dateString] = { count: 0, ids: [] };
-          }
-          
-          dateMap[dateString].count++;
-          dateMap[dateString].ids.push(workout.id);
-        });
-        
-        console.log("Workout dates processed:", dateMap);
-        setWorkoutDates(dateMap);
-      } catch (error) {
-        console.error('Error fetching workout dates:', error);
-        toast.error('Failed to load workout calendar');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchWorkoutDates();
-  }, [user, month]);
+  // Get current year and month from the selected month
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  
+  // Fetch workout dates for the current month view
+  const { data: workoutDates = {}, isLoading, isError } = useWorkoutDates(year, monthIndex);
+  
+  if (isError) {
+    toast.error("Failed to load workout calendar");
+  }
   
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;
     
     const dateString = date.toISOString().split('T')[0];
-    const workouts = workoutDates[dateString];
+    const workoutCount = workoutDates[dateString] || 0;
     
-    if (workouts && workouts.count > 0) {
-      // If there's only one workout for this date, navigate directly to it
-      if (workouts.count === 1) {
-        navigate(`/workout-details/${workouts.ids[0]}`);
-      } else {
-        // Navigate to the history tab with date filter
-        navigate(`/training?tab=history&date=${dateString}`);
-      }
+    if (workoutCount > 0) {
+      // Navigate to the history tab with date filter
+      navigate(`/training?tab=history&date=${dateString}`);
     }
   };
 
@@ -100,15 +43,15 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     setMonth(newMonth);
   };
   
-  // Function to customize day rendering
+  // Function to customize day rendering based on workout count
   const dayClassName = (date: Date): string => {
     const dateString = date.toISOString().split('T')[0];
-    const workouts = workoutDates[dateString];
+    const workoutCount = workoutDates[dateString] || 0;
     
-    if (workouts) {
-      if (workouts.count >= 3) {
+    if (workoutCount > 0) {
+      if (workoutCount >= 3) {
         return 'bg-purple-600 text-white rounded-full hover:bg-purple-700';
-      } else if (workouts.count === 2) {
+      } else if (workoutCount === 2) {
         return 'bg-purple-500/80 text-white rounded-full hover:bg-purple-600';
       } else {
         return 'bg-purple-500/50 text-white rounded-full hover:bg-purple-500';
@@ -124,7 +67,7 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
         <CardTitle className="text-md">Workout Calendar</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        {loading ? (
+        {isLoading ? (
           <div className="h-[300px] flex items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
           </div>
@@ -144,14 +87,8 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
               onMonthChange={handleMonthChange}
               month={month}
               disabled={{ after: new Date() }}
-              modifiersClassNames={{
-                selected: 'selected',
-              }}
-              modifiers={{
-                workout: Object.keys(workoutDates).map(d => new Date(d)),
-              }}
               components={{
-                Day: ({ date, ...props }: React.HTMLAttributes<HTMLDivElement> & { date: Date }) => {
+                Day: ({ date, ...props }) => {
                   const extraClass = dayClassName(date);
                   return (
                     <div 

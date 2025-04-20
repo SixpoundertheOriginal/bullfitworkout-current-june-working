@@ -27,21 +27,36 @@ const Training = () => {
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    navigate(`/training?tab=${value}`, { replace: true });
+    
+    // If changing to a tab other than history with date filter, remove the date filter
+    if (value !== 'history') {
+      navigate(`/training?tab=${value}`, { replace: true });
+    } else {
+      // Preserve date parameter if present when switching to history tab
+      const params = new URLSearchParams(location.search);
+      const dateParam = params.get('date');
+      if (dateParam) {
+        navigate(`/training?tab=history&date=${dateParam}`, { replace: true });
+      } else {
+        navigate(`/training?tab=${value}`, { replace: true });
+      }
+    }
   };
   
   // Update active tab state if URL changes
   useEffect(() => {
     const tabFromURL = getTabFromURL();
     if (tabFromURL !== activeTab) {
+      console.log(`URL changed, updating tab from ${activeTab} to ${tabFromURL}`);
       setActiveTab(tabFromURL);
     }
   }, [location.search]);
   
-  // Debug log
-  useEffect(() => {
-    console.log("Current tab:", activeTab);
-  }, [activeTab]);
+  // Get date filter from URL
+  const getDateFilterFromURL = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('date');
+  };
 
   return (
     <div className="container max-w-7xl mx-auto p-4 pb-20">
@@ -102,7 +117,7 @@ const Training = () => {
         <TabsContent value="history">
           <WorkoutHistory 
             className="mt-4" 
-            dateFilter={new URLSearchParams(location.search).get('date')}
+            dateFilter={getDateFilterFromURL()}
             limit={20}
           />
         </TabsContent>
