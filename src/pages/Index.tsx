@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,8 @@ import {
   X, 
   Zap,
   User as UserIcon,
-  Loader2
+  Loader2,
+  BarChart3
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { toast } from "@/hooks/use-toast";
