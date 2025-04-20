@@ -4,17 +4,8 @@
 @tailwind utilities;
 
 @layer components {
-  /* Add or update these classes for better dark mode text visibility */
-  .training-type-tag {
-    @apply text-xs font-medium uppercase tracking-wider rounded-full px-2.5 py-1 
-           bg-purple-500/30 text-purple-100 border border-purple-500/40;
-  }
-  
-  .training-type-primary {
-    @apply text-lg font-semibold text-white tracking-tight;
-  }
-  
-  .training-metadata {
-    @apply text-sm text-white/80 flex items-center gap-2;
+  /* Improve text visibility for exercise labels */
+  .exercise-label {
+    @apply text-white/90 hover:text-white transition-colors duration-300;
   }
 }
