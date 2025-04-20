@@ -5,23 +5,28 @@ import { Input } from "@/components/ui/input";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { convertWeight, WeightUnit } from "@/utils/unitConversion";
+import { isIsometricExercise, formatDuration, formatIsometricSet } from "@/utils/exerciseUtils";
 
 interface SetRowProps {
   setNumber: number;
   weight: number;
   reps: number;
+  duration?: number;
   restTime?: number;
   completed: boolean;
   isEditing: boolean;
+  exerciseName: string;
   onComplete: () => void;
   onEdit: () => void;
   onSave: () => void;
   onRemove: () => void;
   onWeightChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRepsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDurationChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRestTimeChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onWeightIncrement: (value: number) => void;
   onRepsIncrement: (value: number) => void;
+  onDurationIncrement?: (value: number) => void;
   onRestTimeIncrement?: (value: number) => void;
   weightUnit: string;
   currentVolume?: number;
@@ -31,67 +36,33 @@ export const SetRow = ({
   setNumber,
   weight,
   reps,
+  duration = 0,
   restTime = 60,
   completed,
   isEditing,
+  exerciseName,
   onComplete,
   onEdit,
   onSave,
   onRemove,
   onWeightChange,
   onRepsChange,
+  onDurationChange,
   onRestTimeChange,
   onWeightIncrement,
   onRepsIncrement,
+  onDurationIncrement,
   onRestTimeIncrement,
   weightUnit,
   currentVolume,
 }: SetRowProps) => {
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
+  const isIsometric = isIsometricExercise(exerciseName);
   
   const displayUnit = weightUnit || globalWeightUnit;
   const displayWeight = weight > 0 ? convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit) : 0;
-  
-  const formatRestTime = (seconds?: number) => {
-    if (!seconds) return "--:--";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-  
-  const handleSetComplete = () => {
-    onComplete();
-  };
 
-  const handleWeightIncrement = (increment: number) => {
-    onWeightIncrement(increment);
-  };
-  
-  const handleRepsIncrement = (increment: number) => {
-    onRepsIncrement(increment);
-  };
-
-  const handleRestTimeIncrement = (increment: number) => {
-    if (onRestTimeIncrement) {
-      onRestTimeIncrement(increment);
-    }
-  };
-
-  const handleManualWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onWeightChange(e);
-  };
-
-  const handleManualRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onRepsChange(e);
-  };
-
-  const handleManualRestTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onRestTimeChange) {
-      onRestTimeChange(e);
-    }
-  };
-  
   return (
     <div className="grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
       <div className="text-center font-medium text-gray-400">
@@ -103,7 +74,7 @@ export const SetRow = ({
           <div className="col-span-3 flex items-center gap-1">
             <button 
               type="button"
-              onClick={() => handleWeightIncrement(-1)} 
+              onClick={() => onWeightIncrement(-1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
             >
               <MinusCircle size={isMobile ? 20 : 18} />
@@ -113,58 +84,72 @@ export const SetRow = ({
               min="0"
               step="any"
               value={weight}
-              onChange={handleManualWeightChange}
+              onChange={onWeightChange}
               className="workout-number-input text-center flex-1"
-              onBlur={(e) => {
-                // Ensure weight is never negative
-                if (parseFloat(e.target.value) < 0 || e.target.value === '') {
-                  handleManualWeightChange({
-                    target: { value: "0" }
-                  } as React.ChangeEvent<HTMLInputElement>);
-                }
-              }}
+              placeholder={isIsometric ? "Optional weight" : "Weight"}
             />
             <button 
               type="button"
-              onClick={() => handleWeightIncrement(1)} 
+              onClick={() => onWeightIncrement(1)} 
               className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
             >
               <PlusCircle size={isMobile ? 20 : 18} />
             </button>
           </div>
           
-          <div className="col-span-3 flex items-center gap-1">
-            <button 
-              type="button"
-              onClick={() => handleRepsIncrement(-1)} 
-              className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-            >
-              <MinusCircle size={isMobile ? 20 : 18} />
-            </button>
-            <Input 
-              type="number"
-              min="0"
-              step="1"
-              value={reps}
-              onChange={handleManualRepsChange}
-              className="workout-number-input text-center flex-1"
-              onBlur={(e) => {
-                // Ensure reps is never negative
-                if (parseInt(e.target.value) < 0 || e.target.value === '') {
-                  handleManualRepsChange({
-                    target: { value: "0" }
-                  } as React.ChangeEvent<HTMLInputElement>);
-                }
-              }}
-            />
-            <button 
-              type="button"
-              onClick={() => handleRepsIncrement(1)} 
-              className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-            >
-              <PlusCircle size={isMobile ? 20 : 18} />
-            </button>
-          </div>
+          {isIsometric ? (
+            <div className="col-span-3 flex items-center gap-1">
+              <button 
+                type="button"
+                onClick={() => onDurationIncrement?.(-5)} 
+                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+              >
+                <MinusCircle size={isMobile ? 20 : 18} />
+              </button>
+              <Input 
+                type="number"
+                min="0"
+                step="5"
+                value={duration}
+                onChange={onDurationChange}
+                className="workout-number-input text-center flex-1"
+                placeholder="Duration (seconds)"
+              />
+              <button 
+                type="button"
+                onClick={() => onDurationIncrement?.(5)} 
+                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+              >
+                <PlusCircle size={isMobile ? 20 : 18} />
+              </button>
+            </div>
+          ) : (
+            <div className="col-span-3 flex items-center gap-1">
+              <button 
+                type="button"
+                onClick={() => onRepsIncrement(-1)} 
+                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+              >
+                <MinusCircle size={isMobile ? 20 : 18} />
+              </button>
+              <Input 
+                type="number"
+                min="0"
+                step="1"
+                value={reps}
+                onChange={onRepsChange}
+                className="workout-number-input text-center flex-1"
+                placeholder="Reps"
+              />
+              <button 
+                type="button"
+                onClick={() => onRepsIncrement(1)} 
+                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+              >
+                <PlusCircle size={isMobile ? 20 : 18} />
+              </button>
+            </div>
+          )}
           
           <div className="col-span-3 flex items-center gap-1">
             {onRestTimeIncrement && (
@@ -237,8 +222,16 @@ export const SetRow = ({
             className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
             onClick={onEdit}
           >
-            <span className="font-medium">{reps}</span>
-            <span className="text-xs text-gray-400">reps</span>
+            {isIsometric ? (
+              <span className="text-sm text-gray-400">
+                {duration > 0 ? formatDuration(duration) : "Not set"} hold
+              </span>
+            ) : (
+              <>
+                <span className="font-medium">{reps}</span>
+                <span className="text-xs text-gray-400">reps</span>
+              </>
+            )}
           </div>
           
           <div className="flex items-center justify-start gap-2 text-gray-400">

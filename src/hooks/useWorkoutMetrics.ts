@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { WorkoutMetrics } from '@/types/workout-metrics';
@@ -7,7 +6,7 @@ import {
   getExerciseGroup, 
   calculateSetVolume,
   isIsometricExercise 
-} from '@/utils/workoutMetrics';
+} from '@/utils/exerciseUtils';
 
 export interface ExerciseGroupData {
   group: string;
@@ -72,14 +71,19 @@ export const useWorkoutMetrics = (
       if (isIsometricExercise(exerciseName)) {
         exerciseVolume = sets.reduce((total, set) => {
           if (set.completed) {
-            return total + (set.reps > 0 ? set.reps * 10 : 0);
+            // For isometric exercises, we use duration as the primary metric
+            // Multiply by weight if present for weighted holds
+            const duration = set.duration || 0;
+            return total + (duration * (set.weight || 1));
           }
           return total;
         }, 0);
       } else {
-        // Regular exercises with weight/reps
         exerciseVolume = sets.reduce((total, set) => {
-          return total + calculateSetVolume(set);
+          if (set.completed) {
+            return total + (set.weight * set.reps);
+          }
+          return total;
         }, 0);
       }
       
