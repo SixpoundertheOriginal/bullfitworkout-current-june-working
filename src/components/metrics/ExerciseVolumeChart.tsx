@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   BarChart,
@@ -83,11 +84,17 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
             <Tooltip
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
+                  const value = payload[0].value;
+                  // Convert to number and format, or use as is if it's a string
+                  const formattedValue = typeof value === 'number' 
+                    ? value.toFixed(1) 
+                    : value;
+                    
                   return (
                     <div className="bg-white/90 rounded-md p-3 shadow-lg border border-gray-200 text-gray-900">
                       <div className="font-semibold mb-1">{payload[0].name}</div>
                       <div className="text-sm">
-                        Volume: {payload[0].value.toFixed(1)} {weightUnit}
+                        Volume: {formattedValue} {weightUnit}
                       </div>
                     </div>
                   );
