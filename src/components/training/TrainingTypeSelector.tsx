@@ -97,64 +97,71 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     <div className="space-y-4">
       <div className="flex flex-wrap gap-4 justify-center">
         {DEFAULT_TRAINING_TYPES.map((type) => (
-          <button
-            key={type.name}
-            onClick={() => onSelect(type.name)}
-            className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center relative",
-              "transition-all duration-300 text-white",
-              "bg-gradient-to-br shadow-lg border border-white/10",
-              type.gradient,
-              selectedType === type.name && [
-                "scale-105", 
-                "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
-              ],
-              "hover:scale-105 active:scale-95"
-            )}
+          <div 
+            key={type.name} 
+            className="flex flex-col items-center w-20 space-y-2"
           >
-            {type.icon}
+            <button
+              onClick={() => onSelect(type.name)}
+              className={cn(
+                "w-20 h-20 rounded-2xl flex items-center justify-center",
+                "transition-all duration-300 text-white",
+                "bg-gradient-to-br shadow-lg border border-white/10",
+                type.gradient,
+                selectedType === type.name && [
+                  "scale-105", 
+                  "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
+                ],
+                "hover:scale-105 active:scale-95"
+              )}
+            >
+              {type.icon}
+            </button>
             <span 
               className={cn(
-                "absolute bottom-[-1.5rem] text-sm w-full text-center transition-all duration-300",
+                "text-sm text-center w-full truncate",
                 selectedType === type.name 
-                  ? "opacity-100 font-medium text-white" 
-                  : "opacity-70 text-gray-400"
+                  ? "font-medium text-white" 
+                  : "text-gray-400"
               )}
             >
               {type.name}
             </span>
-          </button>
+          </div>
         ))}
         
-        {/* Similar update for custom types */}
         {customTypes?.map((type) => (
-          <button
-            key={type.id}
-            onClick={() => onSelect(type.name)}
-            className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center relative",
-              "transition-all duration-300 text-white",
-              "bg-gradient-to-br shadow-lg border border-white/10",
-              `from-[${type.color_start}] to-[${type.color_end}]`,
-              selectedType === type.name && [
-                "scale-105", 
-                "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
-              ],
-              "hover:scale-105 active:scale-95"
-            )}
+          <div 
+            key={type.id} 
+            className="flex flex-col items-center w-20 space-y-2"
           >
-            {type.icon}
+            <button
+              onClick={() => onSelect(type.name)}
+              className={cn(
+                "w-20 h-20 rounded-2xl flex items-center justify-center",
+                "transition-all duration-300 text-white",
+                "bg-gradient-to-br shadow-lg border border-white/10",
+                `from-[${type.color_start}] to-[${type.color_end}]`,
+                selectedType === type.name && [
+                  "scale-105", 
+                  "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
+                ],
+                "hover:scale-105 active:scale-95"
+              )}
+            >
+              {type.icon}
+            </button>
             <span 
               className={cn(
-                "absolute bottom-[-1.5rem] text-sm w-full text-center transition-all duration-300",
+                "text-sm text-center w-full truncate",
                 selectedType === type.name 
-                  ? "opacity-100 font-medium text-white" 
-                  : "opacity-70 text-gray-400"
+                  ? "font-medium text-white" 
+                  : "text-gray-400"
               )}
             >
               {type.name}
             </span>
-          </button>
+          </div>
         ))}
       </div>
 
