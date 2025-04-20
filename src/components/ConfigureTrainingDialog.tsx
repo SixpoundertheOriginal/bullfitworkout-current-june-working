@@ -71,9 +71,8 @@ export function ConfigureTrainingDialog({
 
   const handleStartTraining = () => {
     if (!trainingType) {
-      toast("Training type required", {
-        description: "Please select a training type to continue",
-        variant: "destructive",
+      toast.error("Training type required", {
+        description: "Please select a training type to continue"
       });
       return;
     }
