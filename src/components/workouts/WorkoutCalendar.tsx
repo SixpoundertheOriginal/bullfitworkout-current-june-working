@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,11 +15,9 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
   const navigate = useNavigate();
   const [month, setMonth] = useState<Date>(new Date());
   
-  // Get current year and month from the selected month
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
   
-  // Fetch workout dates for the current month view
   const { data: workoutDates = {}, isLoading, isError } = useWorkoutDates(year, monthIndex);
   
   if (isError) {
@@ -34,7 +31,6 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     const workoutCount = workoutDates[dateString] || 0;
     
     if (workoutCount > 0) {
-      // Navigate to the history tab with date filter
       navigate(`/training?tab=history&date=${dateString}`);
     }
   };
@@ -44,7 +40,6 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     setMonth(newMonth);
   };
   
-  // Function to customize day rendering based on workout count
   const dayClassName = (date: Date): string => {
     const dateString = date.toISOString().split('T')[0];
     const workoutCount = workoutDates[dateString] || 0;
@@ -62,7 +57,6 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     return '';
   };
   
-  // Custom day content renderer that adds the workout-based styling
   const CustomDayContent = (props: DayContentProps) => {
     const extraClass = dayClassName(props.date);
     

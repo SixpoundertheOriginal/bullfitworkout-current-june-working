@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { WorkoutCard } from "@/components/WorkoutCard";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { History, Loader2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
+import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
 
 interface WorkoutHistoryProps {
   limit?: number;
@@ -33,6 +33,17 @@ export const WorkoutHistory = ({
     return (
       <div className={`text-center py-8 ${className}`}>
         <p className="text-gray-400">Failed to load workout history</p>
+      </div>
+    );
+  }
+  
+  if (dateFilter) {
+    return (
+      <div className={className}>
+        <DailyWorkoutSummary 
+          date={dateFilter} 
+          onClose={() => navigate('/training?tab=history')}
+        />
       </div>
     );
   }
