@@ -58,13 +58,13 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
   }
 
   return (
-    <div className="mt-6 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+    <div className="mt-6 p-6 bg-gray-900/50 rounded-xl border border-gray-800">
       <h3 className="text-sm font-medium text-gray-300 mb-4">Exercise Volume Distribution</h3>
       <div className="h-64">
         <ChartContainer config={config}>
           <BarChart 
             data={data} 
-            margin={{ top: 10, right: 10, left: 10, bottom: 30 }}
+            margin={{ top: 10, right: 20, left: 20, bottom: 30 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
             <XAxis
@@ -84,16 +84,17 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
             <Tooltip
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
+                  const exerciseName = payload[0].payload.name;
                   const value = payload[0].value;
-                  const name = payload[0].name;
                   
-                  const formattedValue = typeof value === 'number' 
-                    ? value.toFixed(1) 
-                    : value;
-                    
+                  let formattedValue = value;
+                  if (typeof value === 'number') {
+                    formattedValue = value.toFixed(1);
+                  }
+                  
                   return (
                     <div className="bg-white/90 rounded-md p-3 shadow-lg border border-gray-200 text-gray-900">
-                      <div className="font-semibold mb-1">{name}</div>
+                      <div className="font-semibold mb-1">{exerciseName}</div>
                       <div className="text-sm">
                         {formattedValue} {weightUnit}
                       </div>
