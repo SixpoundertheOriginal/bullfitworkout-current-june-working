@@ -38,7 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/sonner";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Exercise, ExerciseSet } from "@/types/exercise";
@@ -276,6 +276,7 @@ const ExerciseCard = ({
 const TrainingSession = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
   const [time, setTime] = useState(0);
@@ -558,8 +559,8 @@ const TrainingSession = () => {
   
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
-  const historicalDate = queryParams.get('date');
-  const isHistorical = queryParams.get('historical') === 'true';
+  const historicalDate = searchParams.get('date');
+  const isHistorical = searchParams.get('historical') === 'true';
   
   const initialStartTime = historicalDate 
     ? new Date(historicalDate) 
@@ -569,17 +570,61 @@ const TrainingSession = () => {
     try {
       const duration = time;
       
+      if (!user) {
+        toast.error("You must be logged in to save a workout");
+        return;
+      }
+      
       const workoutData = {
-        exercises: exercises,
-        duration: duration,
-        startTime: initialStartTime.toISOString(),
+        user_id: user.id,
+        start_time: initialStartTime.toISOString(),
         end_time: new Date(initialStartTime.getTime() + duration * 60000).toISOString(),
-        trainingType: trainingType,
+        duration: duration,
         name: trainingType,
+        training_type: trainingType,
         is_historical: isHistorical,
       };
 
-      await supabase.from('workouts').insert(workoutData);
+      const { data: workout, error } = await supabase
+        .from('workout_sessions')
+        .insert(workoutData)
+        .select('id')
+        .single();
+        
+      if (error) {
+        console.error('Error saving workout:', error);
+        toast.error("Failed to save workout");
+        return;
+      }
+      
+      const workoutId = workout.id;
+      
+      const allSets: any[] = [];
+      
+      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+        sets.forEach(set => {
+          allSets.push({
+            workout_id: workoutId,
+            exercise_name: exerciseName,
+            weight: set.weight,
+            reps: set.reps,
+            set_number: set.set_number,
+            completed: set.completed
+          });
+        });
+      });
+      
+      if (allSets.length > 0) {
+        const { error: setsError } = await supabase
+          .from('exercise_sets')
+          .insert(allSets);
+          
+        if (setsError) {
+          console.error('Error saving exercise sets:', setsError);
+          toast.error("Failed to save exercise sets");
+          return;
+        }
+      }
       
       toast.success("Workout saved successfully", {
         style: {
@@ -588,6 +633,8 @@ const TrainingSession = () => {
           border: "1px solid rgba(120, 120, 120, 0.3)",
         },
       });
+      
+      navigate(`/workout-details/${workoutId}`);
     } catch (error) {
       console.error('Error saving workout:', error);
       toast.error("Failed to save workout");
