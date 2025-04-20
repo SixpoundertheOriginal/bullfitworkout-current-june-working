@@ -3,7 +3,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, BarChart3, Dumbbell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, BarChart3, Dumbbell, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WorkoutCardProps {
@@ -15,6 +16,8 @@ interface WorkoutCardProps {
   exerciseCount: number;
   setCount: number;
   className?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export const WorkoutCard = ({
@@ -25,7 +28,9 @@ export const WorkoutCard = ({
   duration,
   exerciseCount,
   setCount,
-  className
+  className,
+  onEdit,
+  onDelete
 }: WorkoutCardProps) => {
   const navigate = useNavigate();
   
@@ -40,15 +45,19 @@ export const WorkoutCard = ({
     day: 'numeric'
   });
   
-  const handleClick = () => {
-    console.log("Workout card clicked, navigating to:", `/workout-details/${id}`);
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking on action buttons
+    if ((e.target as HTMLElement).closest('button[data-action]')) {
+      e.stopPropagation();
+      return;
+    }
     navigate(`/workout-details/${id}`);
   };
   
   return (
     <Card 
       className={cn(
-        "bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800/70 transition-colors hover:shadow-md active:bg-gray-800",
+        "bg-gray-900 border-gray-800 cursor-pointer hover:bg-gray-800/70 transition-colors hover:shadow-md active:bg-gray-800 group",
         className
       )}
       onClick={handleClick}
@@ -64,9 +73,35 @@ export const WorkoutCard = ({
               <span className="font-mono">{formatTime(duration)}</span>
             </div>
           </div>
-          <Badge className="bg-purple-600/80 text-white">
-            {type}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-purple-600/80 text-white">
+              {type}
+            </Badge>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  data-action="edit"
+                  onClick={onEdit}
+                  className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-700"
+                >
+                  <Edit size={16} />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  data-action="delete"
+                  onClick={onDelete}
+                  className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-gray-700"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
         
         <div className="grid grid-cols-2 gap-2 mt-2">
@@ -83,4 +118,3 @@ export const WorkoutCard = ({
     </Card>
   );
 };
-

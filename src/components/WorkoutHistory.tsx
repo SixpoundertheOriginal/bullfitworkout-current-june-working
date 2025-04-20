@@ -21,6 +21,14 @@ export const WorkoutHistory = ({
   const { data, isLoading, isError } = useWorkoutHistory(limit, dateFilter);
   const navigate = useNavigate();
   
+  const handleEditWorkout = (workoutId: string) => {
+    navigate(`/workout-details/${workoutId}`);
+  };
+  
+  const handleDeleteWorkout = (workoutId: string) => {
+    console.log("Delete workout:", workoutId);
+  };
+  
   if (isLoading) {
     return (
       <div className={`flex justify-center items-center py-8 ${className}`}>
@@ -104,6 +112,8 @@ export const WorkoutHistory = ({
             duration={workout.duration}
             exerciseCount={exerciseCounts[workout.id]?.exercises || 0}
             setCount={exerciseCounts[workout.id]?.sets || 0}
+            onEdit={() => handleEditWorkout(workout.id)}
+            onDelete={() => handleDeleteWorkout(workout.id)}
           />
         ))}
       </div>
