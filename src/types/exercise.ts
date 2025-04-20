@@ -1,4 +1,3 @@
-
 export interface ExerciseSet {
   weight: number;
   reps: number;
@@ -9,6 +8,7 @@ export interface ExerciseSet {
   set_number: number;
   exercise_name: string;
   workout_id: string;
+  weightCalculation?: WeightCalculation;
 }
 
 export type MuscleGroup = 
@@ -81,3 +81,14 @@ export const EXERCISE_LOAD_FACTORS: LoadFactorMapping[] = [
   { name: "L-Sit", factor: 0.7, description: "Advanced isometric core hold" },
   { name: "Handstand", factor: 1.0, description: "Full bodyweight inverted" }
 ];
+
+export interface WeightCalculation {
+  value: number;
+  isAuto: boolean;
+  source: 'user' | 'auto' | 'default';
+}
+
+export const isBodyweightExercise = (exercise: Exercise): boolean => {
+  return exercise.equipment_type.includes('bodyweight') || 
+         exercise.movement_pattern === 'isometric';
+};
