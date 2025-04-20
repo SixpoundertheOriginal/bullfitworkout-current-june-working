@@ -558,24 +558,42 @@ const TrainingSession = () => {
   
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   
-  const finishWorkout = () => {
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-    
-    const endTime = new Date();
-    const durationInSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
-    
-    const workoutData = {
-      exercises: exercises,
-      duration: durationInSeconds,
-      startTime: startTime,
-      endTime: endTime,
-      trainingType: trainingType,
-      name: trainingType
-    };
-    
-    navigate("/workout-complete", { state: { workoutData } });
-  };
+  const historicalDate = queryParams.get('date');
+  const isHistorical = queryParams.get('historical') === 'true';
   
+  const initialStartTime = historicalDate 
+    ? new Date(historicalDate) 
+    : new Date();
+
+  const handleFinishWorkout = async () => {
+    try {
+      const duration = time;
+      
+      const workoutData = {
+        exercises: exercises,
+        duration: duration,
+        startTime: initialStartTime.toISOString(),
+        end_time: new Date(initialStartTime.getTime() + duration * 60000).toISOString(),
+        trainingType: trainingType,
+        name: trainingType,
+        is_historical: isHistorical,
+      };
+
+      await supabase.from('workouts').insert(workoutData);
+      
+      toast.success("Workout saved successfully", {
+        style: {
+          backgroundColor: "rgba(20, 20, 20, 0.9)",
+          color: "white",
+          border: "1px solid rgba(120, 120, 120, 0.3)",
+        },
+      });
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      toast.error("Failed to save workout");
+    }
+  };
+
   const handleRestTimerComplete = () => {
     toast.success("Rest complete! Continue your workout.", {
       style: {
@@ -687,7 +705,7 @@ const TrainingSession = () => {
             <div className="flex flex-col items-center justify-center text-center mt-8">
               <Button 
                 ref={startButtonRef}
-                onClick={finishWorkout}
+                onClick={handleFinishWorkout}
                 className="w-64 h-64 rounded-full text-lg bg-gradient-to-r from-purple-600 to-pink-500 
                   hover:from-purple-700 hover:to-pink-600 font-medium shadow-2xl hover:shadow-purple-500/50
                   transform transition-all duration-300 active:scale-[0.98] 

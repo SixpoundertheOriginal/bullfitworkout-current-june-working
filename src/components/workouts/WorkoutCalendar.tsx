@@ -1,11 +1,19 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
 import { useWorkoutDates } from "@/hooks/useWorkoutHistory";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
-import { DayContent, DayContentProps } from "react-day-picker";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 interface WorkoutCalendarProps {
   className?: string;
@@ -40,6 +48,9 @@ export const WorkoutCalendar = ({ className = "", onDatePreview }: WorkoutCalend
       } else {
         navigate(`/training?tab=history&date=${dateString}`);
       }
+    } else {
+      // For dates without workouts, show the historical workout form
+      navigate(`/training-session?date=${dateString}&historical=true`);
     }
   };
 
@@ -64,13 +75,38 @@ export const WorkoutCalendar = ({ className = "", onDatePreview }: WorkoutCalend
     
     return '';
   };
-  
-  const CustomDayContent = (props: DayContentProps) => {
-    const extraClass = dayClassName(props.date);
+
+  const CustomDayContent = ({ date }: { date: Date }) => {
+    const dateString = date.toISOString().split('T')[0];
+    const hasWorkout = workoutDates[dateString] || 0;
+    const extraClass = dayClassName(date);
+    const isInPast = date < new Date(new Date().setHours(0, 0, 0, 0));
     
     return (
-      <div className={`${extraClass || ''}`}>
-        <DayContent {...props} />
+      <div className={`relative group ${extraClass || ''}`}>
+        <div>{format(date, 'd')}</div>
+        {!hasWorkout && isInPast && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 hover:bg-purple-500/20 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectDate(date);
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Log historical workout</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     );
   };

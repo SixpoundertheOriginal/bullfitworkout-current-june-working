@@ -1139,6 +1139,8 @@ export type Database = {
           duration: number
           end_time: string
           id: string
+          is_historical: boolean | null
+          logged_at: string | null
           name: string
           notes: string | null
           start_time: string
@@ -1151,6 +1153,8 @@ export type Database = {
           duration: number
           end_time: string
           id?: string
+          is_historical?: boolean | null
+          logged_at?: string | null
           name: string
           notes?: string | null
           start_time: string
@@ -1163,6 +1167,8 @@ export type Database = {
           duration?: number
           end_time?: string
           id?: string
+          is_historical?: boolean | null
+          logged_at?: string | null
           name?: string
           notes?: string | null
           start_time?: string
