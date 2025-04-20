@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
@@ -59,69 +58,71 @@ const Training = () => {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto p-4 pb-20">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Training</h1>
-      </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container max-w-7xl mx-auto p-4 pb-20 bg-background">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Training</h1>
+        </div>
 
-      <Tabs 
-        value={activeTab} 
-        onValueChange={handleTabChange} 
-        className="space-y-4"
-      >
-        <TabsList className="bg-gray-900 border-gray-800 grid grid-cols-3">
-          <TabsTrigger 
-            value="overview"
-            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
-          >
-            <Sparkles className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger 
-            value="calendar" 
-            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
-          >
-            <Calendar className="h-4 w-4" />
-            Calendar
-          </TabsTrigger>
-          <TabsTrigger 
-            value="history" 
-            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
-          >
-            <History className="h-4 w-4" />
-            History
-          </TabsTrigger>
-        </TabsList>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={handleTabChange} 
+          className="space-y-4"
+        >
+          <TabsList className="bg-gray-900 border-gray-800 grid grid-cols-3">
+            <TabsTrigger 
+              value="overview"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+            >
+              <Sparkles className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="calendar" 
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+            >
+              <Calendar className="h-4 w-4" />
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history" 
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+            >
+              <History className="h-4 w-4" />
+              History
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-            </div>
-          ) : (
-            <>
-              <WorkoutSummary stats={stats} />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <WorkoutTypeChart data={stats.workoutTypes} />
-                <TopExercisesTable exercises={stats.topExercises} />
+          <TabsContent value="overview" className="space-y-4">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
               </div>
-            </>
-          )}
-        </TabsContent>
+            ) : (
+              <>
+                <WorkoutSummary stats={stats} />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <WorkoutTypeChart data={stats.workoutTypes} />
+                  <TopExercisesTable exercises={stats.topExercises} />
+                </div>
+              </>
+            )}
+          </TabsContent>
 
-        <TabsContent value="calendar">
-          <WorkoutCalendarTab />
-        </TabsContent>
+          <TabsContent value="calendar">
+            <WorkoutCalendarTab />
+          </TabsContent>
 
-        <TabsContent value="history">
-          <WorkoutHistory 
-            className="mt-4" 
-            dateFilter={getDateFilterFromURL()}
-            limit={20}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="history">
+            <WorkoutHistory 
+              className="mt-4" 
+              dateFilter={getDateFilterFromURL()}
+              limit={20}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
