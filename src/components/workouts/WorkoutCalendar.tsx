@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useWorkoutDates } from "@/hooks/useWorkoutHistory";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { DayContent, DayContentProps } from "react-day-picker";
 
 interface WorkoutCalendarProps {
   className?: string;
@@ -61,6 +62,18 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     return '';
   };
   
+  // Custom day content renderer that adds the workout-based styling
+  const CustomDayContent = (props: DayContentProps) => {
+    const { date, ...contentProps } = props;
+    const extraClass = dayClassName(date);
+    
+    return (
+      <div className={`${extraClass || ''}`}>
+        <DayContent {...contentProps} />
+      </div>
+    );
+  };
+  
   return (
     <Card className={`bg-gray-900 border-gray-800 ${className}`}>
       <CardHeader className="pb-2">
@@ -88,17 +101,7 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
               month={month}
               disabled={{ after: new Date() }}
               components={{
-                Day: ({ date, displayMonth, ...props }) => {
-                  // Get the custom class for this date
-                  const extraClass = dayClassName(date);
-                  
-                  return (
-                    <div 
-                      {...props} 
-                      className={`${extraClass}`}
-                    />
-                  );
-                }
+                DayContent: CustomDayContent
               }}
             />
             
