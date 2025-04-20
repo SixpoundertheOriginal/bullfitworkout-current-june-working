@@ -1,28 +1,25 @@
 
 import React from "react";
 import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function EmptyWorkoutState({ onTemplateSelect }) {
   const templates = [
     { 
       name: "Push", 
       description: "Decline Push-Up on Handrails • Mid-Grip Pull-Ups to ...",
-      className: "exercise-label"
     },
     { 
       name: "Pull", 
       description: "Wide Grip Pull-Ups • Behind-the-Back Body Rows (R...",
-      className: "exercise-label"
     },
     { 
       name: "Legs", 
       description: "Squat Variations • Leg Press • Romanian Deadlift",
-      className: "exercise-label"
     },
     { 
       name: "Full Body", 
       description: "Decline Push-Up on Handrails • Wide Grip Pull-Ups • ...",
-      className: "exercise-label"
     }
   ];
 
@@ -37,8 +34,8 @@ export function EmptyWorkoutState({ onTemplateSelect }) {
           >
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-semibold text-white">{template.name}</h3>
-                <p className={template.className}>{template.description}</p>
+                <h3 className="font-semibold dark-text">{template.name}</h3>
+                <p className="dark-text-muted text-sm">{template.description}</p>
               </div>
               <Plus className="text-purple-400" />
             </div>

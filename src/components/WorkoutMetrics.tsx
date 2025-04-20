@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -88,6 +89,8 @@ export const WorkoutMetrics = ({
           label="Time"
           tooltip={`Tracked since ${formattedStartTime}`}
           gradientClass="from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20"
+          valueClass="dark-text"
+          labelClass="dark-text-muted"
         />
         
         <MetricCard
@@ -96,6 +99,8 @@ export const WorkoutMetrics = ({
           label="Exercises"
           tooltip="Active exercises in your workout"
           gradientClass="from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20"
+          valueClass="dark-text"
+          labelClass="dark-text-muted"
         />
         
         <MetricCard
@@ -105,6 +110,8 @@ export const WorkoutMetrics = ({
           tooltip={`${Math.round(completionPercentage)}% sets completed`}
           progressValue={completionPercentage}
           gradientClass="from-violet-500/10 to-purple-500/10 hover:from-violet-500/20 hover:to-purple-500/20"
+          valueClass="dark-text"
+          labelClass="dark-text-muted"
         />
         
         <div className={cn(
@@ -142,7 +149,7 @@ export const WorkoutMetrics = ({
               onClick={onManualRestStart}
               className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-100 transition-all duration-300"
             >
-              <Play size={14} className="mr-1" /> Start Timer
+              <Play size={14} className="mr-1" /> <span className="dark-text">Start Timer</span>
             </Button>
           )}
         </div>

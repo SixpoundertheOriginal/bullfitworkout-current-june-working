@@ -19,11 +19,11 @@
 
   /* Enhanced text visibility for dark backgrounds */
   .dark-text {
-    @apply text-white/90 hover:text-white transition-colors duration-300;
+    @apply text-white hover:text-white transition-colors duration-300;
   }
 
   .dark-text-muted {
-    @apply text-white/70 hover:text-white/90 transition-colors duration-300;
+    @apply text-white/80 hover:text-white transition-colors duration-300;
   }
 
   .dark-text-subtle {
