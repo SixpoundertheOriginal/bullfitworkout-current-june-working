@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
+import { Dumbbell, Bike, Heart, Activity, PullUp } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +37,23 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   },
   {
     name: "Calisthenics",
-    icon: <Activity className="h-7 w-7" />,
+    icon: (
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 24 24" 
+        className="h-7 w-7 stroke-current"
+        fill="none"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 3v8" stroke="currentColor" />
+        <path d="M9 7l3-3 3 3" stroke="currentColor" />
+        <rect x="5" y="14" width="14" height="4" rx="2" stroke="currentColor" />
+        <path d="M14 18v3" stroke="currentColor" />
+        <path d="M10 18v3" stroke="currentColor" />
+      </svg>
+    ),
     gradient: "from-blue-400 via-blue-500 to-blue-600"
   }
 ];
