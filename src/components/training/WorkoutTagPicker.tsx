@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
@@ -8,9 +9,56 @@ interface WorkoutTagPickerProps {
   trainingType?: string;
 }
 
+const defaultTrainingTypeTags = {
+  strength: [
+    "Push",
+    "Pull",
+    "Legs",
+    "Upper Body",
+    "Lower Body",
+    "Core",
+    "Back",
+    "Chest",
+    "Shoulders",
+    "Arms",
+    "Abs"
+  ],
+  cardio: [
+    "Running",
+    "Cycling",
+    "Swimming",
+    "HIIT",
+    "Treadmill",
+    "Stepper",
+    "Jump Rope",
+    "Rowing",
+    "Elliptical",
+    "Interval"
+  ],
+  recovery: [
+    "Stretching",
+    "Yoga",
+    "Mobility",
+    "Foam Rolling",
+    "Joint Health",
+    "Flexibility",
+    "Active Recovery",
+    "Cool Down"
+  ],
+  default: [
+    "Morning",
+    "Afternoon",
+    "Evening",
+    "High Intensity",
+    "Low Intensity",
+    "Moderate",
+    "Training"
+  ]
+};
+
 const tagCategories = {
   strength: {
-    pattern: /(strength|muscle|lifting|power|gains)/i,
+    pattern: /(strength|muscle|lifting|power|gains|push|pull|legs|upper|lower|core|back|chest|shoulders|arms|abs)/i,
     colors: {
       base: "bg-purple-500/20",
       border: "border-purple-500/30",
@@ -20,7 +68,7 @@ const tagCategories = {
     }
   },
   cardio: {
-    pattern: /(cardio|running|endurance|hiit|conditioning)/i,
+    pattern: /(cardio|running|endurance|hiit|cycling|swimming|treadmill|stepper|rowing|elliptical)/i,
     colors: {
       base: "bg-red-500/20",
       border: "border-red-500/30",
@@ -30,7 +78,7 @@ const tagCategories = {
     }
   },
   recovery: {
-    pattern: /(recovery|mobility|flexibility|stretch|yoga)/i,
+    pattern: /(recovery|mobility|flexibility|stretch|yoga|foam|joint|cooldown)/i,
     colors: {
       base: "bg-green-500/20",
       border: "border-green-500/30",
@@ -53,9 +101,8 @@ const tagCategories = {
 
 export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: WorkoutTagPickerProps) {
   const { stats } = useWorkoutStats();
-  
   const currentHour = new Date().getHours();
-  
+
   const getTagCategory = (tag: string) => {
     for (const [category, { pattern }] of Object.entries(tagCategories)) {
       if (category === 'default') continue;
@@ -72,16 +119,15 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
   const getSuggestedTags = () => {
     let suggestions = new Set<string>();
     
-    if (trainingType?.toLowerCase().includes('strength')) {
-      suggestions.add('Strength');
-      suggestions.add('Muscle');
-      suggestions.add('Power');
-    } else if (trainingType?.toLowerCase().includes('cardio')) {
-      suggestions.add('Cardio');
-      suggestions.add('Endurance');
-      suggestions.add('HIIT');
-    }
+    // Get training type specific tags
+    const trainingCategory = trainingType?.toLowerCase() || 'default';
+    const defaultTags = defaultTrainingTypeTags[trainingCategory as keyof typeof defaultTrainingTypeTags] || 
+                       defaultTrainingTypeTags.default;
     
+    // Add some default tags based on training type
+    defaultTags.forEach(tag => suggestions.add(tag));
+    
+    // Add time of day based tags
     if (currentHour >= 5 && currentHour < 11) {
       suggestions.add('Morning');
       suggestions.add('Energy');
@@ -92,8 +138,15 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
       suggestions.add('After Work');
     }
     
+    // Add historical tags specific to this training type if available
     if (stats.tags) {
-      stats.tags.slice(0, 5).forEach(tag => suggestions.add(tag.name));
+      stats.tags
+        .filter(tag => {
+          const category = getTagCategory(tag.name);
+          return category === trainingCategory || category === 'default';
+        })
+        .slice(0, 5)
+        .forEach(tag => suggestions.add(tag.name));
     }
     
     return Array.from(suggestions);
