@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CalendarDays, Clock, Dumbbell, ArrowLeft } from "lucide-react";
+import { Loader2, CalendarDays, Clock, Dumbbell, ArrowLeft, ArrowRight } from "lucide-react";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,10 @@ import { useNavigate } from "react-router-dom";
 interface DailyWorkoutSummaryProps {
   date: string;
   onClose?: () => void;
+  preview?: boolean;
 }
 
-export const DailyWorkoutSummary = ({ date, onClose }: DailyWorkoutSummaryProps) => {
+export const DailyWorkoutSummary = ({ date, onClose, preview = false }: DailyWorkoutSummaryProps) => {
   const { data, isLoading } = useWorkoutHistory(undefined, date);
   const workouts = data?.workouts || [];
   const navigate = useNavigate();
@@ -26,6 +26,10 @@ export const DailyWorkoutSummary = ({ date, onClose }: DailyWorkoutSummaryProps)
     } else {
       navigate('/training?tab=calendar');
     }
+  };
+
+  const handleViewAll = () => {
+    navigate(`/training?tab=history&date=${date}`);
   };
   
   if (isLoading) {
@@ -44,15 +48,17 @@ export const DailyWorkoutSummary = ({ date, onClose }: DailyWorkoutSummaryProps)
             <CalendarDays className="h-5 w-5 text-purple-400" />
             {formattedDate}
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleBack} 
-            className="flex items-center gap-1 text-gray-400 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
+          {!preview ? (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleBack}
+              className="flex items-center gap-1 text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent>
@@ -93,6 +99,17 @@ export const DailyWorkoutSummary = ({ date, onClose }: DailyWorkoutSummaryProps)
                 />
               ))}
             </div>
+            
+            {preview && (
+              <Button
+                onClick={handleViewAll}
+                className="w-full mt-4 flex items-center justify-center gap-2"
+                variant="outline"
+              >
+                View Full Summary
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-400">

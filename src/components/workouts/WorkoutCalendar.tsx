@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,9 +9,10 @@ import { DayContent, DayContentProps } from "react-day-picker";
 
 interface WorkoutCalendarProps {
   className?: string;
+  onDatePreview?: (date: string | null) => void;
 }
 
-export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
+export const WorkoutCalendar = ({ className = "", onDatePreview }: WorkoutCalendarProps) => {
   const navigate = useNavigate();
   const [month, setMonth] = useState<Date>(new Date());
   
@@ -26,14 +26,20 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
   }
   
   const handleSelectDate = (date: Date | undefined) => {
-    if (!date) return;
+    if (!date) {
+      onDatePreview?.(null);
+      return;
+    }
     
     const dateString = date.toISOString().split('T')[0];
     const workoutCount = workoutDates[dateString] || 0;
     
     if (workoutCount > 0) {
-      console.log(`Navigating to: /training?tab=history&date=${dateString}`);
-      navigate(`/training?tab=history&date=${dateString}`);
+      if (onDatePreview) {
+        onDatePreview(dateString);
+      } else {
+        navigate(`/training?tab=history&date=${dateString}`);
+      }
     }
   };
 
