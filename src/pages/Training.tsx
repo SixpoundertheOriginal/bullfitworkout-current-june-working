@@ -6,12 +6,13 @@ import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
 import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
 import { TopExercisesTable } from "@/components/workouts/TopExercisesTable";
 import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
-import { Calendar, Loader2 } from "lucide-react";
+import { Calendar, Loader2, History, Sparkles } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 
 const Training = () => {
   // Fetch workout stats using the hook
   const { stats, loading } = useWorkoutStats();
+  const [activeTab, setActiveTab] = React.useState("overview");
 
   return (
     <div className="container max-w-7xl mx-auto p-4 pb-20">
@@ -19,13 +20,30 @@ const Training = () => {
         <h1 className="text-2xl font-bold">Training</h1>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-gray-900 border-gray-800">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="space-y-4"
+      >
+        <TabsList className="bg-gray-900 border-gray-800 grid grid-cols-3">
+          <TabsTrigger 
+            value="overview"
+            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+          >
+            <Sparkles className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="history" 
+            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+          >
+            <History className="h-4 w-4" />
             History
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
+          <TabsTrigger 
+            value="calendar" 
+            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+          >
             <Calendar className="h-4 w-4" />
             Calendar
           </TabsTrigger>
