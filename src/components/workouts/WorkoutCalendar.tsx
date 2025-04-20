@@ -88,17 +88,16 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
               month={month}
               disabled={{ after: new Date() }}
               components={{
-                Day: ({ date, disabled, ...props }) => {
-                  // Use date to access the date
+                Day: (props) => {
+                  // Access the date from props
+                  const date = props.date;
+                  // Get the custom class for this date
                   const extraClass = dayClassName(date);
-                  
-                  // Create a combined className - but don't try to access className from props
-                  const combinedClassName = `${extraClass}`;
                   
                   return (
                     <div 
                       {...props}
-                      className={combinedClassName}
+                      className={extraClass}
                     />
                   );
                 }
