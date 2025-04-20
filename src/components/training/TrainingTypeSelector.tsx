@@ -101,7 +101,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
             key={type.name}
             onClick={() => onSelect(type.name)}
             className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center",
+              "w-20 h-20 rounded-2xl flex items-center justify-center relative",
               "transition-all duration-300 text-white",
               "bg-gradient-to-br shadow-lg border border-white/10",
               type.gradient,
@@ -109,26 +109,30 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 "scale-105", 
                 "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
               ],
-              "hover:scale-105 active:scale-95",
-              "relative"
+              "hover:scale-105 active:scale-95"
             )}
           >
             {type.icon}
-            <span className={cn(
-              "absolute -bottom-6 text-sm transition-opacity",
-              selectedType === type.name ? "opacity-100 font-medium text-white" : "opacity-70 text-gray-400"
-            )}>
+            <span 
+              className={cn(
+                "absolute bottom-[-1.5rem] text-sm w-full text-center transition-all duration-300",
+                selectedType === type.name 
+                  ? "opacity-100 font-medium text-white" 
+                  : "opacity-70 text-gray-400"
+              )}
+            >
               {type.name}
             </span>
           </button>
         ))}
         
+        {/* Similar update for custom types */}
         {customTypes?.map((type) => (
           <button
             key={type.id}
             onClick={() => onSelect(type.name)}
             className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center",
+              "w-20 h-20 rounded-2xl flex items-center justify-center relative",
               "transition-all duration-300 text-white",
               "bg-gradient-to-br shadow-lg border border-white/10",
               `from-[${type.color_start}] to-[${type.color_end}]`,
@@ -136,15 +140,18 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 "scale-105", 
                 "ring-[3px] ring-purple-500 ring-offset-2 ring-offset-gray-900"
               ],
-              "hover:scale-105 active:scale-95",
-              "relative"
+              "hover:scale-105 active:scale-95"
             )}
           >
             {type.icon}
-            <span className={cn(
-              "absolute -bottom-6 text-sm transition-opacity",
-              selectedType === type.name ? "opacity-100 font-medium text-white" : "opacity-70 text-gray-400"
-            )}>
+            <span 
+              className={cn(
+                "absolute bottom-[-1.5rem] text-sm w-full text-center transition-all duration-300",
+                selectedType === type.name 
+                  ? "opacity-100 font-medium text-white" 
+                  : "opacity-70 text-gray-400"
+              )}
+            >
               {type.name}
             </span>
           </button>
