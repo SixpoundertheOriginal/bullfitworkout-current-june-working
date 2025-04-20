@@ -25,6 +25,7 @@ import { TopRestTimer } from '@/components/TopRestTimer';
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { useWorkoutMetrics } from "@/hooks/useWorkoutMetrics";
 import { IntelligentMetricsDisplay } from "@/components/metrics/IntelligentMetricsDisplay";
+import { ExerciseVolumeChart } from '@/components/metrics/ExerciseVolumeChart';
 
 interface LocationState {
   trainingType?: string;
@@ -652,6 +653,11 @@ const TrainingSession = () => {
                 exercises={exercises}
                 intensity={metrics.performance.intensity}
                 efficiency={metrics.performance.efficiency}
+              />
+              
+              <ExerciseVolumeChart 
+                exercises={exercises}
+                weightUnit={weightUnit}
               />
               
               {Object.keys(exercises || {}).map((exerciseName) => (
