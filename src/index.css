@@ -4,9 +4,9 @@
 @tailwind utilities;
 
 @layer components {
-  /* Existing classes with slight modifications */
+  /* Global text classes for dark backgrounds */
   .workout-log-text {
-    @apply text-white/90 hover:text-white transition-colors duration-300;
+    @apply text-white hover:text-white transition-colors duration-300;
   }
 
   .workout-log-date {
@@ -28,5 +28,35 @@
 
   .dark-text-subtle {
     @apply text-white/60 hover:text-white/80 transition-colors duration-300;
+  }
+  
+  /* Exercise card specific styles */
+  .exercise-name {
+    @apply text-white font-medium text-lg;
+  }
+  
+  .exercise-detail {
+    @apply text-white/70 text-sm flex items-center;
+  }
+  
+  .mono-text {
+    @apply font-mono text-white/90;
+  }
+  
+  .volume-label {
+    @apply text-white/70;
+  }
+  
+  .volume-value {
+    @apply font-mono;
+  }
+  
+  .set-header {
+    @apply text-white/70 text-sm;
+  }
+  
+  /* Workout metrics styles */
+  .workout-number-input {
+    @apply bg-gray-800 border-gray-700 text-white;
   }
 }

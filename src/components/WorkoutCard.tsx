@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, BarChart3, Dumbbell, Edit, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { theme } from "@/lib/theme";
 
 interface WorkoutCardProps {
   id: string;
@@ -67,16 +68,16 @@ export const WorkoutCard = ({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-medium text-lg workout-log-text">{name}</h3>
-            <div className="flex items-center gap-2 text-sm workout-log-date mt-1">
-              <Calendar size={14} className="text-purple-400" />
+            <h3 className={cn(theme.textStyles.primary, "text-lg")}>{name}</h3>
+            <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm mt-1")}>
+              <Calendar size={14} className={theme.colors.accent.purple} />
               <span>{formattedDate}</span>
-              <Clock size={14} className="text-purple-400" />
+              <Clock size={14} className={theme.colors.accent.purple} />
               <span className="font-mono">{formatTime(duration)}</span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge className="bg-purple-600/80 workout-log-tag">
+            <Badge className="bg-purple-600/80 text-white">
               {type}
             </Badge>
             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -113,12 +114,12 @@ export const WorkoutCard = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="flex items-center gap-2 text-sm workout-log-text">
-            <BarChart3 size={16} className="text-purple-400" />
+          <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm")}>
+            <BarChart3 size={16} className={theme.colors.accent.purple} />
             <span>{setCount} sets</span>
           </div>
-          <div className="flex items-center gap-2 text-sm workout-log-text">
-            <Dumbbell size={16} className="text-purple-400" />
+          <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm")}>
+            <Dumbbell size={16} className={theme.colors.accent.purple} />
             <span>{exerciseCount} exercises</span>
           </div>
         </div>

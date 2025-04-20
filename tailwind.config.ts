@@ -1,3 +1,4 @@
+
 import { type Config } from 'tailwindcss';
 
 export default {
@@ -64,6 +65,24 @@ export default {
           'accent-foreground': "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))"
+        },
+        // Add app-specific theme colors
+        app: {
+          // Dark backgrounds
+          dark: '#111827', // gray-900
+          darkAlt: '#1f2937', // gray-800
+          // Text colors for dark backgrounds
+          lightText: {
+            primary: '#ffffff',
+            secondary: 'rgba(255, 255, 255, 0.8)',
+            tertiary: 'rgba(255, 255, 255, 0.6)',
+          },
+          // Accent colors
+          accent: {
+            purple: '#a78bfa',
+            green: '#34d399',
+            red: '#f87171',
+          }
         }
       },
       borderRadius: {
