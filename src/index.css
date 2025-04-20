@@ -1,4 +1,8 @@
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer components {
   /* Add or update these classes for better dark mode text visibility */
   .training-type-tag {
