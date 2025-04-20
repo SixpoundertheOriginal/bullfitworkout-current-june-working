@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  BarChart3, 
-  Calendar, 
   Clock, 
   Moon, 
   Plus, 
@@ -241,9 +239,8 @@ const Index = () => {
         </section>
       </main>
 
-      <nav className="grid grid-cols-4 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm">
+      <nav className="grid grid-cols-3 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm">
         <NavButton icon={<Clock size={20} />} label="Today" active onClick={() => navigate('/')} />
-        <NavButton icon={<BarChart3 size={20} />} label="Progress" onClick={() => navigate('/progress')} />
         <NavButton 
           icon={<Zap size={20} />} 
           label="Training" 
