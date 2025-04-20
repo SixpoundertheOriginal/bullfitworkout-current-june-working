@@ -14,6 +14,11 @@ const Training = () => {
   const { stats, loading } = useWorkoutStats();
   const [activeTab, setActiveTab] = React.useState("overview");
 
+  // Ensure App.tsx has the route to this page
+  React.useEffect(() => {
+    console.log("Current tab:", activeTab);
+  }, [activeTab]);
+
   return (
     <div className="container max-w-7xl mx-auto p-4 pb-20">
       <div className="flex justify-between items-center mb-6">
@@ -34,18 +39,18 @@ const Training = () => {
             Overview
           </TabsTrigger>
           <TabsTrigger 
-            value="history" 
-            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
-          >
-            <History className="h-4 w-4" />
-            History
-          </TabsTrigger>
-          <TabsTrigger 
             value="calendar" 
             className="flex items-center gap-2 data-[state=active]:bg-purple-600"
           >
             <Calendar className="h-4 w-4" />
             Calendar
+          </TabsTrigger>
+          <TabsTrigger 
+            value="history" 
+            className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+          >
+            <History className="h-4 w-4" />
+            History
           </TabsTrigger>
         </TabsList>
 
@@ -66,12 +71,12 @@ const Training = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="history">
-          <WorkoutHistory className="mt-4" />
-        </TabsContent>
-
         <TabsContent value="calendar">
           <WorkoutCalendarTab />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <WorkoutHistory className="mt-4" />
         </TabsContent>
       </Tabs>
     </div>
