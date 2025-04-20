@@ -105,7 +105,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
               onClick={() => onSelect(type.name)}
               className={cn(
                 "w-20 h-20 rounded-2xl flex items-center justify-center",
-                "transition-all duration-300 text-white",
+                "transition-all duration-300",
                 "bg-gradient-to-br shadow-lg border border-white/10",
                 type.gradient,
                 selectedType === type.name && [
@@ -121,8 +121,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
               className={cn(
                 "text-sm text-center w-full truncate",
                 selectedType === type.name 
-                  ? "font-medium text-white" 
-                  : "text-gray-400"
+                  ? "dark-text font-medium" 
+                  : "dark-text-muted"
               )}
             >
               {type.name}
@@ -139,7 +139,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
               onClick={() => onSelect(type.name)}
               className={cn(
                 "w-20 h-20 rounded-2xl flex items-center justify-center",
-                "transition-all duration-300 text-white",
+                "transition-all duration-300",
                 "bg-gradient-to-br shadow-lg border border-white/10",
                 `from-[${type.color_start}] to-[${type.color_end}]`,
                 selectedType === type.name && [
@@ -155,8 +155,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
               className={cn(
                 "text-sm text-center w-full truncate",
                 selectedType === type.name 
-                  ? "font-medium text-white" 
-                  : "text-gray-400"
+                  ? "dark-text font-medium" 
+                  : "dark-text-muted"
               )}
             >
               {type.name}
@@ -168,11 +168,12 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       {selectedType && (
         <div className="flex items-center justify-center py-2 text-center">
           <div className="px-4 py-2 bg-black/20 rounded-full backdrop-blur-sm border border-white/10">
-            <span className="text-sm text-white/80">Selected Training Type: </span>
-            <span className="font-medium text-white">{selectedType}</span>
+            <span className="text-sm dark-text-muted">Selected Training Type: </span>
+            <span className="dark-text font-medium">{selectedType}</span>
           </div>
         </div>
       )}
     </div>
   );
 }
+
