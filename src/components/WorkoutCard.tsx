@@ -65,16 +65,16 @@ export const WorkoutCard = ({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-medium text-lg">{name}</h3>
-            <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
-              <Calendar size={14} />
+            <h3 className="font-medium text-lg workout-log-text">{name}</h3>
+            <div className="flex items-center gap-2 text-sm workout-log-date mt-1">
+              <Calendar size={14} className="text-purple-400" />
               <span>{formattedDate}</span>
-              <Clock size={14} />
+              <Clock size={14} className="text-purple-400" />
               <span className="font-mono">{formatTime(duration)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className="bg-purple-600/80 text-white">
+            <Badge className="bg-purple-600/80 workout-log-tag">
               {type}
             </Badge>
             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -105,11 +105,11 @@ export const WorkoutCard = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="flex items-center gap-2 text-sm text-gray-300">
+          <div className="flex items-center gap-2 text-sm workout-log-text">
             <BarChart3 size={16} className="text-purple-400" />
             <span>{setCount} sets</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-300">
+          <div className="flex items-center gap-2 text-sm workout-log-text">
             <Dumbbell size={16} className="text-purple-400" />
             <span>{exerciseCount} exercises</span>
           </div>
