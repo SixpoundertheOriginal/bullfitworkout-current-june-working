@@ -73,18 +73,18 @@ export const WorkoutCard = ({
               <span className="font-mono">{formatTime(duration)}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end gap-2">
             <Badge className="bg-purple-600/80 workout-log-tag">
               {type}
             </Badge>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               {onEdit && (
                 <Button
                   variant="ghost"
                   size="icon"
                   data-action="edit"
                   onClick={onEdit}
-                  className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-700"
+                  className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-700"
                 >
                   <Edit size={16} />
                 </Button>
