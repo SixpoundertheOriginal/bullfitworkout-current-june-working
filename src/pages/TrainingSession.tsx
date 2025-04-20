@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -688,11 +689,11 @@ const TrainingSession = () => {
           onClick={() => navigate('/')}
           className="p-2 rounded-full hover:bg-gray-800/50 transition-colors"
         >
-          <ArrowLeft size={24} />
+          <ArrowLeft size={24} className="text-white" /> {/* Added text-white to ensure visibility */}
         </button>
         <div className="flex items-center gap-4">
           <TrainingTypeTag type={trainingType as any} />
-          <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+          <h1 className="text-xl font-semibold text-white"> {/* Changed from bg-clip-text to direct text-white */}
             {trainingType}
           </h1>
         </div>
