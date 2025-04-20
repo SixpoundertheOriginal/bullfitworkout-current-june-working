@@ -1,4 +1,3 @@
-
 export type MuscleGroup = 
   | "Chest" 
   | "Back" 
@@ -30,6 +29,7 @@ export type EquipmentType =
   | "Rope" 
   | "Smith Machine" 
   | "EZ Bar" 
+  | "Pull Up Bar" 
   | "Other";
 
 export type MovementPattern = 
@@ -58,7 +58,9 @@ export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [
 export const COMMON_EQUIPMENT: EquipmentType[] = [
   "Barbell", "Dumbbell", "Kettlebell", "Machine", 
   "Cable", "Bodyweight", "Resistance Band", "Medicine Ball", 
-  "Plate", "TRX", "Rope", "Smith Machine", "EZ Bar", "Other"
+  "Plate", "TRX", "Rope", "Smith Machine", "EZ Bar", 
+  "Pull Up Bar", 
+  "Other"
 ];
 
 export const MOVEMENT_PATTERNS: MovementPattern[] = [
