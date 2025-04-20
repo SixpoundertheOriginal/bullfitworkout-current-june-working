@@ -1,15 +1,15 @@
+
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { convertWeight, WeightUnit } from "@/utils/unitConversion";
 import { isIsometricExercise, formatDuration, formatIsometricSet } from "@/utils/exerciseUtils";
 import { useExerciseWeight } from '@/hooks/useExerciseWeight';
 import { Exercise } from '@/types/exercise';
-import { Tooltip } from '@/components/ui/tooltip';
-import { cn } from "@/utils/cn";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from "@/lib/utils";
 
 interface SetRowProps {
   setNumber: number;
@@ -121,23 +121,30 @@ export const SetRow = ({
             >
               <MinusCircle size={isMobile ? 20 : 18} />
             </button>
-            <Tooltip content={isAutoWeight ? `Auto-calculated from bodyweight (${userWeight}kg)` : "Manual weight"}>
-              <Input 
-                type="number"
-                min="0"
-                step="any"
-                value={weight}
-                onChange={(e) => {
-                  onWeightChange(e);
-                  updateWeight(Number(e.target.value));
-                }}
-                className={cn(
-                  "workout-number-input text-center flex-1",
-                  isAutoWeight && "italic text-gray-400"
-                )}
-                placeholder={isIsometric ? "Optional weight" : "Weight"}
-              />
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Input 
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={weight}
+                    onChange={(e) => {
+                      onWeightChange(e);
+                      updateWeight(Number(e.target.value));
+                    }}
+                    className={cn(
+                      "workout-number-input text-center flex-1",
+                      isAutoWeight && "italic text-gray-400"
+                    )}
+                    placeholder={isIsometric ? "Optional weight" : "Weight"}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isAutoWeight ? `Auto-calculated from bodyweight (${userWeight}kg)` : "Manual weight"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <button 
               type="button"
               onClick={() => onWeightIncrement(1)} 
@@ -259,21 +266,28 @@ export const SetRow = ({
         </>
       ) : (
         <>
-          <Tooltip content={isAutoWeight ? `Auto-calculated from bodyweight (${userWeight}kg)` : "Manual weight"}>
-            <div 
-              className={cn(
-                "flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200",
-                isAutoWeight && "italic text-gray-400"
-              )}
-              onClick={onEdit}
-            >
-              <span className="font-medium">
-                {displayWeight}
-                {isAutoWeight && " (auto)"}
-              </span>
-              <span className="text-xs text-gray-400">{globalWeightUnit}</span>
-            </div>
-          </Tooltip>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div 
+                  className={cn(
+                    "flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200",
+                    isAutoWeight && "italic text-gray-400"
+                  )}
+                  onClick={onEdit}
+                >
+                  <span className="font-medium">
+                    {displayWeight}
+                    {isAutoWeight && " (auto)"}
+                  </span>
+                  <span className="text-xs text-gray-400">{globalWeightUnit}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isAutoWeight ? `Auto-calculated from bodyweight (${userWeight}kg)` : "Manual weight"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           <div 
             className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
