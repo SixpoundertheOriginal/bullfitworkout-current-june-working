@@ -7,6 +7,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
+  Cell,
 } from 'recharts';
 import { ExerciseSet } from '@/types/exercise';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
@@ -31,8 +33,10 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
     volume: calculateExerciseVolume(sets),
   }));
 
-  // Fixed config object to match ChartConfig type requirements
-  // Both light and dark theme colors are now provided
+  // Handle empty data or very small values
+  const isEmpty = data.length === 0 || data.every(item => item.volume === 0);
+
+  // Fixed config object to match ChartConfig type requirements with both light and dark theme colors
   const config = {
     volume: {
       label: 'Volume',
@@ -43,12 +47,28 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
     }
   };
 
+  if (isEmpty) {
+    return (
+      <div className="mt-6 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+        <h3 className="text-sm font-medium text-gray-300 mb-4">Exercise Volume Distribution</h3>
+        <div className="h-64 flex items-center justify-center text-gray-400">
+          No exercise volume data available yet.
+          Complete sets with weight and reps to see your distribution.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-6 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
       <h3 className="text-sm font-medium text-gray-300 mb-4">Exercise Volume Distribution</h3>
       <div className="h-64">
         <ChartContainer config={config}>
-          <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+          <BarChart 
+            data={data} 
+            margin={{ top: 10, right: 10, left: 10, bottom: 30 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
             <XAxis
               dataKey="name"
               angle={-45}
@@ -56,6 +76,7 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
               height={60}
               stroke="#666"
               fontSize={12}
+              tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
             />
             <YAxis
               stroke="#666"
@@ -80,12 +101,22 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
               dataKey="volume"
               fill="url(#gradient)"
               radius={[4, 4, 0, 0]}
-            />
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={`url(#gradient-${index})`} />
+              ))}
+            </Bar>
             <defs>
               <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#9b87f5" />
                 <stop offset="100%" stopColor="#7E69AB" />
               </linearGradient>
+              {data.map((entry, index) => (
+                <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={`hsl(${260 + index * 20}, 80%, 65%)`} />
+                  <stop offset="100%" stopColor={`hsl(${260 + index * 20}, 70%, 40%)`} />
+                </linearGradient>
+              ))}
             </defs>
           </BarChart>
         </ChartContainer>

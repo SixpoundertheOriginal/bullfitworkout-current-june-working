@@ -1,4 +1,3 @@
-
 import { ExerciseSet } from "@/types/exercise";
 import { WorkoutMetrics } from "@/types/workout-metrics";
 
@@ -20,12 +19,22 @@ export const calculateWorkoutMetrics = (
     completedSets += sets.filter((set) => set.completed).length;
     
     sets.forEach((set) => {
-      if (set.completed && set.weight > 0 && set.reps > 0) {
-        totalVolume += set.weight * set.reps;
-        // Calculate intensity based on weight relative to max weight for the exercise
-        const maxWeight = Math.max(...sets.map(s => s.weight > 0 ? s.weight : 0));
-        if (maxWeight > 0) {
-          totalIntensity += (set.weight / maxWeight) * 100;
+      if (set.completed) {
+        // For normal weighted exercises
+        if (set.weight > 0 && set.reps > 0) {
+          totalVolume += set.weight * set.reps;
+          // Calculate intensity based on weight relative to max weight for the exercise
+          const maxWeight = Math.max(...sets.map(s => s.weight > 0 ? s.weight : 0));
+          if (maxWeight > 0) {
+            totalIntensity += (set.weight / maxWeight) * 100;
+            setCount++;
+          }
+        } 
+        // For isometric exercises (count as volume even if weight is 0)
+        else if (set.reps > 0) {
+          // Use a nominal weight value for isometric exercises
+          totalVolume += set.reps * 10; // Assign 10 as nominal weight value for isometrics
+          totalIntensity += 70; // Assign a standard intensity value for isometrics
           setCount++;
         }
       }
@@ -65,8 +74,15 @@ export const calculateWorkoutMetrics = (
 };
 
 export const calculateSetVolume = (set: ExerciseSet): number => {
-  if (set.completed && set.weight > 0 && set.reps > 0) {
-    return set.weight * set.reps;
+  if (set.completed) {
+    // Standard weighted exercise
+    if (set.weight > 0 && set.reps > 0) {
+      return set.weight * set.reps;
+    }
+    // Isometric or bodyweight exercise
+    else if (set.reps > 0) {
+      return set.reps * 10; // Use nominal weight value
+    }
   }
   return 0;
 };
@@ -83,7 +99,6 @@ export const getTrendIndicator = (
   return 'stable';
 };
 
-// Helper function to get exercise group
 export const getExerciseGroup = (exerciseName: string): string => {
   // This would ideally come from a database table that maps exercises to muscle groups
   const exerciseGroups: Record<string, string> = {
@@ -132,10 +147,20 @@ export const getExerciseGroup = (exerciseName: string): string => {
   return exerciseGroups[exerciseName] || "";
 };
 
-// Helper function to compare exercise groups
 export const isSameExerciseGroup = (exercise1: string, exercise2: string): boolean => {
   const group1 = getExerciseGroup(exercise1);
   const group2 = getExerciseGroup(exercise2);
   
   return group1 !== "" && group1 === group2;
+};
+
+export const isIsometricExercise = (exerciseName: string): boolean => {
+  // Check if the name contains keywords suggesting isometric exercise
+  const isometricKeywords = [
+    'static', 'hold', 'plank', 'isometric', 'hang', 'l-sit', 'wall sit'
+  ];
+  
+  return isometricKeywords.some(keyword => 
+    exerciseName.toLowerCase().includes(keyword.toLowerCase())
+  );
 };

@@ -2,7 +2,12 @@
 import { useState, useEffect } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { WorkoutMetrics } from '@/types/workout-metrics';
-import { calculateWorkoutMetrics, getExerciseGroup } from '@/utils/workoutMetrics';
+import { 
+  calculateWorkoutMetrics, 
+  getExerciseGroup, 
+  calculateSetVolume,
+  isIsometricExercise 
+} from '@/utils/workoutMetrics';
 
 export interface ExerciseGroupData {
   group: string;
@@ -31,6 +36,11 @@ export const useWorkoutMetrics = (
   const [exerciseGroups, setExerciseGroups] = useState<ExerciseGroupData[]>([]);
 
   useEffect(() => {
+    if (!exercises || Object.keys(exercises).length === 0) {
+      // Return early with default values if no exercises
+      return;
+    }
+
     // Calculate standard metrics
     const updatedMetrics = calculateWorkoutMetrics(exercises, time, weightUnit);
     setMetrics(updatedMetrics);
@@ -56,12 +66,22 @@ export const useWorkoutMetrics = (
       }
       
       // Calculate volume for this exercise
-      const exerciseVolume = sets.reduce((total, set) => {
-        if (set.completed && set.weight > 0 && set.reps > 0) {
-          return total + (set.weight * set.reps);
-        }
-        return total;
-      }, 0);
+      let exerciseVolume = 0;
+      
+      // For isometric exercises, handle differently
+      if (isIsometricExercise(exerciseName)) {
+        exerciseVolume = sets.reduce((total, set) => {
+          if (set.completed) {
+            return total + (set.reps > 0 ? set.reps * 10 : 0);
+          }
+          return total;
+        }, 0);
+      } else {
+        // Regular exercises with weight/reps
+        exerciseVolume = sets.reduce((total, set) => {
+          return total + calculateSetVolume(set);
+        }, 0);
+      }
       
       groupsMap[group].totalVolume += exerciseVolume;
     });
