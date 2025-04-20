@@ -814,6 +814,7 @@ const TrainingSession = () => {
       <AddExerciseBar
         onSelectExercise={handleSelectExercise}
         onAddExercise={handleAddExercise}
+        trainingType={trainingType}
       />
     </div>
   );
