@@ -133,7 +133,7 @@ export function ConfigureTrainingDialog({
 
               <div>
                 <label className="text-lg font-semibold mb-3 block bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  Tags
+                  Training Focus
                 </label>
                 <WorkoutTagPicker
                   selectedTags={selectedTags}

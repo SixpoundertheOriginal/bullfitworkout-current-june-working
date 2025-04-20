@@ -2,6 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface WorkoutTagPickerProps {
   selectedTags: string[];
@@ -9,50 +10,85 @@ interface WorkoutTagPickerProps {
   trainingType?: string;
 }
 
-const defaultTrainingTypeTags = {
+interface TagCategory {
+  id: string;
+  label: string;
+  tags: string[];
+}
+
+const categoryConfig: Record<string, TagCategory[]> = {
   strength: [
-    "Push",
-    "Pull",
-    "Legs",
-    "Upper Body",
-    "Lower Body",
-    "Core",
-    "Back",
-    "Chest",
-    "Shoulders",
-    "Arms",
-    "Abs"
+    {
+      id: "movement",
+      label: "Movement Pattern",
+      tags: ["Push", "Pull", "Upper Body", "Lower Body"]
+    },
+    {
+      id: "body",
+      label: "Body Focus",
+      tags: ["Chest", "Back", "Core", "Shoulders", "Arms", "Legs", "Abs"]
+    },
+    {
+      id: "goal",
+      label: "Goal-Oriented",
+      tags: ["Strength", "Power", "Hypertrophy", "Endurance"]
+    },
+    {
+      id: "context",
+      label: "Session Context",
+      tags: ["Morning", "Afternoon", "Evening", "High Intensity", "Training"]
+    }
   ],
   cardio: [
-    "Running",
-    "Cycling",
-    "Swimming",
-    "HIIT",
-    "Treadmill",
-    "Stepper",
-    "Jump Rope",
-    "Rowing",
-    "Elliptical",
-    "Interval"
+    {
+      id: "type",
+      label: "Type",
+      tags: ["Running", "Cycling", "Swimming", "HIIT", "Interval"]
+    },
+    {
+      id: "intensity",
+      label: "Intensity",
+      tags: ["High Intensity", "Low Intensity", "Moderate", "Endurance"]
+    },
+    {
+      id: "context",
+      label: "Session Context",
+      tags: ["Morning", "Afternoon", "Evening", "Outdoors", "Training"]
+    }
   ],
   recovery: [
-    "Stretching",
-    "Yoga",
-    "Mobility",
-    "Foam Rolling",
-    "Joint Health",
-    "Flexibility",
-    "Active Recovery",
-    "Cool Down"
+    {
+      id: "type",
+      label: "Type",
+      tags: ["Stretching", "Yoga", "Mobility", "Foam Rolling", "Joint Health"]
+    },
+    {
+      id: "focus",
+      label: "Focus Areas",
+      tags: ["Upper Body", "Lower Body", "Back", "Legs", "Full Body"]
+    },
+    {
+      id: "context",
+      label: "Session Context",
+      tags: ["Morning", "Evening", "Active Recovery", "Cool Down"]
+    }
   ],
   default: [
-    "Morning",
-    "Afternoon",
-    "Evening",
-    "High Intensity",
-    "Low Intensity",
-    "Moderate",
-    "Training"
+    {
+      id: "body",
+      label: "Body Focus",
+      tags: ["Chest", "Back", "Core", "Shoulders", "Arms", "Legs", "Abs"]
+    },
+    {
+      id: "movement",
+      label: "Movement Pattern",
+      tags: ["Push", "Pull", "Upper Body", "Lower Body"]
+    },
+    {
+      id: "context",
+      label: "Session Context",
+      tags: ["Morning", "Afternoon", "Evening", "Training"]
+    }
   ]
 };
 
@@ -116,75 +152,79 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
     return tagCategories[category]?.colors || tagCategories.default.colors;
   };
 
-  const getSuggestedTags = () => {
-    let suggestions = new Set<string>();
-    
-    // Get training type specific tags
+  const getCategoriesForType = () => {
     const trainingCategory = trainingType?.toLowerCase() || 'default';
-    const defaultTags = defaultTrainingTypeTags[trainingCategory as keyof typeof defaultTrainingTypeTags] || 
-                       defaultTrainingTypeTags.default;
-    
-    // Add some default tags based on training type
-    defaultTags.forEach(tag => suggestions.add(tag));
-    
-    // Add time of day based tags
-    if (currentHour >= 5 && currentHour < 11) {
-      suggestions.add('Morning');
-      suggestions.add('Energy');
-    } else if (currentHour >= 11 && currentHour < 17) {
-      suggestions.add('Afternoon');
-    } else if (currentHour >= 17 && currentHour < 22) {
-      suggestions.add('Evening');
-      suggestions.add('After Work');
-    }
-    
-    // Add historical tags specific to this training type if available
-    if (stats.tags) {
-      stats.tags
-        .filter(tag => {
-          const category = getTagCategory(tag.name);
-          return category === trainingCategory || category === 'default';
-        })
-        .slice(0, 5)
-        .forEach(tag => suggestions.add(tag.name));
-    }
-    
-    return Array.from(suggestions);
+    return categoryConfig[trainingCategory as keyof typeof categoryConfig] || 
+           categoryConfig.default;
   };
 
-  const suggestedTags = getSuggestedTags();
+  // Get historical tags specific to training type
+  const getHistoricalTags = () => {
+    if (!stats.tags) return [];
+    
+    return stats.tags
+      .filter(tag => {
+        const category = getTagCategory(tag.name);
+        const trainingCategory = trainingType?.toLowerCase() || 'default';
+        return category === trainingCategory || category === 'default';
+      })
+      .slice(0, 5)
+      .map(tag => tag.name);
+  };
+
+  // Combine suggested tags with historical tags
+  const enhanceWithHistoricalTags = (categories: TagCategory[]) => {
+    const historicalTags = getHistoricalTags();
+    
+    if (historicalTags.length > 0) {
+      categories.push({
+        id: "recent",
+        label: "Recently Used",
+        tags: historicalTags
+      });
+    }
+    
+    return categories;
+  };
+
+  const categories = enhanceWithHistoricalTags(getCategoriesForType());
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {suggestedTags.map((tag) => {
-          const isSelected = selectedTags.includes(tag);
-          const colors = getTagColors(tag);
-          
-          return (
-            <button
-              key={tag}
-              onClick={() => onToggleTag(tag)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-sm transition-all duration-200",
-                "border border-opacity-50 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background",
-                colors.base,
-                colors.border,
-                colors.text,
-                colors.hover,
-                isSelected && [
-                  "scale-105",
-                  "shadow-lg",
-                  colors.glow,
-                  "border-opacity-100"
-                ]
-              )}
-            >
-              {tag}
-            </button>
-          );
-        })}
-      </div>
+    <div className="space-y-6">
+      {categories.map((category) => (
+        <div key={category.id} className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-400">{category.label}</h4>
+          <div className="flex flex-wrap gap-2">
+            {category.tags.map((tag) => {
+              const isSelected = selectedTags.includes(tag);
+              const colors = getTagColors(tag);
+              
+              return (
+                <button
+                  key={tag}
+                  onClick={() => onToggleTag(tag)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-sm transition-all duration-200",
+                    "border border-opacity-50 outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background",
+                    colors.base,
+                    colors.border,
+                    colors.text,
+                    colors.hover,
+                    isSelected && [
+                      "scale-105",
+                      "shadow-lg",
+                      colors.glow,
+                      "border-opacity-100"
+                    ]
+                  )}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
