@@ -45,34 +45,51 @@ export const useExercises = () => {
     }
   });
 
-  // Add mutation for creating exercises
+  // Improved mutation for creating exercises
   const { mutate: createExercise, isPending } = useMutation({
     mutationFn: async (newExercise: ExerciseInput) => {
+      console.log("Creating exercise with data:", newExercise);
+      
+      // Make sure we have the required fields
+      if (!newExercise.name || !newExercise.primary_muscle_groups || newExercise.primary_muscle_groups.length === 0) {
+        throw new Error("Exercise name and at least one primary muscle group are required");
+      }
+      
       const { data, error } = await supabase
         .from('exercises')
         .insert([{
           name: newExercise.name,
-          description: newExercise.description,
+          description: newExercise.description || '',
           primary_muscle_groups: newExercise.primary_muscle_groups,
-          secondary_muscle_groups: newExercise.secondary_muscle_groups,
-          equipment_type: newExercise.equipment_type,
+          secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
+          equipment_type: newExercise.equipment_type || [],
           movement_pattern: newExercise.movement_pattern,
           difficulty: newExercise.difficulty,
-          instructions: newExercise.instructions,
-          is_compound: newExercise.is_compound,
-          tips: newExercise.tips,
-          variations: newExercise.variations,
-          metadata: newExercise.metadata,
-          created_by: newExercise.user_id
+          instructions: newExercise.instructions || {},
+          is_compound: Boolean(newExercise.is_compound),
+          tips: newExercise.tips || [],
+          variations: newExercise.variations || [],
+          metadata: newExercise.metadata || {},
+          created_by: newExercise.user_id || '', // Ensure user_id is being sent
+          is_custom: true // Mark as custom exercise
         }])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating exercise:", error);
+        throw error;
+      }
+      
+      console.log("Exercise created successfully:", data);
       return data[0];
     },
     onSuccess: () => {
-      // Invalidate and refetch exercises query
+      // Invalidate and refetch exercises query to update the UI
+      console.log("Invalidating exercises query cache");
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+    onError: (error) => {
+      console.error("Error in createExercise mutation:", error);
     }
   });
 

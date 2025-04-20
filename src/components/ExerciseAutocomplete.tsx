@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/context/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,11 +57,12 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
   const [value, setValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
   
   const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id'>>({
     name: "",
     created_at: new Date().toISOString(),
-    user_id: "",
+    user_id: user?.id || "",
     description: "",
     primary_muscle_groups: [],
     secondary_muscle_groups: [],
@@ -73,6 +75,15 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     variations: [],
     metadata: {}
   });
+  
+  useEffect(() => {
+    if (user?.id) {
+      setNewExercise(prev => ({
+        ...prev,
+        user_id: user.id
+      }));
+    }
+  }, [user]);
   
   const [tempMuscleGroup, setTempMuscleGroup] = useState<MuscleGroup | "">("");
   const [tempEquipment, setTempEquipment] = useState<EquipmentType | "">("");
@@ -91,42 +102,48 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
 
   const handleCreateExercise = () => {
     if (!newExercise.name) {
-      toast("Exercise name required");
+      toast.error("Exercise name required");
       return;
     }
 
     if (!Array.isArray(newExercise.primary_muscle_groups) || newExercise.primary_muscle_groups.length === 0) {
-      toast("Please add at least one primary muscle group");
+      toast.error("Please add at least one primary muscle group");
       return;
     }
-
-    createExercise({
+    
+    const exerciseToCreate = {
       ...newExercise,
-      user_id: "",
-      instructions: newExercise.instructions || {},
-      is_compound: Boolean(newExercise.is_compound),
-      primary_muscle_groups: newExercise.primary_muscle_groups || [],
-      secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
-      equipment_type: newExercise.equipment_type || []
-    });
+      user_id: user?.id || "",
+    };
     
-    setDialogOpen(false);
-    
-    setNewExercise({
-      name: "",
-      created_at: new Date().toISOString(),
-      user_id: "",
-      description: "",
-      primary_muscle_groups: [],
-      secondary_muscle_groups: [],
-      equipment_type: [],
-      movement_pattern: "push",
-      difficulty: "beginner",
-      instructions: {},
-      is_compound: false,
-      tips: [],
-      variations: [],
-      metadata: {}
+    console.log("Creating exercise with data:", exerciseToCreate);
+
+    createExercise(exerciseToCreate, {
+      onSuccess: (data) => {
+        console.log("Exercise created successfully:", data);
+        toast.success(`Exercise "${newExercise.name}" created successfully`);
+        setDialogOpen(false);
+        setNewExercise({
+          name: "",
+          created_at: new Date().toISOString(),
+          user_id: user?.id || "",
+          description: "",
+          primary_muscle_groups: [],
+          secondary_muscle_groups: [],
+          equipment_type: [],
+          movement_pattern: "push",
+          difficulty: "beginner",
+          instructions: {},
+          is_compound: false,
+          tips: [],
+          variations: [],
+          metadata: {}
+        });
+      },
+      onError: (error) => {
+        console.error("Error creating exercise:", error);
+        toast.error(`Failed to create exercise: ${error.message}`);
+      }
     });
   };
 
@@ -487,8 +504,14 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
             <Button 
               onClick={handleCreateExercise}
               className="bg-blue-600 hover:bg-blue-700"
+              disabled={isPending}
             >
-              {isPending ? "Creating..." : "Create Exercise"}
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : "Create Exercise"}
             </Button>
           </DialogFooter>
         </DialogContent>
