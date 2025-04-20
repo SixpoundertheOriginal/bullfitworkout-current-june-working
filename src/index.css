@@ -4,17 +4,17 @@
 @tailwind utilities;
 
 @layer components {
-  /* Improve text visibility for workout log */
+  /* Existing classes with slight modifications */
   .workout-log-text {
     @apply text-white/90 hover:text-white transition-colors duration-300;
   }
 
   .workout-log-date {
-    @apply text-white/70 hover:text-white/90 transition-colors duration-300;
+    @apply text-white/80 hover:text-white transition-colors duration-300;
   }
 
   .workout-log-tag {
-    @apply text-white/80 hover:text-white transition-colors duration-300;
+    @apply text-white/90 hover:text-white transition-colors duration-300;
   }
 
   /* Enhanced text visibility for dark backgrounds */
