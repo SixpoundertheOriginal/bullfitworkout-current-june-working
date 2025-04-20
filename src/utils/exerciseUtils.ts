@@ -1,4 +1,3 @@
-
 import { ExerciseSet } from "@/types/exercise";
 import { WorkoutMetrics } from "@/types/workout-metrics";
 
@@ -27,11 +26,77 @@ export const formatRestTime = (seconds: number): string => {
   return formatDuration(seconds);
 };
 
+// Effort factors for different exercise types
+export const EXERCISE_LOAD_FACTORS: Record<string, number> = {
+  // Full bodyweight movements
+  "Pull-ups": 1.0,
+  "Chin-ups": 1.0,
+  "Dips": 1.0,
+  "Muscle-ups": 1.0,
+  
+  // Push movements (partial bodyweight)
+  "Push-ups": 0.65,
+  "Decline Push-ups": 0.7,
+  "Incline Push-ups": 0.5,
+  
+  // Core movements
+  "Leg Raises": 0.5,
+  "Hanging Leg Raises": 0.5,
+  "Knee Raises": 0.35,
+  "Hanging Knee Raises": 0.35,
+  "Ab Rollouts": 0.5,
+  "Mountain Climbers": 0.4,
+  
+  // Isometric holds
+  "Plank": 0.6,
+  "Side Plank": 0.5,
+  "L-Sit": 0.7,
+  "Front Lever": 0.8,
+  "Back Lever": 0.8,
+  "Handstand": 1.0,
+  "Wall Sit": 0.7
+};
+
+// Default load factor for exercises not in the map
+const DEFAULT_LOAD_FACTOR = 0.5;
+
+// Get load factor for a specific exercise
+export const getExerciseLoadFactor = (exerciseName: string): number => {
+  // Check for exact match
+  if (EXERCISE_LOAD_FACTORS[exerciseName]) {
+    return EXERCISE_LOAD_FACTORS[exerciseName];
+  }
+  
+  // Check for partial matches
+  for (const [key, value] of Object.entries(EXERCISE_LOAD_FACTORS)) {
+    if (exerciseName.toLowerCase().includes(key.toLowerCase())) {
+      return value;
+    }
+  }
+  
+  return DEFAULT_LOAD_FACTOR;
+};
+
+// Determine if an exercise is primarily bodyweight
+export const isBodyweightExercise = (exerciseName: string): boolean => {
+  const bodyweightKeywords = [
+    'push-up', 'pushup', 'pull-up', 'pullup', 'dip', 'plank', 
+    'burpee', 'mountain climber', 'crunch', 'sit-up', 'situp',
+    'leg raise', 'knee raise', 'bodyweight', 'body weight', 
+    'squat', 'lunge', 'handstand', 'pistol'
+  ];
+  
+  return bodyweightKeywords.some(keyword => 
+    exerciseName.toLowerCase().includes(keyword)
+  );
+};
+
 // Add the functions from workoutMetrics.ts
 export const calculateWorkoutMetrics = (
   exercises: Record<string, ExerciseSet[]>,
   time: number,
-  weightUnit: string
+  weightUnit: string,
+  userBodyweight: number = 70 // Default to 70kg if no user bodyweight provided
 ): WorkoutMetrics => {
   const exerciseCount = Object.keys(exercises).length;
   let totalSets = 0;
@@ -41,36 +106,28 @@ export const calculateWorkoutMetrics = (
   let setCount = 0;
 
   // Calculate basic metrics
-  Object.values(exercises).forEach((sets) => {
+  Object.entries(exercises).forEach(([exerciseName, sets]) => {
     totalSets += sets.length;
     completedSets += sets.filter((set) => set.completed).length;
     
     sets.forEach((set) => {
       if (set.completed) {
-        const isIsometric = set.duration && set.duration > 0;
+        // Calculate volume based on exercise type
+        totalVolume += calculateSetVolume(set, exerciseName, userBodyweight);
         
-        // For isometric exercises
-        if (isIsometric) {
-          const effectiveWeight = set.weight > 0 ? set.weight : 10; // Use nominal weight if none provided
-          totalVolume += effectiveWeight * (set.duration || 0);
-          totalIntensity += 70; // Assign a standard intensity value for isometrics
-          setCount++;
-        }
-        // For normal weighted exercises
-        else if (set.weight > 0 && set.reps > 0) {
-          totalVolume += set.weight * set.reps;
-          // Calculate intensity based on weight relative to max weight for the exercise
+        // Calculate intensity based on weight relative to max weight for the exercise
+        const isIsometric = isIsometricExercise(exerciseName);
+        const isBodyweight = isBodyweightExercise(exerciseName);
+        
+        if (!isIsometric && !isBodyweight && set.weight > 0) {
           const maxWeight = Math.max(...sets.map(s => s.weight > 0 ? s.weight : 0));
           if (maxWeight > 0) {
             totalIntensity += (set.weight / maxWeight) * 100;
             setCount++;
           }
-        } 
-        // For bodyweight exercises (count as volume even if weight is 0)
-        else if (set.reps > 0) {
-          // Use a nominal weight value for bodyweight exercises
-          totalVolume += set.reps * 10; // Assign 10 as nominal weight value for bodyweight
-          totalIntensity += 70; // Assign a standard intensity value
+        } else {
+          // Assign a standard intensity value for bodyweight/isometric
+          totalIntensity += 70;
           setCount++;
         }
       }
@@ -109,22 +166,44 @@ export const calculateWorkoutMetrics = (
   };
 };
 
-export const calculateSetVolume = (set: ExerciseSet): number => {
-  if (set.completed) {
-    // Isometric exercise
-    if (set.duration && set.duration > 0) {
-      const effectiveWeight = set.weight > 0 ? set.weight : 10; // Use 10 as nominal weight if none provided
-      return effectiveWeight * set.duration;
-    }
-    // Standard weighted exercise
-    else if (set.weight > 0 && set.reps > 0) {
-      return set.weight * set.reps;
-    }
-    // Bodyweight exercise
-    else if (set.reps > 0) {
-      return set.reps * 10; // Use nominal weight value
+export const calculateSetVolume = (
+  set: ExerciseSet, 
+  exerciseName: string = "", 
+  userBodyweight: number = 70
+): number => {
+  if (!set.completed) return 0;
+  
+  const isIsometric = set.duration && set.duration > 0;
+  const isBodyweight = isBodyweightExercise(exerciseName);
+  const loadFactor = getExerciseLoadFactor(exerciseName);
+  
+  // For isometric exercises (time-based)
+  if (isIsometric) {
+    // If weight is explicitly provided, use it
+    if (set.weight > 0) {
+      return set.weight * (set.duration || 0) / 10;
+    } 
+    // Otherwise use adjusted bodyweight
+    else {
+      return (userBodyweight * loadFactor) * (set.duration || 0) / 10;
     }
   }
+  
+  // For standard weighted exercises
+  if (set.weight > 0 && set.reps > 0) {
+    return set.weight * set.reps;
+  }
+  
+  // For bodyweight exercises with no explicit weight
+  if (isBodyweight && set.reps > 0) {
+    return userBodyweight * loadFactor * set.reps;
+  }
+  
+  // For other bodyweight exercises (if none of the above criteria match)
+  if (set.reps > 0) {
+    return set.reps * 10; // Fallback nominal weight value
+  }
+  
   return 0;
 };
 

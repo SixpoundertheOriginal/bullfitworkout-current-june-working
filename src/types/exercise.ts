@@ -41,6 +41,9 @@ export interface Exercise {
   tips: string[];
   variations: string[];
   metadata: Record<string, any>;
+  load_factor?: number;  // Added for bodyweight exercises
+  is_isometric?: boolean; // Flag to identify isometric exercises
+  is_bodyweight?: boolean; // Flag for bodyweight exercises
 }
 
 export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [
@@ -60,4 +63,21 @@ export const MOVEMENT_PATTERNS: MovementPattern[] = [
 
 export const DIFFICULTY_LEVELS: Difficulty[] = [
   'beginner', 'intermediate', 'advanced', 'expert'
+];
+
+export interface LoadFactorMapping {
+  name: string;
+  factor: number;
+  description?: string;
+}
+
+export const EXERCISE_LOAD_FACTORS: LoadFactorMapping[] = [
+  { name: "Pull-ups", factor: 1.0, description: "Full bodyweight" },
+  { name: "Chin-ups", factor: 1.0, description: "Full bodyweight" },
+  { name: "Dips", factor: 1.0, description: "Full bodyweight" },
+  { name: "Push-ups", factor: 0.65, description: "~65% of bodyweight" },
+  { name: "Leg Raises", factor: 0.5, description: "Lower body engagement" },
+  { name: "Plank", factor: 0.6, description: "Isometric core engagement" },
+  { name: "L-Sit", factor: 0.7, description: "Advanced isometric core hold" },
+  { name: "Handstand", factor: 1.0, description: "Full bodyweight inverted" }
 ];

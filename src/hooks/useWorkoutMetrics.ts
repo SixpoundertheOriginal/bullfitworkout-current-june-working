@@ -6,7 +6,8 @@ import {
   calculateWorkoutMetrics, 
   getExerciseGroup, 
   calculateSetVolume,
-  isIsometricExercise 
+  isIsometricExercise,
+  isBodyweightExercise 
 } from '@/utils/exerciseUtils';
 
 export interface ExerciseGroupData {
@@ -15,10 +16,16 @@ export interface ExerciseGroupData {
   exercises: string[];
 }
 
+export interface UserBodyInfo {
+  weight: number;
+  unit: string;
+}
+
 export const useWorkoutMetrics = (
   exercises: Record<string, ExerciseSet[]>,
   time: number,
-  weightUnit: string
+  weightUnit: string,
+  userBodyInfo?: UserBodyInfo
 ) => {
   const [metrics, setMetrics] = useState<WorkoutMetrics>({
     time: 0,
@@ -34,6 +41,12 @@ export const useWorkoutMetrics = (
   });
   
   const [exerciseGroups, setExerciseGroups] = useState<ExerciseGroupData[]>([]);
+  const [exerciseTypeCounts, setExerciseTypeCounts] = useState({
+    weighted: 0,
+    bodyweight: 0,
+    isometric: 0,
+    total: 0
+  });
 
   useEffect(() => {
     if (!exercises || Object.keys(exercises).length === 0) {
@@ -41,12 +54,25 @@ export const useWorkoutMetrics = (
       return;
     }
 
+    // Get user bodyweight (with default fallback of 70kg)
+    const userBodyweight = userBodyInfo?.weight || 70;
+    
+    // Convert user weight to kg if needed
+    const userWeightInKg = userBodyInfo?.unit === 'lb' 
+      ? userBodyweight / 2.20462 
+      : userBodyweight;
+
     // Calculate standard metrics
-    const updatedMetrics = calculateWorkoutMetrics(exercises, time, weightUnit);
+    const updatedMetrics = calculateWorkoutMetrics(exercises, time, weightUnit, userWeightInKg);
     setMetrics(updatedMetrics);
     
     // Calculate exercise groups data
     const groupsMap: Record<string, ExerciseGroupData> = {};
+    
+    // Track exercise types for analytics
+    let weightedCount = 0;
+    let bodyweightCount = 0;
+    let isometricCount = 0;
     
     Object.entries(exercises).forEach(([exerciseName, sets]) => {
       const group = getExerciseGroup(exerciseName);
@@ -65,35 +91,37 @@ export const useWorkoutMetrics = (
         groupsMap[group].exercises.push(exerciseName);
       }
       
-      // Calculate volume for this exercise
-      let exerciseVolume = 0;
-      
-      // For isometric exercises, handle differently
+      // Track exercise type
       if (isIsometricExercise(exerciseName)) {
-        exerciseVolume = sets.reduce((total, set) => {
-          if (set.completed) {
-            // For isometric exercises, we use duration as the primary metric
-            // Multiply by weight if present for weighted holds
-            const duration = set.duration || 0;
-            return total + (duration * (set.weight || 1));
-          }
-          return total;
-        }, 0);
+        isometricCount++;
+      } else if (isBodyweightExercise(exerciseName)) {
+        bodyweightCount++;
       } else {
-        exerciseVolume = sets.reduce((total, set) => {
-          if (set.completed) {
-            return total + (set.weight * set.reps);
-          }
-          return total;
-        }, 0);
+        weightedCount++;
       }
+      
+      // Calculate volume for this exercise using our enhanced volume calculation
+      let exerciseVolume = 0;
+      sets.forEach(set => {
+        if (set.completed) {
+          exerciseVolume += calculateSetVolume(set, exerciseName, userWeightInKg);
+        }
+      });
       
       groupsMap[group].totalVolume += exerciseVolume;
     });
     
+    // Update exercise type counts
+    setExerciseTypeCounts({
+      weighted: weightedCount,
+      bodyweight: bodyweightCount,
+      isometric: isometricCount,
+      total: weightedCount + bodyweightCount + isometricCount
+    });
+    
     // Convert map to array
     setExerciseGroups(Object.values(groupsMap));
-  }, [exercises, time, weightUnit]);
+  }, [exercises, time, weightUnit, userBodyInfo]);
 
   return { 
     metrics, 
@@ -101,6 +129,7 @@ export const useWorkoutMetrics = (
     exerciseCount: metrics.exerciseCount,
     completedSets: metrics.completedSets,
     totalSets: metrics.totalSets,
-    performance: metrics.performance
+    performance: metrics.performance,
+    exerciseTypeCounts
   };
 };
