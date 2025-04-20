@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -108,12 +107,17 @@ export function useWorkoutHistory(limit: number = 10, dateFilter: string | null 
     }
   };
   
-  return useQuery({
+  const query = useQuery({
     queryKey: ['workout-history', user?.id, limit, dateFilter],
     queryFn: fetchWorkoutHistory,
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+  
+  return {
+    ...query,
+    refetch: query.refetch // Expose refetch method
+  };
 }
 
 export function useWorkoutDates(year: number, month: number) {

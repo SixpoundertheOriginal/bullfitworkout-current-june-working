@@ -6,6 +6,8 @@ import { History, Loader2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
+import { deleteWorkout } from "@/services/workoutService";
+import { toast } from "@/components/ui/sonner";
 
 interface WorkoutHistoryProps {
   limit?: number;
@@ -18,15 +20,22 @@ export const WorkoutHistory = ({
   className = "",
   dateFilter = null
 }: WorkoutHistoryProps) => {
-  const { data, isLoading, isError } = useWorkoutHistory(limit, dateFilter);
+  const { data, isLoading, isError, refetch } = useWorkoutHistory(limit, dateFilter);
   const navigate = useNavigate();
   
   const handleEditWorkout = (workoutId: string) => {
     navigate(`/workout-details/${workoutId}`);
   };
   
-  const handleDeleteWorkout = (workoutId: string) => {
-    console.log("Delete workout:", workoutId);
+  const handleDeleteWorkout = async (workoutId: string) => {
+    try {
+      await deleteWorkout(workoutId);
+      toast.success("Workout deleted successfully");
+      refetch(); // Refresh the workout history
+    } catch (error) {
+      console.error("Error deleting workout:", error);
+      toast.error("Failed to delete workout");
+    }
   };
   
   if (isLoading) {

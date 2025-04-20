@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -179,4 +178,17 @@ export async function getWorkoutWithExercises(workoutId: string) {
     ...workout,
     exerciseSets: sets || []
   };
+}
+
+/**
+ * Deletes a workout and its associated exercise sets
+ */
+export async function deleteWorkout(workoutId: string) {
+  const { error } = await supabase
+    .from('workout_sessions')
+    .delete()
+    .eq('id', workoutId);
+    
+  if (error) throw error;
+  return true;
 }

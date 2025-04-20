@@ -1225,6 +1225,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_workout: {
+        Args: { workout_id: string }
+        Returns: undefined
+      }
       increment_template_usage: {
         Args: { template_id: string }
         Returns: undefined
