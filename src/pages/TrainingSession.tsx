@@ -221,6 +221,7 @@ const ExerciseCard = ({
               restTime={set.restTime}
               completed={set.completed}
               isEditing={set.isEditing}
+              exerciseName={exercise}
               onComplete={() => handleCompleteSet(index)}
               onEdit={() => onEditSet(exercise, index)}
               onSave={() => onSaveSet(exercise, index)}

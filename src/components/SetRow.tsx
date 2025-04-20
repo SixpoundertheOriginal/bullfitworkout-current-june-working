@@ -1,3 +1,4 @@
+
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,28 @@ export const SetRow = ({
   
   const displayUnit = weightUnit || globalWeightUnit;
   const displayWeight = weight > 0 ? convertWeight(weight, weightUnit as WeightUnit, globalWeightUnit) : 0;
+
+  const formatRestTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleRestTimeIncrement = (increment: number) => {
+    if (onRestTimeIncrement) {
+      onRestTimeIncrement(increment);
+    }
+  };
+
+  const handleManualRestTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onRestTimeChange) {
+      onRestTimeChange(e);
+    }
+  };
+
+  const handleSetComplete = () => {
+    onComplete();
+  };
 
   return (
     <div className="grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 py-3 px-2 border-b border-gray-800 transition-all duration-200">
