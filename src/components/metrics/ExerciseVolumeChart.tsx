@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   BarChart,
@@ -33,16 +32,14 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
     volume: calculateExerciseVolume(sets),
   }));
 
-  // Handle empty data or very small values
   const isEmpty = data.length === 0 || data.every(item => item.volume === 0);
 
-  // Fixed config object to match ChartConfig type requirements with both light and dark theme colors
   const config = {
     volume: {
       label: 'Volume',
       theme: {
-        light: '#b898fc', // Light purple for light mode
-        dark: '#9b87f5'   // Dark purple for dark mode
+        light: '#b898fc',
+        dark: '#9b87f5'
       }
     }
   };
@@ -87,15 +84,17 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <ChartTooltipContent
-                      active={active}
-                      payload={payload}
-                      formatter={(value) => `${value} ${weightUnit}`}
-                    />
+                    <div className="bg-white/90 rounded-md p-3 shadow-lg border border-gray-200 text-gray-900">
+                      <div className="font-semibold mb-1">{payload[0].name}</div>
+                      <div className="text-sm">
+                        Volume: {payload[0].value.toFixed(1)} {weightUnit}
+                      </div>
+                    </div>
                   );
                 }
                 return null;
               }}
+              cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
             />
             <Bar
               dataKey="volume"
