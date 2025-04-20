@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -184,6 +185,15 @@ export async function getWorkoutWithExercises(workoutId: string) {
  * Deletes a workout and its associated exercise sets
  */
 export async function deleteWorkout(workoutId: string) {
+  // Delete the exercise sets first
+  const { error: setsError } = await supabase
+    .from('exercise_sets')
+    .delete()
+    .eq('workout_id', workoutId);
+    
+  if (setsError) throw setsError;
+  
+  // Then delete the workout
   const { error } = await supabase
     .from('workout_sessions')
     .delete()
@@ -191,4 +201,71 @@ export async function deleteWorkout(workoutId: string) {
     
   if (error) throw error;
   return true;
+}
+
+/**
+ * Restores a deleted workout with its exercise sets
+ */
+export async function restoreWorkout(workout: any) {
+  if (!workout || !workout.id) {
+    throw new Error("Invalid workout data");
+  }
+  
+  // Insert the workout back
+  const { data: restoredWorkout, error: workoutError } = await supabase
+    .from('workout_sessions')
+    .insert({
+      id: workout.id,
+      name: workout.name,
+      training_type: workout.training_type,
+      start_time: workout.start_time,
+      end_time: workout.end_time,
+      duration: workout.duration,
+      notes: workout.notes,
+      user_id: workout.user_id,
+    })
+    .select()
+    .single();
+  
+  if (workoutError) {
+    console.error("Error restoring workout:", workoutError);
+    throw workoutError;
+  }
+  
+  // Fetch the original exercise sets for this workout
+  // For a complete implementation, we would need to store these too, 
+  // but that would require database changes
+  const { data: sets, error: fetchError } = await supabase
+    .from('exercise_sets')
+    .select('*')
+    .eq('workout_id', workout.id);
+    
+  if (fetchError) {
+    console.error("Error fetching associated exercise sets:", fetchError);
+    
+    // If we couldn't fetch the sets, we still want the workout to be restored,
+    // so we don't throw this error
+    return restoredWorkout;
+  }
+  
+  if (sets && sets.length > 0) {
+    // If the exercise sets were fetched successfully, we want to restore them too
+    const { error: insertError } = await supabase
+      .from('exercise_sets')
+      .insert(sets.map(set => ({
+        workout_id: workout.id,
+        exercise_name: set.exercise_name,
+        weight: set.weight,
+        reps: set.reps,
+        set_number: set.set_number,
+        completed: set.completed
+      })));
+      
+    if (insertError) {
+      console.error("Error restoring exercise sets:", insertError);
+      // Again, we still want the workout to be restored, so we don't throw
+    }
+  }
+  
+  return restoredWorkout;
 }

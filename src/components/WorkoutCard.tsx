@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, BarChart3, Dumbbell, Edit, Trash2 } from "lucide-react";
+import { Calendar, Clock, BarChart3, Dumbbell, Edit, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WorkoutCardProps {
@@ -18,6 +18,7 @@ interface WorkoutCardProps {
   className?: string;
   onEdit?: () => void;
   onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 export const WorkoutCard = ({
@@ -30,7 +31,8 @@ export const WorkoutCard = ({
   setCount,
   className,
   onEdit,
-  onDelete
+  onDelete,
+  isDeleting = false
 }: WorkoutCardProps) => {
   const navigate = useNavigate();
   
@@ -85,6 +87,7 @@ export const WorkoutCard = ({
                   data-action="edit"
                   onClick={onEdit}
                   className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-700"
+                  disabled={isDeleting}
                 >
                   <Edit size={16} />
                 </Button>
@@ -96,8 +99,13 @@ export const WorkoutCard = ({
                   data-action="delete"
                   onClick={onDelete}
                   className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-gray-700"
+                  disabled={isDeleting}
                 >
-                  <Trash2 size={16} />
+                  {isDeleting ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={16} />
+                  )}
                 </Button>
               )}
             </div>

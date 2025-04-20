@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { History, Loader2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
-import { deleteWorkout } from "@/services/workoutService";
+import { deleteWorkout, restoreWorkout } from "@/services/workoutService";
 import { toast } from "@/components/ui/sonner";
 
 interface WorkoutHistoryProps {
@@ -22,19 +22,51 @@ export const WorkoutHistory = ({
 }: WorkoutHistoryProps) => {
   const { data, isLoading, isError, refetch } = useWorkoutHistory(limit, dateFilter);
   const navigate = useNavigate();
+  const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
   
   const handleEditWorkout = (workoutId: string) => {
     navigate(`/workout-details/${workoutId}`);
   };
   
   const handleDeleteWorkout = async (workoutId: string) => {
+    setDeletingWorkoutId(workoutId);
+    
     try {
+      const deletedWorkout = data?.workouts.find(w => w.id === workoutId);
+      
+      if (!deletedWorkout) {
+        throw new Error("Workout not found");
+      }
+      
       await deleteWorkout(workoutId);
-      toast.success("Workout deleted successfully");
+      
+      // Show toast with undo option
+      toast.success("Workout deleted", {
+        description: `"${deletedWorkout.name}" has been removed`,
+        action: {
+          label: "Undo",
+          onClick: () => handleUndoDelete(deletedWorkout),
+        },
+        duration: 5000, // Give user 5 seconds to undo
+      });
+      
       refetch(); // Refresh the workout history
     } catch (error) {
       console.error("Error deleting workout:", error);
       toast.error("Failed to delete workout");
+    } finally {
+      setDeletingWorkoutId(null);
+    }
+  };
+  
+  const handleUndoDelete = async (workout: any) => {
+    try {
+      await restoreWorkout(workout);
+      toast.success("Workout restored");
+      refetch(); // Refresh the workout history
+    } catch (error) {
+      console.error("Error restoring workout:", error);
+      toast.error("Failed to restore workout");
     }
   };
   
@@ -123,6 +155,7 @@ export const WorkoutHistory = ({
             setCount={exerciseCounts[workout.id]?.sets || 0}
             onEdit={() => handleEditWorkout(workout.id)}
             onDelete={() => handleDeleteWorkout(workout.id)}
+            isDeleting={deletingWorkoutId === workout.id}
           />
         ))}
       </div>
