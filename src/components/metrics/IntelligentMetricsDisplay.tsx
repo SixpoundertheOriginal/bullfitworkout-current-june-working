@@ -3,7 +3,7 @@ import React from 'react';
 import { ExerciseVolumeCard } from './ExerciseVolumeCard';
 import { WorkoutIntensityGauge } from './WorkoutIntensityGauge';
 import { WorkoutEfficiencyScore } from './WorkoutEfficiencyScore';
-import { calculateSetVolume, getTrendIndicator } from '@/utils/workoutMetrics';
+import { calculateSetVolume, getTrendIndicator } from '@/utils/exerciseUtils';
 import { cn } from '@/lib/utils';
 import { ExerciseSet } from '@/types/exercise';
 
