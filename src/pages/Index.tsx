@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -93,6 +92,27 @@ const Index = () => {
       console.error("Error in fetchWorkoutSessions:", err);
     } finally {
       setLoadingWorkouts(false);
+    }
+  };
+
+  const handleDeleteWorkout = async (workoutId: string) => {
+    try {
+      const { deleteWorkout } = await import("@/services/workoutService");
+      await deleteWorkout(workoutId);
+      
+      toast({
+        title: "Workout deleted",
+        description: "Workout has been successfully deleted",
+      });
+      
+      setWorkoutSessions(prev => prev.filter(workout => workout.id !== workoutId));
+    } catch (error) {
+      console.error("Error deleting workout:", error);
+      toast({
+        title: "Delete failed",
+        description: "Could not delete the workout",
+        variant: "destructive"
+      });
     }
   };
 
@@ -223,6 +243,8 @@ const Index = () => {
                     duration={workout.duration}
                     exerciseCount={workout.exerciseCount}
                     setCount={workout.setCount}
+                    onEdit={() => navigate(`/workout-details/${workout.id}`)}
+                    onDelete={() => handleDeleteWorkout(workout.id)}
                   />
                 ))}
               </div>
