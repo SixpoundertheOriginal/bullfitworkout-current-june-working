@@ -31,12 +31,16 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
     volume: calculateExerciseVolume(sets),
   }));
 
+  // Fixed config object to match ChartConfig type requirements
+  // Both light and dark theme colors are now provided
   const config = {
     volume: {
+      label: 'Volume',
       theme: {
-        dark: '#9b87f5',
-      },
-    },
+        light: '#b898fc', // Light purple for light mode
+        dark: '#9b87f5'   // Dark purple for dark mode
+      }
+    }
   };
 
   return (
