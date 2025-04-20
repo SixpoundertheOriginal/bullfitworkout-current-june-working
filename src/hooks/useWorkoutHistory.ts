@@ -24,7 +24,7 @@ interface ExerciseSet {
   completed: boolean;
 }
 
-export function useWorkoutHistory(limit: number = 10) {
+export function useWorkoutHistory(limit: number = 10, dateFilter: string | null = null) {
   const { user } = useAuth();
   
   const fetchWorkoutHistory = async (): Promise<{ workouts: WorkoutSession[], exerciseCounts: Record<string, { exercises: number, sets: number }> }> => {
@@ -33,13 +33,26 @@ export function useWorkoutHistory(limit: number = 10) {
     }
     
     try {
-      // Fetch the most recent workouts
-      const { data: workouts, error: workoutsError } = await supabase
+      // Build query for workouts
+      let query = supabase
         .from('workout_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .order('start_time', { ascending: false })
-        .limit(limit);
+        .order('start_time', { ascending: false });
+      
+      // Apply date filter if provided
+      if (dateFilter) {
+        const dateStr = dateFilter.split('T')[0]; // Ensure we just have the date part
+        // Find workouts on this specific date
+        query = query
+          .gte('start_time', `${dateStr}T00:00:00`)
+          .lt('start_time', `${dateStr}T23:59:59`);
+      } else {
+        // Apply limit only when not filtering by date
+        query = query.limit(limit);
+      }
+        
+      const { data: workouts, error: workoutsError } = await query;
         
       if (workoutsError) throw workoutsError;
       
@@ -82,7 +95,7 @@ export function useWorkoutHistory(limit: number = 10) {
   };
   
   return useQuery({
-    queryKey: ['workout-history', user?.id, limit],
+    queryKey: ['workout-history', user?.id, limit, dateFilter],
     queryFn: fetchWorkoutHistory,
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
@@ -8,14 +8,38 @@ import { TopExercisesTable } from "@/components/workouts/TopExercisesTable";
 import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
 import { Calendar, Loader2, History, Sparkles } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Training = () => {
   // Fetch workout stats using the hook
   const { stats, loading } = useWorkoutStats();
-  const [activeTab, setActiveTab] = React.useState("overview");
-
-  // Ensure App.tsx has the route to this page
-  React.useEffect(() => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get tab from URL query parameter or default to overview
+  const getTabFromURL = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('tab') || "overview";
+  };
+  
+  const [activeTab, setActiveTab] = React.useState(getTabFromURL());
+  
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/training?tab=${value}`, { replace: true });
+  };
+  
+  // Update active tab state if URL changes
+  useEffect(() => {
+    const tabFromURL = getTabFromURL();
+    if (tabFromURL !== activeTab) {
+      setActiveTab(tabFromURL);
+    }
+  }, [location.search]);
+  
+  // Debug log
+  useEffect(() => {
     console.log("Current tab:", activeTab);
   }, [activeTab]);
 
@@ -27,7 +51,7 @@ const Training = () => {
 
       <Tabs 
         value={activeTab} 
-        onValueChange={setActiveTab} 
+        onValueChange={handleTabChange} 
         className="space-y-4"
       >
         <TabsList className="bg-gray-900 border-gray-800 grid grid-cols-3">
@@ -76,7 +100,11 @@ const Training = () => {
         </TabsContent>
 
         <TabsContent value="history">
-          <WorkoutHistory className="mt-4" />
+          <WorkoutHistory 
+            className="mt-4" 
+            dateFilter={new URLSearchParams(location.search).get('date')}
+            limit={20}
+          />
         </TabsContent>
       </Tabs>
     </div>

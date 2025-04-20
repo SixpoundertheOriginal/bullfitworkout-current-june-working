@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
+import { Loader2 } from "lucide-react";
 
 interface WorkoutCalendarProps {
   className?: string;
@@ -19,23 +20,36 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const [workoutDates, setWorkoutDates] = React.useState<WorkoutDates>({});
-  const [loading, setLoading] = React.useState(true);
+  const [workoutDates, setWorkoutDates] = useState<WorkoutDates>({});
+  const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState<Date>(new Date());
   
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchWorkoutDates = async () => {
       if (!user) return;
       
       try {
         setLoading(true);
+        console.log("Fetching workout dates for calendar...");
+        
+        // Get first and last day of the current month
+        const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+        const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
         
         const { data, error } = await supabase
           .from('workout_sessions')
           .select('id, start_time')
           .eq('user_id', user.id)
+          .gte('start_time', firstDay.toISOString())
+          .lte('start_time', lastDay.toISOString())
           .order('start_time', { ascending: false });
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching workout dates:", error.message);
+          throw error;
+        }
+        
+        console.log(`Found ${data?.length || 0} workouts for the month:`, data);
         
         // Group workouts by date
         const dateMap: WorkoutDates = {};
@@ -51,6 +65,7 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
           dateMap[dateString].ids.push(workout.id);
         });
         
+        console.log("Workout dates processed:", dateMap);
         setWorkoutDates(dateMap);
       } catch (error) {
         console.error('Error fetching workout dates:', error);
@@ -61,7 +76,7 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
     };
     
     fetchWorkoutDates();
-  }, [user]);
+  }, [user, month]);
   
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;
@@ -74,10 +89,15 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
       if (workouts.count === 1) {
         navigate(`/workout-details/${workouts.ids[0]}`);
       } else {
-        // Navigate to the general workout details page with a date filter (to be implemented)
-        navigate('/workout-details?date=' + dateString);
+        // Navigate to the history tab with date filter
+        navigate(`/training?tab=history&date=${dateString}`);
       }
     }
+  };
+
+  const handleMonthChange = (newMonth: Date) => {
+    console.log("Month changed to:", newMonth);
+    setMonth(newMonth);
   };
   
   // Function to customize day rendering
@@ -104,50 +124,61 @@ export const WorkoutCalendar = ({ className = "" }: WorkoutCalendarProps) => {
         <CardTitle className="text-md">Workout Calendar</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <Calendar
-          mode="single"
-          className="rounded-md border-0"
-          classNames={{
-            day_selected: 'bg-purple-600 text-white hover:bg-purple-700 focus:bg-purple-600',
-            day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100',
-            day_today: 'bg-gray-800 text-white'
-          }}
-          selected={undefined}
-          onSelect={handleSelectDate}
-          disabled={{ after: new Date() }}
-          modifiersClassNames={{
-            selected: 'selected',
-          }}
-          modifiers={{
-            workout: Object.keys(workoutDates).map(d => new Date(d)),
-          }}
-          components={{
-            Day: ({ date, ...props }: React.HTMLAttributes<HTMLDivElement> & { date: Date }) => {
-              const extraClass = dayClassName(date);
-              return (
-                <div 
-                  {...props}
-                  className={`${props.className || ''} ${extraClass}`}
-                />
-              );
-            }
-          }}
-        />
-        
-        <div className="flex justify-center gap-4 mt-2">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-purple-500/50"></div>
-            <span className="text-xs text-gray-400">1 workout</span>
+        {loading ? (
+          <div className="h-[300px] flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-purple-500/80"></div>
-            <span className="text-xs text-gray-400">2 workouts</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-purple-600"></div>
-            <span className="text-xs text-gray-400">3+ workouts</span>
-          </div>
-        </div>
+        ) : (
+          <>
+            <Calendar
+              mode="single"
+              className="rounded-md border-0"
+              classNames={{
+                day_selected: 'bg-purple-600 text-white hover:bg-purple-700 focus:bg-purple-600',
+                day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100',
+                day_today: 'bg-gray-800 text-white',
+                nav_button: 'border-gray-700 bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }}
+              selected={undefined}
+              onSelect={handleSelectDate}
+              onMonthChange={handleMonthChange}
+              month={month}
+              disabled={{ after: new Date() }}
+              modifiersClassNames={{
+                selected: 'selected',
+              }}
+              modifiers={{
+                workout: Object.keys(workoutDates).map(d => new Date(d)),
+              }}
+              components={{
+                Day: ({ date, ...props }: React.HTMLAttributes<HTMLDivElement> & { date: Date }) => {
+                  const extraClass = dayClassName(date);
+                  return (
+                    <div 
+                      {...props}
+                      className={`${props.className || ''} ${extraClass}`}
+                    />
+                  );
+                }
+              }}
+            />
+            
+            <div className="flex justify-center gap-4 mt-2">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-purple-500/50"></div>
+                <span className="text-xs text-gray-400">1 workout</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-purple-500/80"></div>
+                <span className="text-xs text-gray-400">2 workouts</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+                <span className="text-xs text-gray-400">3+ workouts</span>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
