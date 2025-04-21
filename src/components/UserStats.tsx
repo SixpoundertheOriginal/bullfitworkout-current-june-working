@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
+import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
 
 // Define an interface for the workout data structure from Supabase
 interface WorkoutSession {
@@ -165,7 +166,7 @@ export function UserStats() {
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["user-stats", user?.id],
-    queryFn: async (): Promise<WorkoutSummary> => {
+    queryFn: async (): Promise<any> => {
       if (!user) throw new Error("User not authenticated");
       
       // Fetch workout sessions
