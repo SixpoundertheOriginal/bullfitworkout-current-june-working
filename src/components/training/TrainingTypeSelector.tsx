@@ -1,14 +1,21 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
+import { Dumbbell, Bike, Heart, Activity, ChevronLeft, ChevronRight } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import { typography } from '@/lib/typography';
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Button } from "@/components/ui/button";
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselNext, 
+  CarouselPrevious 
+} from "@/components/ui/carousel";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -78,6 +85,9 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const { user } = useAuth();
   const { stats } = useWorkoutStats();
   const [carouselApi, setCarouselApi] = useState<any>(null);
+  const [current, setCurrent] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
 
   const { data: customTypes } = useQuery({
     queryKey: ['customTrainingTypes'],
@@ -92,16 +102,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     },
     enabled: !!user
   });
-
-  // Set up initial position when selectedType changes
-  useEffect(() => {
-    if (carouselApi && selectedType) {
-      const index = DEFAULT_TRAINING_TYPES.findIndex(type => type.name === selectedType);
-      if (index >= 0) {
-        carouselApi.scrollTo(index, { immediate: false });
-      }
-    }
-  }, [selectedType, carouselApi]);
 
   // All training types combined
   const allTrainingTypes = [
@@ -119,117 +119,189 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     }))
   ];
 
+  // Set up initial position when selectedType changes
+  useEffect(() => {
+    if (carouselApi && selectedType) {
+      const index = allTrainingTypes.findIndex(type => type.name === selectedType);
+      if (index >= 0) {
+        carouselApi.scrollTo(index, { immediate: false });
+        setCurrent(index);
+      }
+    }
+  }, [selectedType, carouselApi, allTrainingTypes]);
+
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    const onSelect = () => {
+      setCurrent(carouselApi.selectedScrollSnap());
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
+    };
+
+    carouselApi.on("select", onSelect);
+    carouselApi.on("reInit", onSelect);
+
+    return () => {
+      carouselApi.off("select", onSelect);
+      carouselApi.off("reInit", onSelect);
+    };
+  }, [carouselApi]);
+
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full overflow-visible relative">
+      {/* Page dots indicator */}
+      <div className="flex justify-center gap-1 mb-3">
+        {allTrainingTypes.map((_, index) => (
+          <motion.div
+            key={index}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              current === index ? "w-4 bg-white" : "w-1.5 bg-white/30"
+            }`}
+            animate={{
+              width: current === index ? 16 : 6,
+              opacity: current === index ? 1 : 0.5
+            }}
+          />
+        ))}
+      </div>
+
       <Carousel
         setApi={setCarouselApi}
         opts={{
           align: "center",
-          loop: false
+          loop: false,
+          containScroll: "trimSnaps"
         }}
         className="w-full"
       >
-        <CarouselContent className="px-2">
-          {allTrainingTypes.map((type, index) => {
-            const isSelected = selectedType === type.name;
-            
-            return (
-              <CarouselItem key={`${type.name}-${index}`} className="pl-4 md:basis-auto basis-[280px]">
-                <motion.div
-                  className={cn(
-                    "flex-shrink-0 snap-center",
-                    "w-[280px] h-[280px]",
-                    "transition-all duration-300",
-                    isSelected ? "scale-100" : "scale-90 hover:scale-95"
-                  )}
-                  onClick={() => onSelect(type.name)}
-                  data-type={type.name}
-                  whileHover={{ scale: isSelected ? 1 : 0.95 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div
+        <div className="flex items-center w-full">
+          <CarouselPrevious 
+            className={cn(
+              "static translate-y-0 h-9 w-9 bg-black/30 border-white/10 hover:bg-black/50",
+              !canScrollPrev && "opacity-30 pointer-events-none"
+            )} 
+          />
+          
+          <CarouselContent className="px-2 flex-1">
+            {allTrainingTypes.map((type, index) => {
+              const isSelected = selectedType === type.name;
+              
+              return (
+                <CarouselItem key={`${type.name}-${index}`} className="basis-[280px] md:basis-[280px] px-2">
+                  <motion.div
                     className={cn(
-                      "w-full h-full rounded-3xl p-6",
-                      "flex flex-col items-center justify-center gap-4",
-                      "bg-gradient-to-br shadow-lg cursor-pointer",
+                      "w-full",
                       "transition-all duration-300",
-                      isSelected ? [
-                        `${type.activeGradient}`,
-                        "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
-                      ] : type.gradient,
-                      "relative overflow-hidden"
+                      isSelected ? "scale-100" : "scale-95 hover:scale-98"
                     )}
+                    onClick={() => onSelect(type.name)}
+                    whileHover={{ scale: isSelected ? 1 : 0.98 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {type.level && (
-                      <div className="absolute top-4 right-4 z-20">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm">
-                          <span className="text-xs font-bold text-white">Lv{type.level}</span>
+                    <div
+                      className={cn(
+                        "w-full h-[280px] rounded-3xl p-6",
+                        "flex flex-col items-center justify-center gap-4",
+                        "bg-gradient-to-br shadow-lg cursor-pointer",
+                        "transition-all duration-300",
+                        isSelected ? [
+                          `${type.activeGradient}`,
+                          "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
+                        ] : type.gradient,
+                        "relative overflow-hidden"
+                      )}
+                    >
+                      {type.level && (
+                        <div className="absolute top-4 right-4 z-20">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm">
+                            <span className="text-xs font-bold text-white">Lv{type.level}</span>
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                    <div className="relative z-10 flex flex-col items-center text-center">
-                      <div className={cn(
-                        "mb-4 p-4 rounded-full",
-                        "bg-white/10 backdrop-blur-sm",
-                        "transition-all duration-300"
-                      )}>
-                        {type.icon}
-                      </div>
-                      
-                      <h3 className={cn(
-                        typography.headings.primary,
-                        "text-2xl mb-2"
-                      )}>
-                        {type.name}
-                      </h3>
-                      
-                      {type.description && (
-                        <p className={cn(
-                          typography.text.secondary,
-                          "text-sm mb-4"
-                        )}>
-                          {type.description}
-                        </p>
                       )}
 
-                      {isSelected && type.benefits && type.benefits.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex flex-col items-center"
-                        >
-                          <div className="flex flex-wrap gap-2 justify-center">
-                            {type.benefits?.slice(0, 2).map((benefit, i) => (
-                              <span
-                                key={i}
-                                className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/90"
-                              >
-                                {benefit}
-                              </span>
-                            ))}
-                          </div>
-                        </motion.div>
+                      <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className={cn(
+                          "mb-4 p-4 rounded-full",
+                          "bg-white/10 backdrop-blur-sm",
+                          "transition-all duration-300"
+                        )}>
+                          {type.icon}
+                        </div>
+                        
+                        <h3 className={cn(
+                          typography.headings.primary,
+                          "text-2xl mb-2"
+                        )}>
+                          {type.name}
+                        </h3>
+                        
+                        {type.description && (
+                          <p className={cn(
+                            typography.text.secondary,
+                            "text-sm mb-4"
+                          )}>
+                            {type.description}
+                          </p>
+                        )}
+
+                        {isSelected && type.benefits && type.benefits.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex flex-col items-center"
+                          >
+                            <div className="flex flex-wrap gap-2 justify-center">
+                              {type.benefits?.slice(0, 2).map((benefit, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/90"
+                                >
+                                  {benefit}
+                                </span>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {type.xp && (
+                        <div className="absolute bottom-4 left-4 right-4 h-1 bg-black/30 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${type.xp}%` }}
+                            transition={{ delay: 0.5, duration: 1 }}
+                            className="h-full bg-gradient-to-r from-white/30 to-white/10"
+                          />
+                        </div>
                       )}
                     </div>
-
-                    {type.xp && (
-                      <div className="absolute bottom-4 left-4 right-4 h-1 bg-black/30 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${type.xp}%` }}
-                          transition={{ delay: 0.5, duration: 1 }}
-                          className="h-full bg-gradient-to-r from-white/30 to-white/10"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </CarouselItem>
-            );
-          })}
-        </CarouselContent>
+                  </motion.div>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+          
+          <CarouselNext 
+            className={cn(
+              "static translate-y-0 h-9 w-9 bg-black/30 border-white/10 hover:bg-black/50",
+              !canScrollNext && "opacity-30 pointer-events-none"
+            )}
+          />
+        </div>
       </Carousel>
+      
+      {/* Swipe instructions */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-4 text-center text-white/60 text-xs flex items-center justify-center"
+      >
+        <ChevronLeft size={14} className="mr-1" /> Swipe to see more training types <ChevronRight size={14} className="ml-1" />
+      </motion.div>
     </div>
   );
 }
