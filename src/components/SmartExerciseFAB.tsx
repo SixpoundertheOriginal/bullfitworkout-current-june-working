@@ -117,7 +117,7 @@ export const SmartExerciseFAB = ({
   return (
     <div
       className={cn(
-        "fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+        "fixed z-50 bottom-12 right-12",
         "transition-all duration-300",
         visible
           ? "opacity-100 pointer-events-auto"
