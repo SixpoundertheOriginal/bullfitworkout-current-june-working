@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { Button } from "@/components/ui/button";
-import { History, Loader2, X, Check, SquareCheck } from "lucide-react";
+import { History, Loader2, X, Check, SquareCheck, Undo } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
@@ -73,16 +72,23 @@ export const WorkoutHistory = ({
       toast.success("Workout deleted", {
         description: `"${deletedWorkout.name}" has been removed`,
         action: {
-          label: "Undo",
+          label: (
+            <span className="flex items-center gap-1">
+              <Undo size={14} className="text-purple-400" />
+              Undo
+            </span>
+          ),
           onClick: () => handleUndoDelete(deletedWorkout),
         },
-        duration: 5000,
+        duration: 7000,
       });
       
       refetch();
     } catch (error) {
       console.error("Error deleting workout:", error);
-      toast.error("Failed to delete workout");
+      toast.error("Failed to delete workout", {
+        description: "Something went wrong when trying to delete the workout. Please try again.",
+      });
     } finally {
       setDeletingWorkoutId(null);
     }
