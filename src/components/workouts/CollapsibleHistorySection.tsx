@@ -7,6 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { typography } from '@/lib/typography';
 
 interface CollapsibleHistorySectionProps {
   title: string;
@@ -34,11 +35,11 @@ export const CollapsibleHistorySection = ({
           variant="ghost"
           className="w-full flex items-center justify-between p-2 hover:bg-gray-800/50"
         >
-          <span className="text-sm font-medium">{title}</span>
+          <span className={typography.headings.collapsible}>{title}</span>
           {isOpen ? (
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-4 w-4 text-white" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-4 w-4 text-white" />
           )}
         </Button>
       </CollapsibleTrigger>

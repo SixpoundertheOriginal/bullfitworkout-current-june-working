@@ -1,3 +1,4 @@
+import { typography } from './typography';
 
 /**
  * Theme constants for consistent styling across the application
@@ -28,16 +29,15 @@ export const theme = {
     }
   },
   
-  // Compound classes for common patterns
+  // Updated to use typography system
   textStyles: {
-    primary: "text-white font-medium",
-    secondary: "text-white/80",
-    tertiary: "text-white/60",
+    primary: typography.text.primary,
+    secondary: typography.text.secondary,
+    tertiary: typography.text.muted,
     data: "font-mono text-white",
-    heading: "text-white font-semibold",
-    button: "text-white font-medium",
-    // Adding section heading styles for dark backgrounds
-    sectionHeading: "text-xl font-bold text-white",
+    heading: typography.headings.primary,
+    button: typography.interactive.button,
+    sectionHeading: typography.headings.section,
     sectionSubheading: "text-lg font-medium text-purple-300"
   }
 };
@@ -47,26 +47,18 @@ export const withTheme = (baseClasses: string, customClasses?: string) => {
   return customClasses ? `${baseClasses} ${customClasses}` : baseClasses;
 };
 
-// Adding a new helper specifically for text on dark backgrounds
+// Updated darkModeText object to use typography system
 export const darkModeText = {
-  // For main headings
-  heading: "text-white font-bold",
-  // For section titles
-  sectionTitle: "text-purple-300 font-semibold",
-  // For subheadings
-  subheading: "text-white/90 font-medium",
-  // For regular text
-  body: "text-white/80",
-  // For less important text
-  muted: "text-white/60",
-  // For important numbers or highlights
-  highlight: "text-purple-400 font-medium",
-  // For labels
-  label: "text-white/70 text-sm",
+  heading: typography.headings.primary,
+  sectionTitle: typography.sections.title,
+  subheading: typography.text.secondary,
+  body: typography.text.secondary,
+  muted: typography.text.muted,
+  highlight: typography.interactive.link,
+  label: typography.sections.label,
 };
 
 // Helper function specifically for section headings in dark mode
 export const getSectionHeadingClasses = (withIcon: boolean = false) => {
   return `flex ${withIcon ? 'items-center gap-2' : ''} text-xl font-bold text-white`;
 };
-
