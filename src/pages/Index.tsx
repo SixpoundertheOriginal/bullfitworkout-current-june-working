@@ -268,7 +268,7 @@ const Index = () => {
         <NavButton 
           icon={<Zap size={20} />} 
           label="Training" 
-          onClick={() => navigate('/workout-details')} 
+          onClick={() => navigate('/training')}
         />
         <NavButton 
           icon={<UserIcon size={20} />} 
