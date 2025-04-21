@@ -1,3 +1,4 @@
+
 import { MainMenu } from "./MainMenu";
 import { UserProfile } from "@/components/UserProfile";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -31,25 +32,27 @@ export const HeaderBar = () => {
   const showBackButton = location.pathname !== "/";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center p-4">
-      <div className="flex items-center">
-        {showBackButton && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mr-2"
-            onClick={() => navigate(-1)}
-            aria-label="Go back"
-          >
-            <ChevronLeft className="h-5 w-5 text-gray-300" />
-          </Button>
-        )}
-        <MainMenu />
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 shadow-md">
+      <div className="flex justify-between items-center p-4 max-w-screen-xl mx-auto">
+        <div className="flex items-center">
+          {showBackButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-2"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-300" />
+            </Button>
+          )}
+          <MainMenu />
+        </div>
+        <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+          {title}
+        </h1>
+        <UserProfile />
       </div>
-      <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-        {title}
-      </h1>
-      <UserProfile />
     </header>
   );
 };
