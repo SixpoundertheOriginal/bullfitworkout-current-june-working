@@ -1337,7 +1337,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      exercise_performance_summary: {
+        Row: {
+          avg_reps: number | null
+          avg_weight: number | null
+          exercise_name: string | null
+          max_reps: number | null
+          max_weight: number | null
+          total_sets: number | null
+          user_id: string | null
+          workout_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_sets_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_time_preferences: {
+        Row: {
+          avg_duration: number | null
+          time_of_day: string | null
+          user_id: string | null
+          workout_count: number | null
+        }
+        Relationships: []
+      }
+      workout_type_distribution: {
+        Row: {
+          avg_duration: number | null
+          last_workout_date: string | null
+          total_duration: number | null
+          training_type: string | null
+          user_id: string | null
+          workout_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_workout: {
