@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -268,4 +267,111 @@ export async function restoreWorkout(workout: any) {
   }
   
   return restoredWorkout;
+}
+
+/**
+ * Bulk deletes multiple workouts and their associated exercise sets
+ */
+export async function bulkDeleteWorkouts(workoutIds: string[]) {
+  if (!workoutIds.length) return { success: true, count: 0 };
+  
+  try {
+    // Delete all exercise sets for these workouts first
+    const { error: setsError } = await supabase
+      .from('exercise_sets')
+      .delete()
+      .in('workout_id', workoutIds);
+      
+    if (setsError) throw setsError;
+    
+    // Then delete the workouts
+    const { data, error } = await supabase
+      .from('workout_sessions')
+      .delete()
+      .in('id', workoutIds)
+      .select('id');
+      
+    if (error) throw error;
+    
+    return { success: true, count: data?.length || 0 };
+  } catch (error) {
+    console.error("Error bulk deleting workouts:", error);
+    throw error;
+  }
+}
+
+/**
+ * Bulk updates multiple workouts with the same values
+ */
+export async function bulkUpdateWorkouts(workoutIds: string[], data: {
+  name?: string;
+  training_type?: string;
+  notes?: string | null;
+}) {
+  if (!workoutIds.length) return { success: true, count: 0 };
+  
+  try {
+    const { data: updatedWorkouts, error } = await supabase
+      .from('workout_sessions')
+      .update(data)
+      .in('id', workoutIds)
+      .select('id');
+      
+    if (error) throw error;
+    
+    return { success: true, count: updatedWorkouts?.length || 0 };
+  } catch (error) {
+    console.error("Error bulk updating workouts:", error);
+    throw error;
+  }
+}
+
+/**
+ * Resets exercise sets for a workout (marks all as incomplete with zero weight/reps)
+ */
+export async function resetWorkoutSets(workoutId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('exercise_sets')
+      .update({
+        weight: 0,
+        reps: 0,
+        completed: false
+      })
+      .eq('workout_id', workoutId)
+      .select();
+      
+    if (error) throw error;
+    
+    return { success: true, count: data?.length || 0 };
+  } catch (error) {
+    console.error("Error resetting workout sets:", error);
+    throw error;
+  }
+}
+
+/**
+ * Bulk resets exercise sets for multiple workouts
+ */
+export async function bulkResetWorkoutSets(workoutIds: string[]) {
+  if (!workoutIds.length) return { success: true, count: 0 };
+  
+  try {
+    const { data, error } = await supabase
+      .from('exercise_sets')
+      .update({
+        weight: 0,
+        reps: 0,
+        completed: false
+      })
+      .in('workout_id', workoutIds)
+      .select();
+      
+    if (error) throw error;
+    
+    return { success: true, count: data?.length || 0, workoutCount: workoutIds.length };
+  } catch (error) {
+    console.error("Error bulk resetting workout sets:", error);
+    throw error;
+  }
 }

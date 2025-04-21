@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { Button } from "@/components/ui/button";
-import { History, Loader2, X } from "lucide-react";
+import { History, Loader2, X, Check, SquareCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
 import { deleteWorkout, restoreWorkout } from "@/services/workoutService";
 import { toast } from "@/components/ui/sonner";
+import { BulkWorkoutActions } from "./BulkWorkoutActions";
 
 interface WorkoutHistoryProps {
   limit?: number;
@@ -23,6 +24,34 @@ export const WorkoutHistory = ({
   const { data, isLoading, isError, refetch } = useWorkoutHistory(limit, dateFilter);
   const navigate = useNavigate();
   const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
+  
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedWorkouts, setSelectedWorkouts] = useState<string[]>([]);
+  
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    setSelectedWorkouts([]);
+  };
+  
+  const toggleWorkoutSelection = (workoutId: string) => {
+    setSelectedWorkouts(prevSelected => {
+      if (prevSelected.includes(workoutId)) {
+        return prevSelected.filter(id => id !== workoutId);
+      } else {
+        return [...prevSelected, workoutId];
+      }
+    });
+  };
+  
+  const selectAllWorkouts = () => {
+    if (!data?.workouts) return;
+    
+    if (selectedWorkouts.length === data.workouts.length) {
+      setSelectedWorkouts([]);
+    } else {
+      setSelectedWorkouts(data.workouts.map(w => w.id));
+    }
+  };
   
   const handleEditWorkout = (workoutId: string) => {
     navigate(`/workout-details/${workoutId}`);
@@ -40,17 +69,16 @@ export const WorkoutHistory = ({
       
       await deleteWorkout(workoutId);
       
-      // Show toast with undo option
       toast.success("Workout deleted", {
         description: `"${deletedWorkout.name}" has been removed`,
         action: {
           label: "Undo",
           onClick: () => handleUndoDelete(deletedWorkout),
         },
-        duration: 5000, // Give user 5 seconds to undo
+        duration: 5000,
       });
       
-      refetch(); // Refresh the workout history
+      refetch();
     } catch (error) {
       console.error("Error deleting workout:", error);
       toast.error("Failed to delete workout");
@@ -63,11 +91,17 @@ export const WorkoutHistory = ({
     try {
       await restoreWorkout(workout);
       toast.success("Workout restored");
-      refetch(); // Refresh the workout history
+      refetch();
     } catch (error) {
       console.error("Error restoring workout:", error);
       toast.error("Failed to restore workout");
     }
+  };
+  
+  const handleBulkActionComplete = () => {
+    setSelectionMode(false);
+    setSelectedWorkouts([]);
+    refetch();
   };
   
   if (isLoading) {
@@ -117,8 +151,6 @@ export const WorkoutHistory = ({
     );
   }
   
-  console.log("Rendering workout history cards:", workouts.map(w => ({id: w.id, name: w.name})));
-  
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
@@ -140,7 +172,56 @@ export const WorkoutHistory = ({
             'Recent Workouts'
           )}
         </h2>
+        
+        <div className="flex items-center gap-2">
+          {selectionMode ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={selectAllWorkouts}
+                className="text-xs h-8"
+              >
+                <SquareCheck className="h-4 w-4 mr-1" />
+                {selectedWorkouts.length === workouts.length ? "Deselect All" : "Select All"}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectionMode}
+                className="text-xs h-8"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSelectionMode}
+              className="text-xs h-8 border-purple-500/20 text-purple-400 hover:text-purple-300 hover:bg-purple-950/30"
+            >
+              <Check className="h-4 w-4 mr-1" />
+              Select Multiple
+            </Button>
+          )}
+        </div>
       </div>
+      
+      {selectionMode && selectedWorkouts.length > 0 && (
+        <div className="bg-gray-800/50 p-3 rounded-lg mb-4 flex justify-between items-center">
+          <span className="text-sm text-gray-300">
+            {selectedWorkouts.length} workout{selectedWorkouts.length !== 1 ? 's' : ''} selected
+          </span>
+          
+          <BulkWorkoutActions 
+            selectedWorkoutIds={selectedWorkouts}
+            onActionComplete={handleBulkActionComplete}
+          />
+        </div>
+      )}
       
       <div className="space-y-3">
         {workouts.map(workout => (
@@ -156,6 +237,9 @@ export const WorkoutHistory = ({
             onEdit={() => handleEditWorkout(workout.id)}
             onDelete={() => handleDeleteWorkout(workout.id)}
             isDeleting={deletingWorkoutId === workout.id}
+            selectionMode={selectionMode}
+            isSelected={selectedWorkouts.includes(workout.id)}
+            onToggleSelection={() => toggleWorkoutSelection(workout.id)}
           />
         ))}
       </div>
