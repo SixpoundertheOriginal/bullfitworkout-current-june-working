@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { WorkoutCalendar } from "./WorkoutCalendar";
 import { DailyWorkoutSummary } from "../workouts/DailyWorkoutSummary";
@@ -91,13 +92,19 @@ export const WorkoutCalendarTab = () => {
     if (!exerciseSets?.sets?.length) return { intensity: 0, efficiency: 0 };
     
     // Calculate intensity (percent of max weight used)
-    const totalWeight = exerciseSets.sets.reduce((sum, set) => {
+    let totalWeight = 0;
+    let completedSetsCount = 0;
+    
+    exerciseSets.sets.forEach(set => {
       // Convert the weight to a number if it's not already
       const weight = typeof set.weight === 'string' ? parseFloat(set.weight) : set.weight;
-      return sum + (isNaN(weight) ? 0 : weight);
-    }, 0);
+      if (!isNaN(weight) && set.completed) {
+        totalWeight += weight;
+        completedSetsCount++;
+      }
+    });
     
-    const avgWeight = totalWeight / exerciseSets.sets.length;
+    const avgWeight = completedSetsCount > 0 ? totalWeight / completedSetsCount : 0;
     
     // Find the max weight among all sets
     const maxWeight = Math.max(...exerciseSets.sets.map(set => {
@@ -108,8 +115,7 @@ export const WorkoutCalendarTab = () => {
     const intensity = maxWeight > 0 ? (avgWeight / maxWeight) * 100 : 0;
     
     // Calculate efficiency (completed sets / total sets)
-    const completedSets = exerciseSets.sets.filter(set => set.completed).length;
-    const efficiency = (completedSets / exerciseSets.sets.length) * 100;
+    const efficiency = (completedSetsCount / exerciseSets.sets.length) * 100;
     
     return { intensity, efficiency };
   }, [exerciseSets?.sets]);

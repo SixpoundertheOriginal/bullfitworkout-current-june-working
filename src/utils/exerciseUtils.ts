@@ -96,15 +96,15 @@ export const getExerciseLoadFactor = (exerciseName: string): number => {
   return 0.5;
 };
 
-// Function to determine muscle group
+// Enhanced function to determine muscle group with more detailed categorization
 export const getExerciseGroup = (exerciseName: string): string | null => {
   const exerciseGroups: Record<string, string[]> = {
-    'chest': ['bench press', 'push-up', 'dip', 'fly', 'chest'],
-    'back': ['row', 'pull-up', 'lat', 'deadlift', 'back'],
-    'shoulders': ['shoulder press', 'lateral raise', 'overhead', 'military', 'deltoid'],
-    'arms': ['curl', 'extension', 'bicep', 'tricep'],
-    'legs': ['squat', 'lunge', 'leg press', 'calf', 'hamstring', 'quad', 'leg'],
-    'core': ['crunch', 'plank', 'sit-up', 'ab', 'core']
+    'chest': ['bench press', 'push-up', 'dip', 'fly', 'chest', 'pec', 'decline', 'incline'],
+    'back': ['row', 'pull-up', 'lat', 'deadlift', 'back', 'pull down', 'pulldown', 'pullup', 'chin-up'],
+    'shoulders': ['shoulder press', 'lateral raise', 'overhead', 'military', 'deltoid', 'shrug', 'arnold', 'upright row'],
+    'arms': ['curl', 'extension', 'bicep', 'tricep', 'hammer', 'preacher', 'skull crusher', 'pushdown'],
+    'legs': ['squat', 'lunge', 'leg press', 'calf', 'hamstring', 'quad', 'leg', 'glute', 'hip thrust', 'romanian deadlift'],
+    'core': ['crunch', 'plank', 'sit-up', 'ab', 'core', 'russian twist', 'leg raise', 'oblique']
   };
   
   for (const [group, keywords] of Object.entries(exerciseGroups)) {
@@ -199,5 +199,131 @@ export const calculateWorkoutMetrics = (
       density: Math.round(density * 10) / 10,
       efficiency: Math.round(efficiency)
     }
+  };
+};
+
+// New function: Calculate muscle focus for a workout
+export const calculateMuscleFocus = (exercises: Record<string, ExerciseSet[]>): Record<string, number> => {
+  const muscleGroups: Record<string, number> = {
+    'chest': 0,
+    'back': 0,
+    'shoulders': 0,
+    'arms': 0,
+    'legs': 0,
+    'core': 0
+  };
+  
+  Object.entries(exercises).forEach(([exerciseName, sets]) => {
+    const group = getExerciseGroup(exerciseName);
+    if (group) {
+      // Calculate total sets for this exercise
+      const completedSets = sets.filter(set => set.completed).length;
+      
+      // Add to the muscle group count
+      muscleGroups[group] += completedSets;
+    }
+  });
+  
+  return muscleGroups;
+};
+
+// New function: Calculate training balance over time
+export const calculateTrainingBalance = (muscleGroupData: Record<string, number>[]): number => {
+  if (muscleGroupData.length === 0) return 100;
+  
+  const totalByGroup: Record<string, number> = {};
+  let total = 0;
+  
+  // Sum up all sets by muscle group
+  muscleGroupData.forEach(workout => {
+    Object.entries(workout).forEach(([group, count]) => {
+      if (!totalByGroup[group]) totalByGroup[group] = 0;
+      totalByGroup[group] += count;
+      total += count;
+    });
+  });
+  
+  if (total === 0) return 100;
+  
+  // Calculate percentages
+  const percentages = Object.values(totalByGroup).map(count => (count / total) * 100);
+  
+  // Calculate standard deviation as a measure of imbalance
+  const mean = 100 / percentages.length;
+  const squaredDifferences = percentages.map(p => Math.pow(p - mean, 2));
+  const variance = squaredDifferences.reduce((sum, val) => sum + val, 0) / percentages.length;
+  const stdDev = Math.sqrt(variance);
+  
+  // Convert standard deviation to a balance score (100 = perfectly balanced)
+  // Higher standard deviation = more imbalance = lower score
+  const maxPossibleStdDev = mean * Math.sqrt(percentages.length - 1);
+  const balanceScore = 100 - (stdDev / maxPossibleStdDev) * 100;
+  
+  return Math.max(0, Math.min(100, Math.round(balanceScore)));
+};
+
+// Enhanced exercise classification
+export const getExerciseType = (exerciseName: string): 'compound' | 'isolation' | 'bodyweight' | 'isometric' => {
+  if (isIsometricExercise(exerciseName)) return 'isometric';
+  if (isBodyweightExercise(exerciseName)) return 'bodyweight';
+  
+  const compoundExercises = [
+    'squat', 'deadlift', 'bench press', 'overhead press', 'row', 'pull-up',
+    'chin-up', 'dip', 'lunge', 'clean', 'snatch', 'jerk', 'thruster'
+  ];
+  
+  const isCompound = compoundExercises.some(exercise => 
+    exerciseName.toLowerCase().includes(exercise.toLowerCase())
+  );
+  
+  return isCompound ? 'compound' : 'isolation';
+};
+
+// Analyze workout composition
+export const analyzeWorkoutComposition = (exercises: Record<string, ExerciseSet[]>) => {
+  let compoundCount = 0;
+  let isolationCount = 0;
+  let bodyweightCount = 0;
+  let isometricCount = 0;
+  
+  Object.keys(exercises).forEach(exerciseName => {
+    const type = getExerciseType(exerciseName);
+    
+    switch(type) {
+      case 'compound':
+        compoundCount++;
+        break;
+      case 'isolation':
+        isolationCount++;
+        break;
+      case 'bodyweight':
+        bodyweightCount++;
+        break;
+      case 'isometric':
+        isometricCount++;
+        break;
+    }
+  });
+  
+  const totalExercises = compoundCount + isolationCount + bodyweightCount + isometricCount;
+  
+  return {
+    compound: {
+      count: compoundCount,
+      percentage: totalExercises > 0 ? (compoundCount / totalExercises) * 100 : 0
+    },
+    isolation: {
+      count: isolationCount,
+      percentage: totalExercises > 0 ? (isolationCount / totalExercises) * 100 : 0
+    },
+    bodyweight: {
+      count: bodyweightCount,
+      percentage: totalExercises > 0 ? (bodyweightCount / totalExercises) * 100 : 0
+    },
+    isometric: {
+      count: isometricCount,
+      percentage: totalExercises > 0 ? (isometricCount / totalExercises) * 100 : 0
+    },
+    totalExercises
   };
 };
