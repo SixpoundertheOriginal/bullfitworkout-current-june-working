@@ -10,6 +10,31 @@ import WorkoutDetailsPage from "@/pages/WorkoutDetailsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import Auth from "@/pages/Auth";
 import Training from "@/pages/Training";
+import { MainMenu } from "@/components/navigation/MainMenu";
+import { UserProfile } from "@/components/UserProfile";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const getPageTitle = (pathname: string): string => {
+  switch (pathname) {
+    case "/":
+      return "Today";
+    case "/training":
+      return "Training";
+    case "/profile":
+      return "Profile";
+    case "/training-session":
+      return "Workout";
+    case "/workout-complete":
+      return "Workout Complete";
+    default:
+      if (pathname.startsWith("/workout-details")) {
+        return "Workout Details";
+      }
+      return "404";
+  }
+};
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -27,21 +52,49 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const RouterProvider = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const title = getPageTitle(location.pathname);
+  const showBackButton = location.pathname !== "/";
+
   return (
-    <div className="pb-16">
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-        <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
-        <Route path="/training-session" element={<ProtectedRoute><TrainingSession /></ProtectedRoute>} />
-        <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
-        <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
-        <Route path="/workout-details/:workoutId" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <BottomNav />
+    <div>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm border-b border-gray-800/20 shadow-sm">
+        <div className="flex justify-between items-center p-4 max-w-screen-xl mx-auto">
+          <div className="flex items-center">
+            {showBackButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="mr-2"
+                onClick={() => navigate(-1)}
+                aria-label="Go back"
+              >
+                <ChevronLeft className="h-5 w-5 text-gray-300" />
+              </Button>
+            )}
+            <MainMenu />
+          </div>
+          <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+            {title}
+          </h1>
+          <UserProfile />
+        </div>
+      </header>
+      <div className="pb-16">
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+          <Route path="/training-session" element={<ProtectedRoute><TrainingSession /></ProtectedRoute>} />
+          <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
+          <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
+          <Route path="/workout-details/:workoutId" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <BottomNav />
+      </div>
     </div>
   );
 };

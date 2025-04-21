@@ -147,7 +147,6 @@ const Index = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
-      <HeaderBar />
       <main className="flex-1 overflow-auto px-4 py-6 space-y-6 mt-20">
         <div 
           className="rounded-xl p-6 bg-gradient-to-r from-purple-600/30 to-pink-500/30 border border-purple-500/20 

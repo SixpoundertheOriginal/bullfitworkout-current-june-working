@@ -9,7 +9,6 @@ import { Calendar, Loader2, History, Sparkles } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InsightsDashboard } from "@/components/workouts/InsightsDashboard";
-import { HeaderBar } from "@/components/navigation/HeaderBar";
 
 const Training = () => {
   const { stats, loading } = useWorkoutStats();
@@ -53,7 +52,6 @@ const Training = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <HeaderBar />
       <div className="container max-w-7xl mx-auto p-4 pb-20 bg-gray-900 mt-16">
         <Tabs 
           value={activeTab} 
