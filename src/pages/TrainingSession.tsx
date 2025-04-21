@@ -762,7 +762,6 @@ const TrainingSession = () => {
               </Button>
             </div>
             
-            
             <div className="max-w-3xl mx-auto w-full mt-4 mb-4">
               <ExerciseVolumeChart 
                 exercises={exercises}
@@ -771,7 +770,6 @@ const TrainingSession = () => {
             </div>
           </>
         ) : (
-          
           <EmptyWorkoutState 
             onTemplateSelect={(templateType) => {
               const templateExercises = {
@@ -798,3 +796,20 @@ const TrainingSession = () => {
                   }
                 ];
               });
+              
+              setExercises(newExercises);
+            }}
+          />
+        )}
+      </main>
+      
+      <AddExerciseBar
+        onSelectExercise={handleSelectExercise}
+        onAddExercise={handleAddExercise}
+        trainingType={trainingType}
+      />
+    </div>
+  );
+};
+
+export default TrainingSession;
