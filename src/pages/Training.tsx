@@ -60,10 +60,11 @@ const Training = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="container max-w-7xl mx-auto p-4 pb-20 bg-background">
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Container with consistent dark background */}
+      <div className="container max-w-7xl mx-auto p-4 pb-20 bg-gray-900">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Training</h1>
+          <h1 className="text-2xl font-bold text-white">Training</h1>
         </div>
 
         <Tabs 
@@ -74,35 +75,35 @@ const Training = () => {
           <TabsList className="bg-gray-900 border border-gray-800 grid grid-cols-3">
             <TabsTrigger 
               value="overview"
-              className="flex items-center gap-2 data-[state=active]:bg-purple-600 text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300 hover:text-white"
             >
               <Sparkles className="h-4 w-4" />
               Overview
             </TabsTrigger>
             <TabsTrigger 
               value="calendar" 
-              className="flex items-center gap-2 data-[state=active]:bg-purple-600 text-gray-300 hover:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300 hover:text-white"
             >
               <Calendar className="h-4 w-4" />
               Calendar
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="flex items-center gap-2 data-[state=active]:bg-purple-600 text-gray-300 hover:text-white"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300 hover:text-white"
             >
               <History className="h-4 w-4" />
               History
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6 bg-gray-900/90 rounded-lg p-4">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
               </div>
             ) : (
               // Make analytics/insights the central dashboard
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-6 text-white">
                 {/* MAIN DASHBOARD INSIGHTS */}
                 <InsightsDashboard stats={stats} className="bg-gray-900/80 rounded-lg p-4" />
 
@@ -124,11 +125,11 @@ const Training = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="calendar" className="bg-gray-900/80 rounded-lg p-4">
+          <TabsContent value="calendar" className="bg-gray-900/90 rounded-lg p-4">
             <WorkoutCalendarTab />
           </TabsContent>
 
-          <TabsContent value="history" className="mt-4 bg-gray-900/80 rounded-lg p-4">
+          <TabsContent value="history" className="mt-4 bg-gray-900/90 rounded-lg p-4">
             <WorkoutHistory 
               dateFilter={getDateFilterFromURL()}
               limit={20}
@@ -142,3 +143,4 @@ const Training = () => {
 };
 
 export default Training;
+
