@@ -2,83 +2,110 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useWorkoutStats } from "./useWorkoutStats";
 
-interface WorkoutRecommendation {
+export interface WorkoutRecommendation {
   trainingType: string;
-  duration: number;
-  tags: string[];
   confidence: number;
-}
-
-// Define the structure of the training preferences
-interface TrainingPreferences {
-  preferred_time: string | null;
-  preferred_duration: number | null;
-  preferred_types: string[] | null;
+  suggestedDuration: number;
+  suggestedExercises: string[];
+  bestTimeOfDay: string;
+  reasoning: string[];
 }
 
 export function useWorkoutRecommendations() {
   const { user } = useAuth();
-  const { stats } = useWorkoutStats();
-  
+
   return useQuery({
     queryKey: ['workout-recommendations', user?.id],
     queryFn: async (): Promise<WorkoutRecommendation> => {
       if (!user) throw new Error("User not authenticated");
       
-      // Get user's profile with training preferences
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('training_preferences')
-        .eq('id', user.id)
-        .single();
+      // Fetch user's workout history
+      const { data: workouts, error: workoutError } = await supabase
+        .from('workout_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
         
-      const currentHour = new Date().getHours();
-      const timeOfDay = 
-        currentHour >= 5 && currentHour < 11 ? 'morning' :
-        currentHour >= 11 && currentHour < 17 ? 'afternoon' :
-        currentHour >= 17 && currentHour < 22 ? 'evening' : 'night';
+      if (workoutError) throw workoutError;
+      
+      // Fetch exercise progression data
+      const { data: progression, error: progressionError } = await supabase
+        .from('exercise_progression')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
         
-      // Start with recommended type from stats if available
-      const recommendation: WorkoutRecommendation = {
-        trainingType: stats.recommendedType || "Strength",
-        duration: stats.recommendedDuration || 30,
-        tags: stats.recommendedTags || [],
-        confidence: 0.5
+      if (progressionError) throw progressionError;
+      
+      // Analyze workout patterns
+      const timeDistribution = {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0
       };
-
-      // Adjust based on user preferences if available
-      if (profile?.training_preferences) {
-        try {
-          // Safely convert to TrainingPreferences with a proper type check
-          const prefsData = profile.training_preferences as Record<string, any>;
+      
+      const typeCount: Record<string, number> = {};
+      let totalDuration = 0;
+      
+      workouts?.forEach(workout => {
+        const hour = new Date(workout.start_time).getHours();
+        const timeOfDay = 
+          hour >= 5 && hour < 11 ? 'morning' :
+          hour >= 11 && hour < 17 ? 'afternoon' :
+          hour >= 17 && hour < 22 ? 'evening' : 'night';
           
-          // Check if the data actually matches our expected structure
-          const prefs: TrainingPreferences = {
-            preferred_time: typeof prefsData.preferred_time === 'string' ? prefsData.preferred_time : null,
-            preferred_duration: typeof prefsData.preferred_duration === 'number' ? prefsData.preferred_duration : null,
-            preferred_types: Array.isArray(prefsData.preferred_types) ? prefsData.preferred_types : null
-          };
-          
-          if (prefs.preferred_time === timeOfDay && prefs.preferred_duration) {
-            recommendation.duration = prefs.preferred_duration;
-            recommendation.confidence += 0.2;
-          }
-          
-          if (prefs.preferred_types?.length > 0) {
-            // Check if current recommendation matches any preferred types
-            if (prefs.preferred_types.includes(recommendation.trainingType)) {
-              recommendation.confidence += 0.3;
-            }
-          }
-        } catch (error) {
-          console.error("Error parsing training preferences:", error);
-        }
+        timeDistribution[timeOfDay]++;
+        typeCount[workout.training_type] = (typeCount[workout.training_type] || 0) + 1;
+        totalDuration += workout.duration;
+      });
+      
+      // Determine best time of day
+      const bestTimeOfDay = Object.entries(timeDistribution)
+        .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+      
+      // Determine most effective training type
+      const preferredType = Object.entries(typeCount)
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || 'strength';
+      
+      // Calculate average duration
+      const avgDuration = workouts?.length 
+        ? Math.round(totalDuration / workouts.length / 5) * 5 
+        : 45;
+      
+      // Get recommended exercises based on progression
+      const suggestedExercises = progression
+        ?.filter(p => p.performance_rating >= 4)
+        ?.map(p => p.exercise_name)
+        ?.slice(0, 5) || [];
+      
+      // Calculate confidence based on data points
+      const confidence = Math.min(
+        ((workouts?.length || 0) / 10) * 100, 
+        100
+      );
+      
+      // Generate reasoning
+      const reasoning = [
+        `You've had the most success with ${preferredType} training`,
+        `Your workouts are most consistent during the ${bestTimeOfDay}`,
+        `Your optimal workout duration is around ${avgDuration} minutes`,
+      ];
+      
+      if (progression?.length) {
+        reasoning.push("Based on your exercise progression data");
       }
-
-      return recommendation;
+      
+      return {
+        trainingType: preferredType,
+        confidence,
+        suggestedDuration: avgDuration,
+        suggestedExercises,
+        bestTimeOfDay,
+        reasoning
+      };
     },
-    enabled: !!user && !!stats
+    enabled: !!user
   });
 }

@@ -341,6 +341,53 @@ export type Database = {
           },
         ]
       }
+      exercise_progression: {
+        Row: {
+          created_at: string | null
+          difficulty_level: number | null
+          energy_level: number | null
+          exercise_name: string
+          id: string
+          metadata: Json | null
+          performance_rating: number | null
+          time_of_day: string | null
+          user_id: string
+          workout_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty_level?: number | null
+          energy_level?: number | null
+          exercise_name: string
+          id?: string
+          metadata?: Json | null
+          performance_rating?: number | null
+          time_of_day?: string | null
+          user_id: string
+          workout_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          difficulty_level?: number | null
+          energy_level?: number | null
+          exercise_name?: string
+          id?: string
+          metadata?: Json | null
+          performance_rating?: number | null
+          time_of_day?: string | null
+          user_id?: string
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_progression_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_sets: {
         Row: {
           completed: boolean
@@ -553,6 +600,36 @@ export type Database = {
         }
         Relationships: []
       }
+      movement_pattern_analytics: {
+        Row: {
+          created_at: string | null
+          id: string
+          primary_pattern: string
+          secondary_pattern: string
+          synergy_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          primary_pattern: string
+          secondary_pattern: string
+          synergy_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          primary_pattern?: string
+          secondary_pattern?: string
+          synergy_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       personal_records: {
         Row: {
           created_at: string
@@ -724,6 +801,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      rest_period_analytics: {
+        Row: {
+          created_at: string | null
+          exercise_name: string
+          id: string
+          rest_duration: number
+          subsequent_performance_impact: number | null
+          user_id: string
+          workout_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          exercise_name: string
+          id?: string
+          rest_duration: number
+          subsequent_performance_impact?: number | null
+          user_id: string
+          workout_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          exercise_name?: string
+          id?: string
+          rest_duration?: number
+          subsequent_performance_impact?: number | null
+          user_id?: string
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rest_period_analytics_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subtasks: {
         Row: {
