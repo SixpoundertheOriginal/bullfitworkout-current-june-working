@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { Plus, X, Dumbbell, BarChart3, Search } from "lucide-react";
+import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Exercise } from "@/types/exercise";
@@ -16,97 +17,97 @@ interface SmartExerciseFABProps {
   className?: string;
 }
 
-export const SmartExerciseFAB = ({ 
-  onSelectExercise, 
-  trainingType, 
-  tags, 
+export const SmartExerciseFAB = ({
+  onSelectExercise,
+  trainingType,
+  tags,
   visible = true,
-  className 
+  className
 }: SmartExerciseFABProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [suggestions, setSuggestions] = useState<Exercise[]>([]);
   const { exercises } = useExercises();
-  
+
   useEffect(() => {
     if (!exercises?.length) return;
-    
+
     const scoreExercise = (exercise: Exercise): number => {
       let score = 0;
-      
+
       if (trainingType.toLowerCase().includes("strength") && exercise.is_compound) {
         score += 3;
-      } else if (trainingType.toLowerCase().includes("cardio") && 
-                 (exercise.primary_muscle_groups.includes("cardio") || 
-                  exercise.equipment_type.includes("bodyweight"))) {
+      } else if (
+        trainingType.toLowerCase().includes("cardio") &&
+        (exercise.primary_muscle_groups.includes("cardio") ||
+          exercise.equipment_type.includes("bodyweight"))
+      ) {
         score += 3;
       }
-      
-      if (tags.some(tag => tag.toLowerCase() === "push") && 
-          exercise.movement_pattern === "push") {
+
+      if (tags.some((tag) => tag.toLowerCase() === "push") && exercise.movement_pattern === "push") {
         score += 2;
-      } else if (tags.some(tag => tag.toLowerCase() === "pull") && 
-                exercise.movement_pattern === "pull") {
+      } else if (
+        tags.some((tag) => tag.toLowerCase() === "pull") &&
+        exercise.movement_pattern === "pull"
+      ) {
         score += 2;
       }
-      
-      const muscleMatches = tags.filter(tag => 
-        exercise.primary_muscle_groups.some(muscle => 
-          muscle.toLowerCase().includes(tag.toLowerCase())
-        )
+
+      const muscleMatches = tags.filter((tag) =>
+        exercise.primary_muscle_groups.some((muscle) => muscle.toLowerCase().includes(tag.toLowerCase()))
       );
       score += muscleMatches.length * 2;
-      
-      const secondaryMuscleMatches = tags.filter(tag => 
-        exercise.secondary_muscle_groups.some(muscle => 
-          muscle.toLowerCase().includes(tag.toLowerCase())
-        )
+
+      const secondaryMuscleMatches = tags.filter((tag) =>
+        exercise.secondary_muscle_groups.some((muscle) => muscle.toLowerCase().includes(tag.toLowerCase()))
       );
       score += secondaryMuscleMatches.length;
-      
+
       return score;
     };
-    
+
     const scoredExercises = exercises
-      .map(exercise => ({ exercise, score: scoreExercise(exercise) }))
-      .filter(item => item.score > 0)
+      .map((exercise) => ({ exercise, score: scoreExercise(exercise) }))
+      .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score);
-    
-    const topSuggestions = scoredExercises.slice(0, 5).map(item => item.exercise);
+
+    const topSuggestions = scoredExercises.slice(0, 5).map((item) => item.exercise);
     setSuggestions(topSuggestions);
   }, [exercises, trainingType, tags]);
-  
+
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
-    
+
     if (!isExpanded && suggestions.length === 0) {
       toast.info("No suggestions available for current training configuration", {
-        duration: 2000,
+        duration: 2000
       });
     }
   };
-  
+
   const handleSelectExercise = (exercise: Exercise) => {
     onSelectExercise(exercise);
     setIsExpanded(false);
-    
+
     toast.success(`Added ${exercise.name} to your workout`, {
       style: {
         backgroundColor: "rgba(20, 20, 20, 0.9)",
         color: "white",
-        border: "1px solid rgba(120, 120, 120, 0.3)",
-      },
+        border: "1px solid rgba(120, 120, 120, 0.3)"
+      }
     });
   };
-  
+
+  // Adjusted to fixed radius and angles for fan layout anchored to center button
   const getSuggestionPosition = (index: number, total: number) => {
-    const baseRadius = Math.min(window.innerWidth, window.innerHeight) * 0.20;
-    const radius = Math.max(90, Math.min(baseRadius, 120));
-    const startAngle = -150;
+    const radius = 120; // reduced, fixed radius for consistency
+    const startAngle = -150; // degrees from horizontal right axis (clockwise negative)
     const endAngle = -30;
     const angleStep = total > 1 ? (endAngle - startAngle) / (total - 1) : 0;
     const angle = startAngle + index * angleStep;
     const radian = (angle * Math.PI) / 180;
 
+    // Return x,y relative offsets for absolute positioning from center button
     return {
       x: radius * Math.cos(radian),
       y: radius * Math.sin(radian)
@@ -114,25 +115,27 @@ export const SmartExerciseFAB = ({
   };
 
   return (
-    <div 
+    <div
       className={cn(
-        "fixed z-50 bottom-24 right-6",
+        "fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
         "transition-all duration-300",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-16 pointer-events-none",
+        visible
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none",
         "overflow-visible",
         className
       )}
-      style={{ pointerEvents: visible ? "auto" : "none" }}
     >
       <AnimatePresence>
         {isExpanded && (
           <div
-            className="absolute bottom-5 right-5 flex items-center justify-center"
+            className="absolute bottom-0 right-0 flex items-center justify-center"
             style={{
               width: 0,
               height: 0,
               pointerEvents: "none"
             }}
+            aria-label="Exercise Suggestions"
           >
             {suggestions.map((exercise, index) => {
               const { x, y } = getSuggestionPosition(index, suggestions.length);
@@ -150,7 +153,7 @@ export const SmartExerciseFAB = ({
                       type: "spring",
                       stiffness: 280,
                       damping: 24,
-                      delay: index * 0.06,
+                      delay: index * 0.06
                     }
                   }}
                   exit={{
@@ -164,16 +167,16 @@ export const SmartExerciseFAB = ({
                     "absolute flex flex-col items-center justify-center gap-1",
                     "bg-gray-900/90 hover:bg-gray-800/95 ring-2 ring-purple-600/20",
                     "border border-purple-700/20 rounded-lg",
-                    "min-w-0 w-16 h-16 p-0.5",
+                    "min-w-0 w-14 h-14 p-0.5",
                     "shadow-lg shadow-purple-950/15",
                     "cursor-pointer select-none group",
                     "overflow-hidden",
                     "transition-all duration-200",
                     "backdrop-blur-sm",
-                    "z-30",
+                    "z-30"
                   )}
                   style={{
-                    pointerEvents: "auto",
+                    pointerEvents: "auto"
                   }}
                   onClick={() => handleSelectExercise(exercise)}
                   tabIndex={0}
@@ -186,15 +189,15 @@ export const SmartExerciseFAB = ({
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
-                      maxWidth: 72,
+                      maxWidth: 80
                     }}
                     title={exercise.name}
                   >
                     {exercise.name}
                   </span>
                   <div className="flex justify-center w-full">
-                    {exercise.primary_muscle_groups.slice(0, 1).map(muscle => (
-                      <Badge 
+                    {exercise.primary_muscle_groups.slice(0, 1).map((muscle) => (
+                      <Badge
                         key={muscle}
                         variant="outline"
                         className="text-[9px] px-1 py-0 h-3.5 bg-purple-900/45 border-purple-500/30"
@@ -214,8 +217,8 @@ export const SmartExerciseFAB = ({
                 scale: 1,
                 ...getSuggestionPosition(suggestions.length, suggestions.length + 1),
                 transition: {
-                  type: "spring", 
-                  stiffness: 250, 
+                  type: "spring",
+                  stiffness: 250,
                   damping: 25,
                   delay: 0.225
                 }
@@ -248,7 +251,7 @@ export const SmartExerciseFAB = ({
           </div>
         )}
       </AnimatePresence>
-      
+
       <Button
         variant="gradient"
         size="icon-lg"
@@ -273,10 +276,11 @@ export const SmartExerciseFAB = ({
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 72px;
+            max-width: 80px;
           }
         `}
       </style>
     </div>
   );
 };
+
