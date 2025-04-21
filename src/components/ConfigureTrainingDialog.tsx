@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -17,6 +16,7 @@ import { ChevronLeft, ChevronRight, Check, X, Info, Dumbbell, Bike, Heart, Activ
 import { motion, AnimatePresence } from "framer-motion";
 import { typography } from "@/lib/typography";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrainingAchievementCard } from "./training/TrainingAchievementCard";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -49,7 +49,6 @@ const getGradientByType = (type: string) => {
   return gradients[type] || gradients.default;
 };
 
-// Animation variants for page transitions
 const pageVariants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0 },
@@ -68,6 +67,23 @@ export function ConfigureTrainingDialog({
   const { stats, loading } = useWorkoutStats();
   const [bgGradient, setBgGradient] = useState(getGradientByType("default"));
   const { data: recommendation, isLoading: loadingRecommendation } = useWorkoutRecommendations();
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [achievementType, setAchievementType] = useState("");
+  const [xpEarned, setXpEarned] = useState(0);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stepSound = new Audio();
+      stepSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3';
+      stepSound.volume = 0.3;
+      setStepCompleteSound(stepSound);
+      
+      const selSound = new Audio();
+      selSound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3';
+      selSound.volume = 0.2;
+      setSelectSound(selSound);
+    }
+  }, []);
 
   useEffect(() => {
     if (recommendation && !trainingType) {
@@ -83,8 +99,8 @@ export function ConfigureTrainingDialog({
 
   useEffect(() => {
     if (open) {
-      // Reset to first step when dialog opens
       setCurrentStep(ConfigurationStep.TrainingType);
+      setXpEarned(0);
     }
   }, [open]);
 
@@ -93,6 +109,8 @@ export function ConfigureTrainingDialog({
       setSelectedTags(selectedTags.filter((t) => t !== tag));
     } else {
       setSelectedTags([...selectedTags, tag]);
+      selectSound?.play().catch(() => {});
+      setXpEarned(prev => prev + 5);
     }
   };
 
@@ -104,6 +122,24 @@ export function ConfigureTrainingDialog({
       return;
     }
     
+    setAchievementType(trainingType);
+    setShowAchievement(true);
+    stepCompleteSound?.play().catch(() => {});
+    setTimeout(() => {
+      onStartTraining({
+        trainingType,
+        tags: selectedTags,
+        duration
+      });
+      
+      setShowAchievement(false);
+      onOpenChange(false);
+    }, 3000);
+  };
+
+  const handleAchievementClose = () => {
+    setShowAchievement(false);
+    
     onStartTraining({
       trainingType,
       tags: selectedTags,
@@ -113,6 +149,12 @@ export function ConfigureTrainingDialog({
     onOpenChange(false);
   };
 
+  const handleTypeSelect = (type: string) => {
+    setTrainingType(type);
+    selectSound?.play().catch(() => {});
+    setXpEarned(prev => prev + 15);
+  };
+
   const handleNextStep = () => {
     if (currentStep === ConfigurationStep.TrainingType && !trainingType) {
       toast.error("Training type required", {
@@ -120,6 +162,9 @@ export function ConfigureTrainingDialog({
       });
       return;
     }
+
+    stepCompleteSound?.play().catch(() => {});
+    setXpEarned(prev => prev + 10);
 
     if (currentStep < ConfigurationStep.Review) {
       setCurrentStep(currentStep + 1);
@@ -131,6 +176,7 @@ export function ConfigureTrainingDialog({
   const handlePrevStep = () => {
     if (currentStep > ConfigurationStep.TrainingType) {
       setCurrentStep(currentStep - 1);
+      selectSound?.play().catch(() => {});
     }
   };
 
@@ -144,15 +190,11 @@ export function ConfigureTrainingDialog({
   const renderStepIndicator = () => {
     return (
       <div className="flex items-center justify-between mb-8 relative">
-        {/* Progress Bar Background */}
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-800 -translate-y-1/2 z-0" />
-        
-        {/* Progress Bar Fill */}
         <div 
           className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-purple-500 via-purple-400 to-pink-500 -translate-y-1/2 z-0"
           style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
         />
-        
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
           const isActive = index === currentStep;
@@ -184,7 +226,6 @@ export function ConfigureTrainingDialog({
                   </span>
                 )}
                 
-                {/* Pulse effect for active step */}
                 {isActive && (
                   <motion.div
                     className="absolute inset-0 rounded-full bg-purple-500 opacity-20"
@@ -231,13 +272,13 @@ export function ConfigureTrainingDialog({
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className={cn(typography.headings.primary, "text-lg")}>
-                    Select Your Training Type
+                    Choose Your Character
                   </h3>
                   <AddCustomTrainingType />
                 </div>
                 <TrainingTypeSelector
                   selectedType={trainingType}
-                  onSelect={setTrainingType}
+                  onSelect={handleTypeSelect}
                 />
               </div>
             </div>
@@ -247,7 +288,7 @@ export function ConfigureTrainingDialog({
             <div className="space-y-8">
               <div>
                 <h3 className={cn(typography.headings.primary, "text-lg mb-4")}>
-                  Choose Your Training Focus
+                  Select Your Abilities
                 </h3>
                 <WorkoutTagPicker
                   selectedTags={selectedTags}
@@ -262,11 +303,17 @@ export function ConfigureTrainingDialog({
             <div className="space-y-8">
               <div>
                 <h3 className={cn(typography.headings.primary, "text-lg mb-4")}>
-                  Set Your Training Duration
+                  Set Your Quest Duration
                 </h3>
                 <DurationSelector 
                   value={duration} 
-                  onChange={setDuration}
+                  onChange={(newDuration) => {
+                    setDuration(newDuration);
+                    if (Math.abs(duration - newDuration) > 10) {
+                      setXpEarned(prev => prev + 5);
+                      selectSound?.play().catch(() => {});
+                    }
+                  }}
                 />
               </div>
               <div>
@@ -278,6 +325,8 @@ export function ConfigureTrainingDialog({
                     setTrainingType(trainingType);
                     setSelectedTags(tags);
                     setDuration(duration);
+                    stepCompleteSound?.play().catch(() => {});
+                    setXpEarned(prev => prev + 20);
                   }}
                 />
               </div>
@@ -289,7 +338,7 @@ export function ConfigureTrainingDialog({
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className={cn(typography.headings.primary, "text-lg")}>
-                    Review Your Training
+                    Review Your Quest
                   </h3>
                   {recommendation && (
                     <TooltipProvider>
@@ -316,7 +365,7 @@ export function ConfigureTrainingDialog({
                 
                 <div className="rounded-lg bg-black/30 p-6 space-y-5 border border-white/10 backdrop-blur-sm">
                   <div>
-                    <span className={typography.text.muted}>Training Type</span>
+                    <span className={typography.text.muted}>Character Class</span>
                     <div className="flex items-center gap-3 mt-1.5">
                       <div className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center",
@@ -337,7 +386,7 @@ export function ConfigureTrainingDialog({
                   
                   <div className="flex justify-between items-end pt-2 border-t border-white/5">
                     <div>
-                      <span className={typography.text.muted}>Duration</span>
+                      <span className={typography.text.muted}>Quest Duration</span>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={cn(typography.text.primary, "text-2xl font-bold")}>
                           {duration}
@@ -347,15 +396,18 @@ export function ConfigureTrainingDialog({
                     </div>
                     
                     <div className="flex flex-col items-end">
-                      <span className={typography.text.muted}>Estimated calories</span>
-                      <span className={cn(typography.text.primary, "text-lg")}>
-                        ~{Math.round(duration * 7.5)} kcal
-                      </span>
+                      <span className={typography.text.muted}>Potential Rewards</span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn(typography.text.primary, "text-lg")}>
+                          ~{Math.round(duration * 7.5)} kcal
+                        </span>
+                        <span className="text-yellow-400 text-sm">+{Math.round(duration * 2)} XP</span>
+                      </div>
                     </div>
                   </div>
                   
                   <div className="pt-2 border-t border-white/5">
-                    <span className={typography.text.muted}>Training Focus</span>
+                    <span className={typography.text.muted}>Special Abilities</span>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {selectedTags.length > 0 ? (
                         selectedTags.map(tag => (
@@ -367,7 +419,7 @@ export function ConfigureTrainingDialog({
                           </span>
                         ))
                       ) : (
-                        <span className="text-gray-500 italic">No specific focus areas selected</span>
+                        <span className="text-gray-500 italic">No special abilities selected</span>
                       )}
                     </div>
                   </div>
@@ -383,98 +435,127 @@ export function ConfigureTrainingDialog({
   const getStepTitle = () => {
     switch (currentStep) {
       case ConfigurationStep.TrainingType:
-        return "Configure Your Workout";
+        return "Choose Your Character";
       case ConfigurationStep.TrainingFocus:
-        return "Training Focus Areas";
+        return "Select Your Abilities";
       case ConfigurationStep.Duration:
-        return "Workout Duration";
+        return "Set Quest Duration";
       case ConfigurationStep.Review:
-        return "Ready to Start";
+        return "Ready For Adventure";
       default:
         return "Configure Training";
     }
   };
 
   const getNextButtonText = () => {
-    return currentStep === ConfigurationStep.Review ? "Start Training" : "Continue";
+    return currentStep === ConfigurationStep.Review ? "Start Quest" : "Continue";
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "p-0 overflow-hidden max-w-md max-h-[85vh]",
-        "bg-gradient-to-br from-gray-900/95 via-gray-900/98 to-gray-900/95",
-        "backdrop-blur-sm border border-white/5",
-        "shadow-[0_0_30px_rgba(124,58,237,0.15)]",
-        "rounded-2xl",
-        bgGradient
-      )}>
-        <header className="flex justify-between items-center p-6 pb-0">
-          <div className="flex items-center gap-3">
-            <motion.div 
-              initial={{ rotate: 0 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 opacity-80 blur-sm absolute -top-3 -left-3 z-0"
-            />
-            <h2 className={cn(typography.headings.primary, "text-2xl relative z-10")}>
-              {getStepTitle()}
-            </h2>
-          </div>
-          
-          {recommendation && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400/80 flex items-center gap-1">
-                <div className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse" />
-                AI Suggested
-              </span>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className={cn(
+          "p-0 overflow-hidden max-w-md max-h-[85vh]",
+          "bg-gradient-to-br from-gray-900/95 via-gray-900/98 to-gray-900/95",
+          "backdrop-blur-sm border border-white/5",
+          "shadow-[0_0_30px_rgba(124,58,237,0.15)]",
+          "rounded-2xl",
+          bgGradient
+        )}>
+          <header className="flex justify-between items-center p-6 pb-2">
+            <div className="flex items-center gap-3">
+              <motion.div 
+                initial={{ rotate: 0 }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 opacity-80 blur-sm absolute -top-3 -left-3 z-0"
+              />
+              <h2 className={cn(typography.headings.primary, "text-2xl relative z-10")}>
+                {getStepTitle()}
+              </h2>
             </div>
-          )}
-        </header>
-        
-        <ScrollArea className="max-h-[calc(85vh-8rem)]">
-          <div className="p-6 space-y-4">
-            {renderStepIndicator()}
-            {renderStepContent()}
-          </div>
-        </ScrollArea>
-        
-        <footer className="flex items-center justify-between p-6 pt-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
-          <Button 
-            onClick={handlePrevStep}
-            disabled={currentStep === ConfigurationStep.TrainingType}
-            variant="outline"
-            className={cn(
-              "rounded-xl",
-              "border border-white/5 bg-black/20",
-              "hover:bg-black/40 hover:border-white/10",
-              "text-white/80"
+            
+            {recommendation && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400/80 flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse" />
+                  AI Suggested
+                </span>
+              </div>
             )}
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+          </header>
           
-          <Button 
-            onClick={handleNextStep}
-            className={cn(
-              "rounded-xl",
-              "bg-gradient-to-r from-purple-600 to-pink-500",
-              "hover:from-purple-500 hover:to-pink-400",
-              "transform transition-all duration-300",
-              "shadow-lg hover:shadow-purple-500/25",
-              "border border-white/10"
-            )}
-          >
-            {getNextButtonText()}
-            {currentStep === ConfigurationStep.Review ? (
-              <Check className="w-4 h-4 ml-2" />
-            ) : (
-              <ChevronRight className="w-4 h-4 ml-2" />
-            )}
-          </Button>
-        </footer>
-      </DialogContent>
-    </Dialog>
+          {xpEarned > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-end px-6 pb-0"
+            >
+              <div className="flex items-center gap-2 px-3 py-1 bg-black/30 rounded-full backdrop-blur-sm text-xs text-yellow-400">
+                <span>XP Earned:</span>
+                <motion.span
+                  className="font-mono"
+                  key={xpEarned}
+                  initial={{ scale: 1.3, color: "#FFFFFF" }}
+                  animate={{ scale: 1, color: "#FACC15" }}
+                  transition={{ duration: 0.5 }}
+                >
+                  +{xpEarned}
+                </motion.span>
+              </div>
+            </motion.div>
+          )}
+          
+          <ScrollArea className="max-h-[calc(85vh-8rem)]">
+            <div className="p-6 space-y-4">
+              {renderStepIndicator()}
+              {renderStepContent()}
+            </div>
+          </ScrollArea>
+          
+          <footer className="flex items-center justify-between p-6 pt-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
+            <Button 
+              onClick={handlePrevStep}
+              disabled={currentStep === ConfigurationStep.TrainingType}
+              variant="outline"
+              className={cn(
+                "rounded-xl",
+                "border border-white/5 bg-black/20",
+                "hover:bg-black/40 hover:border-white/10",
+                "text-white/80"
+              )}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            
+            <Button 
+              onClick={handleNextStep}
+              className={cn(
+                "rounded-xl",
+                "bg-gradient-to-r from-purple-600 to-pink-500",
+                "hover:from-purple-500 hover:to-pink-400",
+                "transform transition-all duration-300",
+                "shadow-lg hover:shadow-purple-500/25",
+                "border border-white/10"
+              )}
+            >
+              {getNextButtonText()}
+              {currentStep === ConfigurationStep.Review ? (
+                <Check className="w-4 h-4 ml-2" />
+              ) : (
+                <ChevronRight className="w-4 h-4 ml-2" />
+              )}
+            </Button>
+          </footer>
+        </DialogContent>
+      </Dialog>
+      
+      <TrainingAchievementCard
+        show={showAchievement}
+        trainingType={achievementType}
+        onClose={handleAchievementClose}
+      />
+    </>
   );
 }
