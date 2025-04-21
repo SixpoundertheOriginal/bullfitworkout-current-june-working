@@ -107,16 +107,25 @@ export const SmartExerciseFAB = ({
     });
   };
   
-  // Calculate positions for the semi-circular menu
+  // Calculate positions for the semi-circular menu with improved spacing
   const getSuggestionPosition = (index: number, total: number) => {
     // Create a semi-circle above the FAB
     const radius = 150; // radius of the semi-circle
-    const angleStep = Math.PI / (total + 1); // distribute over half a circle (π radians)
-    const angle = Math.PI - angleStep * (index + 1); // start from the left side
+    
+    // Distribute items evenly within a 180° arc
+    // Start from -150° (left side) to 30° (right side) for better visual balance
+    const startAngle = Math.PI * 0.85; // ~150 degrees in radians
+    const endAngle = Math.PI * 0.15; // ~30 degrees in radians
+    
+    // Calculate the angle step based on the number of items
+    const angleStep = (startAngle - endAngle) / (total - 1 || 1);
+    
+    // Calculate the angle for this specific item
+    const angle = startAngle - (angleStep * index);
     
     // Calculate positions using trigonometry
-    const x = -Math.cos(angle) * radius;
-    const y = -Math.sin(angle) * radius;
+    const x = Math.cos(angle) * radius;
+    const y = -Math.sin(angle) * radius; // Negative to go upward
     
     return { x, y };
   };
@@ -133,16 +142,17 @@ export const SmartExerciseFAB = ({
       {/* Exercise Suggestions */}
       <AnimatePresence>
         {isExpanded && (
-          <div className="absolute bottom-16 right-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute bottom-16 right-0 flex items-center justify-center w-0 h-0">
             {suggestions.map((exercise, index) => {
               const position = getSuggestionPosition(index, suggestions.length);
               
               return (
                 <motion.div
                   key={exercise.id}
-                  initial={{ opacity: 0, x: 0, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.8, x: 0, y: 0 }}
                   animate={{ 
                     opacity: 1,
+                    scale: 1,
                     x: position.x, 
                     y: position.y,
                     transition: { 
@@ -154,35 +164,43 @@ export const SmartExerciseFAB = ({
                   }}
                   exit={{ 
                     opacity: 0, 
+                    scale: 0.8,
                     x: 0, 
                     y: 0,
-                    transition: { duration: 0.2, delay: index * 0.03 }
+                    transition: { duration: 0.2, delay: (suggestions.length - index) * 0.03 }
                   }}
-                  className="absolute pointer-events-auto"
+                  className="absolute"
+                  style={{ 
+                    // Add z-index to prevent later elements from being under earlier ones
+                    zIndex: 50 - index,
+                    transformOrigin: 'center center'
+                  }}
                 >
                   <Button
                     variant="outline"
-                    size="sm"
-                    className={cn(
-                      "flex flex-col items-center gap-1 p-3",
-                      "bg-gray-800/95 hover:bg-gray-700",
-                      "border border-gray-700 rounded-lg",
-                      "backdrop-blur-sm shadow-xl",
-                      "text-white text-xs",
-                      "transition-all duration-200"
-                    )}
+                    size="lg"
                     onClick={() => handleSelectExercise(exercise)}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 p-3",
+                      "h-auto min-h-16 w-20",
+                      "bg-gray-900/95 hover:bg-gray-800/95",
+                      "border border-purple-500/30 rounded-xl",
+                      "backdrop-blur-sm shadow-lg shadow-purple-900/20",
+                      "text-white",
+                      "transition-all duration-200 hover:scale-105",
+                      "overflow-hidden"
+                    )}
                   >
-                    <Dumbbell className="h-5 w-5 text-purple-400 mb-1" />
-                    <span className="text-white text-xs font-medium line-clamp-2 text-center max-w-[80px]">
+                    <Dumbbell className="h-5 w-5 text-purple-400 mb-1 flex-shrink-0" />
+                    <span className="text-white text-xs font-medium line-clamp-1 w-full text-center">
                       {exercise.name}
                     </span>
-                    <div className="flex gap-1 mt-1">
+                    <div className="flex justify-center mt-1 w-full">
                       {exercise.primary_muscle_groups.slice(0, 1).map(muscle => (
                         <Badge 
                           key={muscle} 
                           variant="outline" 
-                          className="text-[10px] px-1.5 py-0 h-4 bg-purple-900/30 border-purple-500/30"
+                          className="text-[9px] px-1 py-0 h-3.5 bg-purple-900/30 border-purple-500/30"
                         >
                           {muscle}
                         </Badge>
@@ -198,7 +216,7 @@ export const SmartExerciseFAB = ({
               initial={{ opacity: 0, y: 0 }}
               animate={{ 
                 opacity: 1,
-                y: -180,
+                y: -210,
                 transition: { 
                   type: "spring", 
                   stiffness: 300, 
@@ -211,25 +229,22 @@ export const SmartExerciseFAB = ({
                 y: 0,
                 transition: { duration: 0.2 }
               }}
-              className="absolute pointer-events-auto"
+              className="absolute left-1/2 -translate-x-1/2"
             >
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setIsExpanded(false)}
                 className={cn(
-                  "flex items-center gap-1 px-4 py-2",
-                  "bg-gray-800/95 hover:bg-gray-700",
-                  "border border-gray-700 rounded-lg",
-                  "backdrop-blur-sm shadow-xl",
+                  "flex items-center gap-1.5 px-4 py-2",
+                  "bg-gray-900/95 hover:bg-gray-800/95",
+                  "border border-purple-500/30 rounded-lg",
+                  "backdrop-blur-sm shadow-lg",
                   "text-white text-xs",
-                  "transition-all duration-200"
+                  "transition-all duration-200 hover:scale-105"
                 )}
-                onClick={() => {
-                  // Close expanded view, the parent component will show the AddExerciseBar
-                  setIsExpanded(false);
-                }}
               >
-                <Search className="h-4 w-4 text-purple-400" />
+                <Search className="h-3.5 w-3.5 text-purple-400" />
                 <span>Browse All</span>
               </Button>
             </motion.div>
@@ -249,11 +264,12 @@ export const SmartExerciseFAB = ({
           "hover:from-purple-700 hover:to-pink-600",
           "shadow-lg hover:shadow-purple-500/25",
           "border border-purple-500/20",
+          isExpanded ? "rotate-45" : "",
           "active:scale-95"
         )}
         aria-label={isExpanded ? "Close Suggestions" : "Show Exercise Suggestions"}
       >
-        {isExpanded ? <X size={24} /> : <Plus size={24} />}
+        <Plus size={24} />
       </Button>
     </div>
   );
