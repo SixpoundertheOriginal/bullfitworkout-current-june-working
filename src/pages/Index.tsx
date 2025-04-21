@@ -142,7 +142,7 @@ const Index = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
       <HeaderBar />
       <main className="flex-1 overflow-auto px-4 py-6 space-y-6 mt-16">
-        <div className="rounded-xl p-6 bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm">
+        <div className="rounded-xl p-6 bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm animate-fade-in">
           <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
             {workoutSessions.length > 0 
               ? `You've logged ${workoutSessions.length} workout${workoutSessions.length !== 1 ? 's' : ''}! 🔥 Keep it up!`
@@ -196,6 +196,7 @@ const Index = () => {
                 }
                 h-32 w-32
                 hover:scale-105 active:scale-95
+                animate-fade-in
               `}
             >
               <Zap size={28} className="mb-1 text-white" />
@@ -228,30 +229,35 @@ const Index = () => {
                 <p className="text-gray-400">Loading your workout history...</p>
               </div>
             ) : workoutSessions.length > 0 ? (
-              <div className="space-y-4">
-                {workoutSessions.map((workout) => (
-                  <WorkoutCard 
+              <div className="space-y-4 animate-fade-in">
+                {workoutSessions.map((workout, index) => (
+                  <div
                     key={workout.id}
-                    id={workout.id}
-                    name={workout.name}
-                    type={workout.training_type} 
-                    date={workout.start_time}
-                    duration={workout.duration}
-                    exerciseCount={workout.exerciseCount}
-                    setCount={workout.setCount}
-                    onEdit={() => navigate(`/workout-details/${workout.id}`)}
-                    onDelete={() => handleDeleteWorkout(workout.id)}
-                  />
+                    className="animate-enter"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <WorkoutCard 
+                      id={workout.id}
+                      name={workout.name}
+                      type={workout.training_type} 
+                      date={workout.start_time}
+                      duration={workout.duration}
+                      exerciseCount={workout.exerciseCount}
+                      setCount={workout.setCount}
+                      onEdit={() => navigate(`/workout-details/${workout.id}`)}
+                      onDelete={() => handleDeleteWorkout(workout.id)}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50">
+              <div className="text-center py-10 rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50 animate-fade-in">
                 <p className="text-gray-400 mb-2">No workouts logged yet</p>
                 <p className="text-sm text-gray-500">Complete a training session to see it here</p>
               </div>
             )
           ) : (
-            <div className="text-center py-10 rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50">
+            <div className="text-center py-10 rounded-lg bg-gradient-to-br from-gray-800/50 to-gray-800/30 backdrop-blur-sm border border-gray-700/50 animate-fade-in">
               <p className="text-gray-400 mb-2">Workout log hidden</p>
               <p className="text-sm text-gray-500">Click 'Show' to view your workout history</p>
             </div>
