@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,9 @@ export const SmartExerciseFAB = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [suggestions, setSuggestions] = useState<Exercise[]>([]);
   const { exercises } = useExercises();
+
+  // Ref for audio element
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!exercises?.length) return;
@@ -75,6 +79,12 @@ export const SmartExerciseFAB = ({
   }, [exercises, trainingType, tags]);
 
   const handleToggleExpand = () => {
+    // Play the futuristic click sound
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+    }
+
     setIsExpanded(!isExpanded);
 
     if (!isExpanded && suggestions.length === 0) {
@@ -102,13 +112,22 @@ export const SmartExerciseFAB = ({
       className={cn(
         "fixed z-50 bottom-12 right-12",
         "transition-all duration-300",
-        visible
-          ? "opacity-100 pointer-events-auto"
+        visible 
+          ? "opacity-100 pointer-events-auto" 
           : "opacity-0 pointer-events-none",
         "overflow-visible",
         className
       )}
     >
+      <audio
+        ref={audioRef}
+        src="data:audio/wav;base64,UklGRvQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YVsAAAD///////8DAwICAgMDAwMDAwMDAwMD/////w=="
+        preload="auto"
+        volume={0.3}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+
       <AnimatePresence>
         {isExpanded && (
           <div className="absolute bottom-16 right-0 flex flex-col items-end" style={{zIndex: 100}} aria-label="Exercise Suggestions">
@@ -231,3 +250,4 @@ export const SmartExerciseFAB = ({
     </div>
   );
 };
+
