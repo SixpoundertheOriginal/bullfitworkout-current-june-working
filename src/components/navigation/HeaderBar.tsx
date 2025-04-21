@@ -32,7 +32,7 @@ export const HeaderBar = () => {
   const showBackButton = location.pathname !== "/";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 shadow-md">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm border-b border-gray-800/20 shadow-sm">
       <div className="flex justify-between items-center p-4 max-w-screen-xl mx-auto">
         <div className="flex items-center">
           {showBackButton && (
