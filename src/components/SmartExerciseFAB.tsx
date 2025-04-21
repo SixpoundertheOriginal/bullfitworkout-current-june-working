@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,16 +60,16 @@ export const SmartExerciseFAB = ({
     slideSynth.volume.value = -24;
 
     // 3. Locking click (brief high click with MetalSynth)
+    // Fix: Use the correct properties for MetalSynth
     const clickSynth = new Tone.MetalSynth({
-      frequency: 160,
-      envelope: { attack: 0.001, decay: 0.15, release: 0.12 },
       harmonicity: 5.5,
       modulationIndex: 31,
       resonance: 2000,
       octaves: 1.5,
+      envelope: { attack: 0.001, decay: 0.15, release: 0.12 }
     }).toDestination();
     clickSynth.volume.value = -20;
-
+    
     // 4. Low-frequency thud (basic synth for sub-bass impact)
     const thud = new Tone.Synth({
       oscillator: { type: "triangle" },
