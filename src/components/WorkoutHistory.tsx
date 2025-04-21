@@ -10,6 +10,7 @@ import { deleteWorkout, restoreWorkout } from "@/services/workoutService";
 import { toast } from "@/components/ui/sonner";
 import { BulkWorkoutActions } from "./BulkWorkoutActions";
 import { CollapsibleHistorySection } from "./workouts/CollapsibleHistorySection";
+import { darkModeText } from "@/lib/theme";
 
 interface WorkoutHistoryProps {
   limit?: number;
@@ -141,7 +142,7 @@ export const WorkoutHistory = ({
   if (isError || !data) {
     return (
       <div className={`text-center py-8 ${className}`}>
-        <p className="text-gray-400">Failed to load workout history</p>
+        <p className={darkModeText.body}>Failed to load workout history</p>
       </div>
     );
   }
@@ -164,7 +165,7 @@ export const WorkoutHistory = ({
   if (workouts.length === 0) {
     return (
       <div className={`text-center py-8 ${className}`}>
-        <p className="text-gray-400">
+        <p className={darkModeText.body}>
           {dateFilter 
             ? `No workouts found for the selected date (${format(parseISO(dateFilter), 'MMMM d, yyyy')})`
             : 'No workout history yet'}
@@ -182,7 +183,7 @@ export const WorkoutHistory = ({
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center">
+        <h2 className={`${darkModeText.heading} flex items-center`}>
           <History size={18} className="mr-2 text-purple-400" />
           {dateFilter ? (
             <div className="flex items-center">

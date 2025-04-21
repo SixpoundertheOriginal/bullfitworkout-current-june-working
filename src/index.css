@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -66,5 +67,30 @@
 
   .value-text {
     @apply text-white font-mono !important;
+  }
+  
+  /* New dark mode optimized text classes */
+  .dark-mode-heading {
+    @apply text-white font-bold text-xl;
+  }
+  
+  .dark-mode-subheading {
+    @apply text-white/90 font-medium text-lg;
+  }
+  
+  .dark-mode-text {
+    @apply text-white/80;
+  }
+  
+  .dark-mode-label {
+    @apply text-white/70 text-sm;
+  }
+  
+  .dark-mode-accent {
+    @apply text-purple-400 font-medium;
+  }
+  
+  .dark-mode-section-title {
+    @apply text-white font-semibold flex items-center;
   }
 }

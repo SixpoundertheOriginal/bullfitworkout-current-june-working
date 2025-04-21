@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { useNavigate } from "react-router-dom";
@@ -34,8 +33,8 @@ import { MainMenu } from "@/components/navigation/MainMenu";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { darkModeText, getSectionHeadingClasses } from "@/lib/theme";
 
-// Feature card component for the knowledge section
 const FeatureCard = ({ icon, title, description, onClick }) => (
   <Card 
     className="relative overflow-hidden group cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 hover:border-purple-500/30"
@@ -187,7 +186,6 @@ const Index = () => {
     navigate(path);
   };
 
-  // Get today's recommended workout type if available
   const recommendedWorkoutType = stats?.recommendedType || "Strength";
   const recommendedDuration = stats?.recommendedDuration || 45;
 
@@ -225,7 +223,6 @@ const Index = () => {
               className="!bottom-20"
             />
 
-            {/* Enhanced Start Button */}
             <button 
               onClick={() => setDialogOpen(true)}
               className={`
@@ -259,12 +256,11 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Knowledge Hub Section */}
         <section className="animate-fade-in mb-8" style={{ animationDelay: '400ms' }}>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
+            <div className={getSectionHeadingClasses(true)}>
               <Brain className="text-purple-400" size={20} />
-              <h2 className="text-xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              <h2 className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
                 Fitness Knowledge Hub
               </h2>
             </div>
@@ -300,9 +296,9 @@ const Index = () => {
 
         <section className="animate-fade-in" style={{ animationDelay: '500ms' }}>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
+            <div className={getSectionHeadingClasses(true)}>
               <BarChart3 className="text-purple-400" size={20} />
-              <h2 className="text-xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              <h2 className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
                 Workout Log
               </h2>
             </div>

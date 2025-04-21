@@ -10,6 +10,10 @@ export const theme = {
       light: "text-white",
       lightMuted: "text-white/80",
       lightSubtle: "text-white/60",
+      // Adding high-contrast variations
+      highContrast: "text-white font-medium",
+      highContrastMuted: "text-purple-200",
+      accent: "text-purple-400",
     },
     // Background colors
     background: {
@@ -31,7 +35,10 @@ export const theme = {
     tertiary: "text-white/60",
     data: "font-mono text-white",
     heading: "text-white font-semibold",
-    button: "text-white font-medium"
+    button: "text-white font-medium",
+    // Adding section heading styles for dark backgrounds
+    sectionHeading: "text-xl font-bold text-white",
+    sectionSubheading: "text-lg font-medium text-purple-300"
   }
 };
 
@@ -39,3 +46,27 @@ export const theme = {
 export const withTheme = (baseClasses: string, customClasses?: string) => {
   return customClasses ? `${baseClasses} ${customClasses}` : baseClasses;
 };
+
+// Adding a new helper specifically for text on dark backgrounds
+export const darkModeText = {
+  // For main headings
+  heading: "text-white font-bold",
+  // For section titles
+  sectionTitle: "text-purple-300 font-semibold",
+  // For subheadings
+  subheading: "text-white/90 font-medium",
+  // For regular text
+  body: "text-white/80",
+  // For less important text
+  muted: "text-white/60",
+  // For important numbers or highlights
+  highlight: "text-purple-400 font-medium",
+  // For labels
+  label: "text-white/70 text-sm",
+};
+
+// Helper function specifically for section headings in dark mode
+export const getSectionHeadingClasses = (withIcon: boolean = false) => {
+  return `flex ${withIcon ? 'items-center gap-2' : ''} text-xl font-bold text-white`;
+};
+
