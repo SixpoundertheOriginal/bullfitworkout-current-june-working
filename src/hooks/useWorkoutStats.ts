@@ -42,6 +42,9 @@ export interface TopExerciseStats {
   totalVolume: number;
   // Add preferred tags association
   associatedTags: string[];
+  // Add trend and percentChange properties
+  trend?: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+  percentChange?: number;
 }
 
 export interface TagStats {

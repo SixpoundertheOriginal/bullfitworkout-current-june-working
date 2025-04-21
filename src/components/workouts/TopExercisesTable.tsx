@@ -115,7 +115,7 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
                   'text-blue-400'
                 }`}>
                   {selectedExercise.trend.charAt(0).toUpperCase() + selectedExercise.trend.slice(1)}
-                  {selectedExercise.percentChange && (
+                  {selectedExercise.percentChange !== undefined && (
                     <span className="ml-2">
                       ({selectedExercise.percentChange > 0 ? '+' : ''}{Math.round(selectedExercise.percentChange)}%)
                     </span>
