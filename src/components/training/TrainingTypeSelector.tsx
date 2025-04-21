@@ -88,6 +88,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const [current, setCurrent] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
+  const [touchActive, setTouchActive] = useState(false);
 
   const { data: customTypes } = useQuery({
     queryKey: ['customTrainingTypes'],
@@ -109,13 +110,13 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     ...(customTypes || []).map(type => ({
       name: type.name,
       icon: type.icon,
-      gradient: `from-[${type.color_start}] to-[${type.color_end}]`,
+      gradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
       activeGradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
       bgColor: `bg-[${type.color_start}]`,
-      description: '', // Default empty string for description
-      benefits: [], // Default empty array for benefits
-      level: undefined, // Default undefined for level
-      xp: undefined // Default undefined for xp
+      description: type.description || '', // Provide default empty string
+      benefits: type.benefits || [], // Provide default empty array
+      level: type.level || undefined, // Provide default undefined
+      xp: type.xp || undefined // Provide default undefined
     }))
   ];
 
@@ -150,8 +151,23 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     };
   }, [carouselApi]);
 
+  // Function to scroll to next/previous card
+  const handleManualScroll = (direction: 'prev' | 'next') => {
+    if (!carouselApi) return;
+    
+    if (direction === 'prev' && canScrollPrev) {
+      carouselApi.scrollPrev();
+    } else if (direction === 'next' && canScrollNext) {
+      carouselApi.scrollNext();
+    }
+  };
+
   return (
-    <div className="w-full overflow-visible relative">
+    <div 
+      className="w-full overflow-visible relative"
+      onTouchStart={() => setTouchActive(true)}
+      onTouchEnd={() => setTouchActive(false)}
+    >
       {/* Page dots indicator */}
       <div className="flex justify-center gap-1 mb-3">
         {allTrainingTypes.map((_, index) => (
@@ -173,19 +189,26 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         opts={{
           align: "center",
           loop: false,
-          containScroll: "trimSnaps"
+          containScroll: "trimSnaps",
+          dragFree: false
         }}
         className="w-full"
       >
         <div className="flex items-center w-full">
-          <CarouselPrevious 
+          <Button
+            onClick={() => handleManualScroll('prev')}
+            variant="ghost"
+            size="icon"
             className={cn(
-              "static translate-y-0 h-9 w-9 bg-black/30 border-white/10 hover:bg-black/50",
-              !canScrollPrev && "opacity-30 pointer-events-none"
-            )} 
-          />
+              "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
+              !canScrollPrev && "opacity-30 pointer-events-none",
+              "transition-opacity duration-200"
+            )}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
           
-          <CarouselContent className="px-2 flex-1">
+          <CarouselContent className="px-10 md:px-16">
             {allTrainingTypes.map((type, index) => {
               const isSelected = selectedType === type.name;
               
@@ -284,19 +307,25 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
             })}
           </CarouselContent>
           
-          <CarouselNext 
+          <Button
+            onClick={() => handleManualScroll('next')}
+            variant="ghost"
+            size="icon"
             className={cn(
-              "static translate-y-0 h-9 w-9 bg-black/30 border-white/10 hover:bg-black/50",
-              !canScrollNext && "opacity-30 pointer-events-none"
+              "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
+              !canScrollNext && "opacity-30 pointer-events-none",
+              "transition-opacity duration-200"
             )}
-          />
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
         </div>
       </Carousel>
       
       {/* Swipe instructions */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: touchActive ? 0 : 1, y: touchActive ? 20 : 0 }}
         transition={{ delay: 0.5 }}
         className="mt-4 text-center text-white/60 text-xs flex items-center justify-center"
       >
