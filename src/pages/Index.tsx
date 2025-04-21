@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +23,7 @@ import { WorkoutCard } from "@/components/WorkoutCard";
 import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
 import { MainMenu } from "@/components/navigation/MainMenu";
 import { HeaderBar } from "@/components/navigation/HeaderBar";
+import { ExerciseFAB } from "@/components/ExerciseFAB";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -37,10 +37,16 @@ const Index = () => {
     threshold: 0.5,
     rootMargin: "-100px"
   });
-  const buttonSize = {
-    large: { height: "8rem", width: "8rem" },
-    small: { height: "3.5rem", width: "3.5rem" }
-  };
+  
+  const [stableFabVisibility, setStableFabVisibility] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setStableFabVisibility(!isSectionVisible);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [isSectionVisible]);
 
   useEffect(() => {
     if (user) {
@@ -167,27 +173,12 @@ const Index = () => {
             Focus today's session and get into flow mode
           </p>
           
-          <div style={{ height: buttonSize.large.height }} className="relative">
-            <button
+          <div style={{ height: "8rem" }} className="relative">
+            <ExerciseFAB 
               onClick={() => setDialogOpen(true)}
-              className={`
-                transition-all duration-300 ease-out
-                flex flex-col items-center justify-center
-                bg-gradient-to-r from-purple-600 to-pink-500
-                shadow-lg hover:shadow-purple-500/25
-                rounded-full border border-purple-500/20
-                fixed bottom-20 right-4 z-50
-                ${!isSectionVisible 
-                  ? 'opacity-100 pointer-events-auto scale-100' 
-                  : 'opacity-0 pointer-events-none scale-75'
-                }
-                h-14 w-14
-                hover:scale-110 active:scale-95
-                animate-pulse
-              `}
-            >
-              <Zap size={20} className="text-white" />
-            </button>
+              visible={stableFabVisibility}
+              className="!bottom-20"
+            />
             
             <button 
               onClick={() => setDialogOpen(true)}
