@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
@@ -8,6 +9,7 @@ import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
 import { Calendar, Loader2, History, Sparkles } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useLocation, useNavigate } from "react-router-dom";
+import { InsightsDashboard } from "@/components/workouts/InsightsDashboard";
 
 const Training = () => {
   // Fetch workout stats using the hook
@@ -99,14 +101,20 @@ const Training = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
               </div>
             ) : (
-              <>
-                <WorkoutSummary stats={stats} />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <WorkoutTypeChart data={stats.workoutTypes} />
-                  <TopExercisesTable exercises={stats.topExercises} />
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="lg:col-span-8 space-y-4">
+                  <WorkoutSummary stats={stats} />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <WorkoutTypeChart data={stats.workoutTypes} />
+                    <TopExercisesTable exercises={stats.topExercises} />
+                  </div>
                 </div>
-              </>
+                
+                <div className="lg:col-span-4">
+                  <InsightsDashboard stats={stats} />
+                </div>
+              </div>
             )}
           </TabsContent>
 
