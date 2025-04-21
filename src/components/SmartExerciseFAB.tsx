@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -98,14 +99,23 @@ export const SmartExerciseFAB = ({
   };
 
   const getSuggestionPosition = (index: number, total: number) => {
-    const distance = 100; // px from FAB
-    const angleStep = 25;
-    const angle = -135 + index * angleStep; // fan upwards/left
+    // Increased angle step from 25 to 40 degrees for wider separation
+    const angleStep = 40; 
+    
+    // Adjusted starting angle to ensure items fan out in the visible area
+    const angle = -140 + index * angleStep;
     const radian = (angle * Math.PI) / 180;
-
+    
+    // Staggered distance calculation - base distance plus index-based offset
+    // This creates a spiral effect that prevents direct overlapping
+    const baseDistance = 100;
+    const indexOffset = index * 15; // Additional 15px per item
+    const distance = baseDistance + indexOffset;
+    
     // Math.max ensures min 20px from edges (will not go off-screen)
     const bottom = Math.max(20, distance * Math.sin(-radian));
     const right = Math.max(20, distance * Math.cos(-radian));
+    
     return { bottom, right };
   };
 
@@ -162,7 +172,6 @@ export const SmartExerciseFAB = ({
                     "absolute flex flex-col items-center justify-center gap-1",
                     "menu-compact-item bg-gray-900/90 hover:bg-gray-800/95",
                     "border border-purple-700/20 rounded-full",
-                    "w-16 h-16 p-1",
                     "shadow-lg shadow-purple-950/15",
                     "cursor-pointer select-none group",
                     "overflow-hidden",
@@ -171,7 +180,11 @@ export const SmartExerciseFAB = ({
                     "z-30"
                   )}
                   style={{
-                    pointerEvents: "auto"
+                    pointerEvents: "auto",
+                    // Reduced size for more compact visual appearance
+                    width: "62px",
+                    height: "62px",
+                    padding: "4px"
                   }}
                   onClick={() => handleSelectExercise(exercise)}
                   tabIndex={0}
@@ -179,7 +192,7 @@ export const SmartExerciseFAB = ({
                 >
                   <Dumbbell className="h-4 w-4 text-purple-300 mb-1" />
                   <span
-                    className="text-white text-[10px] font-medium w-full text-center item-label menu-item-text"
+                    className="text-white text-[9px] font-medium w-full text-center item-label menu-item-text"
                     title={exercise.name}
                   >
                     {exercise.name}
@@ -189,7 +202,7 @@ export const SmartExerciseFAB = ({
                       <Badge
                         key={muscle}
                         variant="outline"
-                        className="text-[8px] px-1 py-0 h-3 bg-purple-900/45 border-purple-500/30"
+                        className="text-[7px] px-1 py-0 h-3 bg-purple-900/45 border-purple-500/30"
                       >
                         {muscle}
                       </Badge>
@@ -200,6 +213,7 @@ export const SmartExerciseFAB = ({
             })}
 
             {(() => {
+              // Browse all button positioned at the end of the fan
               const { bottom, right } = getSuggestionPosition(suggestions.length, suggestions.length + 1);
               return (
                 <motion.button
@@ -227,12 +241,14 @@ export const SmartExerciseFAB = ({
                     "absolute flex flex-row items-center px-1 py-1 rounded-full bg-purple-900/80 border border-purple-700/30 backdrop-blur-sm",
                     "shadow-md text-purple-100 text-[10px] gap-1 z-40",
                     "transition-all duration-200 hover:scale-105 hover:bg-purple-800/90",
-                    "cursor-pointer w-20 h-8 justify-center"
+                    "cursor-pointer justify-center"
                   )}
                   style={{
                     pointerEvents: "auto",
                     minWidth: 0,
-                    minHeight: 0
+                    minHeight: 0,
+                    width: "70px",
+                    height: "26px"
                   }}
                   aria-label="Browse All Exercises"
                   tabIndex={0}
@@ -271,15 +287,12 @@ export const SmartExerciseFAB = ({
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 70px;
-            font-size: 10px;
+            max-width: 56px;
+            font-size: 9px;
           }
           .menu-compact-item {
-            min-width: 48px;
-            min-height: 48px;
-            width: 64px;
-            height: 64px;
-            padding: 6px;
+            min-width: 0;
+            min-height: 0;
           }
         `}
       </style>
