@@ -57,6 +57,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
+import { HeaderBar } from "@/components/navigation/HeaderBar";
 
 interface WorkoutDetails {
   id: string;
@@ -310,20 +311,8 @@ const WorkoutDetailsPage = () => {
   
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      <header className="flex justify-between items-center p-4 border-b border-gray-800">
-        <button 
-          onClick={() => workoutId ? navigate('/workout-details') : navigate('/')}
-          className="p-2 rounded-full hover:bg-gray-900"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="text-xl font-semibold">
-          {workoutId ? 'Workout Details' : 'Training'}
-        </h1>
-        <WeightUnitToggle variant="badge" />
-      </header>
-      
-      <main className="flex-1 overflow-auto px-4 py-6 pb-24">
+      <HeaderBar />
+      <main className="flex-1 overflow-auto px-4 py-6 pb-24 mt-16">
         {!workoutId && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
