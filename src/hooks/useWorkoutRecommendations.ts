@@ -6,6 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 export interface WorkoutRecommendation {
   trainingType: string;
   confidence: number;
+  duration: number;  // Added this property
+  tags: string[];    // Added this property
   suggestedDuration: number;
   suggestedExercises: string[];
   bestTimeOfDay: string;
@@ -82,8 +84,8 @@ export function useWorkoutRecommendations() {
       
       // Calculate confidence based on data points
       const confidence = Math.min(
-        ((workouts?.length || 0) / 10) * 100, 
-        100
+        workouts?.length ? (workouts.length / 10) * 0.1 : 0.5, 
+        1.0
       );
       
       // Generate reasoning
@@ -97,10 +99,23 @@ export function useWorkoutRecommendations() {
         reasoning.push("Based on your exercise progression data");
       }
       
+      // Generate recommended tags based on progression data
+      const recommendedTags = progression
+        ?.map(p => {
+          // Here we would normally extract tags from the exercise
+          // For now, let's just return some dummy tags
+          return ['strength', 'cardio', 'core', 'upper-body', 'lower-body'];
+        })
+        ?.flat()
+        ?.filter((tag, index, self) => self.indexOf(tag) === index)
+        ?.slice(0, 3) || [];
+      
       return {
         trainingType: preferredType,
         confidence,
+        duration: avgDuration,  // Use avgDuration for both fields for now
         suggestedDuration: avgDuration,
+        tags: recommendedTags,  // Add recommended tags
         suggestedExercises,
         bestTimeOfDay,
         reasoning
