@@ -92,9 +92,11 @@ export const WorkoutCalendarTab = () => {
     if (!exerciseSets?.sets?.length) return { intensity: 0, efficiency: 0 };
     
     // Calculate intensity (percent of max weight used)
-    const totalWeight = exerciseSets.sets.reduce((sum, set) => sum + parseFloat(set.weight), 0);
+    const totalWeight = exerciseSets.sets.reduce((sum, set) => {
+      return sum + Number(set.weight);
+    }, 0);
     const avgWeight = totalWeight / exerciseSets.sets.length;
-    const maxWeight = Math.max(...exerciseSets.sets.map(set => parseFloat(set.weight)));
+    const maxWeight = Math.max(...exerciseSets.sets.map(set => Number(set.weight)));
     const intensity = maxWeight > 0 ? (avgWeight / maxWeight) * 100 : 0;
     
     // Calculate efficiency (completed sets / total sets)

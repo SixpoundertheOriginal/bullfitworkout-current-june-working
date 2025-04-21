@@ -7,13 +7,11 @@ import {
   Clock, 
   TrendingUp, 
   PieChart,
-  Clock, 
-  BarChart, 
   ChartLine,
   GaugeCircle
 } from "lucide-react";
 import { WorkoutStats } from "@/hooks/useWorkoutStats";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 interface InsightsDashboardProps {
   stats: WorkoutStats;
@@ -107,7 +105,7 @@ export function InsightsDashboard({ stats, className = "" }: InsightsDashboardPr
           {/* Frequency visualization */}
           <div className="mt-4 h-32">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
+              <RechartsBarChart
                 data={frequencyData}
                 margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
               >
@@ -131,7 +129,7 @@ export function InsightsDashboard({ stats, className = "" }: InsightsDashboardPr
                     <stop offset="95%" stopColor="#D946EF" stopOpacity={0.6}/>
                   </linearGradient>
                 </defs>
-              </BarChart>
+              </RechartsBarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
@@ -225,7 +223,7 @@ export function InsightsDashboard({ stats, className = "" }: InsightsDashboardPr
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">
               <div className="flex items-center">
-                <BarChart className="h-4 w-4 mr-2 text-purple-400" />
+                <BarChart3 className="h-4 w-4 mr-2 text-purple-400" />
                 Top Exercise Progress
               </div>
             </CardTitle>
