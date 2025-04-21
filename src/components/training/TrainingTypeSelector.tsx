@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity, ChevronLeft, ChevronRight } from "lucide-react";
@@ -80,7 +79,6 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   }
 ];
 
-// Type definition for custom training types from database
 type CustomTrainingType = {
   id: string;
   name: string;
@@ -102,7 +100,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const { stats } = useWorkoutStats();
   const [touchActive, setTouchActive] = useState(false);
   
-  // Use embla carousel directly for better control
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
@@ -128,7 +125,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     enabled: !!user
   });
 
-  // All training types combined
   const allTrainingTypes = [
     ...DEFAULT_TRAINING_TYPES,
     ...(customTypes || []).map(type => ({
@@ -137,19 +133,18 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       gradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
       activeGradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
       bgColor: `bg-[${type.color_start}]`,
-      description: type.description || '', // Provide default empty string
-      benefits: type.benefits || [], // Provide default empty array
-      level: type.level || undefined, // Provide default undefined
-      xp: type.xp || undefined // Provide default undefined
+      description: type.description || '',
+      benefits: type.benefits || [],
+      level: type.level || undefined,
+      xp: type.xp || undefined
     }))
   ];
 
-  // Set up initial position when selectedType changes
   useEffect(() => {
     if (emblaApi && selectedType) {
       const index = allTrainingTypes.findIndex(type => type.name === selectedType);
       if (index >= 0) {
-        emblaApi.scrollTo(index, { immediate: false });
+        emblaApi.scrollTo(index);
         setCurrent(index);
       }
     }
@@ -169,7 +164,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
 
-    // Initial call to set the state
     onSelect();
 
     return () => {
@@ -177,7 +171,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     };
   }, [emblaApi]);
 
-  // Function to scroll to next/previous card
   const handleManualScroll = (direction: 'prev' | 'next') => {
     if (!emblaApi) return;
     
@@ -188,7 +181,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     }
   };
 
-  // Log to help debug
   console.log("Carousel state:", { current, canScrollPrev, canScrollNext, totalItems: allTrainingTypes.length });
 
   return (
@@ -197,7 +189,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       onTouchStart={() => setTouchActive(true)}
       onTouchEnd={() => setTouchActive(false)}
     >
-      {/* Page dots indicator */}
       <div className="flex justify-center gap-1 mb-3">
         {allTrainingTypes.map((_, index) => (
           <motion.div
@@ -345,7 +336,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         </Button>
       </div>
       
-      {/* Swipe instructions */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: touchActive ? 0 : 1, y: touchActive ? 20 : 0 }}
