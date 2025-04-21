@@ -122,7 +122,7 @@ export const WorkoutCalendarTab = () => {
 
   return (
     <div className="mt-4">
-      {selectedDate ? (
+      {selectedDate && !window.matchMedia("(min-width: 768px)").matches ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
             <Button 
@@ -200,13 +200,23 @@ export const WorkoutCalendarTab = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <WorkoutCalendar onDatePreview={handleDateSelect} />
           {/* Preview panel for medium and larger screens */}
-          {selectedDate && (
+          {selectedDate ? (
             <div className="hidden md:block">
               <DailyWorkoutSummary 
                 date={selectedDate}
                 onClose={() => handleDateSelect(null)}
                 preview
               />
+            </div>
+          ) : (
+            <div className="hidden md:flex flex-col items-center justify-center bg-gray-800/30 rounded-lg border border-gray-700/50 p-6 h-full">
+              <div className="text-center text-gray-400">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <h3 className="text-lg font-medium text-white mb-2">Workout Summary</h3>
+                <p className="text-sm max-w-md mx-auto">
+                  Select a date from the calendar to view workout details and performance metrics for that day.
+                </p>
+              </div>
             </div>
           )}
         </div>
