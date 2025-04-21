@@ -14,8 +14,8 @@ export const MuscleFocusChart = ({ muscleGroups, className = '' }: MuscleFocusCh
   
   // Sort muscle groups by count (descending)
   const sortedGroups = Object.entries(muscleGroups)
-    .filter(([_, count]) => count > 0)
-    .sort(([_, countA], [_, countB]) => countB - countA);
+    .filter(([group, count]) => count > 0)
+    .sort(([groupA, countA], [groupB, countB]) => countB - countA);
   
   // Generate colors for different muscle groups
   const getGroupColor = (group: string) => {
