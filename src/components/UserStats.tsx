@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -26,24 +25,140 @@ import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
 
-interface WorkoutSummary {
-  totalWorkouts: number;
-  totalDuration: number;
-  averageDuration: number;
-  workoutsByType: { name: string; value: number; }[];
-  recentWorkouts: any[];
-  totalSets: number;
+// Define an interface for the workout data structure from Supabase
+interface WorkoutSession {
+  id: string;
+  user_id: string;
+  name: string;
+  training_type: string;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  tags?: string[]; // Added tags as optional property
 }
 
-const WORKOUT_TYPE_COLORS = [
-  "#9B87F5",
-  "#D946EF",
-  "#8B5CF6",
-  "#6366F1",
-  "#4F46E5",
-  "#7E69AB"
-];
+export interface WorkoutTypeStats {
+  type: string;
+  count: number;
+  totalDuration: number;
+  percentage: number;
+  // Add time of day distribution
+  timeOfDay: {
+    morning: number;   // 5am-11am
+    afternoon: number; // 11am-5pm
+    evening: number;   // 5pm-10pm
+    night: number;     // 10pm-5am
+  };
+  // Add average duration
+  averageDuration: number;
+}
+
+export interface TopExerciseStats {
+  exerciseName: string;
+  count: number;
+  totalSets: number;
+  averageWeight: number;
+  totalVolume: number;
+  // Add preferred tags association
+  associatedTags: string[];
+  // Add trend and percentChange properties
+  trend?: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+  percentChange?: number;
+}
+
+export interface TagStats {
+  name: string;
+  count: number;
+  category: 'strength' | 'cardio' | 'recovery' | 'flexibility' | 'other';
+  associatedTypes: string[];
+  timeOfDay: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
+}
+
+export interface TimePatternStats {
+  preferredDuration: number;
+  preferredTimeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
+  durationByTimeOfDay: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
+  // Day of week patterns
+  daysFrequency: {
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+    saturday: number;
+    sunday: number;
+  };
+}
+
+// Add new interface for exercise volume tracking
+export interface ExerciseVolumeHistory {
+  exercise_name: string;
+  workouts: {
+    date: string;
+    volume: number;
+    sets: number;
+    avgWeight: number;
+  }[];
+  trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+  percentChange: number;
+}
+
+// Add muscle group tracking to workout stats
+export interface MuscleGroupDistribution {
+  group: string;
+  volume: number;
+  frequency: number;
+  percentage: number;
+}
+
+// Updated ProgressMetrics interface with correct types
+export interface ProgressMetrics {
+  volumeChange: number;
+  volumeChangePercentage: number;
+  strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
+  frequencyChange: number;
+  consistencyScore: number;
+}
+
+// Extend WorkoutStats to include advanced metrics
+export interface WorkoutStats {
+  totalWorkouts: number;
+  totalDuration: number;
+  avgDuration: number;
+  totalExercises: number;
+  totalSets: number;
+  topExercises: TopExerciseStats[];
+  workoutTypes: WorkoutTypeStats[];
+  lastWorkoutDate: string | null;
+  streakDays: number;
+  // New analytics
+  tags: TagStats[];
+  timePatterns: TimePatternStats;
+  // Personalized recommendations
+  recommendedType: string | null;
+  recommendedDuration: number | null;
+  recommendedTags: string[];
+  
+  // Advanced analytics
+  exerciseVolumeHistory: ExerciseVolumeHistory[];
+  muscleGroups: MuscleGroupDistribution[];
+  progressMetrics: ProgressMetrics;
+}
 
 export function UserStats() {
   const { user } = useAuth();
@@ -111,6 +226,16 @@ export function UserStats() {
 
   const emptyStats = !stats || stats.totalWorkouts === 0;
 
+  // Prepare data for WorkoutTypeChart
+  const workoutTypeData = stats?.workoutTypes?.map(type => ({
+    type: type.type,
+    count: type.count,
+    totalDuration: type.totalDuration,
+    percentage: type.percentage,
+    timeOfDay: type.timeOfDay,
+    averageDuration: type.averageDuration
+  })) || [];
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-white">Your Fitness Stats</h2>
@@ -154,46 +279,7 @@ export function UserStats() {
           {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Workout types distribution */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardContent className="p-4">
-                <h3 className="text-sm font-medium text-gray-400 mb-4">Workout Type Distribution</h3>
-                <div className="h-[200px]">
-                  {stats.workoutsByType.length > 0 ? (
-                    <ChartContainer
-                      config={stats.workoutsByType.reduce((config, _, i) => ({
-                        ...config,
-                        [`color${i}`]: { theme: { dark: WORKOUT_TYPE_COLORS[i % WORKOUT_TYPE_COLORS.length] } }
-                      }), {})}
-                    >
-                      <PieChart>
-                        <Pie
-                          data={stats.workoutsByType}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          dataKey="value"
-                          label={({ name, percent }) => 
-                            `${name}: ${(percent * 100).toFixed(0)}%`
-                          }
-                        >
-                          {stats.workoutsByType.map((_, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={`var(--color-color${index})`} 
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ChartContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      No workout type data available
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <WorkoutTypeChart data={workoutTypeData} />
             
             {/* Recent workouts */}
             <Card className="bg-gray-900 border-gray-800">

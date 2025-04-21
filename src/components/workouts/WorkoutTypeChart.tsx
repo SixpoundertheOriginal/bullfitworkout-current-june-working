@@ -63,34 +63,48 @@ export const WorkoutTypeChart = ({ data, className = "" }: WorkoutTypeChartProps
       </CardHeader>
       <CardContent>
         <div className="h-60">
-          <ChartContainer config={chartConfig}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={renderCustomizedLabel}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value, name) => [`${value} workouts`, name]}
-                  contentStyle={{ 
-                    backgroundColor: '#1A1F2C', 
-                    border: '1px solid #333',
-                    borderRadius: '4px'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          {chartData.length > 0 ? (
+            <ChartContainer config={chartConfig}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    stroke="#1A1F2C"
+                    strokeWidth={2}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color} 
+                        opacity={0.8}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value, name) => [`${value} workouts`, name]}
+                    contentStyle={{ 
+                      backgroundColor: '#1A1F2C', 
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      color: 'white'
+                    }}
+                    itemStyle={{ color: 'white' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              No workout data available
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-2 gap-2 mt-2">
