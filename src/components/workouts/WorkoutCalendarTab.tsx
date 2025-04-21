@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { WorkoutCalendar } from "./WorkoutCalendar";
 import { DailyWorkoutSummary } from "../workouts/DailyWorkoutSummary";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Info, BarChart3 } from "lucide-react";
+import { ArrowLeft, Info, BarChart3, Calendar } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
