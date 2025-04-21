@@ -26,34 +26,12 @@ import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { useWorkoutMetrics } from "@/hooks/useWorkoutMetrics";
 import { IntelligentMetricsDisplay } from "@/components/metrics/IntelligentMetricsDisplay";
 import { ExerciseVolumeChart } from '@/components/metrics/ExerciseVolumeChart';
+import { SmartExerciseFAB } from '@/components/SmartExerciseFAB';
 
 interface LocationState {
   trainingType?: string;
   [key: string]: any;
 }
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/sonner";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { Input } from "@/components/ui/input";
-import { Exercise, ExerciseSet } from "@/types/exercise";
-import { supabase } from "@/integrations/supabase/client";
-import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
-import { WeightUnitToggle } from "@/components/WeightUnitToggle";
-import { useWeightUnit } from "@/context/WeightUnitContext";
-import { convertWeight, formatWeightWithUnit, WeightUnit } from "@/utils/unitConversion";
-import { ExerciseFAB } from "@/components/ExerciseFAB";
-import { RestTimer } from "@/components/RestTimer";
-import { WorkoutMetrics } from "@/components/WorkoutMetrics";
-import { SetRow } from "@/components/SetRow";
-import { useExercises } from "@/hooks/useExercises";
-import { cn } from "@/lib/utils";
-import { AddExerciseBar } from "@/components/AddExerciseBar";
 
 const exerciseHistoryData = {
   "Bench Press": [
@@ -299,6 +277,8 @@ const TrainingSession = () => {
   );
   
   const [exercises, setExercises] = useState<Record<string, ExerciseSet[]>>({});
+  const [workoutTags, setWorkoutTags] = useState<string[]>([]);
+  const [showAddExerciseBar, setShowAddExerciseBar] = useState(false);
   
   useEffect(() => {
     setStartTime(new Date());
@@ -489,10 +469,34 @@ const TrainingSession = () => {
     }
   };
   
+  useEffect(() => {
+    if (trainingType) {
+      const extractedTags: string[] = [];
+      
+      const words = trainingType.split(/\s+/);
+      words.forEach(word => {
+        if (word.length > 3) {
+          extractedTags.push(word);
+        }
+      });
+      
+      if (locationState?.tags && Array.isArray(locationState.tags)) {
+        extractedTags.push(...locationState.tags);
+      }
+      
+      setWorkoutTags(Array.from(new Set(extractedTags)));
+    }
+  }, [trainingType, locationState]);
+  
   const handleSelectExercise = (exercise: Exercise) => {
     console.log("Selected exercise:", exercise);
     setSelectedExercise(exercise);
     setNewExerciseName(exercise.name);
+    setShowAddExerciseBar(true);
+  };
+  
+  const handleAddExerciseComplete = () => {
+    setShowAddExerciseBar(false);
   };
   
   const handleAddExercise = () => {
@@ -720,7 +724,6 @@ const TrainingSession = () => {
                 intensity={metrics.performance.intensity}
                 efficiency={metrics.performance.efficiency}
               />
-
               
               {Object.keys(exercises || {}).map((exerciseName) => (
                 <ExerciseCard
@@ -803,11 +806,23 @@ const TrainingSession = () => {
         )}
       </main>
       
-      <AddExerciseBar
+      <SmartExerciseFAB 
         onSelectExercise={handleSelectExercise}
-        onAddExercise={handleAddExercise}
         trainingType={trainingType}
+        tags={workoutTags}
+        visible={!showAddExerciseBar}
       />
+      
+      {showAddExerciseBar && (
+        <AddExerciseBar
+          onSelectExercise={handleSelectExercise}
+          onAddExercise={() => {
+            handleAddExercise();
+            handleAddExerciseComplete();
+          }}
+          trainingType={trainingType}
+        />
+      )}
     </div>
   );
 };
