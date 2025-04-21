@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, BarChart3, Dumbbell, Edit, Trash2, Loader2, Check, SquareCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { theme } from "@/lib/theme";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface WorkoutCardProps {
   id: string;
