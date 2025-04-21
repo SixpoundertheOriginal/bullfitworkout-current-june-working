@@ -1,8 +1,7 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useWorkoutDates } from "@/hooks/useWorkoutHistory";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -22,6 +21,7 @@ interface WorkoutCalendarProps {
 
 export const WorkoutCalendar = ({ className = "", onDatePreview }: WorkoutCalendarProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [month, setMonth] = useState<Date>(new Date());
   
   const year = month.getFullYear();
@@ -44,9 +44,11 @@ export const WorkoutCalendar = ({ className = "", onDatePreview }: WorkoutCalend
     
     if (workoutCount > 0) {
       if (onDatePreview) {
+        // Use the callback for inline viewing instead of navigation
         onDatePreview(dateString);
       } else {
-        navigate(`/training?tab=history&date=${dateString}`);
+        // This case should not happen anymore with our updated flow
+        navigate(`/training?tab=calendar&date=${dateString}`);
       }
     } else {
       // For dates without workouts, show the historical workout form
@@ -75,7 +77,7 @@ export const WorkoutCalendar = ({ className = "", onDatePreview }: WorkoutCalend
     
     return '';
   };
-
+  
   const CustomDayContent = ({ date }: { date: Date }) => {
     const dateString = date.toISOString().split('T')[0];
     const hasWorkout = workoutDates[dateString] || 0;
