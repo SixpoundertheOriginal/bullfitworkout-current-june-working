@@ -31,6 +31,13 @@ export const SmartExerciseFAB = ({
   // Ref for audio element
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Set audio volume when the component mounts
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = 0.3;
+    }
+  }, []);
+
   useEffect(() => {
     if (!exercises?.length) return;
 
@@ -123,7 +130,6 @@ export const SmartExerciseFAB = ({
         ref={audioRef}
         src="data:audio/wav;base64,UklGRvQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YVsAAAD///////8DAwICAgMDAwMDAwMDAwMD/////w=="
         preload="auto"
-        volume={0.3}
         aria-hidden="true"
         tabIndex={-1}
       />
@@ -250,4 +256,3 @@ export const SmartExerciseFAB = ({
     </div>
   );
 };
-
