@@ -43,11 +43,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    const fetchSession = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
-    });
+    };
+    
+    fetchSession();
 
     return () => {
       subscription.unsubscribe();
@@ -122,8 +125,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const value = {
+    session,
+    user,
+    signIn,
+    signUp,
+    signOut,
+    loading
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, signIn, signUp, signOut, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
