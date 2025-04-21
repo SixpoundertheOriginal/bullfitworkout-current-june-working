@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
+import { MainMenu } from "@/components/navigation/MainMenu";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -139,11 +140,7 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
       <header className="flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
-        <button className="p-2 hover:bg-gray-800/50 rounded-lg transition-colors">
-          <div className="w-6 h-0.5 bg-white/90 mb-1"></div>
-          <div className="w-6 h-0.5 bg-white/90 mb-1"></div>
-          <div className="w-6 h-0.5 bg-white/90"></div>
-        </button>
+        <MainMenu />
         <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">Today</h1>
         <UserProfile />
       </header>
