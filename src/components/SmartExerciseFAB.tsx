@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,31 +28,73 @@ export const SmartExerciseFAB = ({
   const [suggestions, setSuggestions] = useState<Exercise[]>([]);
   const { exercises } = useExercises();
 
-  // Futuristic FAB sound using Tone.js
+  // Heavier, mechanical FAB sound using Tone.js
   const playFabSound = async () => {
-    await Tone.start(); // Context must be started on user gesture
+    await Tone.start(); // Unlock audio context for browser
 
-    const synth = new Tone.MembraneSynth({
-      pitchDecay: 0.022,
-      octaves: 5.1,
-      oscillator: { type: "triangle" },
+    // 1. Heavy metallic chunk (low-pitched MembraneSynth)
+    const chunkSynth = new Tone.MembraneSynth({
+      pitchDecay: 0.05,
+      octaves: 2,
+      oscillator: { type: "sine" },
       envelope: {
         attack: 0.002,
-        decay: 0.265,
-        sustain: 0.06,
-        release: 0.23,
-        attackCurve: "exponential"
-      }
+        decay: 0.18,
+        sustain: 0.02,
+        release: 0.15,
+      },
     }).toDestination();
-    synth.volume.value = -14;
+    chunkSynth.volume.value = -6;
 
+    // 2. Mechanical sliding noise (NoiseSynth)
+    const slideSynth = new Tone.NoiseSynth({
+      noise: { type: "white" },
+      envelope: {
+        attack: 0.01,
+        decay: 0.33,
+        sustain: 0.03,
+        release: 0.08,
+      },
+    }).toDestination();
+    slideSynth.volume.value = -24;
+
+    // 3. Locking click (brief high click with MetalSynth)
+    const clickSynth = new Tone.MetalSynth({
+      frequency: 160,
+      envelope: { attack: 0.001, decay: 0.15, release: 0.12 },
+      harmonicity: 5.5,
+      modulationIndex: 31,
+      resonance: 2000,
+      octaves: 1.5,
+    }).toDestination();
+    clickSynth.volume.value = -20;
+
+    // 4. Low-frequency thud (basic synth for sub-bass impact)
+    const thud = new Tone.Synth({
+      oscillator: { type: "triangle" },
+      envelope: {
+        attack: 0.001,
+        decay: 0.23,
+        sustain: 0,
+        release: 0.18,
+      },
+    }).toDestination();
+    thud.volume.value = -13;
+
+    // Play sounds with carefully chosen timings for layering
     const now = Tone.now();
-    synth.triggerAttackRelease("C5", 0.17, now, 0.8);
-    synth.triggerAttackRelease("G5", 0.08, now + 0.11, 0.7);
+
+    chunkSynth.triggerAttackRelease("C2", 0.14, now, 0.95); // heavy metallic chunk
+    slideSynth.triggerAttackRelease("16n", now + 0.01, 0.8); // mechanical slide noise
+    clickSynth.triggerAttackRelease("C6", 0.09, now + 0.15, 0.6); // lock click
+    thud.triggerAttackRelease("C1", 0.19, now + 0.15, 1); // heavy thud
 
     setTimeout(() => {
-      synth.dispose();
-    }, 400);
+      chunkSynth.dispose();
+      slideSynth.dispose();
+      clickSynth.dispose();
+      thud.dispose();
+    }, 500); // Dispose after 0.5s
   };
 
   useEffect(() => {
