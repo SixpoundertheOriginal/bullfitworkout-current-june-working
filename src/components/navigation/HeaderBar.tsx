@@ -38,11 +38,11 @@ export const HeaderBar = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="mr-2"
+            className="mr-2 hover:bg-gray-800"
             onClick={() => navigate(-1)}
             aria-label="Go back"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 text-gray-300 hover:text-white" />
           </Button>
         )}
         <MainMenu />
