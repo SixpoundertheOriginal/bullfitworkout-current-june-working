@@ -11,24 +11,25 @@ import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InsightsDashboard } from "@/components/workouts/InsightsDashboard";
 
+// Main dashboard page for analytics & insights
 const Training = () => {
   // Fetch workout stats using the hook
   const { stats, loading } = useWorkoutStats();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get tab from URL query parameter or default to overview
   const getTabFromURL = () => {
     const params = new URLSearchParams(location.search);
     return params.get('tab') || "overview";
   };
-  
+
   const [activeTab, setActiveTab] = React.useState(getTabFromURL());
-  
+
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    
+
     // If changing to a tab other than history with date filter, remove the date filter
     if (value !== 'history') {
       navigate(`/training?tab=${value}`, { replace: true });
@@ -43,16 +44,15 @@ const Training = () => {
       }
     }
   };
-  
+
   // Update active tab state if URL changes
   useEffect(() => {
     const tabFromURL = getTabFromURL();
     if (tabFromURL !== activeTab) {
-      console.log(`URL changed, updating tab from ${activeTab} to ${tabFromURL}`);
       setActiveTab(tabFromURL);
     }
   }, [location.search]);
-  
+
   // Get date filter from URL
   const getDateFilterFromURL = () => {
     const params = new URLSearchParams(location.search);
@@ -95,24 +95,24 @@ const Training = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview" className="space-y-6">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <div className="lg:col-span-8 space-y-4">
+              // Make analytics/insights the central dashboard
+              <div className="flex flex-col gap-6">
+                {/* MAIN DASHBOARD INSIGHTS */}
+                <InsightsDashboard stats={stats} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <WorkoutSummary stats={stats} />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div className="flex flex-col gap-4">
                     <WorkoutTypeChart data={stats.workoutTypes} />
                     <TopExercisesTable exercises={stats.topExercises} />
                   </div>
-                </div>
-                
-                <div className="lg:col-span-4">
-                  <InsightsDashboard stats={stats} />
                 </div>
               </div>
             )}
