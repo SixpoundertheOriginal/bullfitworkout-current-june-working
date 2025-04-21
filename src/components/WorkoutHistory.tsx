@@ -4,11 +4,12 @@ import { WorkoutCard } from "@/components/WorkoutCard";
 import { Button } from "@/components/ui/button";
 import { History, Loader2, X, Check, SquareCheck, Undo } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
 import { deleteWorkout, restoreWorkout } from "@/services/workoutService";
 import { toast } from "@/components/ui/sonner";
 import { BulkWorkoutActions } from "./BulkWorkoutActions";
+import { CollapsibleHistorySection } from "./workouts/CollapsibleHistorySection";
 
 interface WorkoutHistoryProps {
   limit?: number;
@@ -111,6 +112,24 @@ export const WorkoutHistory = ({
     refetch();
   };
   
+  const groupWorkouts = (workouts: any[]) => {
+    const today = new Date();
+    const yesterday = subDays(today, 1);
+    
+    return {
+      today: workouts.filter(w => 
+        new Date(w.start_time).toDateString() === today.toDateString()
+      ),
+      yesterday: workouts.filter(w => 
+        new Date(w.start_time).toDateString() === yesterday.toDateString()
+      ),
+      earlier: workouts.filter(w => 
+        new Date(w.start_time) < yesterday && 
+        new Date(w.start_time).toDateString() !== yesterday.toDateString()
+      )
+    };
+  };
+
   if (isLoading) {
     return (
       <div className={`flex justify-center items-center py-8 ${className}`}>
@@ -140,6 +159,8 @@ export const WorkoutHistory = ({
   
   const { workouts, exerciseCounts } = data;
   
+  const groupedWorkouts = groupWorkouts(workouts);
+
   if (workouts.length === 0) {
     return (
       <div className={`text-center py-8 ${className}`}>
@@ -230,25 +251,84 @@ export const WorkoutHistory = ({
         </div>
       )}
       
-      <div className="space-y-3">
-        {workouts.map(workout => (
-          <WorkoutCard
-            key={workout.id}
-            id={workout.id}
-            name={workout.name}
-            type={workout.training_type}
-            date={workout.start_time}
-            duration={workout.duration}
-            exerciseCount={exerciseCounts[workout.id]?.exercises || 0}
-            setCount={exerciseCounts[workout.id]?.sets || 0}
-            onEdit={() => handleEditWorkout(workout.id)}
-            onDelete={() => handleDeleteWorkout(workout.id)}
-            isDeleting={deletingWorkoutId === workout.id}
-            selectionMode={selectionMode}
-            isSelected={selectedWorkouts.includes(workout.id)}
-            onToggleSelection={() => toggleWorkoutSelection(workout.id)}
-          />
-        ))}
+      <div className="space-y-4">
+        {groupedWorkouts.today.length > 0 && (
+          <CollapsibleHistorySection title="Today">
+            <div className="space-y-3">
+              {groupedWorkouts.today.map(workout => (
+                <WorkoutCard
+                  key={workout.id}
+                  id={workout.id}
+                  name={workout.name}
+                  type={workout.training_type}
+                  date={workout.start_time}
+                  duration={workout.duration}
+                  exerciseCount={exerciseCounts[workout.id]?.exercises || 0}
+                  setCount={exerciseCounts[workout.id]?.sets || 0}
+                  onEdit={() => handleEditWorkout(workout.id)}
+                  onDelete={() => handleDeleteWorkout(workout.id)}
+                  isDeleting={deletingWorkoutId === workout.id}
+                  selectionMode={selectionMode}
+                  isSelected={selectedWorkouts.includes(workout.id)}
+                  onToggleSelection={() => toggleWorkoutSelection(workout.id)}
+                />
+              ))}
+            </div>
+          </CollapsibleHistorySection>
+        )}
+
+        {groupedWorkouts.yesterday.length > 0 && (
+          <CollapsibleHistorySection title="Yesterday">
+            <div className="space-y-3">
+              {groupedWorkouts.yesterday.map(workout => (
+                <WorkoutCard
+                  key={workout.id}
+                  id={workout.id}
+                  name={workout.name}
+                  type={workout.training_type}
+                  date={workout.start_time}
+                  duration={workout.duration}
+                  exerciseCount={exerciseCounts[workout.id]?.exercises || 0}
+                  setCount={exerciseCounts[workout.id]?.sets || 0}
+                  onEdit={() => handleEditWorkout(workout.id)}
+                  onDelete={() => handleDeleteWorkout(workout.id)}
+                  isDeleting={deletingWorkoutId === workout.id}
+                  selectionMode={selectionMode}
+                  isSelected={selectedWorkouts.includes(workout.id)}
+                  onToggleSelection={() => toggleWorkoutSelection(workout.id)}
+                />
+              ))}
+            </div>
+          </CollapsibleHistorySection>
+        )}
+
+        {groupedWorkouts.earlier.length > 0 && (
+          <CollapsibleHistorySection 
+            title="Earlier" 
+            defaultOpen={false}
+          >
+            <div className="space-y-3">
+              {groupedWorkouts.earlier.map(workout => (
+                <WorkoutCard
+                  key={workout.id}
+                  id={workout.id}
+                  name={workout.name}
+                  type={workout.training_type}
+                  date={workout.start_time}
+                  duration={workout.duration}
+                  exerciseCount={exerciseCounts[workout.id]?.exercises || 0}
+                  setCount={exerciseCounts[workout.id]?.sets || 0}
+                  onEdit={() => handleEditWorkout(workout.id)}
+                  onDelete={() => handleDeleteWorkout(workout.id)}
+                  isDeleting={deletingWorkoutId === workout.id}
+                  selectionMode={selectionMode}
+                  isSelected={selectedWorkouts.includes(workout.id)}
+                  onToggleSelection={() => toggleWorkoutSelection(workout.id)}
+                />
+              ))}
+            </div>
+          </CollapsibleHistorySection>
+        )}
       </div>
     </div>
   );
