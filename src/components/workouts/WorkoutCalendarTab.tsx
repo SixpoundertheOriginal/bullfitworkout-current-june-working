@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import { WorkoutCalendar } from "./WorkoutCalendar";
 import { DailyWorkoutSummary } from "../workouts/DailyWorkoutSummary";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Info, PieChart, BarChart3 } from "lucide-react";
+import { ArrowLeft, Info, BarChart3 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,10 +92,19 @@ export const WorkoutCalendarTab = () => {
     
     // Calculate intensity (percent of max weight used)
     const totalWeight = exerciseSets.sets.reduce((sum, set) => {
-      return sum + Number(set.weight);
+      // Convert the weight to a number if it's not already
+      const weight = typeof set.weight === 'string' ? parseFloat(set.weight) : set.weight;
+      return sum + (isNaN(weight) ? 0 : weight);
     }, 0);
+    
     const avgWeight = totalWeight / exerciseSets.sets.length;
-    const maxWeight = Math.max(...exerciseSets.sets.map(set => Number(set.weight)));
+    
+    // Find the max weight among all sets
+    const maxWeight = Math.max(...exerciseSets.sets.map(set => {
+      const weight = typeof set.weight === 'string' ? parseFloat(set.weight) : set.weight;
+      return isNaN(weight) ? 0 : weight;
+    }));
+    
     const intensity = maxWeight > 0 ? (avgWeight / maxWeight) * 100 : 0;
     
     // Calculate efficiency (completed sets / total sets)
