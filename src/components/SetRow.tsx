@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -134,7 +133,7 @@ export const SetRow = ({
                       updateWeight(Number(e.target.value));
                     }}
                     className={cn(
-                      "workout-number-input text-center flex-1",
+                      "workout-number-input text-center flex-1 value-text",
                       isAutoWeight && "italic text-gray-400"
                     )}
                     placeholder={isIsometric ? "Optional weight" : "Weight"}
@@ -169,7 +168,7 @@ export const SetRow = ({
                 step="5"
                 value={duration}
                 onChange={onDurationChange}
-                className="workout-number-input text-center flex-1"
+                className="workout-number-input text-center flex-1 value-text"
                 placeholder="Duration (seconds)"
               />
               <button 
@@ -195,7 +194,7 @@ export const SetRow = ({
                 step="1"
                 value={reps}
                 onChange={onRepsChange}
-                className="workout-number-input text-center flex-1"
+                className="workout-number-input text-center flex-1 value-text"
                 placeholder="Reps"
               />
               <button 
@@ -225,7 +224,7 @@ export const SetRow = ({
               value={restTime || 60}
               onChange={handleManualRestTimeChange}
               disabled={!onRestTimeChange}
-              className="workout-number-input text-center flex-1"
+              className="workout-number-input text-center flex-1 value-text"
               onBlur={(e) => {
                 if (parseInt(e.target.value) < 0 || e.target.value === '') {
                   if (onRestTimeChange) {
@@ -272,15 +271,18 @@ export const SetRow = ({
                 <div 
                   className={cn(
                     "flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200",
-                    isAutoWeight && "italic text-gray-400"
+                    isAutoWeight && "italic text-gray-400",
+                    "value-text"
                   )}
                   onClick={onEdit}
                 >
-                  <span className="font-medium">
+                  <span className="font-mono font-semibold text-white value-text">
                     {displayWeight}
-                    {isAutoWeight && " (auto)"}
                   </span>
-                  <span className="text-xs text-gray-400">{globalWeightUnit}</span>
+                  {isAutoWeight && (
+                    <span className="italic text-gray-400 value-text"> (auto)</span>
+                  )}
+                  <span className="text-xs text-gray-300 ml-1 value-text">{globalWeightUnit}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -294,24 +296,24 @@ export const SetRow = ({
             onClick={onEdit}
           >
             {isIsometric ? (
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-white/90 value-text">
                 {duration > 0 ? formatDuration(duration) : "Not set"} hold
               </span>
             ) : (
               <>
-                <span className="font-medium">{reps}</span>
-                <span className="text-xs text-gray-400">reps</span>
+                <span className="font-mono font-semibold text-white value-text">{reps}</span>
+                <span className="text-xs text-gray-300 ml-1 value-text">reps</span>
               </>
             )}
           </div>
           
           <div className="flex items-center justify-start gap-2 text-gray-400">
             <Timer size={16} className="text-purple-400" />
-            <span className="font-mono text-sm">
+            <span className="font-mono text-sm text-white value-text">
               {formatRestTime(restTime)}
             </span>
             {currentVolume && (
-              <span className="ml-2 text-sm text-emerald-400">
+              <span className="ml-2 text-sm text-emerald-400 font-mono value-text">
                 Vol: {currentVolume} {weightUnit}
               </span>
             )}

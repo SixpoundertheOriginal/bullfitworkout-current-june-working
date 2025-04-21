@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -63,5 +62,9 @@
   /* Fix for exercise suggestion boxes */
   .exercise-suggestion {
     @apply text-white bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50;
+  }
+
+  .value-text {
+    @apply text-white font-mono;
   }
 }
