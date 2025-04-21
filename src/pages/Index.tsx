@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
@@ -52,7 +51,11 @@ const Index = () => {
     });
     
     // Display level up animation for first training of the day
-    if (!stats?.workoutsToday || stats?.workoutsToday === 0) {
+    // Check if there are any workouts today using lastWorkoutDate instead of workoutsToday
+    const isFirstWorkoutToday = !stats?.lastWorkoutDate || 
+      new Date(stats.lastWorkoutDate).toDateString() !== new Date().toDateString();
+      
+    if (isFirstWorkoutToday) {
       setShowLevelUp(true);
       
       // Reset after animation completes
