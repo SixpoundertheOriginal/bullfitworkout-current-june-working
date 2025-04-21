@@ -71,24 +71,24 @@ const Training = () => {
           onValueChange={handleTabChange} 
           className="space-y-4"
         >
-          <TabsList className="bg-gray-900 border-gray-800 grid grid-cols-3">
+          <TabsList className="bg-gray-900 border border-gray-800 grid grid-cols-3">
             <TabsTrigger 
               value="overview"
-              className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600 text-white"
             >
               <Sparkles className="h-4 w-4" />
               Overview
             </TabsTrigger>
             <TabsTrigger 
               value="calendar" 
-              className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600 text-gray-300 hover:text-white"
             >
               <Calendar className="h-4 w-4" />
               Calendar
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="flex items-center gap-2 data-[state=active]:bg-purple-600"
+              className="flex items-center gap-2 data-[state=active]:bg-purple-600 text-gray-300 hover:text-white"
             >
               <History className="h-4 w-4" />
               History
@@ -104,29 +104,35 @@ const Training = () => {
               // Make analytics/insights the central dashboard
               <div className="flex flex-col gap-6">
                 {/* MAIN DASHBOARD INSIGHTS */}
-                <InsightsDashboard stats={stats} />
+                <InsightsDashboard stats={stats} className="bg-gray-900/80 rounded-lg p-4" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <WorkoutSummary stats={stats} />
+                  <WorkoutSummary 
+                    stats={stats} 
+                    className="bg-gray-900/80 rounded-lg p-4" 
+                  />
 
                   <div className="flex flex-col gap-4">
-                    <WorkoutTypeChart data={stats.workoutTypes} />
-                    <TopExercisesTable exercises={stats.topExercises} />
+                    <WorkoutTypeChart data={stats.workoutTypes} className="bg-gray-900/80 rounded-lg p-4" />
+                    <TopExercisesTable 
+                      exercises={stats.topExercises} 
+                      className="bg-gray-900/80 rounded-lg p-4" 
+                    />
                   </div>
                 </div>
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="calendar">
+          <TabsContent value="calendar" className="bg-gray-900/80 rounded-lg p-4">
             <WorkoutCalendarTab />
           </TabsContent>
 
-          <TabsContent value="history">
+          <TabsContent value="history" className="mt-4 bg-gray-900/80 rounded-lg p-4">
             <WorkoutHistory 
-              className="mt-4" 
               dateFilter={getDateFilterFromURL()}
               limit={20}
+              className="text-white"
             />
           </TabsContent>
         </Tabs>
