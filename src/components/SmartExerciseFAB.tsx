@@ -8,6 +8,7 @@ import { useExercises } from "@/hooks/useExercises";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { Badge } from "@/components/ui/badge";
+import * as Tone from "tone";
 
 interface SmartExerciseFABProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -28,22 +29,38 @@ export const SmartExerciseFAB = ({
   const [suggestions, setSuggestions] = useState<Exercise[]>([]);
   const { exercises } = useExercises();
 
-  // Ref for audio element
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Futuristic FAB sound using Tone.js
+  const playFabSound = async () => {
+    await Tone.start(); // Context must be started on user gesture
 
-  // Set audio volume when the component mounts
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.3;
-    }
-  }, []);
+    const synth = new Tone.MembraneSynth({
+      pitchDecay: 0.022,
+      octaves: 5.1,
+      oscillator: { type: "triangle" },
+      envelope: {
+        attack: 0.002,
+        decay: 0.265,
+        sustain: 0.06,
+        release: 0.23,
+        attackCurve: "exponential"
+      }
+    }).toDestination();
+    synth.volume.value = -14;
+
+    const now = Tone.now();
+    synth.triggerAttackRelease("C5", 0.17, now, 0.8);
+    synth.triggerAttackRelease("G5", 0.08, now + 0.11, 0.7);
+
+    setTimeout(() => {
+      synth.dispose();
+    }, 400);
+  };
 
   useEffect(() => {
     if (!exercises?.length) return;
 
     const scoreExercise = (exercise: Exercise): number => {
       let score = 0;
-
       if (trainingType.toLowerCase().includes("strength") && exercise.is_compound) {
         score += 3;
       } else if (
@@ -53,7 +70,6 @@ export const SmartExerciseFAB = ({
       ) {
         score += 3;
       }
-
       if (tags.some((tag) => tag.toLowerCase() === "push") && exercise.movement_pattern === "push") {
         score += 2;
       } else if (
@@ -67,12 +83,10 @@ export const SmartExerciseFAB = ({
         exercise.primary_muscle_groups.some((muscle) => muscle.toLowerCase().includes(tag.toLowerCase()))
       );
       score += muscleMatches.length * 2;
-
       const secondaryMuscleMatches = tags.filter((tag) =>
         exercise.secondary_muscle_groups.some((muscle) => muscle.toLowerCase().includes(tag.toLowerCase()))
       );
       score += secondaryMuscleMatches.length;
-
       return score;
     };
 
@@ -85,12 +99,9 @@ export const SmartExerciseFAB = ({
     setSuggestions(topSuggestions);
   }, [exercises, trainingType, tags]);
 
-  const handleToggleExpand = () => {
-    // Play the futuristic click sound
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
-    }
+  const handleToggleExpand = async () => {
+    // Play the futuristic Tone.js FAB sound
+    await playFabSound();
 
     setIsExpanded(!isExpanded);
 
@@ -104,7 +115,6 @@ export const SmartExerciseFAB = ({
   const handleSelectExercise = (exercise: Exercise) => {
     onSelectExercise(exercise);
     setIsExpanded(false);
-
     toast.success(`Added ${exercise.name} to your workout`, {
       style: {
         backgroundColor: "rgba(20, 20, 20, 0.9)",
@@ -126,13 +136,7 @@ export const SmartExerciseFAB = ({
         className
       )}
     >
-      <audio
-        ref={audioRef}
-        src="data:audio/wav;base64,UklGRvQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YVsAAAD///////8DAwICAgMDAwMDAwMDAwMD/////w=="
-        preload="auto"
-        aria-hidden="true"
-        tabIndex={-1}
-      />
+      {/* Tone.js handles sound. No <audio> element needed. */}
 
       <AnimatePresence>
         {isExpanded && (
