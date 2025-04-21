@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -795,4 +796,52 @@ const TrainingSession = () => {
                 "Push": ["Bench Press", "Shoulder Press", "Tricep Extensions"],
                 "Pull": ["Pull-ups", "Barbell Rows", "Bicep Curls"],
                 "Legs": ["Squats", "Deadlifts", "Leg Press"],
-                "Full Body": ["Bench Press",
+                "Full Body": ["Bench Press", "Pull-ups", "Squats", "Shoulder Press"]
+              };
+
+              const exercises = templateExercises[templateType] || [];
+              
+              const newExercises: Record<string, ExerciseSet[]> = {};
+              exercises.forEach(exercise => {
+                newExercises[exercise] = [
+                  { 
+                    weight: 0, 
+                    reps: 0, 
+                    completed: false, 
+                    isEditing: false, 
+                    restTime: 60,
+                    set_number: 1,
+                    exercise_name: exercise,
+                    workout_id: ''
+                  }
+                ];
+              });
+              
+              setExercises(newExercises);
+              if (exercises.length > 0) {
+                setCurrentExercise(exercises[0]);
+              }
+            }}
+          />
+        )}
+      </main>
+      
+      {showAddExerciseBar && (
+        <AddExerciseBar
+          onSelectExercise={handleSelectExercise}
+          onAddExercise={handleAddExercise}
+          trainingType={trainingType}
+        />
+      )}
+
+      <SmartExerciseFAB
+        onSelectExercise={handleSelectExercise}
+        trainingType={trainingType}
+        tags={workoutTags}
+        visible={!showAddExerciseBar}
+      />
+    </div>
+  );
+};
+
+export default TrainingSession;
