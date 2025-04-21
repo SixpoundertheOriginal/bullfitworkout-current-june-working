@@ -33,16 +33,16 @@ export const HeaderBar = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center">
         {showBackButton && (
           <Button
             variant="ghost"
             size="icon"
-            className="mr-2 hover:bg-gray-800"
+            className="mr-2"
             onClick={() => navigate(-1)}
             aria-label="Go back"
           >
-            <ChevronLeft className="h-5 w-5 text-gray-300 hover:text-white" />
+            <ChevronLeft className="h-5 w-5 text-gray-300" />
           </Button>
         )}
         <MainMenu />
