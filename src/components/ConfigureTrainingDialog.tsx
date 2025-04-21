@@ -13,7 +13,7 @@ import { QuickSetupTemplates } from "./training/QuickSetupTemplates";
 import { cn } from "@/lib/utils";
 import { useWorkoutRecommendations } from "@/hooks/useWorkoutRecommendations";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, Check, X, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, X, Info, Dumbbell, Bike, Heart, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { typography } from "@/lib/typography";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

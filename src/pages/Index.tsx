@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
@@ -12,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { StartTrainingButton } from "@/components/training/StartTrainingButton";
 import { motion } from "framer-motion";
 import { typography } from "@/lib/typography";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const navigate = useNavigate();
