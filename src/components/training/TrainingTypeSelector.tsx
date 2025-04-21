@@ -1,13 +1,12 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Heart, Activity, Star, Award, Medal } from "lucide-react";
+import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { AnimatePresence, motion } from "framer-motion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion } from "framer-motion";
 import { typography } from '@/lib/typography';
 
 interface TrainingTypeSelectorProps {
@@ -74,63 +73,14 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   }
 ];
 
-// Animation variants for the cards
-const cardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.9 },
-  visible: (index: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      delay: index * 0.1,
-      duration: 0.5,
-      type: "spring",
-      stiffness: 100,
-      damping: 15
-    }
-  }),
-  hover: {
-    y: -5,
-    scale: 1.05,
-    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 20
-    }
-  },
-  tap: {
-    scale: 0.95,
-    boxShadow: "0 5px 10px rgba(0, 0, 0, 0.1)",
-    transition: {
-      type: "spring",
-      stiffness: 500,
-      damping: 15
-    }
-  },
-  selected: {
-    y: -8,
-    scale: 1.08,
-    boxShadow: "0 15px 30px rgba(0, 0, 0, 0.3)",
-    transition: {
-      type: "spring",
-      stiffness: 200,
-      damping: 25
-    }
-  }
-};
-
 export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSelectorProps) {
   const { user } = useAuth();
   const { stats } = useWorkoutStats();
-  const [hoveredType, setHoveredType] = useState<string | null>(null);
-  const [selectedCard, setSelectedCard] = useState<string | null>(selectedType);
-  const [showUnlockAnimation, setShowUnlockAnimation] = useState<string | null>(null);
-  
-  useEffect(() => {
-    setSelectedCard(selectedType);
-  }, [selectedType]);
-  
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
   const { data: customTypes } = useQuery({
     queryKey: ['customTrainingTypes'],
     queryFn: async () => {
@@ -145,291 +95,157 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     enabled: !!user
   });
 
-  const getTypeSize = (typeName: string) => {
-    const typeStats = stats?.workoutTypes?.find(t => t.type === typeName);
-    if (!typeStats || !stats?.totalWorkouts) return "md";
-    
-    const totalWorkouts = stats.totalWorkouts;
-    const percentage = (typeStats.count / totalWorkouts) * 100;
-    
-    if (percentage > 30) return "lg";
-    if (percentage > 15) return "md";
-    return "sm";
+  useEffect(() => {
+    if (scrollRef.current && selectedType) {
+      const container = scrollRef.current;
+      const selectedElement = container.querySelector(`[data-type="${selectedType}"]`);
+      
+      if (selectedElement) {
+        const containerWidth = container.offsetWidth;
+        const elementWidth = selectedElement.clientWidth;
+        const elementLeft = (selectedElement as HTMLElement).offsetLeft;
+        
+        container.scrollTo({
+          left: elementLeft - (containerWidth / 2) + (elementWidth / 2),
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [selectedType]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current!.offsetLeft);
+    setScrollLeft(scrollRef.current!.scrollLeft);
   };
 
-  const handleSelectType = (typeName: string) => {
-    setSelectedCard(typeName);
-    onSelect(typeName);
-    
-    // Show unlock animation effect if it's first time selecting
-    if (!showUnlockAnimation && !selectedType) {
-      setShowUnlockAnimation(typeName);
-      setTimeout(() => setShowUnlockAnimation(null), 2000);
-    }
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
-  
-  // Particle animation component for selection effect
-  const SelectionParticles = ({ active }: { active: boolean }) => {
-    return (
-      <AnimatePresence>
-        {active && (
-          <div className="absolute inset-0 pointer-events-none">
-            {[...Array(10)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ 
-                  x: "50%", 
-                  y: "50%", 
-                  opacity: 1,
-                  scale: 0
-                }}
-                animate={{
-                  x: `${50 + (Math.random() * 100 - 50)}%`,
-                  y: `${50 + (Math.random() * 100 - 50)}%`,
-                  opacity: 0,
-                  scale: Math.random() * 0.5 + 0.5,
-                  rotate: Math.random() * 360
-                }}
-                transition={{
-                  duration: 1 + Math.random(),
-                  ease: "easeOut"
-                }}
-                className="absolute w-2 h-2 bg-white rounded-full"
-                style={{
-                  boxShadow: "0 0 10px 2px rgba(255, 255, 255, 0.7)"
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </AnimatePresence>
-    );
-  };
-  
-  // Level badge component
-  const LevelBadge = ({ level }: { level: number }) => {
-    return (
-      <div className="absolute top-2 right-2 z-20">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, type: "spring" }}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm border border-white/20"
-        >
-          <Star className="w-4 h-4 text-yellow-300" />
-          <span className="absolute text-xs font-bold text-white">{level}</span>
-        </motion.div>
-      </div>
-    );
-  };
-  
-  // XP bar component
-  const XPBar = ({ xp }: { xp: number }) => {
-    return (
-      <div className="absolute bottom-2 left-2 right-2 h-1 bg-black/30 rounded-full overflow-hidden z-20">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${xp}%` }}
-          transition={{ delay: 0.5, duration: 1 }}
-          className="h-full bg-gradient-to-r from-yellow-400 to-yellow-300"
-        />
-      </div>
-    );
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current!.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current!.scrollLeft = scrollLeft - walk;
   };
 
   return (
-    <div className="space-y-6">
-      <div className="relative py-3">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500/10 via-purple-500/30 to-purple-500/10"
-        />
-        <motion.h3
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className={cn(typography.headings.primary, "text-center text-lg mb-1")}
-        >
-          Select Your Character Class
-        </motion.h3>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className={cn(typography.text.secondary, "text-center text-sm")}
-        >
-          Choose your training style and unlock special abilities
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500/10 via-purple-500/30 to-purple-500/10"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="w-full overflow-hidden">
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto px-4 py-6 snap-x snap-mandatory scrollbar-none"
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseUp}
+      >
         {DEFAULT_TRAINING_TYPES.map((type, index) => {
-          const isSelected = selectedCard === type.name;
-          const isHovered = hoveredType === type.name;
-          const showUnlock = showUnlockAnimation === type.name;
+          const isSelected = selectedType === type.name;
           
           return (
-            <motion.div 
+            <motion.div
               key={type.name}
-              custom={index}
-              initial="hidden"
-              animate="visible"
-              variants={cardVariants}
-              className="flex flex-col items-center space-y-3"
+              className={cn(
+                "flex-shrink-0 snap-center",
+                "w-[280px] h-[280px]",
+                "transition-all duration-300",
+                isSelected ? "scale-100" : "scale-90 hover:scale-95"
+              )}
+              onClick={() => onSelect(type.name)}
+              data-type={type.name}
+              whileHover={{ scale: isSelected ? 1 : 0.95 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <motion.button
-                onHoverStart={() => setHoveredType(type.name)}
-                onHoverEnd={() => setHoveredType(null)}
-                onClick={() => handleSelectType(type.name)}
-                whileHover="hover"
-                whileTap="tap"
-                animate={isSelected ? "selected" : "visible"}
-                variants={cardVariants}
-                custom={index}
+              <div
                 className={cn(
-                  "relative overflow-hidden w-full aspect-square rounded-2xl flex flex-col items-center justify-center",
+                  "w-full h-full rounded-3xl p-6",
+                  "flex flex-col items-center justify-center gap-4",
+                  "bg-gradient-to-br shadow-lg cursor-pointer",
                   "transition-all duration-300",
-                  "bg-gradient-to-br shadow-lg",
                   isSelected ? [
-                    type.activeGradient,
+                    `${type.activeGradient}`,
                     "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
                   ] : type.gradient,
-                  "border border-white/10",
-                  "transform perspective-1000"
+                  "relative overflow-hidden"
                 )}
               >
-                {/* Level indicator */}
-                {type.level && <LevelBadge level={type.level} />}
-                
-                {/* XP bar */}
-                {type.xp && <XPBar xp={type.xp} />}
-                
-                {/* Selection particles effect */}
-                <SelectionParticles active={showUnlock} />
-                
-                {/* Pulse effect for selected item */}
-                {isSelected && (
-                  <motion.div 
-                    className="absolute inset-0 bg-white/10 rounded-2xl"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ 
-                      opacity: [0.1, 0.2, 0.1], 
-                      scale: [0.8, 1.1, 0.8] 
-                    }}
-                    transition={{ 
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatType: "loop"
-                    }}
-                  />
+                {type.level && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm">
+                      <span className="text-xs font-bold text-white">Lv{type.level}</span>
+                    </div>
+                  </div>
                 )}
-                
-                {/* Hover effect */}
-                <motion.div 
-                  className="absolute inset-0 bg-white/5 rounded-2xl"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isHovered && !isSelected ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                />
-                
-                <div className={cn(
-                  "relative z-10 flex flex-col items-center justify-center h-full w-full p-4",
-                  "transition-all duration-300",
-                )}>
-                  <motion.div 
-                    className="mb-2 p-3 rounded-full bg-white/10 backdrop-blur-sm"
-                    animate={isSelected ? { 
-                      y: [0, -5, 0],
-                      scale: [1, 1.1, 1]
-                    } : {}}
-                    transition={{
-                      duration: 2,
-                      repeat: isSelected ? Infinity : 0,
-                      repeatType: "loop"
-                    }}
-                  >
+
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className={cn(
+                    "mb-4 p-4 rounded-full",
+                    "bg-white/10 backdrop-blur-sm",
+                    "transition-all duration-300"
+                  )}>
                     {type.icon}
-                  </motion.div>
-                  <span className={cn(
+                  </div>
+                  
+                  <h3 className={cn(
                     typography.headings.primary,
-                    "text-lg transition-all duration-300",
-                    isSelected ? "text-white" : "text-white/90"
+                    "text-2xl mb-2"
                   )}>
                     {type.name}
-                  </span>
+                  </h3>
                   
-                  <AnimatePresence>
-                    {isSelected && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="text-center mt-2"
-                      >
-                        <p className="text-xs text-white/80 mb-2">{type.description}</p>
-                        <ul className="text-left text-xs text-white/70 space-y-1">
-                          {type.benefits.map((benefit, i) => (
-                            <motion.li 
-                              key={i}
-                              initial={{ opacity: 0, x: -5 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.3 + (i * 0.1) }}
-                              className="flex items-center"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-white/50 mr-1.5 flex-shrink-0" />
-                              {benefit}
-                            </motion.li>
-                          ))}
-                        </ul>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                
-                {/* "Unlocked" animation overlay */}
-                <AnimatePresence>
-                  {showUnlock && (
+                  <p className={cn(
+                    typography.text.secondary,
+                    "text-sm mb-4"
+                  )}>
+                    {type.description}
+                  </p>
+
+                  {isSelected && (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center rounded-2xl z-30"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex flex-col items-center"
                     >
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: [0, 1.2, 1] }}
-                        transition={{ duration: 0.5, type: "spring" }}
-                        className="flex flex-col items-center"
-                      >
-                        <Medal className="w-10 h-10 text-yellow-400 mb-2" />
-                        <p className="text-white font-bold text-lg">Unlocked!</p>
-                        <p className="text-white/80 text-xs">New abilities available</p>
-                      </motion.div>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {type.benefits.slice(0, 2).map((benefit, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/90"
+                          >
+                            {benefit}
+                          </span>
+                        ))}
+                      </div>
                     </motion.div>
                   )}
-                </AnimatePresence>
-              </motion.button>
+                </div>
+
+                {type.xp && (
+                  <div className="absolute bottom-4 left-4 right-4 h-1 bg-black/30 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${type.xp}%` }}
+                      transition={{ delay: 0.5, duration: 1 }}
+                      className="h-full bg-gradient-to-r from-white/30 to-white/10"
+                    />
+                  </div>
+                )}
+              </div>
             </motion.div>
           );
         })}
-        
+
         {customTypes?.map((type) => (
           <div 
             key={type.id} 
-            className="flex flex-col items-center space-y-2"
+            className="flex-shrink-0 snap-center flex flex-col items-center space-y-2"
           >
             <button
               onClick={() => onSelect(type.name)}
               className={cn(
-                "w-full aspect-square rounded-2xl flex items-center justify-center",
+                "w-[280px] h-[280px] rounded-3xl flex items-center justify-center",
                 "transition-all duration-300",
                 "bg-gradient-to-br shadow-lg border border-white/10",
                 `from-[${type.color_start}] to-[${type.color_end}]`,
@@ -455,20 +271,6 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           </div>
         ))}
       </div>
-
-      {selectedType && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-center py-2 text-center mt-4"
-        >
-          <div className="px-6 py-3 bg-black/20 rounded-full backdrop-blur-sm border border-white/10 flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-            <span className={cn(typography.text.primary, "font-semibold")}>{selectedType}</span>
-            <span className={typography.text.muted}>selected</span>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }
