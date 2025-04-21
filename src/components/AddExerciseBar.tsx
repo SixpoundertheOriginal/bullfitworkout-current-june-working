@@ -8,6 +8,7 @@ import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
 import { Exercise } from "@/types/exercise";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
+import { theme } from "@/lib/theme";
 
 interface AddExerciseBarProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -42,7 +43,7 @@ export function AddExerciseBar({
           )}>
             <ExerciseAutocomplete 
               onSelectExercise={onSelectExercise} 
-              className="w-full bg-gray-800/50 border-gray-700/50"
+              className="w-full bg-gray-800/50 border-gray-700/50 text-white"
             />
           </div>
           <Button 
@@ -55,11 +56,12 @@ export function AddExerciseBar({
               "hover:scale-[1.02] active:scale-[0.98]",
               "shadow-lg hover:shadow-purple-500/25",
               "border border-purple-500/20",
+              "text-white",
               isMobile ? "order-1 w-full flex justify-center items-center gap-2" : "order-2"
             )}
           >
             <Plus className="w-5 h-5" />
-            {isMobile && <span>Add Exercise</span>}
+            {isMobile && <span className={theme.textStyles.primary}>Add Exercise</span>}
           </Button>
         </div>
       </div>

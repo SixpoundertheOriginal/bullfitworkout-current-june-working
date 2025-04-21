@@ -31,6 +31,7 @@ export const theme = {
     tertiary: "text-white/60",
     data: "font-mono text-white",
     heading: "text-white font-semibold",
+    button: "text-white font-medium"
   }
 };
 

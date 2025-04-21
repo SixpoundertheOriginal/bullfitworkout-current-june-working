@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Search, Plus, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { theme } from "@/lib/theme";
 
 interface ExerciseQuickSelectProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -33,11 +34,11 @@ export function ExerciseQuickSelect({
               key={exercise.id}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50"
+              className="flex items-center gap-2 bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50 text-white exercise-suggestion"
               onClick={() => onSelectExercise(exercise)}
             >
               <Dumbbell className="w-4 h-4 text-purple-400" />
-              {exercise.name}
+              <span className={theme.textStyles.primary}>{exercise.name}</span>
             </Button>
           ))}
         </div>
