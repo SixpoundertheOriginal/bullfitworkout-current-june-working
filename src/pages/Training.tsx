@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
@@ -10,15 +9,13 @@ import { Calendar, Loader2, History, Sparkles, ArrowLeft } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InsightsDashboard } from "@/components/workouts/InsightsDashboard";
+import { HeaderBar } from "@/components/navigation/HeaderBar";
 
-// Main dashboard page for analytics & insights
 const Training = () => {
-  // Fetch workout stats using the hook
   const { stats, loading } = useWorkoutStats();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get tab from URL query parameter or default to overview
   const getTabFromURL = () => {
     const params = new URLSearchParams(location.search);
     return params.get('tab') || "overview";
@@ -26,15 +23,12 @@ const Training = () => {
 
   const [activeTab, setActiveTab] = React.useState(getTabFromURL());
 
-  // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
 
-    // If changing to a tab other than history with date filter, remove the date filter
     if (value !== 'history') {
       navigate(`/training?tab=${value}`, { replace: true });
     } else {
-      // Preserve date parameter if present when switching to history tab
       const params = new URLSearchParams(location.search);
       const dateParam = params.get('date');
       if (dateParam) {
@@ -45,7 +39,6 @@ const Training = () => {
     }
   };
 
-  // Update active tab state if URL changes
   useEffect(() => {
     const tabFromURL = getTabFromURL();
     if (tabFromURL !== activeTab) {
@@ -53,7 +46,6 @@ const Training = () => {
     }
   }, [location.search]);
 
-  // Get date filter from URL
   const getDateFilterFromURL = () => {
     const params = new URLSearchParams(location.search);
     return params.get('date');
@@ -61,8 +53,8 @@ const Training = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Container with consistent dark background */}
-      <div className="container max-w-7xl mx-auto p-4 pb-20 bg-gray-900">
+      <HeaderBar />
+      <div className="container max-w-7xl mx-auto p-4 pb-20 bg-gray-900 mt-16">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <button
@@ -111,9 +103,7 @@ const Training = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
               </div>
             ) : (
-              // Make analytics/insights the central dashboard
               <div className="flex flex-col gap-6 text-white">
-                {/* MAIN DASHBOARD INSIGHTS */}
                 <InsightsDashboard stats={stats} className="bg-gray-900/80 rounded-lg p-4" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -152,4 +142,3 @@ const Training = () => {
 };
 
 export default Training;
-

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -11,8 +10,8 @@ import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HeaderBar } from "@/components/navigation/HeaderBar";
 
-// Define user profile type
 export type UserProfileData = {
   full_name: string | null;
   age: number | null;
@@ -58,7 +57,6 @@ const ProfilePage = () => {
         if (data) {
           setProfileData(data);
         } else {
-          // Initialize with default values
           setProfileData({
             full_name: user.user_metadata?.full_name || null,
             age: null,
@@ -110,7 +108,6 @@ const ProfilePage = () => {
     }
   };
 
-  // Extract user's initials for the avatar fallback
   const getInitials = () => {
     if (profileData?.full_name) {
       return profileData.full_name
@@ -125,29 +122,14 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="flex justify-between items-center p-4 border-b border-gray-800">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate(-1)}
-          className="p-2 text-white hover:bg-gray-800"
-        >
-          <ArrowLeft size={20} />
-          <span className="ml-2">Back</span>
-        </Button>
-        <h1 className="text-xl font-semibold">Your Profile</h1>
-        <div className="w-24"></div> {/* Spacer for alignment */}
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-4xl mx-auto p-6">
+      <HeaderBar />
+      <main className="max-w-4xl mx-auto p-6 mt-16">
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
           </div>
         ) : (
           <>
-            {/* Profile Overview */}
             <div className="mb-10 flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
