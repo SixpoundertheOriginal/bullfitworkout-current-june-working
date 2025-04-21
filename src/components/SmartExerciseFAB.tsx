@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -98,27 +97,6 @@ export const SmartExerciseFAB = ({
     });
   };
 
-  const getSuggestionPosition = (index: number, total: number) => {
-    // Increased angle step from 25 to 40 degrees for wider separation
-    const angleStep = 40; 
-    
-    // Adjusted starting angle to ensure items fan out in the visible area
-    const angle = -140 + index * angleStep;
-    const radian = (angle * Math.PI) / 180;
-    
-    // Staggered distance calculation - base distance plus index-based offset
-    // This creates a spiral effect that prevents direct overlapping
-    const baseDistance = 100;
-    const indexOffset = index * 15; // Additional 15px per item
-    const distance = baseDistance + indexOffset;
-    
-    // Math.max ensures min 20px from edges (will not go off-screen)
-    const bottom = Math.max(20, distance * Math.sin(-radian));
-    const right = Math.max(20, distance * Math.cos(-radian));
-    
-    return { bottom, right };
-  };
-
   return (
     <div
       className={cn(
@@ -133,58 +111,59 @@ export const SmartExerciseFAB = ({
     >
       <AnimatePresence>
         {isExpanded && (
-          <div
-            className="absolute bottom-0 right-0 flex items-center justify-center"
-            style={{
-              width: 0,
-              height: 0,
-              pointerEvents: "none"
-            }}
-            aria-label="Exercise Suggestions"
-          >
-            {suggestions.map((exercise, index) => {
-              const { bottom, right } = getSuggestionPosition(index, suggestions.length);
+          <div className="absolute bottom-16 right-0 flex flex-col items-end" style={{zIndex: 100}} aria-label="Exercise Suggestions">
+            <motion.button
+              initial={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0, transition: { duration: 0.22 } }}
+              exit={{ opacity: 0, translateY: 10, transition: { duration: 0.14 } }}
+              className={cn(
+                "mb-2 flex flex-row items-center px-3 py-1 rounded-xl bg-purple-900/85 border border-purple-700/30 backdrop-blur-sm",
+                "shadow-md text-purple-100 text-[12px] gap-2 z-40 max-w-[150px]",
+                "transition-all duration-200 hover:scale-105 hover:bg-purple-800/90",
+                "cursor-pointer"
+              )}
+              style={{
+                pointerEvents: "auto",
+                minWidth: "90px",
+                minHeight: "28px"
+              }}
+              aria-label="Browse All Exercises"
+              tabIndex={0}
+              onClick={() => setIsExpanded(false)}
+            >
+              <Search className="h-4 w-4 text-purple-300 mr-0.5" />
+              <span className="truncate max-w-[110px]">Browse All</span>
+            </motion.button>
 
-              return (
+            <div className="flex flex-row gap-3 pb-1 scroll-px-2 overflow-x-auto max-w-xs sm:max-w-md"
+                 style={{ maxWidth: "calc(100vw - 96px)" }}>
+              {suggestions.map((exercise, index) => (
                 <motion.button
                   key={exercise.id}
-                  initial={{ opacity: 0, scale: 0.7, bottom: 0, right: 0 }}
+                  initial={{ opacity: 0, scale: 0.7 }}
                   animate={{
                     opacity: 1,
                     scale: 1,
-                    bottom,
-                    right,
-                    transition: {
-                      type: "spring",
-                      stiffness: 280,
-                      damping: 24,
-                      delay: index * 0.06
-                    }
+                    transition: { type: "spring", stiffness: 330, damping: 20, delay: index * 0.05 }
                   }}
                   exit={{
                     opacity: 0,
-                    scale: 0.6,
-                    bottom: 0,
-                    right: 0,
-                    transition: { duration: 0.21, delay: (suggestions.length - index) * 0.03 }
+                    scale: 0.5,
+                    transition: { duration: 0.12 }
                   }}
                   className={cn(
-                    "absolute flex flex-col items-center justify-center gap-1",
-                    "menu-compact-item bg-gray-900/90 hover:bg-gray-800/95",
-                    "border border-purple-700/20 rounded-full",
-                    "shadow-lg shadow-purple-950/15",
-                    "cursor-pointer select-none group",
-                    "overflow-hidden",
-                    "transition-all duration-200",
-                    "backdrop-blur-sm",
-                    "z-30"
+                    "flex flex-col items-center justify-center bg-gray-900/90 hover:bg-gray-800/95",
+                    "border border-purple-700/20 rounded-full shadow-lg shadow-purple-950/15",
+                    "cursor-pointer select-none group transition-all duration-200",
+                    "backdrop-blur-sm z-30 menu-compact-item",
                   )}
                   style={{
                     pointerEvents: "auto",
-                    // Reduced size for more compact visual appearance
-                    width: "62px",
-                    height: "62px",
-                    padding: "4px"
+                    width: "60px",
+                    height: "60px",
+                    minWidth: "60px",
+                    minHeight: "60px",
+                    padding: "2.5px",
                   }}
                   onClick={() => handleSelectExercise(exercise)}
                   tabIndex={0}
@@ -197,7 +176,7 @@ export const SmartExerciseFAB = ({
                   >
                     {exercise.name}
                   </span>
-                  <div className="flex justify-center w-full">
+                  <div className="flex justify-center w-full mt-0.5">
                     {exercise.primary_muscle_groups.slice(0, 1).map((muscle) => (
                       <Badge
                         key={muscle}
@@ -209,56 +188,8 @@ export const SmartExerciseFAB = ({
                     ))}
                   </div>
                 </motion.button>
-              );
-            })}
-
-            {(() => {
-              // Browse all button positioned at the end of the fan
-              const { bottom, right } = getSuggestionPosition(suggestions.length, suggestions.length + 1);
-              return (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.7, bottom: 0, right: 0 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    bottom,
-                    right,
-                    transition: {
-                      type: "spring",
-                      stiffness: 250,
-                      damping: 25,
-                      delay: 0.225
-                    }
-                  }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.5,
-                    bottom: 0,
-                    right: 0,
-                    transition: { duration: 0.18 }
-                  }}
-                  className={cn(
-                    "absolute flex flex-row items-center px-1 py-1 rounded-full bg-purple-900/80 border border-purple-700/30 backdrop-blur-sm",
-                    "shadow-md text-purple-100 text-[10px] gap-1 z-40",
-                    "transition-all duration-200 hover:scale-105 hover:bg-purple-800/90",
-                    "cursor-pointer justify-center"
-                  )}
-                  style={{
-                    pointerEvents: "auto",
-                    minWidth: 0,
-                    minHeight: 0,
-                    width: "70px",
-                    height: "26px"
-                  }}
-                  aria-label="Browse All Exercises"
-                  tabIndex={0}
-                  onClick={() => setIsExpanded(false)}
-                >
-                  <Search className="h-3 w-3 text-purple-300 mr-0.5" />
-                  <span className="max-w-[52px] truncate">Browse All</span>
-                </motion.button>
-              )
-            })()}
+              ))}
+            </div>
           </div>
         )}
       </AnimatePresence>
@@ -281,13 +212,14 @@ export const SmartExerciseFAB = ({
       >
         <Plus size={24} />
       </Button>
+
       <style>
         {`
           .menu-item-text, .item-label {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 56px;
+            max-width: 54px;
             font-size: 9px;
           }
           .menu-compact-item {
