@@ -65,6 +65,6 @@
   }
 
   .value-text {
-    @apply text-white font-mono;
+    @apply text-white font-mono !important;
   }
 }

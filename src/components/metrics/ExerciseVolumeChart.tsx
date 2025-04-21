@@ -47,38 +47,40 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
 
   if (isEmpty) {
     return (
-      <div className="mt-6 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
-        <h3 className="text-sm font-medium text-gray-300 mb-4">Exercise Volume Distribution</h3>
-        <div className="h-64 flex items-center justify-center text-gray-400">
+      <div className="mt-2 p-3 bg-gray-900/70 rounded-lg border border-gray-800">
+        <h3 className="text-xs font-medium text-gray-300 mb-2">Exercise Volume Distribution</h3>
+        <div className="h-32 flex items-center justify-center text-gray-400 text-xs">
           No exercise volume data available yet.
-          Complete sets with weight and reps to see your distribution.
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 p-6 bg-gray-900/50 rounded-xl border border-gray-800">
-      <h3 className="text-sm font-medium text-gray-300 mb-4">Exercise Volume Distribution</h3>
-      <div className="h-64">
+    <div className="mt-2 p-3 bg-gray-900/70 rounded-lg border border-gray-800">
+      <h3 className="text-xs font-medium text-gray-300 mb-2">Exercise Volume Distribution</h3>
+      <div className="h-44">
         <ChartContainer config={config}>
           <BarChart 
             data={data} 
-            margin={{ top: 10, right: 20, left: 20, bottom: 30 }}
+            margin={{ top: 8, right: 10, left: 10, bottom: 20 }}
+            barCategoryGap={20}
+            barGap={8}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
             <XAxis
               dataKey="name"
-              angle={-45}
+              angle={-40}
               textAnchor="end"
-              height={60}
-              stroke="#666"
-              fontSize={12}
-              tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
+              height={48}
+              stroke="#8884d8"
+              fontSize={11}
+              tickFormatter={(value) => value.length > 12 ? `${value.substring(0, 12)}...` : value}
             />
             <YAxis
-              stroke="#666"
-              fontSize={12}
+              stroke="#aaa"
+              fontSize={11}
+              width={48}
               tickFormatter={(value) => `${value} ${weightUnit}`}
             />
             <Tooltip
@@ -93,22 +95,21 @@ export const ExerciseVolumeChart = ({ exercises, weightUnit }: ExerciseVolumeCha
                   }
                   
                   return (
-                    <div className="bg-white/90 rounded-md p-3 shadow-lg border border-gray-200 text-gray-900">
+                    <div className="bg-white/90 rounded p-2 shadow border border-gray-200 text-gray-900 text-xs">
                       <div className="font-semibold mb-1">{exerciseName}</div>
-                      <div className="text-sm">
-                        {formattedValue} {weightUnit}
-                      </div>
+                      <div className="">{formattedValue} {weightUnit}</div>
                     </div>
                   );
                 }
                 return null;
               }}
-              cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+              cursor={{ fill: 'rgba(0,0,0,0.08)' }}
             />
             <Bar
               dataKey="volume"
               fill="url(#gradient)"
               radius={[4, 4, 0, 0]}
+              barSize={24}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={`url(#gradient-${index})`} />

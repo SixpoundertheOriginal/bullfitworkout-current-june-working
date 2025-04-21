@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -689,11 +688,11 @@ const TrainingSession = () => {
           onClick={() => navigate('/')}
           className="p-2 rounded-full hover:bg-gray-800/50 transition-colors"
         >
-          <ArrowLeft size={24} className="text-white" /> {/* Added text-white to ensure visibility */}
+          <ArrowLeft size={24} className="text-white" />
         </button>
         <div className="flex items-center gap-4">
           <TrainingTypeTag type={trainingType as any} />
-          <h1 className="text-xl font-semibold text-white"> {/* Changed from bg-clip-text to direct text-white */}
+          <h1 className="text-xl font-semibold text-white">
             {trainingType}
           </h1>
         </div>
@@ -721,11 +720,7 @@ const TrainingSession = () => {
                 intensity={metrics.performance.intensity}
                 efficiency={metrics.performance.efficiency}
               />
-              
-              <ExerciseVolumeChart 
-                exercises={exercises}
-                weightUnit={weightUnit}
-              />
+
               
               {Object.keys(exercises || {}).map((exerciseName) => (
                 <ExerciseCard
@@ -766,8 +761,17 @@ const TrainingSession = () => {
                 <span className="text-white text-xl">Complete Workout</span>
               </Button>
             </div>
+            
+            
+            <div className="max-w-3xl mx-auto w-full mt-4 mb-4">
+              <ExerciseVolumeChart 
+                exercises={exercises}
+                weightUnit={weightUnit}
+              />
+            </div>
           </>
         ) : (
+          
           <EmptyWorkoutState 
             onTemplateSelect={(templateType) => {
               const templateExercises = {
@@ -794,31 +798,3 @@ const TrainingSession = () => {
                   }
                 ];
               });
-
-              setExercises(newExercises);
-              if (exercises.length > 0) {
-                setCurrentExercise(exercises[0]);
-              }
-
-              toast.success(`${templateType} template added to your workout`, {
-                style: {
-                  backgroundColor: "rgba(20, 20, 20, 0.9)",
-                  color: "white",
-                  border: "1px solid rgba(120, 120, 120, 0.3)",
-                },
-              });
-            }} 
-          />
-        )}
-      </main>
-      
-      <AddExerciseBar
-        onSelectExercise={handleSelectExercise}
-        onAddExercise={handleAddExercise}
-        trainingType={trainingType}
-      />
-    </div>
-  );
-};
-
-export default TrainingSession;
