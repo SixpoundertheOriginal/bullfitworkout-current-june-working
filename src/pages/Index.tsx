@@ -266,48 +266,12 @@ const Index = () => {
         </section>
       </main>
 
-      <nav className="grid grid-cols-3 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm">
-        <NavButton icon={<Clock size={20} />} label="Today" active onClick={() => navigate('/')} />
-        <NavButton 
-          icon={<Zap size={20} />} 
-          label="Training" 
-          onClick={() => navigate('/training')}
-        />
-        <NavButton 
-          icon={<UserIcon size={20} />} 
-          label="Profile" 
-          onClick={() => navigate('/profile')} 
-        />
-      </nav>
-
       <ConfigureTrainingDialog 
         open={dialogOpen} 
         onOpenChange={setDialogOpen} 
         onStartTraining={handleStartTraining} 
       />
     </div>
-  );
-};
-
-const NavButton = ({ 
-  icon, 
-  label, 
-  active = false, 
-  onClick 
-}: { 
-  icon: React.ReactNode, 
-  label: string, 
-  active?: boolean, 
-  onClick?: () => void 
-}) => {
-  return (
-    <button 
-      onClick={onClick} 
-      className={`flex flex-col items-center justify-center py-3 ${active ? 'text-white' : 'text-gray-500'}`}
-    >
-      {icon}
-      <span className="text-xs mt-1">{label}</span>
-    </button>
   );
 };
 
