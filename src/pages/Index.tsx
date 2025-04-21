@@ -139,13 +139,13 @@ const Index = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
-      <header className="flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
         <MainMenu />
         <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">Today</h1>
         <UserProfile />
       </header>
 
-      <main className="flex-1 overflow-auto px-4 py-6 space-y-6">
+      <main className="flex-1 overflow-auto px-4 py-6 space-y-6 mt-16">
         <div className="rounded-xl p-6 bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm">
           <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
             {workoutSessions.length > 0 
