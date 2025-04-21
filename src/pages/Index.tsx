@@ -142,7 +142,11 @@ const Index = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
       <HeaderBar />
       <main className="flex-1 overflow-auto px-4 py-6 space-y-6 mt-16">
-        <div className="rounded-xl p-6 bg-gradient-to-r from-purple-600/20 to-pink-500/20 border border-purple-500/10 shadow-lg backdrop-blur-sm animate-fade-in">
+        <div 
+          className="rounded-xl p-6 bg-gradient-to-r from-purple-600/30 to-pink-500/30 border border-purple-500/20 
+                     shadow-lg backdrop-blur-sm hover:shadow-purple-500/10 transition-all duration-300
+                     transform hover:-translate-y-0.5 animate-fade-in"
+        >
           <p className="text-xl font-medium bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
             {workoutSessions.length > 0 
               ? `You've logged ${workoutSessions.length} workout${workoutSessions.length !== 1 ? 's' : ''}! 🔥 Keep it up!`
@@ -154,10 +158,13 @@ const Index = () => {
         <QuickStatsSection />
 
         <section ref={sectionRef} className="mb-10 text-center">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent mb-2">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent mb-2
+                         animate-fade-in" style={{ animationDelay: '200ms' }}>
             Start Your Training
           </h2>
-          <p className="text-gray-400 mb-6">Focus today's session and get into flow mode</p>
+          <p className="text-gray-400 mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
+            Focus today's session and get into flow mode
+          </p>
           
           <div style={{ height: buttonSize.large.height }} className="relative">
             <button
@@ -175,6 +182,7 @@ const Index = () => {
                 }
                 h-14 w-14
                 hover:scale-110 active:scale-95
+                animate-pulse
               `}
             >
               <Zap size={20} className="text-white" />
@@ -196,16 +204,16 @@ const Index = () => {
                 }
                 h-32 w-32
                 hover:scale-105 active:scale-95
-                animate-fade-in
+                animate-fade-in hover:from-purple-500 hover:to-pink-400
               `}
             >
-              <Zap size={28} className="mb-1 text-white" />
+              <Zap size={28} className="mb-1 text-white animate-pulse" />
               <span className="text-xl font-semibold text-white">Start</span>
             </button>
           </div>
         </section>
 
-        <section>
+        <section className="animate-fade-in" style={{ animationDelay: '400ms' }}>
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="text-purple-400" size={20} />
