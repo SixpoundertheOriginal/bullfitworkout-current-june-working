@@ -10,7 +10,6 @@ import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { HeaderBar } from "@/components/navigation/HeaderBar";
 
 export type UserProfileData = {
   full_name: string | null;
@@ -122,7 +121,6 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <HeaderBar />
       <main className="max-w-4xl mx-auto p-6 mt-16">
         {loading ? (
           <div className="flex justify-center items-center h-64">

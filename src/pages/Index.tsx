@@ -22,7 +22,6 @@ import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
 import { MainMenu } from "@/components/navigation/MainMenu";
-import { HeaderBar } from "@/components/navigation/HeaderBar";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 
 const Index = () => {

@@ -57,7 +57,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
-import { HeaderBar } from "@/components/navigation/HeaderBar";
 
 interface WorkoutDetails {
   id: string;
@@ -311,7 +310,6 @@ const WorkoutDetailsPage = () => {
   
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      <HeaderBar />
       <main className="flex-1 overflow-auto px-4 py-6 pb-24 mt-16">
         {!workoutId && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
