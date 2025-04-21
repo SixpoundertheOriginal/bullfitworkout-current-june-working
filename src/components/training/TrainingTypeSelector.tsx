@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -5,9 +6,9 @@ import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion } from "framer-motion";
 import { typography } from '@/lib/typography';
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -76,10 +77,7 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
 export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSelectorProps) {
   const { user } = useAuth();
   const { stats } = useWorkoutStats();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<any>(null);
 
   const { data: customTypes } = useQuery({
     queryKey: ['customTrainingTypes'],
@@ -95,182 +93,141 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     enabled: !!user
   });
 
+  // Set up initial position when selectedType changes
   useEffect(() => {
-    if (scrollRef.current && selectedType) {
-      const container = scrollRef.current;
-      const selectedElement = container.querySelector(`[data-type="${selectedType}"]`);
-      
-      if (selectedElement) {
-        const containerWidth = container.offsetWidth;
-        const elementWidth = selectedElement.clientWidth;
-        const elementLeft = (selectedElement as HTMLElement).offsetLeft;
-        
-        container.scrollTo({
-          left: elementLeft - (containerWidth / 2) + (elementWidth / 2),
-          behavior: 'smooth'
-        });
+    if (carouselApi && selectedType) {
+      const index = DEFAULT_TRAINING_TYPES.findIndex(type => type.name === selectedType);
+      if (index >= 0) {
+        carouselApi.scrollTo(index, { immediate: false });
       }
     }
-  }, [selectedType]);
+  }, [selectedType, carouselApi]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - scrollRef.current!.offsetLeft);
-    setScrollLeft(scrollRef.current!.scrollLeft);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current!.offsetLeft;
-    const walk = (x - startX) * 2;
-    scrollRef.current!.scrollLeft = scrollLeft - walk;
-  };
+  // All training types combined
+  const allTrainingTypes = [
+    ...DEFAULT_TRAINING_TYPES,
+    ...(customTypes || []).map(type => ({
+      name: type.name,
+      icon: type.icon,
+      gradient: `from-[${type.color_start}] to-[${type.color_end}]`,
+      activeGradient: `from-[${type.color_start}] via-[${type.color_mid || type.color_start}] to-[${type.color_end}]`,
+      bgColor: `bg-[${type.color_start}]`,
+      description: type.description || '',
+      benefits: type.benefits || [],
+      level: type.level,
+      xp: type.xp
+    }))
+  ];
 
   return (
     <div className="w-full overflow-hidden">
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto px-4 py-6 snap-x snap-mandatory scrollbar-none"
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseUp}
+      <Carousel
+        setApi={setCarouselApi}
+        opts={{
+          align: "center",
+          loop: false
+        }}
+        className="w-full"
       >
-        {DEFAULT_TRAINING_TYPES.map((type, index) => {
-          const isSelected = selectedType === type.name;
-          
-          return (
-            <motion.div
-              key={type.name}
-              className={cn(
-                "flex-shrink-0 snap-center",
-                "w-[280px] h-[280px]",
-                "transition-all duration-300",
-                isSelected ? "scale-100" : "scale-90 hover:scale-95"
-              )}
-              onClick={() => onSelect(type.name)}
-              data-type={type.name}
-              whileHover={{ scale: isSelected ? 1 : 0.95 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div
-                className={cn(
-                  "w-full h-full rounded-3xl p-6",
-                  "flex flex-col items-center justify-center gap-4",
-                  "bg-gradient-to-br shadow-lg cursor-pointer",
-                  "transition-all duration-300",
-                  isSelected ? [
-                    `${type.activeGradient}`,
-                    "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
-                  ] : type.gradient,
-                  "relative overflow-hidden"
-                )}
-              >
-                {type.level && (
-                  <div className="absolute top-4 right-4 z-20">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm">
-                      <span className="text-xs font-bold text-white">Lv{type.level}</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className={cn(
-                    "mb-4 p-4 rounded-full",
-                    "bg-white/10 backdrop-blur-sm",
-                    "transition-all duration-300"
-                  )}>
-                    {type.icon}
-                  </div>
-                  
-                  <h3 className={cn(
-                    typography.headings.primary,
-                    "text-2xl mb-2"
-                  )}>
-                    {type.name}
-                  </h3>
-                  
-                  <p className={cn(
-                    typography.text.secondary,
-                    "text-sm mb-4"
-                  )}>
-                    {type.description}
-                  </p>
-
-                  {isSelected && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex flex-col items-center"
-                    >
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {type.benefits.slice(0, 2).map((benefit, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/90"
-                          >
-                            {benefit}
-                          </span>
-                        ))}
-                      </div>
-                    </motion.div>
+        <CarouselContent className="px-2">
+          {allTrainingTypes.map((type, index) => {
+            const isSelected = selectedType === type.name;
+            
+            return (
+              <CarouselItem key={`${type.name}-${index}`} className="pl-4 md:basis-auto basis-[280px]">
+                <motion.div
+                  className={cn(
+                    "flex-shrink-0 snap-center",
+                    "w-[280px] h-[280px]",
+                    "transition-all duration-300",
+                    isSelected ? "scale-100" : "scale-90 hover:scale-95"
                   )}
-                </div>
+                  onClick={() => onSelect(type.name)}
+                  data-type={type.name}
+                  whileHover={{ scale: isSelected ? 1 : 0.95 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div
+                    className={cn(
+                      "w-full h-full rounded-3xl p-6",
+                      "flex flex-col items-center justify-center gap-4",
+                      "bg-gradient-to-br shadow-lg cursor-pointer",
+                      "transition-all duration-300",
+                      isSelected ? [
+                        `${type.activeGradient}`,
+                        "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
+                      ] : type.gradient,
+                      "relative overflow-hidden"
+                    )}
+                  >
+                    {type.level && (
+                      <div className="absolute top-4 right-4 z-20">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm">
+                          <span className="text-xs font-bold text-white">Lv{type.level}</span>
+                        </div>
+                      </div>
+                    )}
 
-                {type.xp && (
-                  <div className="absolute bottom-4 left-4 right-4 h-1 bg-black/30 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${type.xp}%` }}
-                      transition={{ delay: 0.5, duration: 1 }}
-                      className="h-full bg-gradient-to-r from-white/30 to-white/10"
-                    />
+                    <div className="relative z-10 flex flex-col items-center text-center">
+                      <div className={cn(
+                        "mb-4 p-4 rounded-full",
+                        "bg-white/10 backdrop-blur-sm",
+                        "transition-all duration-300"
+                      )}>
+                        {type.icon}
+                      </div>
+                      
+                      <h3 className={cn(
+                        typography.headings.primary,
+                        "text-2xl mb-2"
+                      )}>
+                        {type.name}
+                      </h3>
+                      
+                      <p className={cn(
+                        typography.text.secondary,
+                        "text-sm mb-4"
+                      )}>
+                        {type.description}
+                      </p>
+
+                      {isSelected && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex flex-col items-center"
+                        >
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            {type.benefits?.slice(0, 2).map((benefit, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/90"
+                              >
+                                {benefit}
+                              </span>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {type.xp && (
+                      <div className="absolute bottom-4 left-4 right-4 h-1 bg-black/30 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${type.xp}%` }}
+                          transition={{ delay: 0.5, duration: 1 }}
+                          className="h-full bg-gradient-to-r from-white/30 to-white/10"
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-
-        {customTypes?.map((type) => (
-          <div 
-            key={type.id} 
-            className="flex-shrink-0 snap-center flex flex-col items-center space-y-2"
-          >
-            <button
-              onClick={() => onSelect(type.name)}
-              className={cn(
-                "w-[280px] h-[280px] rounded-3xl flex items-center justify-center",
-                "transition-all duration-300",
-                "bg-gradient-to-br shadow-lg border border-white/10",
-                `from-[${type.color_start}] to-[${type.color_end}]`,
-                selectedType === type.name && [
-                  "scale-105", 
-                  "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
-                ],
-                "hover:scale-105 active:scale-95 hover:shadow-xl"
-              )}
-            >
-              {type.icon}
-            </button>
-            <span 
-              className={cn(
-                "text-sm text-center w-full truncate",
-                selectedType === type.name 
-                  ? typography.text.primary
-                  : typography.text.muted
-              )}
-            >
-              {type.name}
-            </span>
-          </div>
-        ))}
-      </div>
+                </motion.div>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+      </Carousel>
     </div>
   );
 }
