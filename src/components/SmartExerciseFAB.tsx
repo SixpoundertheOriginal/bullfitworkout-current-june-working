@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,6 @@ import { useExercises } from "@/hooks/useExercises";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { Badge } from "@/components/ui/badge";
-import * as Tone from "tone";
 
 interface SmartExerciseFABProps {
   onSelectExercise: (exercise: Exercise) => void;
@@ -28,75 +27,6 @@ export const SmartExerciseFAB = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [suggestions, setSuggestions] = useState<Exercise[]>([]);
   const { exercises } = useExercises();
-
-  // Heavier, mechanical FAB sound using Tone.js
-  const playFabSound = async () => {
-    await Tone.start(); // Unlock audio context for browser
-
-    // 1. Heavy metallic chunk (low-pitched MembraneSynth)
-    const chunkSynth = new Tone.MembraneSynth({
-      pitchDecay: 0.05,
-      octaves: 2,
-      oscillator: { type: "sine" },
-      envelope: {
-        attack: 0.002,
-        decay: 0.18,
-        sustain: 0.02,
-        release: 0.15,
-      },
-    }).toDestination();
-    chunkSynth.volume.value = -6;
-
-    // 2. Mechanical sliding noise (NoiseSynth)
-    const slideSynth = new Tone.NoiseSynth({
-      noise: { type: "white" },
-      envelope: {
-        attack: 0.01,
-        decay: 0.33,
-        sustain: 0.03,
-        release: 0.08,
-      },
-    }).toDestination();
-    slideSynth.volume.value = -24;
-
-    // 3. Locking click (brief high click with MetalSynth)
-    // Fix: Use the correct properties for MetalSynth
-    const clickSynth = new Tone.MetalSynth({
-      harmonicity: 5.5,
-      modulationIndex: 31,
-      resonance: 2000,
-      octaves: 1.5,
-      envelope: { attack: 0.001, decay: 0.15, release: 0.12 }
-    }).toDestination();
-    clickSynth.volume.value = -20;
-    
-    // 4. Low-frequency thud (basic synth for sub-bass impact)
-    const thud = new Tone.Synth({
-      oscillator: { type: "triangle" },
-      envelope: {
-        attack: 0.001,
-        decay: 0.23,
-        sustain: 0,
-        release: 0.18,
-      },
-    }).toDestination();
-    thud.volume.value = -13;
-
-    // Play sounds with carefully chosen timings for layering
-    const now = Tone.now();
-
-    chunkSynth.triggerAttackRelease("C2", 0.14, now, 0.95); // heavy metallic chunk
-    slideSynth.triggerAttackRelease("16n", now + 0.01, 0.8); // mechanical slide noise
-    clickSynth.triggerAttackRelease("C6", 0.09, now + 0.15, 0.6); // lock click
-    thud.triggerAttackRelease("C1", 0.19, now + 0.15, 1); // heavy thud
-
-    setTimeout(() => {
-      chunkSynth.dispose();
-      slideSynth.dispose();
-      clickSynth.dispose();
-      thud.dispose();
-    }, 500); // Dispose after 0.5s
-  };
 
   useEffect(() => {
     if (!exercises?.length) return;
@@ -141,10 +71,7 @@ export const SmartExerciseFAB = ({
     setSuggestions(topSuggestions);
   }, [exercises, trainingType, tags]);
 
-  const handleToggleExpand = async () => {
-    // Play the futuristic Tone.js FAB sound
-    await playFabSound();
-
+  const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
 
     if (!isExpanded && suggestions.length === 0) {
@@ -178,8 +105,6 @@ export const SmartExerciseFAB = ({
         className
       )}
     >
-      {/* Tone.js handles sound. No <audio> element needed. */}
-
       <AnimatePresence>
         {isExpanded && (
           <div className="absolute bottom-16 right-0 flex flex-col items-end" style={{zIndex: 100}} aria-label="Exercise Suggestions">
@@ -302,3 +227,4 @@ export const SmartExerciseFAB = ({
     </div>
   );
 };
+
