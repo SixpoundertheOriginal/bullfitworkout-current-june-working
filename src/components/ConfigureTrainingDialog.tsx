@@ -18,6 +18,12 @@ import { typography } from "@/lib/typography";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrainingAchievementCard } from "./training/TrainingAchievementCard";
 
+interface ConfigureTrainingDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onStartTraining: (config: TrainingConfig) => void;
+}
+
 interface TrainingAchievementCardProps {
   show: boolean;
   trainingType: string;
@@ -71,7 +77,6 @@ export function ConfigureTrainingDialog({
   const [achievementType, setAchievementType] = useState("");
   const [xpEarned, setXpEarned] = useState(0);
   
-  // Add the missing sound state variables
   const [stepCompleteSound, setStepCompleteSound] = useState<HTMLAudioElement | null>(null);
   const [selectSound, setSelectSound] = useState<HTMLAudioElement | null>(null);
   
