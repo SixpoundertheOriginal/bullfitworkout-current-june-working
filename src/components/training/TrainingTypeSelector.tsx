@@ -12,10 +12,9 @@ import { Button } from "@/components/ui/button";
 import { 
   Carousel, 
   CarouselContent, 
-  CarouselItem, 
-  CarouselNext, 
-  CarouselPrevious 
+  CarouselItem,
 } from "@/components/ui/carousel";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -81,16 +80,41 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   }
 ];
 
+// Type definition for custom training types from database
+type CustomTrainingType = {
+  id: string;
+  name: string;
+  icon: string;
+  color_start: string;
+  color_end: string;
+  user_id: string;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+  description?: string;
+  benefits?: string[];
+  level?: number;
+  xp?: number;
+};
+
 export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSelectorProps) {
   const { user } = useAuth();
   const { stats } = useWorkoutStats();
-  const [carouselApi, setCarouselApi] = useState<any>(null);
+  const [touchActive, setTouchActive] = useState(false);
+  
+  // Use embla carousel directly for better control
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "center",
+    loop: false,
+    dragFree: true,
+    containScroll: "trimSnaps",
+  });
+  
   const [current, setCurrent] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
-  const [touchActive, setTouchActive] = useState(false);
 
-  const { data: customTypes } = useQuery({
+  const { data: customTypes } = useQuery<CustomTrainingType[]>({
     queryKey: ['customTrainingTypes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -122,45 +146,50 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
   // Set up initial position when selectedType changes
   useEffect(() => {
-    if (carouselApi && selectedType) {
+    if (emblaApi && selectedType) {
       const index = allTrainingTypes.findIndex(type => type.name === selectedType);
       if (index >= 0) {
-        carouselApi.scrollTo(index, { immediate: false });
+        emblaApi.scrollTo(index, { immediate: false });
         setCurrent(index);
       }
     }
-  }, [selectedType, carouselApi, allTrainingTypes]);
+  }, [selectedType, emblaApi, allTrainingTypes]);
 
   useEffect(() => {
-    if (!carouselApi) {
-      return;
+    if (!emblaApi) {
+      return undefined;
     }
 
     const onSelect = () => {
-      setCurrent(carouselApi.selectedScrollSnap());
-      setCanScrollPrev(carouselApi.canScrollPrev());
-      setCanScrollNext(carouselApi.canScrollNext());
+      setCurrent(emblaApi.selectedScrollSnap());
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
     };
 
-    carouselApi.on("select", onSelect);
-    carouselApi.on("reInit", onSelect);
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+
+    // Initial call to set the state
+    onSelect();
 
     return () => {
-      carouselApi.off("select", onSelect);
-      carouselApi.off("reInit", onSelect);
+      emblaApi.off("select", onSelect);
     };
-  }, [carouselApi]);
+  }, [emblaApi]);
 
   // Function to scroll to next/previous card
   const handleManualScroll = (direction: 'prev' | 'next') => {
-    if (!carouselApi) return;
+    if (!emblaApi) return;
     
     if (direction === 'prev' && canScrollPrev) {
-      carouselApi.scrollPrev();
+      emblaApi.scrollPrev();
     } else if (direction === 'next' && canScrollNext) {
-      carouselApi.scrollNext();
+      emblaApi.scrollNext();
     }
   };
+
+  // Log to help debug
+  console.log("Carousel state:", { current, canScrollPrev, canScrollNext, totalItems: allTrainingTypes.length });
 
   return (
     <div 
@@ -184,36 +213,30 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         ))}
       </div>
 
-      <Carousel
-        setApi={setCarouselApi}
-        opts={{
-          align: "center",
-          loop: false,
-          containScroll: "trimSnaps",
-          dragFree: false
-        }}
-        className="w-full"
-      >
-        <div className="flex items-center w-full">
-          <Button
-            onClick={() => handleManualScroll('prev')}
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
-              !canScrollPrev && "opacity-30 pointer-events-none",
-              "transition-opacity duration-200"
-            )}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          
-          <CarouselContent className="px-10 md:px-16">
+      <div className="relative">
+        <Button
+          onClick={() => handleManualScroll('prev')}
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
+            !canScrollPrev && "opacity-30 pointer-events-none",
+            "transition-opacity duration-200"
+          )}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex px-10 md:px-16">
             {allTrainingTypes.map((type, index) => {
               const isSelected = selectedType === type.name;
               
               return (
-                <CarouselItem key={`${type.name}-${index}`} className="basis-[280px] md:basis-[280px] px-2">
+                <div 
+                  key={`${type.name}-${index}`} 
+                  className="min-w-0 shrink-0 grow-0 basis-[280px] px-2 py-1"
+                >
                   <motion.div
                     className={cn(
                       "w-full",
@@ -302,25 +325,25 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                       )}
                     </div>
                   </motion.div>
-                </CarouselItem>
+                </div>
               );
             })}
-          </CarouselContent>
-          
-          <Button
-            onClick={() => handleManualScroll('next')}
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
-              !canScrollNext && "opacity-30 pointer-events-none",
-              "transition-opacity duration-200"
-            )}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          </div>
         </div>
-      </Carousel>
+        
+        <Button
+          onClick={() => handleManualScroll('next')}
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
+            !canScrollNext && "opacity-30 pointer-events-none",
+            "transition-opacity duration-200"
+          )}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      </div>
       
       {/* Swipe instructions */}
       <motion.div 
