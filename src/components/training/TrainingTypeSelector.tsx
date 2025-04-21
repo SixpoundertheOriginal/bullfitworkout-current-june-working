@@ -110,12 +110,12 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       name: type.name,
       icon: type.icon,
       gradient: `from-[${type.color_start}] to-[${type.color_end}]`,
-      activeGradient: `from-[${type.color_start}] via-[${type.color_mid || type.color_start}] to-[${type.color_end}]`,
+      activeGradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
       bgColor: `bg-[${type.color_start}]`,
-      description: type.description || '',
-      benefits: type.benefits || [],
-      level: type.level,
-      xp: type.xp
+      description: '', // Default empty string for description
+      benefits: [], // Default empty array for benefits
+      level: undefined, // Default undefined for level
+      xp: undefined // Default undefined for xp
     }))
   ];
 
@@ -184,14 +184,16 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                         {type.name}
                       </h3>
                       
-                      <p className={cn(
-                        typography.text.secondary,
-                        "text-sm mb-4"
-                      )}>
-                        {type.description}
-                      </p>
+                      {type.description && (
+                        <p className={cn(
+                          typography.text.secondary,
+                          "text-sm mb-4"
+                        )}>
+                          {type.description}
+                        </p>
+                      )}
 
-                      {isSelected && (
+                      {isSelected && type.benefits && type.benefits.length > 0 && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
