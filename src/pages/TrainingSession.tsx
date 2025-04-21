@@ -27,6 +27,22 @@ import { useWorkoutMetrics } from "@/hooks/useWorkoutMetrics";
 import { IntelligentMetricsDisplay } from "@/components/metrics/IntelligentMetricsDisplay";
 import { ExerciseVolumeChart } from '@/components/metrics/ExerciseVolumeChart';
 import { SmartExerciseFAB } from '@/components/SmartExerciseFAB';
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { useWeightUnit } from "@/context/WeightUnitContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Exercise, ExerciseSet } from "@/types/exercise";
+import { convertWeight } from "@/utils/unitConversion";
+import { WeightUnitToggle } from "@/components/WeightUnitToggle";
+import { WorkoutMetrics } from "@/components/WorkoutMetrics";
+import { SetRow } from "@/components/SetRow";
+import { useExercises } from "@/hooks/useExercises";
+import { AddExerciseBar } from "@/components/AddExerciseBar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/sonner";
 
 interface LocationState {
   trainingType?: string;
@@ -779,52 +795,4 @@ const TrainingSession = () => {
                 "Push": ["Bench Press", "Shoulder Press", "Tricep Extensions"],
                 "Pull": ["Pull-ups", "Barbell Rows", "Bicep Curls"],
                 "Legs": ["Squats", "Deadlifts", "Leg Press"],
-                "Full Body": ["Bench Press", "Pull-ups", "Squats", "Shoulder Press"]
-              };
-
-              const exercises = templateExercises[templateType] || [];
-              
-              const newExercises: Record<string, ExerciseSet[]> = {};
-              exercises.forEach(exercise => {
-                newExercises[exercise] = [
-                  { 
-                    weight: 0, 
-                    reps: 0, 
-                    completed: false, 
-                    isEditing: false, 
-                    restTime: 60,
-                    set_number: 1,
-                    exercise_name: exercise,
-                    workout_id: ''
-                  }
-                ];
-              });
-              
-              setExercises(newExercises);
-            }}
-          />
-        )}
-      </main>
-      
-      <SmartExerciseFAB 
-        onSelectExercise={handleSelectExercise}
-        trainingType={trainingType}
-        tags={workoutTags}
-        visible={!showAddExerciseBar}
-      />
-      
-      {showAddExerciseBar && (
-        <AddExerciseBar
-          onSelectExercise={handleSelectExercise}
-          onAddExercise={() => {
-            handleAddExercise();
-            handleAddExerciseComplete();
-          }}
-          trainingType={trainingType}
-        />
-      )}
-    </div>
-  );
-};
-
-export default TrainingSession;
+                "Full Body": ["Bench Press",
