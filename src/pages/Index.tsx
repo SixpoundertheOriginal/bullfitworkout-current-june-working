@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,8 @@ const Index = () => {
             }
           </p>
         </div>
+
+        <QuickStatsSection />
 
         <section ref={sectionRef} className="mb-10 text-center">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent mb-2">

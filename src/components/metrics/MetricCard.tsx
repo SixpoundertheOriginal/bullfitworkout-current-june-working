@@ -22,8 +22,8 @@ export const MetricCard = ({
   tooltip, 
   progressValue, 
   gradientClass,
-  valueClass = "dark-text",
-  labelClass = "dark-text-muted" 
+  valueClass = "text-white",
+  labelClass = "text-gray-400" 
 }: MetricCardProps) => {
   return (
     <Tooltip>
