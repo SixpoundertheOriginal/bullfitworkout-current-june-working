@@ -1,14 +1,9 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Heart, Activity, ArrowRight } from "lucide-react";
-import { useWorkoutStats } from "@/hooks/useWorkoutStats";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
+import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { typography } from '@/lib/typography';
-import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TrainingTypeSelectorProps {
@@ -16,131 +11,69 @@ interface TrainingTypeSelectorProps {
   onSelect: (type: string) => void;
 }
 
-type DefaultTrainingType = {
+type TrainingType = {
   name: string;
   icon: React.ReactNode;
-  gradient: string;
-  bgColor: string;
-  activeGradient: string;
+  color: string;
+  activeColor: string;
   description: string;
-  benefits: string[];
-  level?: number;
-  xp?: number;
+  level: number;
+  xp: number;
 }
 
-type CustomTrainingType = {
-  id: string;
-  name: string;
-  icon: string;
-  color_start: string;
-  color_end: string;
-  user_id: string;
-  usage_count: number;
-  created_at: string;
-  updated_at: string;
-  description?: string;
-  benefits?: string[];
-  level?: number;
-  xp?: number;
-};
-
-const DEFAULT_TRAINING_TYPES = [
+// Simplified training types with consistent styling
+const TRAINING_TYPES: TrainingType[] = [
   {
     name: "Strength",
-    icon: <Dumbbell className="h-7 w-7" />,
-    gradient: "from-purple-500/80 to-purple-700/80",
-    activeGradient: "from-purple-400 to-purple-600",
-    bgColor: "bg-purple-500",
+    icon: <Dumbbell className="h-6 w-6" />,
+    color: "bg-purple-500/80",
+    activeColor: "bg-purple-500",
     description: "Build muscle & increase power",
-    benefits: ["Muscle growth", "Better strength", "Power gains"],
     level: 2,
     xp: 65
   },
   {
     name: "Cardio",
-    icon: <Bike className="h-7 w-7" />,
-    gradient: "from-red-400/80 to-red-600/80",
-    activeGradient: "from-red-300 to-red-500",
-    bgColor: "bg-red-500",
+    icon: <Bike className="h-6 w-6" />,
+    color: "bg-red-500/80",
+    activeColor: "bg-red-500",
     description: "Boost endurance & heart health",
-    benefits: ["Stamina boost", "Heart health", "Fat burn"],
     level: 1,
     xp: 30
   },
   {
     name: "Yoga",
-    icon: <Heart className="h-7 w-7" />,
-    gradient: "from-green-400/80 to-green-600/80",
-    activeGradient: "from-green-300 to-green-500",
-    bgColor: "bg-green-500",
+    icon: <Heart className="h-6 w-6" />,
+    color: "bg-green-500/80",
+    activeColor: "bg-green-500",
     description: "Flow & mindfulness",
-    benefits: ["Flexibility", "Balance", "Peace"],
     level: 3,
     xp: 85
   },
   {
     name: "Calisthenics",
-    icon: <Activity className="h-7 w-7" />,
-    gradient: "from-blue-400/80 to-blue-600/80",
-    activeGradient: "from-blue-300 to-blue-500",
-    bgColor: "bg-blue-500",
+    icon: <Activity className="h-6 w-6" />,
+    color: "bg-blue-500/80",
+    activeColor: "bg-blue-500",
     description: "Master bodyweight skills",
-    benefits: ["Body control", "Strength", "Agility"],
     level: 1,
     xp: 45
   }
 ];
 
 export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSelectorProps) {
-  const { user } = useAuth();
-  const { stats } = useWorkoutStats();
-  const [touchActive, setTouchActive] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-
-  const { data: customTypes } = useQuery<CustomTrainingType[]>({
-    queryKey: ['customTrainingTypes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('custom_training_types')
-        .select('*')
-        .order('usage_count', { ascending: false });
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user
-  });
-
-  const allTrainingTypes = [
-    ...DEFAULT_TRAINING_TYPES,
-    ...(customTypes || []).map(type => ({
-      name: type.name,
-      icon: type.icon,
-      gradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
-      activeGradient: `from-[${type.color_start}] via-[${type.color_start}] to-[${type.color_end}]`,
-      bgColor: `bg-[${type.color_start}]`,
-      description: type.description || '',
-      benefits: type.benefits || [],
-      level: type.level || undefined,
-      xp: type.xp || undefined
-    }))
-  ];
-
-  const handleTypeSelect = (type: string) => {
-    if (!isDragging) {
-      onSelect(type);
-    }
-  };
-
-  const selectedTrainingType = DEFAULT_TRAINING_TYPES.find(type => type.name === selectedType) || DEFAULT_TRAINING_TYPES[0];
+  
+  // Find selected training type data
+  const selectedTrainingTypeData = TRAINING_TYPES.find(type => 
+    type.name === selectedType
+  ) || TRAINING_TYPES[0];
 
   return (
-    <div className="w-full relative">
+    <div className="w-full flex flex-col items-center space-y-8">
       {/* Indicator dots */}
-      <div className="flex justify-center gap-2 mb-6">
-        {DEFAULT_TRAINING_TYPES.map((type, index) => (
+      <div className="flex justify-center gap-2 mb-4">
+        {TRAINING_TYPES.map((type, index) => (
           <motion.div
             key={index}
             className={cn(
@@ -151,10 +84,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         ))}
       </div>
 
-      {/* Radial menu container */}
-      <div className="w-full aspect-square relative flex items-center justify-center">
-        {/* Center circle with selected training type */}
-        <div className="absolute z-10 w-1/2 h-1/2 rounded-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-800/90 to-gray-900/90 border border-white/10 shadow-xl">
+      {/* Central display of selected type */}
+      <div className="relative w-64 h-64 mx-auto">
+        {/* Center circle with selected training info */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full flex flex-col items-center justify-center bg-gray-900/90 border border-white/10 shadow-lg z-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedType}
@@ -166,38 +99,38 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
             >
               <div className={cn(
                 "p-4 rounded-full",
-                "bg-gradient-to-br", 
-                selectedTrainingType.gradient,
+                selectedTrainingTypeData.activeColor,
                 "shadow-lg"
               )}>
-                {selectedTrainingType.icon}
+                {selectedTrainingTypeData.icon}
               </div>
               
               <h3 className={cn(typography.headings.primary, "text-lg")}>
-                {selectedTrainingType.name}
+                {selectedTrainingTypeData.name}
               </h3>
               
-              <p className={cn(typography.text.muted, "text-xs text-center")}>
-                {selectedTrainingType.description}
+              <p className={cn(typography.text.muted, "text-xs text-center max-w-[90%]")}>
+                {selectedTrainingTypeData.description}
               </p>
               
-              <div className="mt-2 flex items-center gap-1 text-xs text-white/60">
-                <span>Level {selectedTrainingType.level}</span>
+              <div className="mt-1 flex items-center gap-1 text-xs text-white/60">
+                <span>Level {selectedTrainingTypeData.level}</span>
                 <span>•</span>
-                <span>{selectedTrainingType.xp} XP</span>
+                <span>{selectedTrainingTypeData.xp} XP</span>
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Radial menu items */}
-        {DEFAULT_TRAINING_TYPES.map((type, index) => {
-          const totalItems = DEFAULT_TRAINING_TYPES.length;
+        {/* Outer circle with training type options */}
+        {TRAINING_TYPES.map((type, index) => {
+          const totalItems = TRAINING_TYPES.length;
           const angleStep = (2 * Math.PI) / totalItems;
-          const angle = index * angleStep - Math.PI / 2; // Start from top (- Math.PI/2)
+          // Start from top position (-Math.PI/2)
+          const angle = index * angleStep - Math.PI / 2;
           
-          // Calculate position on the circle
-          const radius = 38; // % of container width
+          // Calculate position on the circle (radius = 32% of container)
+          const radius = 32;
           const x = Math.cos(angle) * radius;
           const y = Math.sin(angle) * radius;
           
@@ -219,10 +152,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 damping: 20,
                 delay: index * 0.1,
               }}
-              onClick={() => handleTypeSelect(type.name)}
+              onClick={() => onSelect(type.name)}
               className={cn(
                 "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-                "w-20 h-20 flex flex-col items-center justify-center gap-1",
+                "flex flex-col items-center justify-center gap-1",
                 "cursor-pointer"
               )}
             >
@@ -231,10 +164,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 whileTap={{ scale: 0.95 }}
                 className={cn(
                   "rounded-full p-4",
-                  "bg-gradient-to-br shadow-lg",
+                  "shadow-lg",
                   isSelected 
-                    ? [type.activeGradient, "ring-2 ring-white/30"] 
-                    : [type.gradient, "border border-white/10"]
+                    ? [type.activeColor, "ring-2 ring-white/30"] 
+                    : [type.color, "border border-white/10"]
                 )}
               >
                 {type.icon}
@@ -247,18 +180,18 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 {type.name}
               </span>
               
-              {/* Radial connector line */}
+              {/* Connector line to center */}
               <div 
                 className={cn(
-                  "absolute h-px bg-white/10",
-                  "top-1/2 left-1/2 origin-left",
+                  "absolute h-px",
                   isSelected ? "bg-white/30" : "bg-white/10"
                 )}
                 style={{
                   width: `${radius}%`,
                   transform: `rotate(${angle}rad) scaleX(0.7)`,
                   transformOrigin: '0 0',
-                  opacity: 0.3,
+                  top: "50%",
+                  left: "50%",
                 }}
               />
             </motion.div>
