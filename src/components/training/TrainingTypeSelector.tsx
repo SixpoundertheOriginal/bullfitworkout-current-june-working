@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -266,8 +265,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                     "bg-gradient-to-br backdrop-blur-sm",
                     "cursor-pointer relative overflow-hidden",
                     "transition-all duration-300 ease-out",
-                    // Unified border style for all cards, including left border
-                    "border border-white/10 hover:border-white/20",
+                    "border-2 border-white/10 hover:border-white/20",
                     "shadow-lg hover:shadow-xl",
                     isSelected ? [
                       `${type.activeGradient}`,
