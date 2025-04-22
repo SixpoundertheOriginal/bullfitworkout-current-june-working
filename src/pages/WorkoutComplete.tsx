@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChartContainer } from "@/components/ui/chart";
@@ -134,6 +135,7 @@ const WorkoutComplete = () => {
         notes: notes || null
       });
       
+      // Create the workout session
       const { data: workoutSession, error: workoutError } = await supabase
         .from('workout_sessions')
         .insert({
@@ -156,6 +158,7 @@ const WorkoutComplete = () => {
       if (workoutSession) {
         setWorkoutId(workoutSession.id);
         
+        // Build the exercise sets array
         const exerciseSets = [];
         
         for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
@@ -175,36 +178,71 @@ const WorkoutComplete = () => {
         
         console.log("Saving exercise sets:", exerciseSets);
         
+        // Only attempt to save exercise sets if there are any
         if (exerciseSets.length > 0) {
-          const { error: setsError } = await supabase
-            .from('exercise_sets')
-            .insert(exerciseSets);
+          try {
+            // Split the exercise sets into smaller batches to avoid request size limits
+            const batchSize = 50;
+            const batches = [];
             
-          if (setsError) {
+            for (let i = 0; i < exerciseSets.length; i += batchSize) {
+              batches.push(exerciseSets.slice(i, i + batchSize));
+            }
+            
+            // Process each batch sequentially
+            for (const batch of batches) {
+              const { error: batchError } = await supabase
+                .from('exercise_sets')
+                .insert(batch);
+                
+              if (batchError) {
+                console.error("Error saving exercise set batch:", batchError);
+                throw batchError;
+              }
+            }
+          } catch (setsError) {
             console.error("Error saving exercise sets:", setsError);
-            throw setsError;
+            // Don't throw here, we still want to consider the workout saved
+            toast({
+              title: "Workout saved, but there was an issue saving exercise details.",
+              variant: "default",
+            });
           }
         }
         
+        // Save as template if requested
         if (saveAsTemplate) {
-          const validTrainingType = isValidTrainingType(workoutData.trainingType)
-            ? workoutData.trainingType
-            : 'Strength';
-          
-          const { error: templateError } = await supabase
-            .from('workout_templates')
-            .insert({
-              name: templateName || `${workoutData.trainingType} Template`,
-              description: `Created from workout on ${new Date().toLocaleDateString()}`,
-              training_type: validTrainingType,
-              exercises: JSON.stringify(workoutData.exercises),
-              created_by: user.id,
-              estimated_duration: workoutData.duration
-            });
+          try {
+            const validTrainingType = isValidTrainingType(workoutData.trainingType)
+              ? workoutData.trainingType
+              : 'Strength';
             
-          if (templateError) {
+            const { error: templateError } = await supabase
+              .from('workout_templates')
+              .insert({
+                name: templateName || `${workoutData.trainingType} Template`,
+                description: `Created from workout on ${new Date().toLocaleDateString()}`,
+                training_type: validTrainingType,
+                exercises: JSON.stringify(workoutData.exercises),
+                created_by: user.id,
+                estimated_duration: workoutData.duration
+              });
+              
+            if (templateError) {
+              console.error("Error saving workout template:", templateError);
+              // Don't throw here, we still want to consider the workout saved
+              toast({
+                title: "Workout saved, but template could not be created.",
+                variant: "default",
+              });
+            }
+          } catch (templateError) {
             console.error("Error saving workout template:", templateError);
-            throw templateError;
+            // Don't throw here, we still want to consider the workout saved
+            toast({
+              title: "Workout saved, but template could not be created.",
+              variant: "default",
+            });
           }
         }
         

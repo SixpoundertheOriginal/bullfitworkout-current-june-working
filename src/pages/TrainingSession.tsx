@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -335,6 +336,7 @@ const TrainingSession: React.FC = () => {
       try {
         const now = new Date();
         
+        // First, create the workout session record
         const { data: workoutSession, error: workoutError } = await supabase
           .from('workout_sessions')
           .insert({
@@ -359,6 +361,7 @@ const TrainingSession: React.FC = () => {
         }
         
         if (workoutSession) {
+          // Now prepare the exercise sets data
           const exerciseSets = [];
           
           for (const [exerciseName, sets] of Object.entries(exercises)) {
@@ -376,13 +379,22 @@ const TrainingSession: React.FC = () => {
             });
           }
           
+          // Only try to insert if we have any completed sets
           if (exerciseSets.length > 0) {
-            const { error: setsError } = await supabase
-              .from('exercise_sets')
-              .insert(exerciseSets);
-              
-            if (setsError) {
-              console.error("Error saving exercise sets:", setsError);
+            try {
+              const { error: setsError } = await supabase
+                .from('exercise_sets')
+                .insert(exerciseSets);
+                
+              if (setsError) {
+                console.error("Error saving exercise sets:", setsError);
+                toast({
+                  title: "Workout saved, but there was an issue saving exercise details.",
+                  variant: "default",
+                });
+              }
+            } catch (setInsertError) {
+              console.error("Exception when saving exercise sets:", setInsertError);
               toast({
                 title: "Workout saved, but there was an issue saving exercise details.",
                 variant: "default",
@@ -412,6 +424,7 @@ const TrainingSession: React.FC = () => {
         });
       }
     } else {
+      // User not logged in, just pass the data to the workout complete page
       const now = new Date();
       navigate('/workout-complete', {
         state: {
