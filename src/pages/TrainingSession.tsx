@@ -44,6 +44,11 @@ import { toast } from "@/hooks/use-toast";
 import { ExerciseVolumeSparkline } from "@/components/metrics/ExerciseVolumeSparkline";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import AllExercisesPage from "@/pages/AllExercisesPage";
+import {
+  calculateSetVolume as sharedCalculateSetVolume,
+  getExerciseGroup,
+  getExerciseType
+} from "@/utils/exerciseUtils";
 
 interface TrainingTypeObj {
   id: string;
@@ -108,25 +113,6 @@ const getPreviousSessionData = (exerciseName: string) => {
   return { date: "N/A", weight: 0, reps: 0, sets: 0 };
 };
 
-const calculateSetVolume = (sets: ExerciseSet[], weightUnit: string) => {
-  return sets.reduce((total, set) => {
-    if (set.completed) {
-      if (set.weight > 0 && set.reps > 0) {
-        return total + (set.weight * set.reps);
-      }
-    }
-    return total;
-  }, 0);
-};
-
-interface LocalExerciseSet {
-  weight: number;
-  reps: number;
-  restTime: number;
-  completed: boolean;
-  isEditing: boolean;
-}
-
 const ExerciseCard = ({ 
   exercise, 
   sets, 
@@ -173,8 +159,14 @@ const ExerciseCard = ({
   const weightDiff = previousSession.weight - olderSession.weight;
   const percentChange = olderSession.weight ? ((weightDiff / olderSession.weight) * 100).toFixed(1) : "0";
   const isImproved = weightDiff > 0;
-  
-  const currentVolume = calculateSetVolume(sets as unknown as ExerciseSet[], weightUnit);
+
+  const currentVolume = (sets as unknown as ExerciseSet[]).reduce((total, set) => {
+    return total + sharedCalculateSetVolume(
+      set,
+      exercise,
+      undefined
+    );
+  }, 0);
   
   const previousVolume = previousSession.weight > 0 ? 
     previousSessionWeight * previousSession.reps * previousSession.sets : 0;
