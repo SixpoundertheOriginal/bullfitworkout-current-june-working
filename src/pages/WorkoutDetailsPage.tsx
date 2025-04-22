@@ -56,7 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AddExerciseDialog } from "@/components/AddExerciseDialog";
+import { ExerciseDialog } from "@/components/ExerciseDialog";  // Update this import
 
 interface WorkoutDetails {
   id: string;
@@ -469,16 +469,16 @@ const WorkoutDetailsPage = () => {
         onSave={handleSaveExerciseSets}
       />
       
-      <AddExerciseDialog
+      <ExerciseDialog  // Replace AddExerciseDialog with ExerciseDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onAddExercise={handleAddExercise}
-        onAdd={async (exercise) => {
+        onSubmit={async (exercise) => {
           if (exercise.name) {
             return handleAddExercise(exercise.name);
           }
           return Promise.resolve();
         }}
+        mode="add"  // Specify the mode explicitly
       />
       
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
