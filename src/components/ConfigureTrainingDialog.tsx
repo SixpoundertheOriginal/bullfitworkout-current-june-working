@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -283,7 +284,7 @@ export function ConfigureTrainingDialog({
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className={cn(typography.headings.primary, "text-lg")}>
-                    Choose Your Character
+                    Choose Your Training Type
                   </h3>
                   <AddCustomTrainingType />
                 </div>
