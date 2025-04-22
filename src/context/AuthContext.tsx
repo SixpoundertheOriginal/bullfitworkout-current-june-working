@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -15,11 +15,28 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create a separate toast context for auth to avoid circular dependencies
-const showToast = (title: string, description: string, variant?: "default" | "destructive") => {
-  // This function will be replaced when a component renders
-  console.log(`Toast (${variant || 'default'}): ${title} - ${description}`);
-};
+// Create a helper function to show toasts
+function createToastHelper() {
+  // Default implementation logs to console
+  let showToastImpl = (title: string, description: string, variant?: "default" | "destructive") => {
+    console.log(`Toast (${variant || 'default'}): ${title} - ${description}`);
+  };
+
+  // The function we'll expose
+  const showToast = (title: string, description: string, variant?: "default" | "destructive") => {
+    showToastImpl(title, description, variant);
+  };
+
+  // A setter to update the implementation
+  const setToastImplementation = (impl: typeof showToastImpl) => {
+    showToastImpl = impl;
+  };
+
+  return { showToast, setToastImplementation };
+}
+
+// Create a single instance of the toast helper
+const toastHelper = createToastHelper();
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,15 +44,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
-  // Replace the placeholder with the actual toast function
+  // Set the toast implementation once the component mounts
   useEffect(() => {
-    showToast = (title, description, variant) => {
+    toastHelper.setToastImplementation((title, description, variant) => {
       toast({
         title,
         description,
         variant,
       });
-    };
+    });
   }, [toast]);
 
   useEffect(() => {
@@ -47,9 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
 
         if (event === 'SIGNED_IN') {
-          showToast("Successfully signed in", "Welcome back!");
+          toastHelper.showToast("Successfully signed in", "Welcome back!");
         } else if (event === 'SIGNED_OUT') {
-          showToast("Signed out", "You have been signed out.");
+          toastHelper.showToast("Signed out", "You have been signed out.");
         }
       }
     );
@@ -79,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
     } catch (error: any) {
-      showToast("Error signing in", error.message, "destructive");
+      toastHelper.showToast("Error signing in", error.message, "destructive");
       throw error;
     } finally {
       setLoading(false);
@@ -101,9 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      showToast("Account created", "Please check your email to confirm your account.");
+      toastHelper.showToast("Account created", "Please check your email to confirm your account.");
     } catch (error: any) {
-      showToast("Error signing up", error.message, "destructive");
+      toastHelper.showToast("Error signing up", error.message, "destructive");
       throw error;
     } finally {
       setLoading(false);
@@ -116,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error: any) {
-      showToast("Error signing out", error.message, "destructive");
+      toastHelper.showToast("Error signing out", error.message, "destructive");
     } finally {
       setLoading(false);
     }
