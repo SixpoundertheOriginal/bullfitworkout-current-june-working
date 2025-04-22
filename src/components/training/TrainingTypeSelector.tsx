@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Heart, Activity, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import { typography } from '@/lib/typography';
-import { Button } from "@/components/ui/button";
-import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem,
-} from "@/components/ui/carousel";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface TrainingTypeSelectorProps {
@@ -36,44 +30,44 @@ const DEFAULT_TRAINING_TYPES: DefaultTrainingType[] = [
   {
     name: "Strength",
     icon: <Dumbbell className="h-7 w-7" />,
-    gradient: "from-purple-500 via-purple-600 to-purple-700",
-    activeGradient: "from-purple-400 via-purple-600 to-purple-800",
+    gradient: "from-purple-500/80 to-purple-700/80",
+    activeGradient: "from-purple-400 to-purple-600",
     bgColor: "bg-purple-500",
-    description: "Build muscle and increase power",
-    benefits: ["Increased muscle mass", "Better bone density", "Higher metabolism"],
+    description: "Build muscle & increase power",
+    benefits: ["Muscle growth", "Better strength", "Power gains"],
     level: 2,
     xp: 65
   },
   {
     name: "Cardio",
     icon: <Bike className="h-7 w-7" />,
-    gradient: "from-red-400 via-red-500 to-red-600",
-    activeGradient: "from-red-300 via-red-500 to-red-700",
+    gradient: "from-red-400/80 to-red-600/80",
+    activeGradient: "from-red-300 to-red-500",
     bgColor: "bg-red-500",
-    description: "Improve endurance and heart health",
-    benefits: ["Better cardiovascular health", "Increased stamina", "Improved mood"],
+    description: "Boost endurance & heart health",
+    benefits: ["Stamina boost", "Heart health", "Fat burn"],
     level: 1,
     xp: 30
   },
   {
     name: "Yoga",
     icon: <Heart className="h-7 w-7" />,
-    gradient: "from-green-400 via-green-500 to-green-600",
-    activeGradient: "from-green-300 via-green-500 to-green-700",
+    gradient: "from-green-400/80 to-green-600/80",
+    activeGradient: "from-green-300 to-green-500",
     bgColor: "bg-green-500",
-    description: "Enhance flexibility and mindfulness",
-    benefits: ["Improved flexibility", "Better stress management", "Enhanced balance"],
+    description: "Flow & mindfulness",
+    benefits: ["Flexibility", "Balance", "Peace"],
     level: 3,
     xp: 85
   },
   {
     name: "Calisthenics",
     icon: <Activity className="h-7 w-7" />,
-    gradient: "from-blue-400 via-blue-500 to-blue-600",
-    activeGradient: "from-blue-300 via-blue-500 to-blue-700",
+    gradient: "from-blue-400/80 to-blue-600/80",
+    activeGradient: "from-blue-300 to-blue-500",
     bgColor: "bg-blue-500",
-    description: "Master bodyweight exercises",
-    benefits: ["Functional strength", "Body control", "No equipment needed"],
+    description: "Master bodyweight skills",
+    benefits: ["Body control", "Strength", "Agility"],
     level: 1,
     xp: 45
   }
@@ -111,11 +105,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     inViewThreshold: 0.9,
     breakpoints: {
       '(min-width: 768px)': { slidesToScroll: 2 }
-    },
-    dragThreshold: 10,
-    watchDrag: true,
-    skipSnaps: false,
-    startIndex: DEFAULT_TRAINING_TYPES.findIndex(t => t.name === selectedType)
+    }
   };
   
   const [emblaRef, emblaApi] = useEmblaCarousel(options);
@@ -202,197 +192,192 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     };
   }, [emblaApi]);
 
-  const handleManualScroll = (direction: 'prev' | 'next') => {
-    if (!emblaApi) return;
-    
-    if (direction === 'prev' && canScrollPrev) {
-      emblaApi.scrollPrev();
-    } else if (direction === 'next' && canScrollNext) {
-      emblaApi.scrollNext();
-    }
-  };
-
   const handleTypeSelect = (type: string) => {
     if (!isDragging) {
       onSelect(type);
+      // selectSound?.play().catch(() => {});
     }
   };
 
   return (
-    <div 
-      className="w-full overflow-visible relative"
-      onTouchStart={() => setTouchActive(true)}
-      onTouchEnd={() => {
-        setTouchActive(false);
-        setIsDragging(false);
-      }}
-    >
-      <div className="flex justify-center gap-0.5 mb-4">
-        {allTrainingTypes.map((_, index) => (
+    <div className="w-full overflow-visible relative">
+      <div className="flex justify-center gap-2 mb-6">
+        {DEFAULT_TRAINING_TYPES.map((_, index) => (
           <motion.div
             key={index}
             className={cn(
-              "h-0.5 rounded-full transition-all duration-300",
-              current === index ? "w-2.5 bg-white" : "w-0.5 bg-white/30"
+              "h-1 rounded-full transition-all duration-300 relative",
+              current === index ? "w-8 bg-white" : "w-2 bg-white/20"
             )}
             animate={{
-              width: current === index ? 10 : 2,
-              opacity: current === index ? 1 : 0.5
+              width: current === index ? 32 : 8,
+              opacity: current === index ? 1 : 0.2
             }}
-          />
+          >
+            {current === index && (
+              <motion.div
+                className="absolute inset-0 bg-white rounded-full"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [1, 0.7, 1],
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "loop"
+                }}
+              />
+            )}
+          </motion.div>
         ))}
       </div>
 
-      <div className="relative px-1">
-        <Button
-          onClick={() => handleManualScroll('prev')}
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "absolute -left-2 z-10 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full",
-            "bg-black/40 border border-white/10 hover:bg-black/60",
-            "transition-all duration-200 backdrop-blur-sm",
-            !canScrollPrev && "opacity-30 pointer-events-none"
-          )}
-        >
-          <ChevronLeft className="h-3 w-3" />
-        </Button>
-        
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex px-1">
-            {allTrainingTypes.map((type, index) => {
-              const isSelected = selectedType === type.name;
-              
-              return (
-                <div 
-                  key={`${type.name}-${index}`} 
-                  className="min-w-0 shrink-0 grow-0 basis-[200px] px-2"
-                >
-                  <motion.div
-                    className={cn(
-                      "w-full cursor-grab active:cursor-grabbing",
-                      "transition-all duration-300",
-                      isSelected ? "scale-100" : "scale-95 hover:scale-98"
-                    )}
-                    onClick={() => handleTypeSelect(type.name)}
-                    whileHover={{ scale: isSelected ? 1 : 0.98 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <div
-                      className={cn(
-                        "w-full aspect-square rounded-[1.5rem] p-4",
-                        "flex flex-col items-center justify-center gap-3",
-                        "bg-gradient-to-br shadow-lg cursor-pointer",
-                        "transition-all duration-300",
-                        isSelected ? [
-                          `${type.activeGradient}`,
-                          "ring-2 ring-white/20 ring-offset-1 ring-offset-gray-900"
-                        ] : type.gradient,
-                        "relative overflow-hidden"
-                      )}
-                    >
-                      {type.level && (
-                        <div className="absolute top-4 right-4 z-20">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm">
-                            <span className="text-xs font-bold text-white">Lv{type.level}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="relative z-10 flex flex-col items-center text-center">
-                        <div className={cn(
-                          "mb-3 p-3 rounded-full",
-                          "bg-white/10 backdrop-blur-sm",
-                          "transition-all duration-300"
-                        )}>
-                          {type.icon}
-                        </div>
-                        
-                        <h3 className={cn(
-                          typography.headings.primary,
-                          "text-xl mb-1"
-                        )}>
-                          {type.name}
-                        </h3>
-                        
-                        {type.description && (
-                          <p className={cn(
-                            typography.text.secondary,
-                            "text-xs mb-2"
-                          )}>
-                            {type.description}
-                          </p>
-                        )}
-
-                        {isSelected && type.benefits && type.benefits.length > 0 && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex flex-col items-center"
-                          >
-                            <div className="flex flex-wrap gap-2 justify-center">
-                              {type.benefits?.slice(0, 2).map((benefit, i) => (
-                                <span
-                                  key={i}
-                                  className="px-2 py-1 text-xs rounded-full bg-white/10 text-white/90"
-                                >
-                                  {benefit}
-                                </span>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      {type.xp && (
-                        <div className="absolute bottom-4 left-4 right-4 h-1 bg-black/30 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${type.xp}%` }}
-                            transition={{ delay: 0.5, duration: 1 }}
-                            className="h-full bg-gradient-to-r from-white/30 to-white/10"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        
-        <Button
-          onClick={() => handleManualScroll('next')}
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "absolute -right-2 z-10 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full",
-            "bg-black/40 border border-white/10 hover:bg-black/60",
-            "transition-all duration-200 backdrop-blur-sm",
-            !canScrollNext && "opacity-30 pointer-events-none"
-          )}
-        >
-          <ChevronRight className="h-3 w-3" />
-        </Button>
-      </div>
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ 
-          opacity: touchActive ? 0 : 1, 
-          y: touchActive ? 20 : 0 
+      <div 
+        ref={emblaRef} 
+        className="overflow-hidden"
+        onTouchStart={() => setTouchActive(true)}
+        onTouchEnd={() => {
+          setTouchActive(false);
+          setIsDragging(false);
         }}
-        transition={{ 
-          delay: 0.5,
-          duration: 0.2
-        }}
-        className="mt-3 text-center text-white/60 text-xs flex items-center justify-center"
       >
-        <ChevronLeft size={12} className="mr-1 animate-pulse" /> 
-        Swipe to see more training types 
-        <ChevronRight size={12} className="ml-1 animate-pulse" />
-      </motion.div>
+        <div className="flex">
+          {DEFAULT_TRAINING_TYPES.map((type, index) => {
+            const isSelected = selectedType === type.name;
+            
+            return (
+              <motion.div
+                key={`${type.name}-${index}`}
+                className="min-w-0 shrink-0 grow-0 basis-[200px] px-2"
+                whileHover={{ scale: isSelected ? 1 : 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <motion.div
+                  onClick={() => handleTypeSelect(type.name)}
+                  animate={{ 
+                    scale: isSelected ? 1 : 0.95,
+                    y: isSelected ? -4 : 0
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className={cn(
+                    "w-full aspect-square rounded-2xl p-4",
+                    "flex flex-col items-center justify-center gap-3",
+                    "bg-gradient-to-br backdrop-blur-sm",
+                    "cursor-pointer relative overflow-hidden",
+                    "transition-all duration-300 ease-out",
+                    "border border-white/10",
+                    "hover:border-white/20",
+                    "shadow-lg hover:shadow-xl",
+                    isSelected ? [
+                      `${type.activeGradient}`,
+                      "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
+                    ] : [
+                      type.gradient,
+                      "hover:from-opacity-90 hover:to-opacity-90"
+                    ]
+                  )}
+                >
+                  {type.level && (
+                    <div className="absolute top-3 right-3">
+                      <motion.div 
+                        className={cn(
+                          "flex items-center justify-center",
+                          "h-7 px-2 rounded-full",
+                          "bg-black/40 backdrop-blur-sm",
+                          "border border-white/10"
+                        )}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <span className="text-xs font-medium text-white">Lv{type.level}</span>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className={cn(
+                      "mb-3 p-3 rounded-xl",
+                      "bg-white/10 backdrop-blur-sm",
+                      "shadow-inner border border-white/5"
+                    )}
+                  >
+                    {type.icon}
+                  </motion.div>
+                  
+                  <div className="text-center space-y-1">
+                    <motion.h3
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className={cn(typography.headings.primary, "text-xl")}
+                    >
+                      {type.name}
+                    </motion.h3>
+                    
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.9 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-sm text-white/80"
+                    >
+                      {type.description}
+                    </motion.p>
+                  </div>
+
+                  {isSelected && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2"
+                    >
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {type.benefits?.slice(0, 3).map((benefit, i) => (
+                          <motion.span
+                            key={i}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.3 + i * 0.1 }}
+                            className={cn(
+                              "px-2 py-0.5 text-xs rounded-full",
+                              "bg-black/20 backdrop-blur-sm",
+                              "border border-white/10",
+                              "text-white/90"
+                            )}
+                          >
+                            {benefit}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {type.xp && (
+                    <motion.div 
+                      className="absolute bottom-3 left-3 right-3"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <div className="h-1 bg-black/20 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${type.xp}%` }}
+                          transition={{ delay: 0.5, duration: 1 }}
+                          className="h-full bg-gradient-to-r from-white/30 to-white/10"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
