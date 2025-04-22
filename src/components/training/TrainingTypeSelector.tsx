@@ -241,24 +241,24 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full",
+            "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
             "bg-black/30 border-white/10 hover:bg-black/50",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollPrev && "opacity-30 pointer-events-none"
           )}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
         
         <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex px-10 md:px-16">
+          <div className="flex px-6 md:px-12">
             {allTrainingTypes.map((type, index) => {
               const isSelected = selectedType === type.name;
               
               return (
                 <div 
                   key={`${type.name}-${index}`} 
-                  className="min-w-0 shrink-0 grow-0 basis-[280px] px-2 py-1"
+                  className="min-w-0 shrink-0 grow-0 basis-[240px] px-2 py-1"
                 >
                   <motion.div
                     className={cn(
@@ -272,8 +272,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   >
                     <div
                       className={cn(
-                        "w-full h-[280px] rounded-3xl p-6",
-                        "flex flex-col items-center justify-center gap-4",
+                        "w-full h-[240px] rounded-2xl p-4",
+                        "flex flex-col items-center justify-center gap-3",
                         "bg-gradient-to-br shadow-lg cursor-pointer",
                         "transition-all duration-300",
                         isSelected ? [
@@ -293,7 +293,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
                       <div className="relative z-10 flex flex-col items-center text-center">
                         <div className={cn(
-                          "mb-4 p-4 rounded-full",
+                          "mb-3 p-3 rounded-full",
                           "bg-white/10 backdrop-blur-sm",
                           "transition-all duration-300"
                         )}>
@@ -302,7 +302,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                         
                         <h3 className={cn(
                           typography.headings.primary,
-                          "text-2xl mb-2"
+                          "text-xl mb-1"
                         )}>
                           {type.name}
                         </h3>
@@ -310,7 +310,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                         {type.description && (
                           <p className={cn(
                             typography.text.secondary,
-                            "text-sm mb-4"
+                            "text-xs mb-2"
                           )}>
                             {type.description}
                           </p>
@@ -359,13 +359,13 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full",
+            "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
             "bg-black/30 border-white/10 hover:bg-black/50",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollNext && "opacity-30 pointer-events-none"
           )}
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
       
@@ -379,11 +379,11 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           delay: 0.5,
           duration: 0.2
         }}
-        className="mt-4 text-center text-white/60 text-xs flex items-center justify-center"
+        className="mt-3 text-center text-white/60 text-xs flex items-center justify-center"
       >
-        <ChevronLeft size={14} className="mr-1 animate-pulse" /> 
+        <ChevronLeft size={12} className="mr-1 animate-pulse" /> 
         Swipe to see more training types 
-        <ChevronRight size={14} className="ml-1 animate-pulse" />
+        <ChevronRight size={12} className="ml-1 animate-pulse" />
       </motion.div>
     </div>
   );
