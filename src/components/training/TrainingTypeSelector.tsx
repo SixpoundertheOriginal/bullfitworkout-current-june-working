@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity, ChevronLeft, ChevronRight } from "lucide-react";
@@ -99,12 +100,16 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const { user } = useAuth();
   const { stats } = useWorkoutStats();
   const [touchActive, setTouchActive] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
-    dragFree: true,
+    dragFree: false, // Changed to false for smoother snapping
     containScroll: "trimSnaps",
+    slidesToScroll: 1,
+    speed: 20, // Increased animation speed
+    inViewThreshold: 0.7, // Improved threshold for better snap
   });
   
   const [current, setCurrent] = useState(0);
@@ -141,6 +146,18 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   ];
 
   useEffect(() => {
+    if (!emblaApi) return;
+
+    emblaApi.on("dragStart", () => setIsDragging(true));
+    emblaApi.on("dragEnd", () => setIsDragging(false));
+
+    return () => {
+      emblaApi.off("dragStart", () => setIsDragging(true));
+      emblaApi.off("dragEnd", () => setIsDragging(false));
+    };
+  }, [emblaApi]);
+
+  useEffect(() => {
     if (emblaApi && selectedType) {
       const index = allTrainingTypes.findIndex(type => type.name === selectedType);
       if (index >= 0) {
@@ -175,27 +192,29 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     if (!emblaApi) return;
     
     if (direction === 'prev' && canScrollPrev) {
-      emblaApi.scrollPrev();
+      emblaApi.scrollPrev({ duration: 300 });
     } else if (direction === 'next' && canScrollNext) {
-      emblaApi.scrollNext();
+      emblaApi.scrollNext({ duration: 300 });
     }
   };
-
-  console.log("Carousel state:", { current, canScrollPrev, canScrollNext, totalItems: allTrainingTypes.length });
 
   return (
     <div 
       className="w-full overflow-visible relative"
       onTouchStart={() => setTouchActive(true)}
-      onTouchEnd={() => setTouchActive(false)}
+      onTouchEnd={() => {
+        setTouchActive(false);
+        setIsDragging(false);
+      }}
     >
       <div className="flex justify-center gap-1 mb-3">
         {allTrainingTypes.map((_, index) => (
           <motion.div
             key={index}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
+            className={cn(
+              "h-1.5 rounded-full transition-all duration-300",
               current === index ? "w-4 bg-white" : "w-1.5 bg-white/30"
-            }`}
+            )}
             animate={{
               width: current === index ? 16 : 6,
               opacity: current === index ? 1 : 0.5
@@ -210,9 +229,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
-            !canScrollPrev && "opacity-30 pointer-events-none",
-            "transition-opacity duration-200"
+            "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full",
+            "bg-black/30 border-white/10 hover:bg-black/50",
+            "transition-all duration-200 backdrop-blur-sm",
+            !canScrollPrev && "opacity-30 pointer-events-none"
           )}
         >
           <ChevronLeft className="h-5 w-5" />
@@ -230,11 +250,11 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 >
                   <motion.div
                     className={cn(
-                      "w-full",
+                      "w-full cursor-grab active:cursor-grabbing",
                       "transition-all duration-300",
                       isSelected ? "scale-100" : "scale-95 hover:scale-98"
                     )}
-                    onClick={() => onSelect(type.name)}
+                    onClick={() => !isDragging && onSelect(type.name)}
                     whileHover={{ scale: isSelected ? 1 : 0.98 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -327,9 +347,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/30 border-white/10 hover:bg-black/50",
-            !canScrollNext && "opacity-30 pointer-events-none",
-            "transition-opacity duration-200"
+            "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full",
+            "bg-black/30 border-white/10 hover:bg-black/50",
+            "transition-all duration-200 backdrop-blur-sm",
+            !canScrollNext && "opacity-30 pointer-events-none"
           )}
         >
           <ChevronRight className="h-5 w-5" />
@@ -338,11 +359,19 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: touchActive ? 0 : 1, y: touchActive ? 20 : 0 }}
-        transition={{ delay: 0.5 }}
+        animate={{ 
+          opacity: touchActive ? 0 : 1, 
+          y: touchActive ? 20 : 0 
+        }}
+        transition={{ 
+          delay: 0.5,
+          duration: 0.2
+        }}
         className="mt-4 text-center text-white/60 text-xs flex items-center justify-center"
       >
-        <ChevronLeft size={14} className="mr-1" /> Swipe to see more training types <ChevronRight size={14} className="ml-1" />
+        <ChevronLeft size={14} className="mr-1 animate-pulse" /> 
+        Swipe to see more training types 
+        <ChevronRight size={14} className="ml-1 animate-pulse" />
       </motion.div>
     </div>
   );
