@@ -2,8 +2,20 @@
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
+// CUSTOM COLORS
+const colors = {
+  primary: "#9b87f5",          // Purple
+  secondary: "#F97316",        // Orange
+  accent: "#F2FCE2",           // Soft Green
+  neutral: "#1A1F2C",          // Very dark background
+  neutralLight: "#23263A",
+  info: "#90cdf4",             // Light blue
+  positive: "#34d399",         // Green
+  negative: "#f87171",         // Red
+};
+
 const config = {
-  darkMode: ["class"], // Enables class-based dark mode switching!
+  darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -20,13 +32,36 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        montserrat: ["Montserrat", ...fontFamily.sans],
+        inter: ["Inter", ...fontFamily.sans],
+        // fallback for anything not in the pairing
+        sans: ["Inter", ...fontFamily.sans],
+      },
       colors: {
+        // Core palette override
+        primary: {
+          DEFAULT: colors.primary,
+        },
+        secondary: {
+          DEFAULT: colors.secondary,
+        },
+        accent: {
+          DEFAULT: colors.accent,
+        },
+        neutral: {
+          DEFAULT: colors.neutral,
+          light: colors.neutralLight,
+        },
+        info: colors.info,
+        positive: colors.positive,
+        negative: colors.negative,
+        // Map to variable colors for easier migration
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        // Use mostly standard colors - theme relies on CSS variables below!
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -42,6 +77,15 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
+        "checkmark": {
+          '0%': { scale: '0.7', opacity: 0.7 },
+          '70%': { scale: '1.05', opacity: 1 },
+          '100%': { scale: '1', opacity: 1 },
+        },
+        "fade-in": {
+          "0%": { opacity: 0, transform: "translateY(10px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
         "pulse-slow": {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.8' },
@@ -50,14 +94,12 @@ const config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "checkmark": "checkmark 0.32s cubic-bezier(0.39,0.58,0.57,1) forwards",
+        "fade-in": "fade-in 0.22s ease-in",
         "pulse-slow": "pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-      },
-      fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
 };
-
 export default config;

@@ -5,19 +5,19 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-montserrat font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        default: "btn btn-primary",
+        destructive: "bg-negative text-white hover:bg-negative/90 shadow-sm",
+        outline: "btn btn-outline",
+        secondary: "btn btn-secondary",
+        ghost: "btn btn-ghost",
         link: "text-primary underline-offset-4 hover:underline",
-        gradient: "bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow-lg hover:shadow-purple-500/25",
+        gradient: "bg-gradient-to-r from-primary to-secondary text-white hover:from-primary/90 hover:to-secondary/90 shadow-lg hover:scale-105",
         "icon-circle": "rounded-full bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105 focus:ring-offset-background",
-        "nav-action": "bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold tracking-wide hover:from-purple-500 hover:to-pink-400 shadow-lg hover:shadow-purple-500/25 border border-white/10",
+        "nav-action": "bg-gradient-to-r from-primary to-secondary text-white font-semibold tracking-wide hover:from-primary/80 hover:to-secondary/80 shadow-lg hover:shadow-primary/25 border border-white/10",
       },
       shape: {
         default: "rounded-md",
@@ -25,11 +25,11 @@ const buttonVariants = cva(
         square: "rounded-none",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10 p-2",
-        "icon-lg": "h-20 w-20 p-4",
+        default: "h-11 px-5 py-2",
+        sm: "h-9 rounded-md px-3 text-sm",
+        lg: "h-14 rounded-md px-8 text-lg",
+        icon: "h-11 w-11 p-2",
+        "icon-lg": "h-16 w-16 p-4",
       },
       iconPosition: {
         left: "[&_svg]:ml-0 [&_svg]:mr-2",
@@ -44,7 +44,7 @@ const buttonVariants = cva(
       iconPosition: "left",
     },
   }
-)
+);
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -69,7 +69,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             shape,
             iconPosition: effectiveIconPosition,
             className 
-          })
+          }),
+          "transition-all duration-200 ease-in-out",
+          props.disabled && "btn-disabled"
         )}
         ref={ref}
         {...props}

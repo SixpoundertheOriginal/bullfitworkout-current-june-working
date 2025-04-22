@@ -1,8 +1,82 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Light mode variables */
+/* Font family setup */
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+  body {
+    @apply font-inter bg-background text-foreground antialiased;
+  }
+  h1, h2, h3, h4, h5, h6,
+  .heading, .font-heading, .font-montserrat {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .font-inter { font-family: 'Inter', sans-serif; }
+  .font-montserrat { font-family: 'Montserrat', sans-serif; }
+}
+
+/* Systematic text utilities */
+.text-primary-num {
+  @apply text-white font-bold font-montserrat text-xl tracking-tight drop-shadow-lg;
+}
+.text-numeric {
+  @apply text-sky-200 font-mono font-medium;
+}
+.text-positive {
+  @apply text-emerald-300 font-bold font-mono;
+}
+.text-negative {
+  @apply text-red-400 font-bold font-mono;
+}
+
+/* Button utility classes */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md transition-all duration-200 font-montserrat font-semibold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+}
+.btn-primary {
+  @apply bg-primary text-white shadow hover:bg-primary/90 active:bg-primary/80;
+}
+.btn-secondary {
+  @apply bg-secondary text-white hover:bg-secondary/90 active:bg-secondary/80;
+}
+.btn-accent {
+  @apply bg-accent text-primary hover:bg-accent/90;
+}
+.btn-outline {
+  @apply border border-primary bg-transparent text-primary hover:bg-primary/10;
+}
+.btn-ghost {
+  @apply bg-transparent text-primary hover:bg-primary/10 active:bg-primary/20;
+}
+.btn-disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  @apply animate-fade-in;
+}
+.animate-checkmark {
+  @apply animate-checkmark;
+}
+
+/* Grid & spacing */
+.grid-system {
+  @apply grid gap-4;
+}
+.container {
+  @apply mx-auto px-4 md:px-8;
+}
+
+/* Remainder: card gradients, glass, dark mode variables unchanged */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -11,13 +85,11 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --primary: 253 87% 76%; /* mapped to #9b87f5 */
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 249 97% 73%;          /* custom accent for purple */
+    --secondary: 31 96% 60%; /* mapped to #F97316 */
+    --secondary-foreground: 0 0% 98%;
+    --accent: 92 76% 91%; /* mapped to #F2FCE2 */
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -26,18 +98,13 @@
     --ring: 240 5.9% 10%;
     --radius: 1rem;
   }
-  .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl;
-  }
 }
 
 @layer utilities {
   .card-gradient {
-    @apply bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--secondary)_/_0.8)] backdrop-blur-sm;
+    @apply bg-gradient-to-br from-card to-secondary/80 backdrop-blur-sm;
   }
 }
-
-/* Dark mode variables */
 @layer base {
   .dark {
     --background: 240 10% 3.9%;
@@ -46,14 +113,12 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
+    --primary: 253 87% 76%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 31 96% 60%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 249 97% 73%; /* custom accent for purple */
-    --accent-foreground: 0 0% 98%;
+    --accent: 92 76% 91%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
@@ -67,27 +132,8 @@
   }
 }
 
-/* Smoothing all themes */
 @layer base {
   body {
     @apply bg-background text-foreground antialiased;
   }
-}
-
-/* Custom text utilities */
-.text-primary {
-  @apply text-white;
-}
-
-.text-secondary {
-  @apply text-gray-300;
-}
-
-.text-muted {
-  @apply text-gray-500;
-}
-
-/* Example of more specific text utility */
-.text-link {
-  @apply text-blue-400 hover:text-blue-300;
 }
