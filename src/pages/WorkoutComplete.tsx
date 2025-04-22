@@ -218,11 +218,6 @@ const WorkoutComplete = () => {
           description: "Your workout has been successfully recorded"
         });
         
-        if (!navigatePending.pending) {
-          // We'll let the user navigate manually instead of automatic redirect
-          // This prevents unexpected navigation when viewing workout details
-        }
-        
         return workoutSession.id;
       }
       

@@ -57,7 +57,6 @@ interface LocationState {
   [key: string]: any;
 }
 
-// Add back the LocalExerciseSet interface that was removed during refactoring
 interface LocalExerciseSet {
   weight: number;
   reps: number;
@@ -335,46 +334,76 @@ const TrainingSession: React.FC = () => {
     if (user) {
       try {
         const now = new Date();
-        const workoutData = {
-          user_id: user.id,
-          name: `Workout ${now.toLocaleDateString()}`,
-          start_time: new Date(now.getTime() - elapsedTime * 1000).toISOString(),
-          end_time: now.toISOString(),
-          training_type: trainingType,
-          duration: elapsedTime,
-          notes: null,
-          exercises: Object.entries(exercises).map(([name, sets]) => ({
-            name,
-            sets: sets.map(set => ({
-              weight: set.weight,
-              reps: set.reps,
-              rest_time: set.restTime,
-              completed: set.completed
-            }))
-          }))
-        };
         
-        const { data, error } = await supabase
+        const { data: workoutSession, error: workoutError } = await supabase
           .from('workout_sessions')
-          .insert(workoutData)
-          .select();
+          .insert({
+            user_id: user.id,
+            name: `Workout ${now.toLocaleDateString()}`,
+            training_type: trainingType,
+            start_time: new Date(now.getTime() - elapsedTime * 1000).toISOString(),
+            end_time: now.toISOString(),
+            duration: elapsedTime,
+            notes: null
+          })
+          .select()
+          .single();
           
-        if (error) {
-          throw error;
+        if (workoutError) {
+          console.error("Error saving workout session:", workoutError);
+          toast({
+            title: "Failed to save your workout. Please try again.",
+            variant: "destructive",
+          });
+          return;
         }
         
-        navigate('/workout-complete', {
-          state: {
-            workoutId: data[0].id,
-            duration: elapsedTime,
-            training_type: trainingType,
-            intensity,
-            volume,
-            calories: projectedCalories,
-            completed_sets: completedSets,
-            total_sets: totalSets
+        if (workoutSession) {
+          const exerciseSets = [];
+          
+          for (const [exerciseName, sets] of Object.entries(exercises)) {
+            sets.forEach((set, index) => {
+              if (set.completed) {
+                exerciseSets.push({
+                  workout_id: workoutSession.id,
+                  exercise_name: exerciseName,
+                  weight: set.weight,
+                  reps: set.reps,
+                  set_number: index + 1,
+                  completed: set.completed
+                });
+              }
+            });
           }
-        });
+          
+          if (exerciseSets.length > 0) {
+            const { error: setsError } = await supabase
+              .from('exercise_sets')
+              .insert(exerciseSets);
+              
+            if (setsError) {
+              console.error("Error saving exercise sets:", setsError);
+              toast({
+                title: "Workout saved, but there was an issue saving exercise details.",
+                variant: "warning",
+              });
+            }
+          }
+          
+          navigate('/workout-complete', {
+            state: {
+              workoutId: workoutSession.id,
+              workoutData: {
+                exercises,
+                duration: elapsedTime,
+                startTime: new Date(now.getTime() - elapsedTime * 1000),
+                endTime: now,
+                trainingType,
+                name: `Workout ${now.toLocaleDateString()}`
+              }
+            }
+          });
+        }
       } catch (error) {
         console.error('Error saving workout:', error);
         toast({
@@ -383,15 +412,17 @@ const TrainingSession: React.FC = () => {
         });
       }
     } else {
+      const now = new Date();
       navigate('/workout-complete', {
         state: {
-          duration: elapsedTime,
-          training_type: trainingType,
-          intensity,
-          volume,
-          calories: projectedCalories,
-          completed_sets: completedSets,
-          total_sets: totalSets
+          workoutData: {
+            exercises,
+            duration: elapsedTime,
+            startTime: new Date(now.getTime() - elapsedTime * 1000),
+            endTime: now,
+            trainingType,
+            name: `Workout ${now.toLocaleDateString()}`
+          }
         }
       });
     }
