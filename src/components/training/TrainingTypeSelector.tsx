@@ -107,12 +107,12 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     dragFree: false,
     containScroll: "trimSnaps" as const,
     slidesToScroll: 1,
-    duration: 30,
-    inViewThreshold: 0.6,
+    duration: 25,
+    inViewThreshold: 0.7,
     breakpoints: {
       '(min-width: 768px)': { slidesToScroll: 2 }
     },
-    dragThreshold: 10,
+    dragThreshold: 8,
     watchDrag: true,
     skipSnaps: false,
     startIndex: DEFAULT_TRAINING_TYPES.findIndex(t => t.name === selectedType)
@@ -226,41 +226,41 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           <motion.div
             key={index}
             className={cn(
-              "h-1.5 rounded-full transition-all duration-300",
-              current === index ? "w-4 bg-white" : "w-1.5 bg-white/30"
+              "h-1 rounded-full transition-all duration-300",
+              current === index ? "w-3 bg-white" : "w-1 bg-white/30"
             )}
             animate={{
-              width: current === index ? 16 : 6,
+              width: current === index ? 12 : 4,
               opacity: current === index ? 1 : 0.5
             }}
           />
         ))}
       </div>
 
-      <div className="relative px-4">
+      <div className="relative px-2">
         <Button
           onClick={() => handleManualScroll('prev')}
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute -left-2 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
+            "absolute -left-1 z-10 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full",
             "bg-black/40 border border-white/10 hover:bg-black/60",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollPrev && "opacity-30 pointer-events-none"
           )}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
         
         <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex px-4">
+          <div className="flex px-2">
             {allTrainingTypes.map((type, index) => {
               const isSelected = selectedType === type.name;
               
               return (
                 <div 
                   key={`${type.name}-${index}`} 
-                  className="min-w-0 shrink-0 grow-0 basis-[220px] px-2"
+                  className="min-w-0 shrink-0 grow-0 basis-[200px] px-2"
                 >
                   <motion.div
                     className={cn(
@@ -274,13 +274,13 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   >
                     <div
                       className={cn(
-                        "w-full h-[220px] rounded-[2rem] p-4",
+                        "w-full aspect-square rounded-[1.5rem] p-4",
                         "flex flex-col items-center justify-center gap-3",
                         "bg-gradient-to-br shadow-lg cursor-pointer",
                         "transition-all duration-300",
                         isSelected ? [
                           `${type.activeGradient}`,
-                          "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
+                          "ring-2 ring-white/20 ring-offset-1 ring-offset-gray-900"
                         ] : type.gradient,
                         "relative overflow-hidden"
                       )}
@@ -361,13 +361,13 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute -right-2 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
+            "absolute -right-1 z-10 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full",
             "bg-black/40 border border-white/10 hover:bg-black/60",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollNext && "opacity-30 pointer-events-none"
           )}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </Button>
       </div>
       

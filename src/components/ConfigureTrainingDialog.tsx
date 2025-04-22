@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -469,10 +468,10 @@ export function ConfigureTrainingDialog({
           "bg-gradient-to-br from-gray-900/95 via-gray-900/98 to-gray-900/95",
           "backdrop-blur-sm border border-white/5",
           "shadow-[0_0_30px_rgba(124,58,237,0.15)]",
-          "rounded-2xl",
+          "rounded-2xl mx-4",
           bgGradient
         )}>
-          <header className="flex justify-between items-center p-6 pb-2">
+          <header className="flex justify-between items-center px-4 py-4">
             <div className="flex items-center gap-3">
               <motion.div 
                 initial={{ rotate: 0 }}
@@ -480,7 +479,7 @@ export function ConfigureTrainingDialog({
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 opacity-80 blur-sm absolute -top-3 -left-3 z-0"
               />
-              <h2 className={cn(typography.headings.primary, "text-2xl relative z-10")}>
+              <h2 className={cn(typography.headings.primary, "text-xl relative z-10")}>
                 {getStepTitle()}
               </h2>
             </div>
@@ -495,53 +494,34 @@ export function ConfigureTrainingDialog({
             )}
           </header>
           
-          {xpEarned > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-end px-6 pb-0"
-            >
-              <div className="flex items-center gap-2 px-3 py-1 bg-black/30 rounded-full backdrop-blur-sm text-xs text-yellow-400">
-                <span>XP Earned:</span>
-                <motion.span
-                  className="font-mono"
-                  key={xpEarned}
-                  initial={{ scale: 1.3, color: "#FFFFFF" }}
-                  animate={{ scale: 1, color: "#FACC15" }}
-                  transition={{ duration: 0.5 }}
-                >
-                  +{xpEarned}
-                </motion.span>
-              </div>
-            </motion.div>
-          )}
-          
           <ScrollArea className="max-h-[calc(85vh-8rem)]">
-            <div className="p-6 space-y-4">
+            <div className="px-4 py-2 space-y-4">
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
           </ScrollArea>
           
-          <footer className="flex items-center justify-between p-6 pt-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
+          <footer className="flex items-center justify-between p-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
             <Button 
               onClick={handlePrevStep}
               disabled={currentStep === ConfigurationStep.TrainingType}
               variant="outline"
+              size="sm"
               className={cn(
                 "rounded-xl",
                 "border border-white/5 bg-black/20",
                 "hover:bg-black/40 hover:border-white/10",
                 "text-white/80",
-                currentStep === ConfigurationStep.TrainingType && "opacity-50 cursor-not-allowed"
+                currentStep === ConfigurationStep.TrainingType && "opacity-0 pointer-events-none"
               )}
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <ChevronLeft className="w-4 h-4 mr-1" />
               Back
             </Button>
             
             <Button 
               onClick={handleNextStep}
+              size="sm"
               className={cn(
                 "rounded-xl",
                 "bg-gradient-to-r from-purple-600 to-pink-500",
@@ -553,9 +533,9 @@ export function ConfigureTrainingDialog({
             >
               {getNextButtonText()}
               {currentStep === ConfigurationStep.Review ? (
-                <Check className="w-4 h-4 ml-2" />
+                <Check className="w-4 h-4 ml-1" />
               ) : (
-                <ChevronRight className="w-4 h-4 ml-2" />
+                <ChevronRight className="w-4 h-4 ml-1" />
               )}
             </Button>
           </footer>
