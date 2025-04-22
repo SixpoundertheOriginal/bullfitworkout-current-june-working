@@ -15,11 +15,28 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Create a separate toast context for auth to avoid circular dependencies
+const showToast = (title: string, description: string, variant?: "default" | "destructive") => {
+  // This function will be replaced when a component renders
+  console.log(`Toast (${variant || 'default'}): ${title} - ${description}`);
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Replace the placeholder with the actual toast function
+  useEffect(() => {
+    showToast = (title, description, variant) => {
+      toast({
+        title,
+        description,
+        variant,
+      });
+    };
+  }, [toast]);
 
   useEffect(() => {
     // Set up the auth state listener first
@@ -30,15 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
 
         if (event === 'SIGNED_IN') {
-          toast({
-            title: "Successfully signed in",
-            description: "Welcome back!",
-          });
+          showToast("Successfully signed in", "Welcome back!");
         } else if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Signed out",
-            description: "You have been signed out.",
-          });
+          showToast("Signed out", "You have been signed out.");
         }
       }
     );
@@ -56,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []); // Removed toast dependency to avoid circular dependency
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -68,11 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
     } catch (error: any) {
-      toast({
-        title: "Error signing in",
-        description: error.message,
-        variant: "destructive",
-      });
+      showToast("Error signing in", error.message, "destructive");
       throw error;
     } finally {
       setLoading(false);
@@ -94,16 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      toast({
-        title: "Account created",
-        description: "Please check your email to confirm your account.",
-      });
+      showToast("Account created", "Please check your email to confirm your account.");
     } catch (error: any) {
-      toast({
-        title: "Error signing up",
-        description: error.message,
-        variant: "destructive",
-      });
+      showToast("Error signing up", error.message, "destructive");
       throw error;
     } finally {
       setLoading(false);
@@ -116,11 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
+      showToast("Error signing out", error.message, "destructive");
     } finally {
       setLoading(false);
     }
