@@ -40,8 +40,10 @@ interface ExerciseDialogProps {
   mode?: "add" | "edit";
 }
 
+// Master lists for selects/buttons
 const MUSCLE_GROUPS: MuscleGroup[] = [
-  "full body", "chest", "back", "shoulders", "arms", "legs", "core", "glutes", "triceps", "biceps", "hamstrings", "quads", "calves", "forearms", "traps", "lats"
+  "full body", "chest", "back", "shoulders", "arms", "legs", "core", "glutes", "triceps", "biceps",
+  "hamstrings", "quads", "calves", "forearms", "traps", "lats"
 ];
 const EQUIPMENT_TYPES: EquipmentType[] = [
   "barbell", "dumbbell", "machine", "bodyweight", "cable", "kettlebell", "resistance band", "smith machine", "other"
@@ -82,7 +84,6 @@ export function ExerciseDialog({
     } else if (open && !initialExercise) {
       clearForm();
     }
-    // ignore eslint exhaustive-deps on open change
     // eslint-disable-next-line
   }, [open, initialExercise]);
 
@@ -94,6 +95,14 @@ export function ExerciseDialog({
     setEquipmentType([]);
     setMovementPattern("push");
     setDifficulty("beginner");
+  };
+
+  const toggleSelect = <T,>(value: T, arr: T[], setArr: (v: T[]) => void) => {
+    if (arr.includes(value)) {
+      setArr(arr.filter(v => v !== value));
+    } else {
+      setArr([...arr, value]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,43 +134,39 @@ export function ExerciseDialog({
     }
   };
 
-  const toggleSelect = <T,>(value: T, arr: T[], setArr: (v: T[]) => void) => {
-    if (arr.includes(value)) {
-      setArr(arr.filter(v => v !== value));
-    } else {
-      setArr([...arr, value]);
-    }
-  };
+  // Styles for button chips — update to look more like screenshot
+  const chipBaseClass = "px-3 py-1 rounded-full border text-xs font-medium focus:outline-none whitespace-nowrap transition-colors";
+  const primaryActive = "bg-purple-600 border-purple-300 text-white";
+  const secondaryActive = "bg-pink-700 border-pink-300 text-white";
+  const equipActive = "bg-blue-700 border-blue-300 text-white";
+  const chipInactive = "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700/70";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg w-full">
+      <DialogContent className="bg-[#181f2c] border-[#27315a] text-white max-w-lg w-full">
         <DialogHeader>
-          <DialogTitle>{mode === "add" ? "Add New Exercise" : "Edit Exercise"}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-white mb-2">{mode === "add" ? "Add New Exercise" : "Edit Exercise"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm text-gray-300 mb-1" htmlFor="exercise-name">
-              Exercise Name
-            </label>
+            <label className="block text-[16px] text-white mb-1 font-medium" htmlFor="exercise-name">Exercise Name</label>
             <input
               id="exercise-name"
-              className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring focus:ring-purple-600"
+              className="w-full px-4 py-2 rounded-lg bg-[#232a3d] border-2 border-transparent focus:border-[#9b87f5] text-base text-white outline-none transition-all placeholder:text-[#8E9196]"
               required
               maxLength={50}
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Barbell Bench Press"
               disabled={loading}
+              autoFocus
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-300 mb-1" htmlFor="exercise-description">
-              Description
-            </label>
+            <label className="block text-[16px] text-white mb-1 font-medium" htmlFor="exercise-description">Description</label>
             <textarea
               id="exercise-description"
-              className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring focus:ring-purple-600"
+              className="w-full px-4 py-2 rounded-lg bg-[#232a3d] border-2 border-transparent focus:border-[#9b87f5] text-base text-white outline-none transition-all placeholder:text-[#8E9196]"
               rows={3}
               maxLength={256}
               value={description}
@@ -170,58 +175,65 @@ export function ExerciseDialog({
               disabled={loading}
             />
           </div>
+          {/* Primary Muscle Groups */}
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Primary Muscle Groups</label>
+            <label className="block text-[16px] text-white mb-1 font-medium">Primary Muscle Groups</label>
             <div className="flex flex-wrap gap-2">
               {MUSCLE_GROUPS.map(muscle => (
                 <button
                   type="button"
                   key={muscle}
-                  className={`px-3 py-1 rounded-full border ${primaryMuscleGroups.includes(muscle) ? "bg-purple-600 border-purple-300 text-white" : "bg-gray-800 border-gray-700 text-gray-200"} text-xs`}
+                  className={`${chipBaseClass} ${primaryMuscleGroups.includes(muscle) ? primaryActive : chipInactive}`}
                   onClick={() => toggleSelect(muscle, primaryMuscleGroups, setPrimaryMuscleGroups)}
                   disabled={loading}
+                  tabIndex={0}
                 >
                   {muscle.charAt(0).toUpperCase() + muscle.slice(1)}
                 </button>
               ))}
             </div>
           </div>
+          {/* Secondary Muscle Groups */}
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Secondary Muscle Groups</label>
+            <label className="block text-[16px] text-white mb-1 font-medium">Secondary Muscle Groups</label>
             <div className="flex flex-wrap gap-2">
               {MUSCLE_GROUPS.map(muscle => (
                 <button
                   type="button"
                   key={muscle + "_secondary"}
-                  className={`px-3 py-1 rounded-full border ${secondaryMuscleGroups.includes(muscle) ? "bg-pink-700 border-pink-300 text-white" : "bg-gray-800 border-gray-700 text-gray-200"} text-xs`}
+                  className={`${chipBaseClass} ${secondaryMuscleGroups.includes(muscle) ? secondaryActive : chipInactive}`}
                   onClick={() => toggleSelect(muscle, secondaryMuscleGroups, setSecondaryMuscleGroups)}
                   disabled={loading}
+                  tabIndex={0}
                 >
                   {muscle.charAt(0).toUpperCase() + muscle.slice(1)}
                 </button>
               ))}
             </div>
           </div>
+          {/* Equipment Types */}
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Equipment Types</label>
+            <label className="block text-[16px] text-white mb-1 font-medium">Equipment Types</label>
             <div className="flex flex-wrap gap-2">
               {EQUIPMENT_TYPES.map(eq => (
                 <button
                   type="button"
                   key={eq}
-                  className={`px-3 py-1 rounded-full border ${equipmentType.includes(eq) ? "bg-blue-700 border-blue-300 text-white" : "bg-gray-800 border-gray-700 text-gray-200"} text-xs`}
+                  className={`${chipBaseClass} ${equipmentType.includes(eq) ? equipActive : chipInactive}`}
                   onClick={() => toggleSelect(eq, equipmentType, setEquipmentType)}
                   disabled={loading}
+                  tabIndex={0}
                 >
                   {eq.charAt(0).toUpperCase() + eq.slice(1)}
                 </button>
               ))}
             </div>
           </div>
+          {/* Movement Pattern */}
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Movement Pattern</label>
+            <label className="block text-[16px] text-white mb-1 font-medium">Movement Pattern</label>
             <select
-              className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring focus:ring-purple-600"
+              className="w-full px-4 py-2 rounded-lg bg-[#232a3d] border-2 border-transparent focus:border-[#9b87f5] text-base text-white outline-none transition-all"
               value={movementPattern}
               onChange={e => setMovementPattern(e.target.value as MovementPattern)}
               disabled={loading}
@@ -231,10 +243,11 @@ export function ExerciseDialog({
               ))}
             </select>
           </div>
+          {/* Difficulty */}
           <div>
-            <label className="block text-sm text-gray-300 mb-1">Difficulty</label>
+            <label className="block text-[16px] text-white mb-1 font-medium">Difficulty</label>
             <select
-              className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring focus:ring-purple-600"
+              className="w-full px-4 py-2 rounded-lg bg-[#232a3d] border-2 border-transparent focus:border-[#9b87f5] text-base text-white outline-none transition-all"
               value={difficulty}
               onChange={e => setDifficulty(e.target.value as Difficulty)}
               disabled={loading}
@@ -244,13 +257,13 @@ export function ExerciseDialog({
               ))}
             </select>
           </div>
-          <DialogFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" className="bg-gray-800 border-gray-700" onClick={() => { onOpenChange(false); clearForm(); }} disabled={loading}>
+          <DialogFooter className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" className="bg-[#232a3d] border-[#404769] text-white hover:bg-[#22273c]" onClick={() => { onOpenChange(false); clearForm(); }} disabled={loading}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              variant="gradient" 
+            <Button
+              type="submit"
+              variant="gradient"
               disabled={loading || !name.trim() || primaryMuscleGroups.length === 0}
             >
               {loading
