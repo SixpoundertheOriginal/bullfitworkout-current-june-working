@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useRef, useState } from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +35,7 @@ interface SetRowProps {
   currentVolume?: number;
   exerciseData?: Exercise;
   userWeight?: number;
+  onAutoAdvanceNext?: () => void;
 }
 
 export const SetRow = ({
@@ -63,6 +63,7 @@ export const SetRow = ({
   currentVolume,
   exerciseData,
   userWeight,
+  onAutoAdvanceNext,
 }: SetRowProps) => {
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
@@ -102,20 +103,68 @@ export const SetRow = ({
   };
 
   const handleSetComplete = () => {
-    onComplete();
+    playCompleteAnimation();
   };
 
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
+  const [swipeDelta, setSwipeDelta] = useState(0);
+  const [justCompleted, setJustCompleted] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setSwipeStartX(e.touches[0].clientX);
+    setSwipeDelta(0);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (swipeStartX !== null) {
+      const dx = e.touches[0].clientX - swipeStartX;
+      setSwipeDelta(dx);
+    }
+  };
+  const handleTouchEnd = () => {
+    if (swipeDelta > 100) {
+      playCompleteAnimation();
+    }
+    setSwipeStartX(null);
+    setSwipeDelta(0);
+  };
+
+  const playCompleteAnimation = () => {
+    setJustCompleted(true);
+    setTimeout(() => {
+      setJustCompleted(false);
+      onComplete();
+      if (onAutoAdvanceNext) setTimeout(onAutoAdvanceNext, 300);
+    }, 400);
+  };
+
+  const completedAnim = justCompleted
+    ? "animate-[pulse_0.4s_ease-in-out] ring-2 ring-green-500 shadow-lg transition-all"
+    : "";
+
   return (
-    <div className={`${isEditing ? 'py-2' : 'py-3'} border-b border-gray-800 transition-all duration-200`}>
+    <div
+      ref={rowRef}
+      className={`relative ${isEditing ? "py-2" : "py-3"} border-b border-gray-800 transition-all duration-200 touch-pan-x select-none ${completedAnim}`}
+      onTouchStart={!isEditing && !completed ? handleTouchStart : undefined}
+      onTouchMove={!isEditing && !completed ? handleTouchMove : undefined}
+      onTouchEnd={!isEditing && !completed ? handleTouchEnd : undefined}
+      style={{
+        transform: swipeDelta > 0 ? `translateX(${swipeDelta}px)` : undefined,
+        transition: swipeDelta === 0 ? "transform 0.15s" : undefined,
+        background:
+          justCompleted
+            ? "linear-gradient(90deg, rgba(16,185,129,0.15) 0%, rgba(59,130,246,0.07) 100%)"
+            : undefined,
+        zIndex: justCompleted ? 20 : undefined,
+      }}
+    >
       {isEditing ? (
         <div className="grid grid-cols-12 gap-2 items-center">
-          {/* Set number */}
           <div className="col-span-1 text-center font-medium text-gray-400">
             #{setNumber}
           </div>
-          
-          {/* Weight input with +/- buttons */}
-          <div className="col-span-4 flex items-center gap-1">
+          <div className="col-span-4 flex items-center gap-1 min-w-0">
             <button 
               type="button"
               onClick={() => onWeightIncrement(-1)} 
@@ -136,7 +185,7 @@ export const SetRow = ({
                       updateWeight(Number(e.target.value));
                     }}
                     className={cn(
-                      "workout-number-input text-center flex-1 value-text",
+                      "workout-number-input text-center value-text px-1 py-2 w-full min-w-0",
                       isAutoWeight && "italic text-gray-400"
                     )}
                     placeholder={isIsometric ? "Optional weight" : "Weight"}
@@ -155,9 +204,7 @@ export const SetRow = ({
               <PlusCircle size={isMobile ? 20 : 18} />
             </button>
           </div>
-          
-          {/* Reps or Duration input with +/- buttons */}
-          <div className="col-span-4 flex items-center gap-1">
+          <div className="col-span-4 flex items-center gap-1 min-w-0">
             {isIsometric ? (
               <>
                 <button 
@@ -173,7 +220,7 @@ export const SetRow = ({
                   step="5"
                   value={duration}
                   onChange={onDurationChange}
-                  className="workout-number-input text-center flex-1 value-text"
+                  className="workout-number-input text-center value-text px-1 py-2 w-full min-w-0"
                   placeholder="Duration (seconds)"
                 />
                 <button 
@@ -199,7 +246,7 @@ export const SetRow = ({
                   step="1"
                   value={reps}
                   onChange={onRepsChange}
-                  className="workout-number-input text-center flex-1 value-text"
+                  className="workout-number-input text-center value-text px-1 py-2 w-full min-w-0"
                   placeholder="Reps"
                 />
                 <button 
@@ -212,9 +259,7 @@ export const SetRow = ({
               </>
             )}
           </div>
-          
-          {/* Rest Time Input */}
-          <div className="col-span-3 flex items-center gap-1">
+          <div className="col-span-3 flex items-center gap-1 min-w-0">
             {onRestTimeIncrement && (
               <button 
                 type="button"
@@ -231,7 +276,7 @@ export const SetRow = ({
               value={restTime || 60}
               onChange={handleManualRestTimeChange}
               disabled={!onRestTimeChange}
-              className="workout-number-input text-center flex-1 value-text"
+              className="workout-number-input text-center value-text px-1 py-2 w-full min-w-0"
               onBlur={(e) => {
                 if (parseInt(e.target.value) < 0 || e.target.value === '') {
                   if (onRestTimeChange) {
@@ -252,8 +297,6 @@ export const SetRow = ({
               </button>
             )}
           </div>
-          
-          {/* Action Buttons */}
           <div className="col-span-12 flex justify-end gap-2 mt-2">
             <Button
               size="icon"
@@ -273,12 +316,9 @@ export const SetRow = ({
         </div>
       ) : (
         <div className="grid grid-cols-12 gap-2 items-center">
-          {/* Set Number */}
           <div className="col-span-1 text-center font-medium text-gray-400">
             #{setNumber}
           </div>
-          
-          {/* Weight Display */}
           <div className="col-span-3">
             <TooltipProvider>
               <Tooltip>
@@ -306,8 +346,6 @@ export const SetRow = ({
               </Tooltip>
             </TooltipProvider>
           </div>
-          
-          {/* Reps/Duration Display */}
           <div className="col-span-3">
             <div 
               className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
@@ -325,8 +363,6 @@ export const SetRow = ({
               )}
             </div>
           </div>
-          
-          {/* Rest Time and Volume Display */}
           <div className="col-span-3 flex items-center justify-start gap-2 text-gray-400">
             <Timer size={16} className="text-purple-400" />
             <span className="font-mono text-sm text-white value-text">
@@ -338,8 +374,6 @@ export const SetRow = ({
               </span>
             )}
           </div>
-          
-          {/* Action Buttons */}
           <div className="col-span-2 flex justify-end gap-2">
             {completed ? (
               <Button
@@ -365,6 +399,14 @@ export const SetRow = ({
             >
               <Trash2 size={20} />
             </Button>
+          </div>
+        </div>
+      )}
+      {justCompleted && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="rounded-full bg-green-500/90 flex items-center justify-center px-10 py-3 shadow-xl animate-fade-in">
+            <Check size={32} className="text-white animate-scale-in" />
+            <span className="ml-3 text-white font-bold text-lg animate-scale-in">Set Complete!</span>
           </div>
         </div>
       )}

@@ -160,7 +160,13 @@ const ExerciseCard = ({
       id: `set-complete-${exercise}-${index}`,
     });
   };
-  
+
+  const handleAutoAdvanceNext = (index: number) => {
+    if (sets[index + 1] && sets[index + 1].isEditing) {
+      onEditSet(exercise, index + 1);
+    }
+  };
+
   console.log(`Exercise: ${exercise}`);
   console.log(`Current volume: ${currentVolume}`);
   console.log(`Previous volume: ${previousVolume}`);
@@ -216,7 +222,11 @@ const ExerciseCard = ({
               completed={set.completed}
               isEditing={set.isEditing}
               exerciseName={exercise}
-              onComplete={() => handleCompleteSet(index)}
+              onComplete={() => {
+                onCompleteSet(exercise, index);
+                setTimeout(() => handleAutoAdvanceNext(index), 550);
+                onShowRestTimer();
+              }}
               onEdit={() => onEditSet(exercise, index)}
               onSave={() => onSaveSet(exercise, index)}
               onRemove={() => onRemoveSet(exercise, index)}
@@ -227,6 +237,7 @@ const ExerciseCard = ({
               onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
               onRestTimeIncrement={(value) => onRestTimeIncrement && onRestTimeIncrement(exercise, index, value)}
               weightUnit={weightUnit}
+              onAutoAdvanceNext={() => handleAutoAdvanceNext(index)}
             />
           ))}
           
