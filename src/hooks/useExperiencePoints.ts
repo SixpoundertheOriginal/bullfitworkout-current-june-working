@@ -1,7 +1,15 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Json } from "@/integrations/supabase/types";
+
+// Utility to ensure safe conversion for arithmetic, with fallback to 0
+const toSafeNumber = (value: unknown): number => {
+  if (typeof value === 'number' && !isNaN(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '' && !isNaN(Number(value))) return Number(value);
+  return 0;
+};
 
 export interface ExperienceData {
   totalXp: number;
@@ -42,15 +50,15 @@ export const calculateLevelFromXP = (totalXp: number): { level: number; progress
   let level = 0;
   let remainingXp = totalXp;
   let levelThreshold = calculateLevelRequirement(1);
-  
+
   while (remainingXp >= levelThreshold) {
     level++;
     remainingXp -= levelThreshold;
     levelThreshold = calculateLevelRequirement(level + 1);
   }
-  
-  const progress = remainingXp / levelThreshold * 100;
-  
+
+  const progress = (levelThreshold > 0) ? (remainingXp / levelThreshold * 100) : 0;
+
   return { 
     level: Math.max(1, level),
     progress
@@ -67,19 +75,19 @@ export function useExperiencePoints() {
       if (!user) {
         throw new Error("User not authenticated");
       }
-      
+
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
           .eq('id', user.id)
           .single();
-        
+
         if (profileError) {
           console.error("Error fetching user experience:", profileError);
           throw profileError;
         }
-        
+
         const defaultExpData: ExperienceData = {
           totalXp: 0,
           level: 1,
@@ -93,50 +101,48 @@ export function useExperiencePoints() {
             "Calisthenics": { level: 1, xp: 0, progress: 0 }
           }
         };
-        
+
         if (!profileData || !profileData.training_experience) {
           return defaultExpData;
         }
-        
+
         const trainingExperienceData = profileData.training_experience as unknown as TrainingExperience;
-        
-        const totalXp = typeof trainingExperienceData.totalXp === 'number' 
-          ? trainingExperienceData.totalXp 
-          : Number(trainingExperienceData.totalXp || 0);
-          
+
+        // Safe conversion of totalXp
+        const totalXp = toSafeNumber(trainingExperienceData.totalXp);
+
         const { level, progress } = calculateLevelFromXP(totalXp);
-        
-        const previousLevelsXp = Array.from({ length: level - 1 }).reduce((sum, _, i) => 
-            sum + calculateLevelRequirement(i + 1), 0);
-            
+
+        const previousLevelsXp = Array.from({ length: level - 1 }).reduce((sum, _, i) =>
+          sum + calculateLevelRequirement(i + 1), 0);
+
         const currentLevelXp = totalXp - previousLevelsXp;
-        
+
         const nextLevelThreshold = calculateLevelRequirement(level + 1);
-        
+
         const trainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
           "Strength": { xp: 0 },
           "Cardio": { xp: 0 },
           "Yoga": { xp: 0 },
           "Calisthenics": { xp: 0 }
         };
-        
+
         const processedTrainingTypes: ExperienceData['trainingTypeLevels'] = {};
-        
+
         Object.keys(trainingTypeLevels).forEach(type => {
           const typeData = trainingTypeLevels[type];
-          const typeXp = typeof typeData.xp === 'number' 
-            ? typeData.xp 
-            : Number(typeData.xp || 0);
-            
+          // Safe conversion of xp for each type
+          const typeXp = toSafeNumber(typeData.xp);
+
           const levelData = calculateLevelFromXP(typeXp);
-          
+
           processedTrainingTypes[type] = {
             xp: typeXp,
             level: levelData.level,
             progress: levelData.progress
           };
         });
-        
+
         return {
           totalXp,
           level,
@@ -175,103 +181,97 @@ export function useExperiencePoints() {
     }) => {
       if (!user) throw new Error("User not authenticated");
 
-      try {
-        // Ensure xp is converted to a number
-        const xpAmount = typeof xp === 'string' ? parseInt(xp, 10) : xp;
-        
-        if (isNaN(xpAmount)) {
-          throw new Error("Invalid XP amount");
-        }
-        
-        const { data: currentData, error: fetchError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (fetchError) throw fetchError;
+      // Ensure xp is a number
+      const xpAmount = toSafeNumber(xp);
 
-        const defaultExp: TrainingExperience = {
-          totalXp: 0,
-          trainingTypeLevels: {
-            "Strength": { xp: 0 },
-            "Cardio": { xp: 0 },
-            "Yoga": { xp: 0 },
-            "Calisthenics": { xp: 0 }
-          }
-        };
-        
-        const currentExp = currentData.training_experience 
-          ? (currentData.training_experience as unknown as TrainingExperience)
-          : defaultExp;
-            
-        // Ensure we're working with numbers by explicitly converting
-        const currentTotalXp = typeof currentExp.totalXp === 'string' 
-          ? parseInt(currentExp.totalXp, 10)
-          : (typeof currentExp.totalXp === 'number' ? currentExp.totalXp : 0);
-          
-        if (isNaN(currentTotalXp)) {
-          throw new Error("Invalid current XP value");
+      if (isNaN(xpAmount)) {
+        throw new Error("Invalid XP amount");
+      }
+
+      const { data: currentData, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const defaultExp: TrainingExperience = {
+        totalXp: 0,
+        trainingTypeLevels: {
+          "Strength": { xp: 0 },
+          "Cardio": { xp: 0 },
+          "Yoga": { xp: 0 },
+          "Calisthenics": { xp: 0 }
         }
-        
-        // Fix for line 111 - ensure we're adding numbers
-        const newTotalXp = currentTotalXp + xpAmount;
-        
-        const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
-        updatedExp.totalXp = newTotalXp;
-        
-        if (trainingType && updatedExp.trainingTypeLevels && updatedExp.trainingTypeLevels[trainingType]) {
-          const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
-          const currentTypeXp = typeof typeXpValue === 'string'
-            ? parseInt(typeXpValue, 10)
-            : (typeof typeXpValue === 'number' ? typeXpValue : 0);
-            
-          if (isNaN(currentTypeXp)) {
-            throw new Error("Invalid training type XP value");
-          }
-          
-          // Fix for line 113 - ensure we're using a number for the calculation
-          updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
+      };
+
+      const currentExp = currentData.training_experience 
+        ? (currentData.training_experience as unknown as TrainingExperience)
+        : defaultExp;
+
+      // Defensive: ensure totalXp is a number
+      const currentTotalXp = toSafeNumber(currentExp.totalXp);
+
+      if (isNaN(currentTotalXp)) {
+        throw new Error("Invalid current XP value");
+      }
+
+      const newTotalXp = currentTotalXp + xpAmount;
+
+      // Defensive: deep copy
+      const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
+      updatedExp.totalXp = newTotalXp;
+
+      if (
+        trainingType &&
+        updatedExp.trainingTypeLevels &&
+        Object.prototype.hasOwnProperty.call(updatedExp.trainingTypeLevels, trainingType)
+      ) {
+        const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
+        const currentTypeXp = toSafeNumber(typeXpValue);
+
+        if (isNaN(currentTypeXp)) {
+          throw new Error("Invalid training type XP value");
         }
-        
-        const { error: updateError } = await supabase
-          .from('user_profiles')
-          .update({
-            training_experience: updatedExp as unknown as Json
-          })
-          .eq('id', user.id);
-          
-        if (updateError) throw updateError;
-        
-        try {
-          const { error: logError } = await supabase
-            .from('experience_logs')
-            .insert({
-              user_id: user.id,
-              amount: xpAmount,
-              training_type: trainingType || null,
-              source: 'workout_completion',
-              metadata: {
-                timestamp: new Date().toISOString()
-              }
-            });
-          
-          if (logError) {
-            console.error("Error logging experience gain:", logError);
-          }
-        } catch (logError) {
+
+        updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
+      }
+
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({
+          training_experience: updatedExp as unknown as Json
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      try {
+        const { error: logError } = await supabase
+          .from('experience_logs')
+          .insert({
+            user_id: user.id,
+            amount: xpAmount,
+            training_type: trainingType || null,
+            source: 'workout_completion',
+            metadata: {
+              timestamp: new Date().toISOString()
+            }
+          });
+
+        if (logError) {
           console.error("Error logging experience gain:", logError);
         }
-        
-        return {
-          addedXp: xpAmount,
-          newTotalXp,
-          trainingType
-        };
-      } catch (error) {
-        console.error("Error updating experience:", error);
-        throw error;
+      } catch (logError) {
+        console.error("Error logging experience gain:", logError);
       }
+
+      return {
+        addedXp: xpAmount,
+        newTotalXp,
+        trainingType
+      };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['experience', user?.id] });
@@ -287,3 +287,5 @@ export function useExperiencePoints() {
     isAddingExperience: addExperienceMutation.isPending
   };
 }
+
+// ... (end of file)
