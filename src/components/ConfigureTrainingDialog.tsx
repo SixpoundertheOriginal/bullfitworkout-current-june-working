@@ -17,6 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { typography } from "@/lib/typography";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrainingAchievementCard } from "./training/TrainingAchievementCard";
+import { processExerciseRanking } from "@/utils/processExerciseRanking";
+import { useExercises } from "@/hooks/useExercises";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -34,6 +36,7 @@ interface TrainingConfig {
   trainingType: string;
   tags: string[];
   duration: number;
+  rankedExercises: { recommended: Exercise[]; other: Exercise[]; matchData: Record<string, { score: number, reasons: string[] }> };
 }
 
 enum ConfigurationStep {
@@ -77,10 +80,11 @@ export function ConfigureTrainingDialog({
   const [achievementType, setAchievementType] = useState("");
   const [xpEarned, setXpEarned] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [rankedResults, setRankedResults] = useState<{ recommended: Exercise[]; other: Exercise[]; matchData: Record<string, { score: number, reasons: string[] }> }>({ recommended: [], other: [], matchData: {} });
+
   const [stepCompleteSound, setStepCompleteSound] = useState<HTMLAudioElement | null>(null);
   const [selectSound, setSelectSound] = useState<HTMLAudioElement | null>(null);
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stepSound = new Audio();
@@ -115,6 +119,18 @@ export function ConfigureTrainingDialog({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (allExercises && allExercises.length && trainingType) {
+      const criteria = {
+        trainingType,
+        bodyFocus: selectedTags as MuscleGroup[],
+        movementPattern: [], // We could allow selection in UI if available
+        difficulty: undefined,
+      };
+      setRankedResults(processExerciseRanking(allExercises, criteria));
+    }
+  }, [allExercises, trainingType, selectedTags]);
+
   const handleTagToggle = (tag: string) => {
     if (selectedTags.includes(tag)) {
       setSelectedTags(selectedTags.filter((t) => t !== tag));
@@ -143,7 +159,8 @@ export function ConfigureTrainingDialog({
       onStartTraining({
         trainingType,
         tags: selectedTags,
-        duration
+        duration,
+        rankedExercises: rankedResults
       });
       
       setShowAchievement(false);
@@ -158,7 +175,8 @@ export function ConfigureTrainingDialog({
     onStartTraining({
       trainingType,
       tags: selectedTags,
-      duration
+      duration,
+      rankedExercises: rankedResults
     });
     
     onOpenChange(false);

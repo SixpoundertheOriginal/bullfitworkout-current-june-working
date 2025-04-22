@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
@@ -36,7 +35,7 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, [isSectionVisible]);
 
-  const handleStartTraining = ({ trainingType, tags, duration }) => {
+  const handleStartTraining = ({ trainingType, tags, duration, rankedExercises }) => {
     toast({
       title: "Quest Started!",
       description: 
@@ -57,19 +56,20 @@ const Index = () => {
       
       setTimeout(() => {
         setShowLevelUp(false);
-        navigateToTraining({ trainingType, tags, duration });
+        navigateToTraining({ trainingType, tags, duration, rankedExercises });
       }, 2500);
     } else {
-      navigateToTraining({ trainingType, tags, duration });
+      navigateToTraining({ trainingType, tags, duration, rankedExercises });
     }
   };
 
-  const navigateToTraining = ({ trainingType, tags, duration }) => {
+  const navigateToTraining = ({ trainingType, tags, duration, rankedExercises }) => {
     navigate('/training-session', { 
       state: { 
         trainingType, 
         tags, 
-        duration 
+        duration,
+        rankedExercises
       } 
     });
   };
