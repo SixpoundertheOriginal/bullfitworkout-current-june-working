@@ -5,6 +5,7 @@ import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
 import { MinimalisticExerciseSelect } from "./MinimalisticExerciseSelect";
 import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
+import { useExercises } from "@/hooks/useExercises";
 
 interface ExerciseSelectorProps {
   onSelectExercise: (exercise: string | Exercise) => void;
@@ -21,6 +22,7 @@ export function ExerciseSelector({
 }: ExerciseSelectorProps) {
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
   const { data } = useWorkoutHistory();
+  const { exercises: allExercises } = useExercises();
   
   // Extract recently used exercises from workout history
   const recentExercises = React.useMemo(() => {
@@ -28,17 +30,26 @@ export function ExerciseSelector({
     
     const exerciseMap = new Map<string, Exercise>();
     
-    // Get unique exercises from recent workouts
+    // Get unique exercise names from recent workouts' exercise sets
     data.workouts.slice(0, 5).forEach(workout => {
-      workout.exercises?.forEach(exercise => {
-        if (exercise.exercise && !exerciseMap.has(exercise.exercise.id)) {
-          exerciseMap.set(exercise.exercise.id, exercise.exercise);
+      const exerciseNames = new Set<string>();
+      
+      // Collect unique exercise names from the workout's exercise sets
+      workout.exerciseSets?.forEach(set => {
+        exerciseNames.add(set.exercise_name);
+      });
+      
+      // For each unique exercise name, find the matching exercise from allExercises
+      exerciseNames.forEach(name => {
+        const exercise = allExercises.find(e => e.name === name);
+        if (exercise && !exerciseMap.has(exercise.id)) {
+          exerciseMap.set(exercise.id, exercise);
         }
       });
     });
     
     return Array.from(exerciseMap.values());
-  }, [data]);
+  }, [data, allExercises]);
 
   if (useLegacyDesign) {
     return (

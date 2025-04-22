@@ -1,6 +1,9 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { Exercise } from "@/types/exercise";
+import { useExercises } from "./useExercises";
 
 interface WorkoutSession {
   id: string;
@@ -23,10 +26,19 @@ interface ExerciseSet {
   completed: boolean;
 }
 
+// Add a new interface that extends WorkoutSession to include exercises
+interface WorkoutSessionWithExercises extends WorkoutSession {
+  exerciseSets?: ExerciseSet[];
+}
+
 export function useWorkoutHistory(limit: number = 10, dateFilter: string | null = null) {
   const { user } = useAuth();
+  const { exercises: allExercises } = useExercises();
   
-  const fetchWorkoutHistory = async (): Promise<{ workouts: WorkoutSession[], exerciseCounts: Record<string, { exercises: number, sets: number }> }> => {
+  const fetchWorkoutHistory = async (): Promise<{ 
+    workouts: WorkoutSessionWithExercises[], 
+    exerciseCounts: Record<string, { exercises: number, sets: number }> 
+  }> => {
     if (!user) {
       return { workouts: [], exerciseCounts: {} };
     }
@@ -97,8 +109,17 @@ export function useWorkoutHistory(limit: number = 10, dateFilter: string | null 
         };
       });
       
+      // Map exercise sets to each workout
+      const workoutsWithExercises: WorkoutSessionWithExercises[] = workouts.map(workout => {
+        const workoutSets = exerciseSets?.filter(set => set.workout_id === workout.id) || [];
+        return {
+          ...workout,
+          exerciseSets: workoutSets
+        };
+      });
+      
       return { 
-        workouts: workouts as WorkoutSession[],
+        workouts: workoutsWithExercises,
         exerciseCounts
       };
     } catch (error) {
