@@ -1,10 +1,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseAutocomplete } from "@/components/ExerciseAutocomplete";
-import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
 import { Exercise } from "@/types/exercise";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
@@ -22,8 +21,9 @@ export function AddExerciseBar({
   trainingType = ""
 }: AddExerciseBarProps) {
   const isMobile = useIsMobile();
-  const { suggestedExercises } = useExerciseSuggestions(trainingType);
-  
+  // No longer need suggestedExercises here,
+  // We're removing the ExerciseQuickSelect from the bar.
+
   // Handle selection of exercise and extract name if it's an object
   const handleSelectExercise = (exercise: string | Exercise) => {
     if (typeof exercise === 'string') {
@@ -32,16 +32,11 @@ export function AddExerciseBar({
       onSelectExercise(exercise.name);
     }
   };
-  
+
   return (
     <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 via-gray-900/95 to-gray-900/0 z-40">
       <div className="space-y-4">
-        <ExerciseQuickSelect
-          onSelectExercise={handleSelectExercise}
-          suggestedExercises={suggestedExercises}
-          className="mb-2"
-        />
-        
+        {/* Removed ExerciseQuickSelect */}
         <div className={cn(
           "flex gap-4",
           isMobile ? "flex-col" : "flex-row"
