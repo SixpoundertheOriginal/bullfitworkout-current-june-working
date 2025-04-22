@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -97,15 +96,15 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const [isDragging, setIsDragging] = useState(false);
   
   const options = {
-    align: "center" as const,
-    loop: true,
+    align: "start" as const,
+    loop: false,
     dragFree: true,
-    containScroll: "trimSnaps" as const, // Changed from boolean to valid string value
+    containScroll: "trimSnaps" as const,
     slidesToScroll: 1,
     duration: 30,
     inViewThreshold: 0.6,
     breakpoints: {
-      '(min-width: 768px)': { slidesToScroll: 2 }
+      '(min-width: 768px)': { slidesToScroll: 3 }
     }
   };
   
@@ -164,13 +163,13 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
   useEffect(() => {
     if (emblaApi && selectedType) {
-      const index = allTrainingTypes.findIndex(type => type.name === selectedType);
+      const index = DEFAULT_TRAINING_TYPES.findIndex(type => type.name === selectedType);
       if (index >= 0) {
         emblaApi.scrollTo(index);
         setCurrent(index);
       }
     }
-  }, [selectedType, emblaApi, allTrainingTypes]);
+  }, [selectedType, emblaApi]);
 
   useEffect(() => {
     if (!emblaApi) {
@@ -242,14 +241,14 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           setIsDragging(false);
         }}
       >
-        <div className="flex">
+        <div className="flex flex-row">
           {DEFAULT_TRAINING_TYPES.map((type, index) => {
             const isSelected = selectedType === type.name;
             
             return (
               <motion.div
                 key={`${type.name}-${index}`}
-                className="min-w-0 shrink-0 grow-0 basis-[200px] px-2"
+                className="min-w-[160px] shrink-0 grow-0 basis-[160px] px-2 sm:min-w-[200px] sm:basis-[200px]"
                 whileHover={{ scale: isSelected ? 1 : 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
