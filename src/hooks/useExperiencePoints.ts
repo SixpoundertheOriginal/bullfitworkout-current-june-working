@@ -209,7 +209,7 @@ export function useExperiencePoints() {
         // Ensure we're working with numbers by explicitly converting
         const currentTotalXp = typeof currentExp.totalXp === 'string' 
           ? parseInt(currentExp.totalXp, 10)
-          : (currentExp.totalXp as number || 0);
+          : (typeof currentExp.totalXp === 'number' ? currentExp.totalXp : 0);
           
         if (isNaN(currentTotalXp)) {
           throw new Error("Invalid current XP value");
@@ -224,7 +224,7 @@ export function useExperiencePoints() {
           const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
           const currentTypeXp = typeof typeXpValue === 'string'
             ? parseInt(typeXpValue, 10)
-            : (typeXpValue as number || 0);
+            : (typeof typeXpValue === 'number' ? typeXpValue : 0);
             
           if (isNaN(currentTypeXp)) {
             throw new Error("Invalid training type XP value");
