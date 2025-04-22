@@ -37,7 +37,6 @@ const Index = () => {
   }, [isSectionVisible]);
 
   const handleStartTraining = ({ trainingType, tags, duration }) => {
-    // Show a gamified toast notification
     toast({
       title: "Quest Started!",
       description: 
@@ -50,15 +49,12 @@ const Index = () => {
         </div>,
     });
     
-    // Display level up animation for first training of the day
-    // Check if there are any workouts today using lastWorkoutDate instead of workoutsToday
     const isFirstWorkoutToday = !stats?.lastWorkoutDate || 
       new Date(stats.lastWorkoutDate).toDateString() !== new Date().toDateString();
       
     if (isFirstWorkoutToday) {
       setShowLevelUp(true);
       
-      // Reset after animation completes
       setTimeout(() => {
         setShowLevelUp(false);
         navigateToTraining({ trainingType, tags, duration });
@@ -171,12 +167,12 @@ const Index = () => {
           </div>
         </section>
 
-        <FeaturesSection onNavigate={navigate} />
-        
         <WorkoutLogSection 
           showWorkouts={showWorkouts}
           onToggle={toggleWorkoutDisplay}
         />
+
+        <FeaturesSection onNavigate={navigate} />
       </main>
 
       <ConfigureTrainingDialog 
@@ -185,13 +181,11 @@ const Index = () => {
         onStartTraining={handleStartTraining} 
       />
       
-      {/* Level Up Animation */}
       <AnimatedLevelUp show={showLevelUp} />
     </div>
   );
 };
 
-// Level up animation component
 const AnimatedLevelUp = ({ show }: { show: boolean }) => {
   return (
     <motion.div
