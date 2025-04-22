@@ -19,9 +19,11 @@ export const QuickStatsSection = () => {
       <div className="absolute -top-10 -left-20 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl" />
       <div className="absolute -top-10 -right-20 w-60 h-60 bg-pink-600/10 rounded-full blur-3xl" />
       
+      {/* Use glass/card-gradient for light/dark */}
       <div className={cn(
-        "grid grid-cols-3 gap-3 sm:gap-5 mb-6 p-1",
-        "relative z-10"
+        "grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 p-1",
+        "relative z-10",
+        "card-gradient"
       )}>
         <MetricCard
           icon={Calendar}

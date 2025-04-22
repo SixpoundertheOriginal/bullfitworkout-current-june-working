@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -32,7 +31,7 @@ export const MetricCard = ({
         <div
           className={cn(
             "flex flex-col items-center justify-center p-4 rounded-2xl border border-white/10 backdrop-blur-xl transition-all duration-300",
-            "bg-gradient-to-br from-gray-900/80 via-gray-800/40 to-gray-900/90",
+            "bg-card card-gradient",
             gradientClass,
             "hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10",
             "min-w-[100px] w-full",
