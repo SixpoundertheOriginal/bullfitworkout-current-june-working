@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AddExerciseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (exercise: { name: string; description: string }) => Promise<void>;
+  onAdd?: (exercise: { name: string; description: string }) => Promise<void>;
   onAddExercise?: (exerciseName: string) => Promise<void>;
 }
 
@@ -22,7 +23,7 @@ export function AddExerciseDialog({ open, onOpenChange, onAdd, onAddExercise }: 
     try {
       if (onAddExercise) {
         await onAddExercise(name.trim());
-      } else {
+      } else if (onAdd) {
         await onAdd({ name: name.trim(), description: description.trim() });
       }
       setName("");
