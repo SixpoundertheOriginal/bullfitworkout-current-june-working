@@ -201,7 +201,7 @@ export function useExperiencePoints() {
             
         // Convert totalXp to number explicitly before arithmetic operations
         const currentTotalXp = Number(currentExp.totalXp || 0);
-        const newTotalXp = currentTotalXp + xp;
+        const newTotalXp = Number(currentTotalXp) + xp;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
         updatedExp.totalXp = newTotalXp;
@@ -210,7 +210,7 @@ export function useExperiencePoints() {
           // Convert type-specific XP to number explicitly before arithmetic
           const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
           const currentTypeXp = Number(typeXpValue || 0);
-          updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xp;
+          updatedExp.trainingTypeLevels[trainingType].xp = Number(currentTypeXp) + xp;
         }
         
         const { error: updateError } = await supabase
