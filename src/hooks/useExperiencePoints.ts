@@ -220,7 +220,7 @@ export function useExperiencePoints() {
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
         updatedExp.totalXp = newTotalXp;
         
-        if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
+        if (trainingType && updatedExp.trainingTypeLevels && updatedExp.trainingTypeLevels[trainingType]) {
           const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
           const currentTypeXp = typeof typeXpValue === 'string'
             ? parseInt(typeXpValue, 10)
