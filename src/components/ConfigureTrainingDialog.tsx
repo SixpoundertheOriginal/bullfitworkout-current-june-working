@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -526,7 +527,7 @@ export function ConfigureTrainingDialog({
             maxHeight: 'calc(80vh - 104px)',
             overscrollBehavior: 'contain'
           }}>
-            <div className="space-y-6 pb-2">
+            <div className="space-y-6 pb-24"> {/* Increased bottom padding from pb-2 to pb-24 */}
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
