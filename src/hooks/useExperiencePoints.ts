@@ -199,7 +199,8 @@ export function useExperiencePoints() {
           : defaultExp;
             
         const currentTotalXp = Number(currentExp.totalXp || 0);
-        const newTotalXp = currentTotalXp + Number(xp);
+        const xpAmount = Number(xp);
+        const newTotalXp = currentTotalXp + xpAmount;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
         updatedExp.totalXp = newTotalXp;
@@ -207,7 +208,7 @@ export function useExperiencePoints() {
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
           const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
           const currentTypeXp = Number(typeXpValue || 0);
-          updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + Number(xp);
+          updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
         }
         
         const { error: updateError } = await supabase
@@ -224,7 +225,7 @@ export function useExperiencePoints() {
             .from('experience_logs')
             .insert({
               user_id: user.id,
-              amount: xp,
+              amount: xpAmount,
               training_type: trainingType || null,
               source: 'workout_completion',
               metadata: {
@@ -240,7 +241,7 @@ export function useExperiencePoints() {
         }
         
         return {
-          addedXp: xp,
+          addedXp: xpAmount,
           newTotalXp,
           trainingType
         };
