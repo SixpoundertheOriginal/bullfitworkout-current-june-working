@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,10 @@ interface AddExerciseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (exercise: { name: string; description: string }) => Promise<void>;
+  onAddExercise?: (exerciseName: string) => Promise<void>;
 }
 
-export function AddExerciseDialog({ open, onOpenChange, onAdd }: AddExerciseDialogProps) {
+export function AddExerciseDialog({ open, onOpenChange, onAdd, onAddExercise }: AddExerciseDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,11 @@ export function AddExerciseDialog({ open, onOpenChange, onAdd }: AddExerciseDial
     e.preventDefault();
     setLoading(true);
     try {
-      await onAdd({ name: name.trim(), description: description.trim() });
+      if (onAddExercise) {
+        await onAddExercise(name.trim());
+      } else {
+        await onAdd({ name: name.trim(), description: description.trim() });
+      }
       setName("");
       setDescription("");
       onOpenChange(false);
@@ -54,21 +58,23 @@ export function AddExerciseDialog({ open, onOpenChange, onAdd }: AddExerciseDial
               disabled={loading}
             />
           </div>
-          <div>
-            <label className="block text-sm text-gray-300 mb-1" htmlFor="exercise-description">
-              Description
-            </label>
-            <textarea
-              id="exercise-description"
-              className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring focus:ring-purple-600"
-              rows={3}
-              maxLength={256}
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Describe the movement, muscles, or instructions…"
-              disabled={loading}
-            />
-          </div>
+          {!onAddExercise && (
+            <div>
+              <label className="block text-sm text-gray-300 mb-1" htmlFor="exercise-description">
+                Description
+              </label>
+              <textarea
+                id="exercise-description"
+                className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring focus:ring-purple-600"
+                rows={3}
+                maxLength={256}
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Describe the movement, muscles, or instructions…"
+                disabled={loading}
+              />
+            </div>
+          )}
           <DialogFooter className="flex justify-end gap-2">
             <Button type="button" variant="outline" className="bg-gray-800 border-gray-700" onClick={() => onOpenChange(false)} disabled={loading}>
               Cancel

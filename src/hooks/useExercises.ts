@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
@@ -11,7 +10,7 @@ export type ExerciseMetadata = {
   display_unit?: string;
 };
 
-type ExerciseInput = Omit<Exercise, 'id'>;
+type ExerciseInput = Omit<Exercise, 'id' | 'created_at'> & { created_at?: string };
 
 export const useExercises = () => {
   const queryClient = useQueryClient();
@@ -45,12 +44,10 @@ export const useExercises = () => {
     }
   });
 
-  // Improved mutation for creating exercises
   const { mutate: createExercise, isPending } = useMutation({
     mutationFn: async (newExercise: ExerciseInput) => {
       console.log("Creating exercise with data:", newExercise);
       
-      // Make sure we have the required fields
       if (!newExercise.name || !newExercise.primary_muscle_groups || newExercise.primary_muscle_groups.length === 0) {
         throw new Error("Exercise name and at least one primary muscle group are required");
       }
@@ -70,8 +67,8 @@ export const useExercises = () => {
           tips: newExercise.tips || [],
           variations: newExercise.variations || [],
           metadata: newExercise.metadata || {},
-          created_by: newExercise.user_id || '', // Ensure user_id is being sent
-          is_custom: true // Mark as custom exercise
+          created_by: newExercise.user_id || '',
+          is_custom: true
         }])
         .select();
 
@@ -84,7 +81,6 @@ export const useExercises = () => {
       return data[0];
     },
     onSuccess: () => {
-      // Invalidate and refetch exercises query to update the UI
       console.log("Invalidating exercises query cache");
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
     },
