@@ -497,14 +497,14 @@ export function ConfigureTrainingDialog({
             )}
           </header>
           
-          <ScrollArea className="flex-grow overflow-auto">
-            <div className="px-6 py-2 space-y-6">
+          <ScrollArea className="flex-grow overflow-auto px-6 py-2">
+            <div className="space-y-6">
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
           </ScrollArea>
           
-          <footer className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm sticky bottom-0 left-0 right-0 z-20">
+          <footer className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm relative z-50">
             <Button 
               onClick={handlePrevStep}
               disabled={currentStep === ConfigurationStep.TrainingType}
