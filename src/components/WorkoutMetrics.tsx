@@ -89,9 +89,9 @@ export const WorkoutMetrics = ({
           value={formatTime(time)}
           label="Time"
           tooltip={`Tracked since ${formattedStartTime}`}
-          gradientClass="from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20"
-          valueClass={theme.textStyles.primary}
-          labelClass={theme.textStyles.secondary}
+          gradientClass="from-sky-500/5 to-blue-500/5 hover:from-sky-500/10 hover:to-blue-500/10"
+          valueClass="text-sky-600 font-semibold"
+          labelClass="text-gray-500"
         />
         
         <MetricCard
@@ -99,9 +99,9 @@ export const WorkoutMetrics = ({
           value={exerciseCount}
           label="Exercises"
           tooltip="Active exercises in your workout"
-          gradientClass="from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20"
-          valueClass={theme.textStyles.primary}
-          labelClass={theme.textStyles.secondary}
+          gradientClass="from-emerald-500/5 to-teal-500/5 hover:from-emerald-500/10 hover:to-teal-500/10"
+          valueClass="text-emerald-600 font-semibold"
+          labelClass="text-gray-500"
         />
         
         <MetricCard
@@ -110,15 +110,15 @@ export const WorkoutMetrics = ({
           label="Sets"
           tooltip={`${Math.round(completionPercentage)}% sets completed`}
           progressValue={completionPercentage}
-          gradientClass="from-violet-500/10 to-purple-500/10 hover:from-violet-500/20 hover:to-purple-500/20"
-          valueClass={theme.textStyles.primary}
-          labelClass={theme.textStyles.secondary}
+          gradientClass="from-violet-500/5 to-purple-500/5 hover:from-violet-500/10 hover:to-purple-500/10"
+          valueClass="text-violet-600 font-semibold"
+          labelClass="text-gray-500"
         />
         
         <div className={cn(
           "relative group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/5 backdrop-blur-xl transition-all duration-300",
-          "bg-gradient-to-br from-orange-500/10 to-red-500/10",
-          "hover:from-orange-500/20 hover:to-red-500/20 hover:scale-[1.02]"
+          "bg-gradient-to-br from-orange-500/5 to-red-500/5",
+          "hover:from-orange-500/10 hover:to-red-500/10 hover:scale-[1.02]"
         )}>
           <div className="relative">
             <CircularProgress 
@@ -129,7 +129,7 @@ export const WorkoutMetrics = ({
               <Timer 
                 size={24} 
                 className={cn(
-                  "text-orange-400 absolute inset-0 m-auto",
+                  "text-orange-500 absolute inset-0 m-auto",
                   showRestTimer && "animate-pulse"
                 )} 
               />
@@ -148,9 +148,9 @@ export const WorkoutMetrics = ({
               variant="outline"
               size="sm"
               onClick={onManualRestStart}
-              className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-white transition-all duration-300"
+              className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600 transition-all duration-300"
             >
-              <Play size={14} className="mr-1" /> <span className={theme.textStyles.primary}>Start Timer</span>
+              <Play size={14} className="mr-1" /> Start Timer
             </Button>
           )}
         </div>
