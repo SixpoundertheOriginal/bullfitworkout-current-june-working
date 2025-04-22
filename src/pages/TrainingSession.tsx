@@ -313,8 +313,14 @@ const ExerciseCard = ({
   );
 };
 
-const TrainingSession = () => {
-  // ... rest of code remains unchanged
+const TrainingSession: React.FC = () => {
+  // Add your component implementation here
+  return (
+    <div className="container mx-auto px-4 py-6">
+      <h1 className="text-2xl font-bold mb-4">Training Session</h1>
+      <p>This component needs to be implemented.</p>
+    </div>
+  );
 };
 
 export default TrainingSession;
