@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -68,36 +67,31 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   ) || TRAINING_TYPES[0];
 
   return (
-    <div className="relative w-full max-w-[500px] mx-auto aspect-square p-4">
-      <div className="absolute inset-0 m-auto w-32 h-32 rounded-full bg-gray-800/80 border border-white/10 flex items-center justify-center">
-        <motion.div
-          key={selectedType}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
-          className="flex flex-col items-center text-center space-y-2"
-        >
-          <div className={cn(
-            "p-3 rounded-full",
-            selectedTrainingTypeData.activeColor
-          )}>
-            {selectedTrainingTypeData.icon}
-          </div>
-          <span className="text-sm font-medium text-white">
-            {selectedTrainingTypeData.name}
-          </span>
-        </motion.div>
+    <div className="relative w-full max-w-[400px] mx-auto aspect-square">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-32 h-32 rounded-full bg-gray-800/80 border border-white/10 flex items-center justify-center">
+          <motion.div
+            key={selectedType}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-center text-center"
+          >
+            <span className="text-lg font-medium text-white">
+              {selectedTrainingTypeData.name}
+            </span>
+          </motion.div>
+        </div>
       </div>
 
       <div className="absolute inset-0 w-full h-full">
         {TRAINING_TYPES.map((type, index) => {
-          // Adjust radius to bring buttons closer
-          const radius = 120; // Reduced from 160
           const totalTypes = TRAINING_TYPES.length;
-          const angle = (index * (360 / totalTypes)) * (Math.PI / 180);
+          const angle = ((index * (360 / totalTypes)) - 90) * (Math.PI / 180);
+          const radius = 40;
           
-          const x = Math.cos(angle) * radius + radius;
-          const y = Math.sin(angle) * radius + radius;
+          const x = 50 + Math.cos(angle) * radius;
+          const y = 50 + Math.sin(angle) * radius;
           
           const isSelected = selectedType === type.name;
           
@@ -113,8 +107,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 isSelected ? type.activeColor : type.color
               )}
               style={{
-                left: `${x}px`,
-                top: `${y}px`,
+                left: `${x}%`,
+                top: `${y}%`,
               }}
             >
               {type.icon}
