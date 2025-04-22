@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -69,6 +70,15 @@ const trainingTypes: TrainingTypeObj[] = [
 interface LocationState {
   trainingType?: string;
   [key: string]: any;
+}
+
+// Add back the LocalExerciseSet interface that was removed during refactoring
+interface LocalExerciseSet {
+  weight: number;
+  reps: number;
+  restTime: number;
+  completed: boolean;
+  isEditing: boolean;
 }
 
 const exerciseHistoryData = {
