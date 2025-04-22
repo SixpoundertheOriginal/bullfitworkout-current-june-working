@@ -103,12 +103,17 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   
   const options = {
     align: "center" as const,
-    loop: false,
-    dragFree: false,
+    loop: true,
+    dragFree: true,
     containScroll: "trimSnaps" as const,
     slidesToScroll: 1,
-    duration: 25,
-    inViewThreshold: 0.7,
+    duration: 20,
+    inViewThreshold: 0.5,
+    breakpoints: {
+      '(min-width: 768px)': { slidesToScroll: 2 }
+    },
+    dragThreshold: 10,
+    watchDrag: true
   };
   
   const [emblaRef, emblaApi] = useEmblaCarousel(options);
@@ -150,7 +155,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     if (!emblaApi) return;
 
     const onDragStart = () => setIsDragging(true);
-    const onDragEnd = () => setIsDragging(false);
+    const onDragEnd = () => {
+      setIsDragging(false);
+      setTimeout(() => setIsDragging(false), 100);
+    };
 
     emblaApi.on("pointerDown", onDragStart);
     emblaApi.on("pointerUp", onDragEnd);
