@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -531,7 +532,8 @@ export function ConfigureTrainingDialog({
                 "rounded-xl",
                 "border border-white/5 bg-black/20",
                 "hover:bg-black/40 hover:border-white/10",
-                "text-white/80"
+                "text-white/80",
+                currentStep === ConfigurationStep.TrainingType && "opacity-50 cursor-not-allowed"
               )}
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
