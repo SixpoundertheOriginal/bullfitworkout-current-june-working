@@ -199,20 +199,20 @@ export function useExperiencePoints() {
           ? (currentData.training_experience as unknown as TrainingExperience)
           : defaultExp;
             
-        // Fix: Ensure totalXp is converted to number before arithmetic operations
+        // Convert totalXp to a number before arithmetic operations
         const currentTotalXp = typeof currentExp.totalXp === 'number' 
           ? currentExp.totalXp 
           : Number(currentExp.totalXp || 0);
           
         const newTotalXp = currentTotalXp + xp;
         
-        const updatedExp = JSON.parse(JSON.stringify(currentExp)) as TrainingExperience;
+        const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
         updatedExp.totalXp = newTotalXp;
         
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
-          // Fix: Ensure xp value is converted to number before arithmetic operations
+          // Convert training type xp to a number before arithmetic operations
           const currentTypeXp = typeof updatedExp.trainingTypeLevels[trainingType].xp === 'number' 
-            ? updatedExp.trainingTypeLevels[trainingType].xp 
+            ? updatedExp.trainingTypeLevels[trainingType].xp as number
             : Number(updatedExp.trainingTypeLevels[trainingType].xp || 0);
             
           updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xp;
