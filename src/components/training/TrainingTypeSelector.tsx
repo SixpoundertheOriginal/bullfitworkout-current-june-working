@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity, ChevronLeft, ChevronRight } from "lucide-react";
@@ -103,10 +102,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const [isDragging, setIsDragging] = useState(false);
   
   const options = {
-    align: "center",
+    align: "center" as const,
     loop: false,
     dragFree: false,
-    containScroll: "trimSnaps",
+    containScroll: "trimSnaps" as const,
     slidesToScroll: 1,
     duration: 25,
     inViewThreshold: 0.7,
