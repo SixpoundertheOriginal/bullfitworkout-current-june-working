@@ -8,7 +8,7 @@ interface UseElementVisibilityOptions {
 
 export const useElementVisibility = (options: UseElementVisibilityOptions = {}) => {
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<Element>(null);
+  const ref = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const element = ref.current;

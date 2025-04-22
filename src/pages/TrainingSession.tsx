@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -367,9 +368,9 @@ const TrainingSession: React.FC = () => {
   
   const trainingTypeObj = trainingTypes.find(t => t.id === trainingType);
   
-  const metricsVisibility = useElementVisibility();
-  const metricsRef = metricsVisibility.ref;
-  const metricsVisible = metricsVisibility.isVisible;
+  const { ref: metricsRef, isVisible: metricsVisible } = useElementVisibility({
+    threshold: 0.2
+  });
   
   const completedSets = Object.values(exercises).reduce(
     (total, sets) => total + sets.filter(set => set.completed).length, 
@@ -691,7 +692,7 @@ const TrainingSession: React.FC = () => {
       {trainingTypeObj && (
         <div className="px-4 py-2 mb-2">
           <TrainingTypeTag
-            type={trainingTypeObj.name as "Strength" | "Hypertrophy" | "Cardio" | "Calisthenics" | "Stretching" | "Yoga"}
+            type={trainingTypeObj.name}
             className="mb-2"
           />
         </div>
@@ -776,7 +777,7 @@ const TrainingSession: React.FC = () => {
       
       <div className="sticky bottom-16 right-0 p-4">
         <SmartExerciseFAB 
-          onSelectExercise={handleAddExerciseFromFAB} 
+          onSelectExercise={(exercise: Exercise) => handleAddExerciseFromFAB(exercise)} 
           trainingType={trainingType}
           tags={[]}
         />

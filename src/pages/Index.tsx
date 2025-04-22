@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
@@ -19,8 +20,7 @@ const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { stats } = useWorkoutStats(7);
   
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const isSectionVisible = useElementVisibility(sectionRef, {
+  const { ref: sectionRef, isVisible: isSectionVisible } = useElementVisibility({
     threshold: 0.5,
     rootMargin: "-100px"
   });
