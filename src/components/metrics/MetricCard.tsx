@@ -3,6 +3,10 @@ import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { typography } from "@/lib/typography";
+
+// Subtle, glassy neutral background for metric cards
+// Add a max-width for better alignment on mobile
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -15,47 +19,56 @@ interface MetricCardProps {
   labelClass?: string;
 }
 
-export const MetricCard = ({ 
-  icon: Icon, 
-  value, 
-  label, 
-  tooltip, 
-  progressValue, 
+export const MetricCard = ({
+  icon: Icon,
+  value,
+  label,
+  tooltip,
+  progressValue,
   gradientClass,
-  valueClass = "text-white",
-  labelClass = "text-gray-400" 
+  valueClass,
+  labelClass
 }: MetricCardProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className={cn(
-          "flex flex-col items-center justify-center p-4 rounded-2xl border border-white/5 backdrop-blur-xl transition-all duration-300",
-          "bg-gradient-to-br",
-          gradientClass || "from-gray-500/10 to-gray-700/10 hover:from-gray-500/20 hover:to-gray-700/20",
-          "hover:scale-[1.02]"
-        )}>
-          <div className="mb-2">
-            <Icon className={cn("h-7 w-7", valueClass)} />
+        <div
+          className={cn(
+            // New glassy background + subtle gradient
+            "flex flex-col items-center justify-center p-4 rounded-2xl border border-white/8 backdrop-blur-2xl transition-all duration-300",
+            "bg-gradient-to-br from-card/85 via-card/90 to-secondary/60",
+            gradientClass,
+            "hover:scale-[1.015] shadow-sm",
+            "min-w-[84px] max-w-[108px] w-full"
+          )}
+        >
+          {/* Icon circle with softened bg */}
+          <div className="mb-1 rounded-full bg-white/10 shadow-sm flex h-9 w-9 items-center justify-center">
+            <Icon className="h-5 w-5 text-purple-300" />
           </div>
-          <div className={cn("text-2xl font-bold", valueClass)}>
+          {/* Value (prominent) */}
+          <div className={cn("text-xl font-bold", valueClass ?? typography.headings.primary, "mt-1")}>
             {value}
           </div>
-          <div className={cn("text-sm", labelClass)}>
+          {/* Label (muted, defined style) */}
+          <div className={
+            cn("text-xs mt-1 tracking-wide", labelClass ?? typography.sections.label, "text-gray-400 font-medium")
+          }>
             {label}
           </div>
-          
+          {/* Progress (if present) */}
           {progressValue !== undefined && (
             <div className="w-full mt-2">
-              <Progress 
-                value={progressValue} 
-                className="h-1 bg-gray-800 [&>div]:bg-purple-500" 
+              <Progress
+                value={progressValue}
+                className="h-1 bg-gray-800 [&>div]:bg-purple-500"
               />
             </div>
           )}
         </div>
       </TooltipTrigger>
       {tooltip && (
-        <TooltipContent 
+        <TooltipContent
           side="bottom"
           className="bg-gray-900 border border-gray-800 text-white"
         >

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +7,7 @@ import { TopRestTimer } from "./TopRestTimer";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { cn } from "@/lib/utils";
 import { theme } from "@/lib/theme";
+import { typography } from "@/lib/typography";
 
 interface WorkoutMetricsProps {
   time: number;
@@ -21,16 +21,16 @@ interface WorkoutMetricsProps {
   className?: string;
 }
 
-export const WorkoutMetrics = ({ 
-  time, 
-  exerciseCount, 
-  completedSets, 
+export const WorkoutMetrics = ({
+  time,
+  exerciseCount,
+  completedSets,
   totalSets,
   showRestTimer,
   onRestTimerComplete,
   onRestTimeUpdate,
   onManualRestStart,
-  className 
+  className
 }: WorkoutMetricsProps) => {
   const [resetCounter, setResetCounter] = useState(0);
   
@@ -82,75 +82,75 @@ export const WorkoutMetrics = ({
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   return (
-    <div className={cn("relative", className)}>
-      <div className="grid grid-cols-4 gap-3 p-4">
+    <div className={cn("relative w-full", className)}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-2 py-3 sm:p-4 rounded-3xl bg-white/2">
         <MetricCard
           icon={Clock}
           value={formatTime(time)}
           label="Time"
           tooltip={`Tracked since ${formattedStartTime}`}
-          gradientClass="from-sky-500/5 to-blue-500/5 hover:from-sky-500/10 hover:to-blue-500/10"
+          gradientClass="from-transparent via-white/5 to-slate-900/5"
           valueClass="text-sky-600 font-semibold"
-          labelClass="text-gray-500"
+          labelClass={typography.sections.label}
         />
-        
+
         <MetricCard
           icon={Dumbbell}
           value={exerciseCount}
           label="Exercises"
           tooltip="Active exercises in your workout"
-          gradientClass="from-emerald-500/5 to-teal-500/5 hover:from-emerald-500/10 hover:to-teal-500/10"
+          gradientClass="from-transparent via-white/5 to-slate-900/5"
           valueClass="text-emerald-600 font-semibold"
-          labelClass="text-gray-500"
+          labelClass={typography.sections.label}
         />
-        
+
         <MetricCard
           icon={Timer}
           value={`${completedSets}/${totalSets}`}
           label="Sets"
           tooltip={`${Math.round(completionPercentage)}% sets completed`}
           progressValue={completionPercentage}
-          gradientClass="from-violet-500/5 to-purple-500/5 hover:from-violet-500/10 hover:to-purple-500/10"
+          gradientClass="from-transparent via-white/5 to-slate-900/5"
           valueClass="text-violet-600 font-semibold"
-          labelClass="text-gray-500"
+          labelClass={typography.sections.label}
         />
-        
+
         <div className={cn(
-          "relative group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/5 backdrop-blur-xl transition-all duration-300",
-          "bg-gradient-to-br from-orange-500/5 to-red-500/5",
-          "hover:from-orange-500/10 hover:to-red-500/10 hover:scale-[1.02]"
+          "relative group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/8 backdrop-blur-2xl transition-all duration-300",
+          "bg-gradient-to-br from-card/85 via-white/10 to-secondary/70",
+          "hover:scale-[1.015] shadow-sm min-w-[84px] max-w-[108px] w-full"
         )}>
-          <div className="relative">
-            <CircularProgress 
-              value={showRestTimer ? 100 : 0} 
-              size={48} 
+          <div className="relative mb-1 rounded-full bg-orange-300/10 shadow-sm flex h-9 w-9 items-center justify-center">
+            <CircularProgress
+              value={showRestTimer ? 100 : 0}
+              size={36}
               className="text-orange-500/20"
             >
-              <Timer 
-                size={24} 
+              <Timer
+                size={18}
                 className={cn(
                   "text-orange-500 absolute inset-0 m-auto",
                   showRestTimer && "animate-pulse"
-                )} 
+                )}
               />
             </CircularProgress>
           </div>
-          <TopRestTimer 
-            isActive={showRestTimer} 
+          <TopRestTimer
+            isActive={showRestTimer}
             onComplete={onRestTimerComplete}
             resetSignal={resetCounter}
             onTimeUpdate={onRestTimeUpdate}
             onManualStart={onManualRestStart}
           />
-          
+
           {!showRestTimer && (
             <Button
               variant="outline"
               size="sm"
               onClick={onManualRestStart}
-              className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600 transition-all duration-300"
+              className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600 transition-all duration-300 text-xs font-medium"
             >
-              <Play size={14} className="mr-1" /> Start Timer
+              <Play size={12} className="mr-1" /> Start Timer
             </Button>
           )}
         </div>
