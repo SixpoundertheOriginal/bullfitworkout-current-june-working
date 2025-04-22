@@ -552,24 +552,26 @@ export function ConfigureTrainingDialog({
             
             <Button 
               onClick={handleNextStep}
+              variant="nav-action"
               size="sm"
+              shape="pill"
               className={cn(
-                "rounded-xl w-32", // Increased width slightly
-                "bg-gradient-to-r from-purple-600 to-pink-500", // Vibrant gradient
-                "hover:from-purple-500 hover:to-pink-400",
-                "transform transition-all duration-300",
-                "shadow-lg hover:shadow-purple-500/25",
-                "border border-white/10",
-                "text-base font-semibold", // Adjusted font size and weight
-                "tracking-wider" // Added letter spacing for better readability
+                "w-36", // Increased width for better text positioning
+                "text-base font-medium", // Better typography
+                "bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500", // Enhanced gradient
+                "hover:from-purple-500 hover:via-purple-400 hover:to-pink-400",
+                "shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20",
+                "transition-all duration-300", 
+                "py-5", // More vertical padding for a larger button
+                "tracking-wide", // Letter spacing for better readability
               )}
+              iconPosition="right"
+              icon={currentStep === ConfigurationStep.Review ? 
+                <Check className="w-4 h-4" /> : 
+                <ChevronRight className="w-4 h-4" />
+              }
             >
               {getNextButtonText()}
-              {currentStep === ConfigurationStep.Review ? (
-                <Check className="w-4 h-4 ml-1" />
-              ) : (
-                <ChevronRight className="w-4 h-4 ml-1" />
-              )}
             </Button>
           </footer>
         </DialogContent>

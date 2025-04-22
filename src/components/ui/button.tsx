@@ -17,6 +17,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         gradient: "bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow-lg hover:shadow-purple-500/25",
         "icon-circle": "rounded-full bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105 focus:ring-offset-background",
+        "nav-action": "bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold tracking-wide hover:from-purple-500 hover:to-pink-400 shadow-lg hover:shadow-purple-500/25 border border-white/10",
       },
       shape: {
         default: "rounded-md",
