@@ -14,7 +14,7 @@ import {
   CarouselContent, 
   CarouselItem,
 } from "@/components/ui/carousel";
-import useEmblaCarousel, { EmblaOptionsType } from "embla-carousel-react";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -102,7 +102,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const [touchActive, setTouchActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  const options: EmblaOptionsType = {
+  const options = {
     align: "center",
     loop: false,
     dragFree: false,
