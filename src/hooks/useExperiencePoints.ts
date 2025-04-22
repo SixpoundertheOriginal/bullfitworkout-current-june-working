@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -170,12 +171,15 @@ export function useExperiencePoints() {
       xp, 
       trainingType 
     }: { 
-      xp: number; 
+      xp: number | string; 
       trainingType?: string;
     }) => {
       if (!user) throw new Error("User not authenticated");
 
       try {
+        // Ensure xp is converted to a number
+        const xpAmount = typeof xp === 'string' ? Number(xp) : xp;
+        
         const { data: currentData, error: fetchError } = await supabase
           .from('user_profiles')
           .select('*')
@@ -199,7 +203,6 @@ export function useExperiencePoints() {
           : defaultExp;
             
         const currentTotalXp = Number(currentExp.totalXp || 0);
-        const xpAmount = Number(xp);
         const newTotalXp = currentTotalXp + xpAmount;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
