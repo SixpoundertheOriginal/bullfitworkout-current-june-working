@@ -556,19 +556,30 @@ export function ConfigureTrainingDialog({
               size="sm"
               shape="pill"
               className={cn(
-                "w-36", // Increased width for better text positioning
-                "text-base font-medium", // Better typography
-                "bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500", // Enhanced gradient
-                "hover:from-purple-500 hover:via-purple-400 hover:to-pink-400",
-                "shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20",
-                "transition-all duration-300", 
-                "py-5", // More vertical padding for a larger button
-                "tracking-wide", // Letter spacing for better readability
+                "w-40", // slightly wider
+                "text-base font-bold tracking-wide",
+                "rounded-full px-6 py-4",
+                // Glassmorphism/gradient
+                "bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400",
+                "hover:from-purple-400 hover:via-pink-400 hover:to-yellow-300",
+                "border-0 shadow-xl shadow-purple-500/10",
+                // Text shadow for better readability (optional)
+                "transition-all duration-200",
+                // Unique elevation/effect for the Review Quest step
+                currentStep === ConfigurationStep.Duration ? "scale-105 ring-2 ring-yellow-300/30" : "",
+                "focus:ring-4 focus:ring-pink-500/30"
               )}
               iconPosition="right"
-              icon={currentStep === ConfigurationStep.Review ? 
-                <Check className="w-4 h-4" /> : 
-                <ChevronRight className="w-4 h-4" />
+              icon={
+                currentStep === ConfigurationStep.Review
+                  ? <Check className="w-4 h-4" />
+                  : <ChevronRight className="w-4 h-4" />
+              }
+              style={
+                // Add a custom shadow for this final step
+                currentStep === ConfigurationStep.Duration
+                  ? { boxShadow: "0 0 0 4px rgba(253, 224, 71, 0.12), 0 2px 12px 2px rgba(168,85,247,0.20)" }
+                  : {}
               }
             >
               {getNextButtonText()}

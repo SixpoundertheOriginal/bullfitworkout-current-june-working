@@ -32,7 +32,8 @@ export function DurationSelector({ value, onChange }: DurationSelectorProps) {
           <span className="text-base font-medium">Duration</span>
         </div>
         <div className={`text-lg font-mono ${getDurationFeedbackColor(value)}`}>
-          {value} min
+          {/* Show integer only, no decimals */}
+          {Math.round(value)} min
         </div>
       </div>
 
