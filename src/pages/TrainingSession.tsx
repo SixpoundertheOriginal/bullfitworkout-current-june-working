@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -32,7 +31,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ExerciseSet } from "@/types/exercise";
+import { ExerciseSet, Exercise } from "@/types/exercise";
 import { convertWeight } from "@/utils/unitConversion";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { SetRow } from "@/components/SetRow";
@@ -45,7 +44,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 import { ExerciseVolumeSparkline } from "@/components/metrics/ExerciseVolumeSparkline";
 
-// Define the training types with the required properties
 interface TrainingTypeObj {
   id: string;
   name: string;
@@ -90,7 +88,6 @@ const exerciseHistoryData = {
   ],
 };
 
-// Helper functions for workout calculations
 const getPreviousSessionData = (exerciseName: string) => {
   const history = exerciseHistoryData[exerciseName] || [];
   if (history.length > 0) {
@@ -111,7 +108,6 @@ const calculateSetVolume = (sets: ExerciseSet[], weightUnit: string) => {
   }, 0);
 };
 
-// Define the local exercise set type to match the component's needs
 interface LocalExerciseSet {
   weight: number;
   reps: number;
@@ -219,16 +215,13 @@ const ExerciseCard = ({
   console.log(`Volume % change: ${volumePercentChange}`);
   console.log(`Sets:`, sets);
   
-  // Collect session volumes for sparkline: get up to 4 historical + current
   const sessionVolumes = [
     ...((exerciseHistoryData[exercise] || []).slice(0, 3).reverse().map(s => {
-      // Convert to user's weightUnit for fair visual trend
       return convertWeight(s.weight, "lb", weightUnit) * s.reps * s.sets;
     })),
     currentVolume,
   ];
-  // The most recent value is at the END of array
-
+  
   const positiveTrend = volumeDiff > 0;
   const negativeTrend = volumeDiff < 0;
 
@@ -322,7 +315,6 @@ const ExerciseCard = ({
           <div className="flex justify-between items-center text-sm mb-2">
             <span className="volume-label flex items-center">
               Volume vs last session
-              {/* Sparkline */}
               <ExerciseVolumeSparkline
                 volumes={sessionVolumes}
                 positive={positiveTrend}
@@ -370,17 +362,15 @@ const TrainingSession: React.FC = () => {
   const { weightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
   
-  // Get training type from location state or search params
   const locationState = location.state as LocationState;
   const trainingType = locationState?.trainingType || searchParams.get('type') || 'strength';
   
-  // Find training type object
   const trainingTypeObj = trainingTypes.find(t => t.id === trainingType);
   
-  // Track visibility for metrics panel
-  const { ref: metricsRef, isVisible: metricsVisible } = useElementVisibility();
+  const metricsVisibility = useElementVisibility();
+  const metricsRef = metricsVisibility.ref;
+  const metricsVisible = metricsVisibility.isVisible;
   
-  // Calculate metrics
   const completedSets = Object.values(exercises).reduce(
     (total, sets) => total + sets.filter(set => set.completed).length, 
     0
@@ -391,14 +381,12 @@ const TrainingSession: React.FC = () => {
     0
   );
 
-  // Simplified versions of metrics for now
-  const intensity = 75; // Example value
-  const volume = 1250; // Example value
-  const efficiency = 85; // Example value
-  const projectedCalories = 320; // Example value
+  const intensity = 75;
+  const volume = 1250;
+  const efficiency = 85;
+  const projectedCalories = 320;
   
   useEffect(() => {
-    // Start timer
     timerRef.current = setInterval(() => {
       setElapsedTime(prev => prev + 1);
     }, 1000);
@@ -412,19 +400,16 @@ const TrainingSession: React.FC = () => {
   
   const handleAddExercise = (exerciseName: string) => {
     setExercises(prev => {
-      // If already exists, don't add it again
       if (prev[exerciseName]) {
         return prev;
       }
       
-      const newExercises = {
+      return {
         ...prev,
         [exerciseName]: [
           { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: true }
         ]
       };
-      
-      return newExercises;
     });
     
     setActiveExercise(exerciseName);
@@ -437,12 +422,15 @@ const TrainingSession: React.FC = () => {
     }, 100);
   };
   
+  const handleAddExerciseFromFAB = (exercise: Exercise) => {
+    handleAddExercise(exercise.name);
+  };
+  
   const handleAddSet = (exerciseName: string) => {
     setExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
       const lastSet = exerciseSets[exerciseSets.length - 1];
       
-      // Create new set with values from last set if available
       const newSet = lastSet ? {
         weight: lastSet.weight,
         reps: lastSet.reps,
@@ -457,12 +445,10 @@ const TrainingSession: React.FC = () => {
         isEditing: true
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: [...exerciseSets, newSet]
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -475,12 +461,10 @@ const TrainingSession: React.FC = () => {
         isEditing: false 
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -489,19 +473,16 @@ const TrainingSession: React.FC = () => {
       const exerciseSets = [...(prev[exerciseName] || [])];
       exerciseSets.splice(setIndex, 1);
       
-      // If no sets left, remove the exercise
       if (exerciseSets.length === 0) {
         const newExercises = { ...prev };
         delete newExercises[exerciseName];
         return newExercises;
       }
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -513,12 +494,10 @@ const TrainingSession: React.FC = () => {
         isEditing: true 
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -530,12 +509,10 @@ const TrainingSession: React.FC = () => {
         isEditing: false 
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -547,12 +524,10 @@ const TrainingSession: React.FC = () => {
         weight: parseFloat(value) || 0
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -564,12 +539,10 @@ const TrainingSession: React.FC = () => {
         reps: parseInt(value) || 0
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -581,12 +554,10 @@ const TrainingSession: React.FC = () => {
         restTime: parseInt(value) || 0
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -599,12 +570,10 @@ const TrainingSession: React.FC = () => {
         weight: Math.max(0, currentWeight + increment)
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -617,12 +586,10 @@ const TrainingSession: React.FC = () => {
         reps: Math.max(0, currentReps + increment)
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
@@ -635,24 +602,25 @@ const TrainingSession: React.FC = () => {
         restTime: Math.max(0, currentRestTime + increment)
       };
       
-      const updatedExercises = {
+      return {
         ...prev,
         [exerciseName]: exerciseSets
       };
-      
-      return updatedExercises;
     });
   };
   
   const handleCompleteWorkout = async () => {
-    // Save workout data
     if (user) {
       try {
+        const now = new Date();
         const workoutData = {
           user_id: user.id,
-          date: new Date().toISOString(),
+          name: `Workout ${now.toLocaleDateString()}`,
+          start_time: new Date(now.getTime() - elapsedTime * 1000).toISOString(),
+          end_time: now.toISOString(),
           training_type: trainingType,
           duration: elapsedTime,
+          notes: null,
           exercises: Object.entries(exercises).map(([name, sets]) => ({
             name,
             sets: sets.map(set => ({
@@ -661,10 +629,7 @@ const TrainingSession: React.FC = () => {
               rest_time: set.restTime,
               completed: set.completed
             }))
-          })),
-          intensity,
-          volume,
-          calories: projectedCalories
+          }))
         };
         
         const { data, error } = await supabase
@@ -676,7 +641,6 @@ const TrainingSession: React.FC = () => {
           throw error;
         }
         
-        // Navigate to workout complete page with workout data
         navigate('/workout-complete', {
           state: {
             workoutId: data[0].id,
@@ -694,7 +658,6 @@ const TrainingSession: React.FC = () => {
         toast.error('Failed to save your workout. Please try again.');
       }
     } else {
-      // If not logged in, still go to complete page but without saving
       navigate('/workout-complete', {
         state: {
           duration: elapsedTime,
@@ -714,8 +677,7 @@ const TrainingSession: React.FC = () => {
   };
   
   const handleResetRestTimer = () => {
-    // This will be called when a set is completed,
-    // we use it to reset the timer in TopRestTimer component
+    setShowRestTimer(false);
   };
   
   const handleRestTimerComplete = () => {
@@ -724,13 +686,12 @@ const TrainingSession: React.FC = () => {
   
   const totalExercises = Object.keys(exercises).length;
   
-  // Render UI
   return (
     <div className="pb-20">
       {trainingTypeObj && (
         <div className="px-4 py-2 mb-2">
           <TrainingTypeTag
-            type={trainingTypeObj.name}
+            type={trainingTypeObj.name as "Strength" | "Hypertrophy" | "Cardio" | "Calisthenics" | "Stretching" | "Yoga"}
             className="mb-2"
           />
         </div>
@@ -812,7 +773,7 @@ const TrainingSession: React.FC = () => {
       </div>
       
       <div className="sticky bottom-16 right-0 p-4">
-        <SmartExerciseFAB onSelectExercise={handleAddExercise} />
+        <SmartExerciseFAB onSelectExercise={handleAddExerciseFromFAB} />
       </div>
       
       <div className="fixed bottom-16 left-0 right-0 p-4 z-20">
