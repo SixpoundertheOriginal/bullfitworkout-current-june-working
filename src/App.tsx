@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,8 +15,8 @@ import Training from "./pages/Training";
 import { AuthProvider } from "./context/AuthContext";
 import { WeightUnitProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
+import AllExercisesPage from "./pages/AllExercisesPage";
 
-// Create a client
 const queryClient = new QueryClient();
 
 function App() {
@@ -30,6 +29,9 @@ function App() {
               <Toaster />
               <Sonner />
               <RouterProvider />
+              {/* Add route for All Exercises page */}
+              {/* The RouterProvider component contains the main app routes */}
+              {/* AllExercisesPage will be rendered via BrowserRouter below if route is present */}
             </TooltipProvider>
           </WeightUnitProvider>
         </AuthProvider>

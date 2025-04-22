@@ -14,6 +14,7 @@ import { UserProfile } from "@/components/UserProfile";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AllExercisesPage from "@/pages/AllExercisesPage";
 
 const getPageTitle = (pathname: string): string => {
   switch (pathname) {
@@ -89,6 +90,7 @@ export const RouterProvider = () => {
           <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
           <Route path="/workout-details/:workoutId" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/all-exercises" element={<ProtectedRoute><AllExercisesPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Search } from "lucide-react";
 import { Exercise } from "@/types/exercise";
 import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
+import { useNavigate } from "react-router-dom";
 
 interface EmptyWorkoutStateProps {
   onTemplateSelect: (exercise: string | Exercise) => void;
@@ -15,6 +15,7 @@ interface EmptyWorkoutStateProps {
 // You can wire up trainingType prop if you want it dynamic.
 export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplateSelect }) => {
   const { suggestedExercises } = useExerciseSuggestions("strength");
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-10">
@@ -24,7 +25,6 @@ export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplate
       </div>
       <Card className="w-full max-w-md bg-gray-900 border-gray-800">
         <CardContent className="p-6">
-          {/* Suggestions in the center */}
           <div>
             <h3 className="font-semibold mb-3 text-white text-center">Quick Add Exercises</h3>
             <ExerciseQuickSelect 
@@ -37,7 +37,7 @@ export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplate
             <Button 
               className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
               size="lg"
-              onClick={() => { /* Could open an all-exercises modal/search in future */ }}
+              onClick={() => navigate("/all-exercises")}
             >
               <Search className="w-4 h-4 mr-2" />
               Browse All Exercises
