@@ -107,12 +107,12 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     dragFree: false,
     containScroll: "trimSnaps" as const,
     slidesToScroll: 1,
-    duration: 25,
-    inViewThreshold: 0.7,
+    duration: 20,
+    inViewThreshold: 0.9,
     breakpoints: {
       '(min-width: 768px)': { slidesToScroll: 2 }
     },
-    dragThreshold: 8,
+    dragThreshold: 10,
     watchDrag: true,
     skipSnaps: false,
     startIndex: DEFAULT_TRAINING_TYPES.findIndex(t => t.name === selectedType)
@@ -221,39 +221,39 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         setIsDragging(false);
       }}
     >
-      <div className="flex justify-center gap-1 mb-3">
+      <div className="flex justify-center gap-0.5 mb-4">
         {allTrainingTypes.map((_, index) => (
           <motion.div
             key={index}
             className={cn(
-              "h-1 rounded-full transition-all duration-300",
-              current === index ? "w-3 bg-white" : "w-1 bg-white/30"
+              "h-0.5 rounded-full transition-all duration-300",
+              current === index ? "w-2.5 bg-white" : "w-0.5 bg-white/30"
             )}
             animate={{
-              width: current === index ? 12 : 4,
+              width: current === index ? 10 : 2,
               opacity: current === index ? 1 : 0.5
             }}
           />
         ))}
       </div>
 
-      <div className="relative px-2">
+      <div className="relative px-1">
         <Button
           onClick={() => handleManualScroll('prev')}
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute -left-1 z-10 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full",
+            "absolute -left-2 z-10 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full",
             "bg-black/40 border border-white/10 hover:bg-black/60",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollPrev && "opacity-30 pointer-events-none"
           )}
         >
-          <ChevronLeft className="h-3.5 w-3.5" />
+          <ChevronLeft className="h-3 w-3" />
         </Button>
         
         <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex px-2">
+          <div className="flex px-1">
             {allTrainingTypes.map((type, index) => {
               const isSelected = selectedType === type.name;
               
@@ -361,13 +361,13 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute -right-1 z-10 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full",
+            "absolute -right-2 z-10 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full",
             "bg-black/40 border border-white/10 hover:bg-black/60",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollNext && "opacity-30 pointer-events-none"
           )}
         >
-          <ChevronRight className="h-3.5 w-3.5" />
+          <ChevronRight className="h-3 w-3" />
         </Button>
       </div>
       

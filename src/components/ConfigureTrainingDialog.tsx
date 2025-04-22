@@ -464,14 +464,14 @@ export function ConfigureTrainingDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className={cn(
-          "p-0 overflow-hidden max-w-md max-h-[85vh]",
+          "p-0 overflow-hidden max-w-[420px] max-h-[85vh]",
           "bg-gradient-to-br from-gray-900/95 via-gray-900/98 to-gray-900/95",
           "backdrop-blur-sm border border-white/5",
           "shadow-[0_0_30px_rgba(124,58,237,0.15)]",
-          "rounded-2xl mx-4",
+          "rounded-2xl mx-auto",
           bgGradient
         )}>
-          <header className="flex justify-between items-center px-4 py-4">
+          <header className="flex justify-between items-center px-6 py-4">
             <div className="flex items-center gap-3">
               <motion.div 
                 initial={{ rotate: 0 }}
@@ -495,20 +495,20 @@ export function ConfigureTrainingDialog({
           </header>
           
           <ScrollArea className="max-h-[calc(85vh-8rem)]">
-            <div className="px-4 py-2 space-y-4">
+            <div className="px-6 py-2 space-y-6">
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
           </ScrollArea>
           
-          <footer className="flex items-center justify-between p-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
+          <footer className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
             <Button 
               onClick={handlePrevStep}
               disabled={currentStep === ConfigurationStep.TrainingType}
               variant="outline"
               size="sm"
               className={cn(
-                "rounded-xl",
+                "rounded-xl w-24",
                 "border border-white/5 bg-black/20",
                 "hover:bg-black/40 hover:border-white/10",
                 "text-white/80",
@@ -523,7 +523,7 @@ export function ConfigureTrainingDialog({
               onClick={handleNextStep}
               size="sm"
               className={cn(
-                "rounded-xl",
+                "rounded-xl w-24",
                 "bg-gradient-to-r from-purple-600 to-pink-500",
                 "hover:from-purple-500 hover:to-pink-400",
                 "transform transition-all duration-300",
