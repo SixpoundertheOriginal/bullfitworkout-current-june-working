@@ -202,7 +202,11 @@ export function useExperiencePoints() {
           ? (currentData.training_experience as unknown as TrainingExperience)
           : defaultExp;
             
-        const currentTotalXp = Number(currentExp.totalXp || 0);
+        // Ensure we're working with numbers by explicitly converting
+        const currentTotalXp = typeof currentExp.totalXp === 'string' 
+          ? Number(currentExp.totalXp)
+          : Number(currentExp.totalXp || 0);
+          
         const newTotalXp = currentTotalXp + xpAmount;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
@@ -210,7 +214,10 @@ export function useExperiencePoints() {
         
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
           const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
-          const currentTypeXp = Number(typeXpValue || 0);
+          const currentTypeXp = typeof typeXpValue === 'string'
+            ? Number(typeXpValue)
+            : Number(typeXpValue || 0);
+            
           updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
         }
         
