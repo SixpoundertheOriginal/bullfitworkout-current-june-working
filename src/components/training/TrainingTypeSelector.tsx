@@ -74,7 +74,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     selectedTrainingTypeData;
 
   return (
-    <div className="relative w-full max-w-[400px] mx-auto aspect-square flex items-center justify-center">
+    <div className="relative w-full max-w-[400px] mx-auto aspect-square flex items-center justify-center overflow-visible">
       {/* Center circle */}
       <div className="absolute w-40 h-40 rounded-full bg-gray-800/80 border border-white/10 flex flex-col items-center justify-center pointer-events-none shadow-lg">
         <motion.div
@@ -95,8 +95,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         const totalTypes = TRAINING_TYPES.length;
         // Start from top (-90deg); bring closer to center
         const angle = ((index * (360 / totalTypes)) - 90) * (Math.PI / 180);
-        const radius = 80; // px: smaller = closer to center
-
+        const radius = 85; // Slightly increased from 80
+        
         // Reduce radius divisor to bring buttons in tight
         const x = 50 + Math.cos(angle) * (radius / 1.8);
         const y = 50 + Math.sin(angle) * (radius / 1.8);
@@ -138,4 +138,3 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     </div>
   );
 }
-
