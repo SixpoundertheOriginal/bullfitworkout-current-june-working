@@ -8,16 +8,18 @@ export const BottomNav = () => {
   
   const isActive = (path: string) => location.pathname === path;
   
-  // Don't show bottom nav on training configuration screens
+  // Don't show bottom nav on training configuration screens or when dialogs are open
   const isTrainingConfig = location.pathname.includes('/training') && 
     (location.pathname !== '/training' && location.pathname !== '/training-session');
   
-  if (isTrainingConfig) {
+  const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
+  
+  if (isTrainingConfig || isDialogOpen) {
     return null;
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-3 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-40">
+    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-3 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Today" 

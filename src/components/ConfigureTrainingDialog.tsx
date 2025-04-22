@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -472,9 +471,10 @@ export function ConfigureTrainingDialog({
           "backdrop-blur-sm border border-white/5",
           "shadow-[0_0_30px_rgba(124,58,237,0.15)]",
           "rounded-2xl mx-auto",
+          "flex flex-col",
           bgGradient
         )}>
-          <header className="flex justify-between items-center px-6 py-4">
+          <header className="flex justify-between items-center px-6 py-4 relative z-10">
             <div className="flex items-center gap-3">
               <motion.div 
                 initial={{ rotate: 0 }}
@@ -497,14 +497,14 @@ export function ConfigureTrainingDialog({
             )}
           </header>
           
-          <ScrollArea className="max-h-[calc(85vh-8rem)]">
+          <ScrollArea className="flex-grow overflow-auto">
             <div className="px-6 py-2 space-y-6">
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
           </ScrollArea>
           
-          <footer className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm">
+          <footer className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm sticky bottom-0 left-0 right-0 z-20">
             <Button 
               onClick={handlePrevStep}
               disabled={currentStep === ConfigurationStep.TrainingType}
