@@ -116,8 +116,11 @@ export function useExperiencePoints() {
         const previousLevelsXp = Array.from({ length: level - 1 }).reduce((sum, _, i) =>
           sum + calculateLevelRequirement(i + 1), 0);
 
-        const currentLevelXp = totalXp - previousLevelsXp;
-        const nextLevelThreshold = calculateLevelRequirement(level + 1);
+        // Fix for error on line 117: Ensure previousLevelsXp is a number before subtraction 
+        const previousLevelsXpNumber: number = previousLevelsXp;
+        const currentLevelXp = totalXp - previousLevelsXpNumber;
+        // Fix for error on line 119: Ensure level is a number before addition
+        const nextLevelThreshold = calculateLevelRequirement(Number(level) + 1);
 
         // Defensive: ensure all type XPs are numbers
         const rawTrainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
@@ -291,5 +294,3 @@ export function useExperiencePoints() {
     isAddingExperience: addExperienceMutation.isPending
   };
 }
-
-// ... (end of file)
