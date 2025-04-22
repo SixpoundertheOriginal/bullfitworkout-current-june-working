@@ -198,53 +198,81 @@ export function ConfigureTrainingDialog({
     { title: "Review", description: "Confirm & start" }
   ];
 
+  const getNextButtonText = () => {
+    switch (currentStep) {
+      case ConfigurationStep.TrainingType:
+        return "Focus → What are your training goals?";
+      case ConfigurationStep.TrainingFocus:
+        return "Duration → Select session length";
+      case ConfigurationStep.Duration:
+        return "Review → Confirm and Start";
+      case ConfigurationStep.Review:
+        return "Start Quest";
+      default:
+        return "Continue";
+    }
+  };
+
   const renderStepIndicator = () => {
     return (
       <div className="flex items-center justify-between mb-8 relative">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-800 -translate-y-1/2 z-0" />
-        <div 
+        <motion.div
           className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-purple-500 via-purple-400 to-pink-500 -translate-y-1/2 z-0"
-          style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+          style={{
+            width: `${(currentStep / (steps.length - 1)) * 100}%`
+          }}
+          initial={false}
+          animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+          transition={{ type: "spring", stiffness: 80, damping: 18 }}
         />
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
           const isActive = index === currentStep;
-          
           return (
             <div key={index} className="z-10 flex flex-col items-center">
               <motion.div 
                 initial={{ scale: 1 }}
                 animate={{ 
-                  scale: isActive ? 1.1 : 1,
-                  boxShadow: isActive ? '0 0 15px rgba(168, 85, 247, 0.5)' : 'none'
+                  scale: isActive ? 1.12 : 1,
+                  boxShadow: isActive
+                    ? '0 0 15px rgba(168,85,247,0.56)'
+                    : 'none'
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 280,
+                  damping: 19
                 }}
                 className={cn(
                   "relative w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300",
-                  isActive ? 
-                    "bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-white/20" : 
-                    isCompleted ? 
-                      "bg-purple-600 border border-purple-400/30" : 
-                      "bg-gray-800/80 border border-gray-700"
+                  isActive
+                    ? "bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-white/20"
+                    : isCompleted
+                    ? "bg-purple-600 border border-purple-400/30"
+                    : "bg-gray-800/80 border border-gray-700"
                 )}
               >
                 {isCompleted ? (
-                  <Check className="w-5 h-5 text-white" />
+                  <span className="w-5 h-5 flex items-center justify-center text-white">✓</span>
                 ) : (
-                  <span className={cn(
-                    isActive ? typography.text.primary : typography.text.muted
-                  )}>
+                  <span
+                    className={cn(
+                      isActive ? typography.text.primary : typography.text.muted
+                    )}
+                  >
                     {index + 1}
                   </span>
                 )}
-                
+
                 {isActive && (
                   <motion.div
                     className="absolute inset-0 rounded-full bg-purple-500 opacity-20"
-                    animate={{ 
-                      scale: [1, 1.2, 1],
-                      opacity: [0.2, 0.1, 0.2],
+                    animate={{
+                      scale: [1, 1.18, 1],
+                      opacity: [0.19, 0.1, 0.19],
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 2,
                       repeat: Infinity,
                       repeatType: "loop"
@@ -252,7 +280,7 @@ export function ConfigureTrainingDialog({
                   />
                 )}
               </motion.div>
-              
+
               <span className={cn(
                 "text-xs font-medium transition-all duration-200",
                 isActive ? typography.text.primary : typography.text.muted
@@ -458,15 +486,11 @@ export function ConfigureTrainingDialog({
     }
   };
 
-  const getNextButtonText = () => {
-    return currentStep === ConfigurationStep.Review ? "Start Quest" : "Continue";
-  };
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className={cn(
-          "p-0 overflow-hidden max-w-[420px] max-h-[85vh]",
+          "p-0 overflow-visible max-w-[420px] max-h-[85vh]",
           "bg-gradient-to-br from-gray-900/95 via-gray-900/98 to-gray-900/95",
           "backdrop-blur-sm border border-white/5",
           "shadow-[0_0_30px_rgba(124,58,237,0.15)]",
@@ -497,8 +521,12 @@ export function ConfigureTrainingDialog({
             )}
           </header>
           
-          <ScrollArea className="flex-grow overflow-auto px-6 py-2">
-            <div className="space-y-6">
+          <ScrollArea className="flex-grow overflow-auto px-6 py-2" style={{
+            minHeight: 360,
+            maxHeight: 'calc(80vh - 104px)',
+            overscrollBehavior: 'contain'
+          }}>
+            <div className="space-y-6 pb-2">
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
