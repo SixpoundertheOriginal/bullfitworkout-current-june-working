@@ -6,9 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Edit, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
-import { MuscleGroup, EquipmentType, MovementPattern, Difficulty } from "@/types/exercise";
+import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
 
-export default function AllExercisesPage() {
+interface AllExercisesPageProps {
+  onSelectExercise?: (exercise: string | Exercise) => void;
+}
+
+export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageProps = {}) {
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
@@ -53,6 +57,12 @@ export default function AllExercisesPage() {
     setExerciseToEdit(null);
     setDialogMode("add");
     setShowDialog(true);
+  };
+
+  const handleSelectExercise = (exercise: Exercise) => {
+    if (onSelectExercise) {
+      onSelectExercise(exercise);
+    }
   };
 
   // Add/Edit handler
@@ -117,7 +127,11 @@ export default function AllExercisesPage() {
           </div>
         )}
         {exercises.map((exercise) => (
-          <Card key={exercise.id} className="bg-gray-900 border-gray-700">
+          <Card 
+            key={exercise.id} 
+            className="bg-gray-900 border-gray-700 hover:bg-gray-800 transition-colors cursor-pointer"
+            onClick={() => handleSelectExercise(exercise)}
+          >
             <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
                 <div className="font-semibold text-white">{exercise.name}</div>
@@ -127,7 +141,10 @@ export default function AllExercisesPage() {
                 <Button 
                   variant="secondary" 
                   size="sm" 
-                  onClick={() => handleEdit(exercise.id)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    handleEdit(exercise.id);
+                  }}
                   className="text-white bg-gray-800 hover:bg-gray-700"
                 >
                   <Edit className="w-4 h-4 mr-1" />
@@ -136,7 +153,10 @@ export default function AllExercisesPage() {
                 <Button 
                   variant="destructive" 
                   size="sm" 
-                  onClick={() => handleDelete(exercise.id)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    handleDelete(exercise.id);
+                  }}
                   className="bg-red-900/50 hover:bg-red-800 text-white"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />

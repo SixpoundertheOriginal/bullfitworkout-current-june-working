@@ -205,7 +205,7 @@ const ExerciseCard = ({
     
     toast({
       title: `${exercise}: Set ${index + 1} logged successfully`,
-      variant: "success",
+      variant: "default",
     });
   };
 
@@ -710,10 +710,7 @@ const TrainingSession: React.FC = () => {
               Add an Exercise
             </SheetTitle>
           </SheetHeader>
-          {/* Use the actual AllExercisesPage for selection */}
           <AllExercisesPage
-            {...{
-            }}
             onSelectExercise={handleAddExercise}
           />
         </SheetContent>
