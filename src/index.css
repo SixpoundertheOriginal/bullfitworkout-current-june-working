@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -31,9 +30,10 @@
     @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl;
   }
 }
-@layer base {
+
+@layer utilities {
   .card-gradient {
-    @apply bg-gradient-to-br from-card to-secondary/80 backdrop-blur-sm;
+    @apply bg-gradient-to-br from-[hsl(var(--card))] to-[hsl(var(--secondary)_/_0.8)] backdrop-blur-sm;
   }
 }
 
@@ -74,4 +74,20 @@
   }
 }
 
-/* ... keep existing code (custom text utilities and other styles) the same ... */
+/* Custom text utilities */
+.text-primary {
+  @apply text-white;
+}
+
+.text-secondary {
+  @apply text-gray-300;
+}
+
+.text-muted {
+  @apply text-gray-500;
+}
+
+/* Example of more specific text utility */
+.text-link {
+  @apply text-blue-400 hover:text-blue-300;
+}
