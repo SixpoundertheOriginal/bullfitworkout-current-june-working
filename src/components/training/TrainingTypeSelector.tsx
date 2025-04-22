@@ -104,16 +104,18 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const options = {
     align: "center" as const,
     loop: true,
-    dragFree: true,
+    dragFree: false,
     containScroll: "trimSnaps" as const,
     slidesToScroll: 1,
-    duration: 20,
-    inViewThreshold: 0.5,
+    duration: 30,
+    inViewThreshold: 0.6,
     breakpoints: {
       '(min-width: 768px)': { slidesToScroll: 2 }
     },
     dragThreshold: 10,
-    watchDrag: true
+    watchDrag: true,
+    skipSnaps: false,
+    startIndex: DEFAULT_TRAINING_TYPES.findIndex(t => t.name === selectedType)
   };
   
   const [emblaRef, emblaApi] = useEmblaCarousel(options);
@@ -235,14 +237,14 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         ))}
       </div>
 
-      <div className="relative">
+      <div className="relative px-4">
         <Button
           onClick={() => handleManualScroll('prev')}
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute left-0 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
-            "bg-black/30 border-white/10 hover:bg-black/50",
+            "absolute -left-2 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
+            "bg-black/40 border border-white/10 hover:bg-black/60",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollPrev && "opacity-30 pointer-events-none"
           )}
@@ -251,14 +253,14 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
         </Button>
         
         <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex px-6 md:px-12">
+          <div className="flex px-4">
             {allTrainingTypes.map((type, index) => {
               const isSelected = selectedType === type.name;
               
               return (
                 <div 
                   key={`${type.name}-${index}`} 
-                  className="min-w-0 shrink-0 grow-0 basis-[240px] px-2 py-1"
+                  className="min-w-0 shrink-0 grow-0 basis-[220px] px-2"
                 >
                   <motion.div
                     className={cn(
@@ -272,7 +274,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   >
                     <div
                       className={cn(
-                        "w-full h-[240px] rounded-2xl p-4",
+                        "w-full h-[220px] rounded-[2rem] p-4",
                         "flex flex-col items-center justify-center gap-3",
                         "bg-gradient-to-br shadow-lg cursor-pointer",
                         "transition-all duration-300",
@@ -359,8 +361,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
           variant="ghost"
           size="icon"
           className={cn(
-            "absolute right-0 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
-            "bg-black/30 border-white/10 hover:bg-black/50",
+            "absolute -right-2 z-10 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
+            "bg-black/40 border border-white/10 hover:bg-black/60",
             "transition-all duration-200 backdrop-blur-sm",
             !canScrollNext && "opacity-30 pointer-events-none"
           )}
