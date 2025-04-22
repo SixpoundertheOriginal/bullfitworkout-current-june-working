@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -274,7 +275,7 @@ export function ConfigureTrainingDialog({
           exit="exit"
           variants={pageVariants}
           transition={{ duration: 0.25 }}
-          className="min-h-[350px]"
+          className="min-h-[350px] relative"
         >
           {currentStep === ConfigurationStep.TrainingType && (
             <div className="space-y-8">
@@ -436,6 +437,43 @@ export function ConfigureTrainingDialog({
               </div>
             </div>
           )}
+          
+          {/* Navigation Buttons */}
+          <div className="mt-8 flex justify-between">
+            <Button 
+              onClick={handlePrevStep}
+              disabled={currentStep === ConfigurationStep.TrainingType}
+              variant="outline"
+              className={cn(
+                "rounded-xl",
+                "border border-white/5 bg-black/20",
+                "hover:bg-black/40 hover:border-white/10",
+                "text-white/80"
+              )}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            
+            <Button 
+              onClick={handleNextStep}
+              className={cn(
+                "rounded-xl",
+                "bg-gradient-to-r from-purple-600 to-pink-500",
+                "hover:from-purple-500 hover:to-pink-400",
+                "transform transition-all duration-300",
+                "shadow-lg hover:shadow-purple-500/25",
+                "border border-white/10"
+              )}
+            >
+              {currentStep === ConfigurationStep.Review ? "Start Quest" : "Continue"}
+              {currentStep === ConfigurationStep.Review ? (
+                <Check className="w-4 h-4 ml-2" />
+              ) : (
+                <ChevronRight className="w-4 h-4 ml-2" />
+              )}
+            </Button>
+          </div>
         </motion.div>
       </AnimatePresence>
     );
