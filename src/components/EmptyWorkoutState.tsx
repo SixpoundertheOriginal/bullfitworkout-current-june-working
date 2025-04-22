@@ -1,11 +1,12 @@
+
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search } from "lucide-react";
 import { Exercise } from "@/types/exercise";
 import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
 import { useNavigate } from "react-router-dom";
+import { CircularGradientButton } from "@/components/CircularGradientButton";
+import { Search } from "lucide-react";
 
 interface EmptyWorkoutStateProps {
   onTemplateSelect: (exercise: string | Exercise) => void;
@@ -33,15 +34,15 @@ export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplate
               className="mb-4"
             />
           </div>
-          <div className="mt-6">
-            <Button 
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
-              size="lg"
+          <div className="mt-8 flex justify-center">
+            <CircularGradientButton
+              size={84}
               onClick={() => navigate("/all-exercises")}
+              icon={<Search size={28} className="text-white" />}
+              className="shadow-xl"
             >
-              <Search className="w-4 h-4 mr-2" />
-              Browse All Exercises
-            </Button>
+              Browse All
+            </CircularGradientButton>
           </div>
         </CardContent>
       </Card>
