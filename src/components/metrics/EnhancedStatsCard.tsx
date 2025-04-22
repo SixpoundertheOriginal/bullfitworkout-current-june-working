@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -10,7 +9,7 @@ interface StatsCardProps {
   className?: string;
 }
 
-export const StatsCard = ({ 
+export const EnhancedStatsCard = ({ 
   title, 
   value, 
   icon, 
