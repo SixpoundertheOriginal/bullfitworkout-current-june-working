@@ -1,22 +1,44 @@
+
 import React, { useState } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Edit, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AddExerciseDialog } from "@/components/AddExerciseDialog";
+import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty } from "@/types/exercise";
 
 export default function AllExercisesPage() {
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
   const { toast } = useToast();
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+
+  // For add/edit
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [exerciseToEdit, setExerciseToEdit] = useState<any | null>(null);
 
   const handleEdit = (exerciseId: string) => {
-    toast({
-      title: "Edit Exercise",
-      description: `Editing exercise with ID: ${exerciseId}`,
-    });
+    const found = exercises.find(e => e.id === exerciseId);
+    if (found) {
+      setExerciseToEdit({
+        name: found.name,
+        description: found.description,
+        primary_muscle_groups: found.primary_muscle_groups,
+        secondary_muscle_groups: found.secondary_muscle_groups,
+        equipment_type: found.equipment_type,
+        movement_pattern: found.movement_pattern,
+        difficulty: found.difficulty,
+        instructions: found.instructions,
+        is_compound: found.is_compound,
+        tips: found.tips,
+        variations: found.variations,
+        metadata: found.metadata,
+      });
+      setDialogMode("edit");
+      setShowDialog(true);
+    } else {
+      toast({ title: "Exercise not found", variant: "destructive" });
+    }
   };
 
   const handleDelete = (exerciseId: string) => {
@@ -28,10 +50,13 @@ export default function AllExercisesPage() {
   };
 
   const handleAdd = () => {
-    setShowAddDialog(true);
+    setExerciseToEdit(null);
+    setDialogMode("add");
+    setShowDialog(true);
   };
 
-  const handleAddExercise = async (exercise: {
+  // Add/Edit handler
+  const handleDialogSubmit = async (exercise: {
     name: string;
     description: string;
     primary_muscle_groups: MuscleGroup[];
@@ -45,19 +70,24 @@ export default function AllExercisesPage() {
     variations?: string[];
     metadata?: Record<string, any>;
   }) => {
-    await new Promise(resolve => setTimeout(resolve, 350));
-    return new Promise<void>((resolve, reject) => {
-      createExercise(
-        {
-          ...exercise,
-          user_id: "",
-        },
-        {
-          onSuccess: () => resolve(),
-          onError: err => reject(err),
-        }
-      );
-    });
+    if (dialogMode === "add") {
+      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise<void>((resolve, reject) => {
+        createExercise(
+          {
+            ...exercise,
+            user_id: "",
+          },
+          {
+            onSuccess: () => resolve(),
+            onError: err => reject(err),
+          }
+        );
+      });
+    } else {
+      // For now, just toast in edit mode (update functionality to be added)
+      toast({ title: "Edit not implemented", description: "Update exercise functionality will be implemented soon!" });
+    }
   };
 
   if (isLoading) return <div className="text-white text-center pt-8">Loading exercises...</div>;
@@ -65,10 +95,13 @@ export default function AllExercisesPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-6 px-2 space-y-6">
-      <AddExerciseDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onAdd={handleAddExercise}
+      <ExerciseDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onSubmit={handleDialogSubmit}
+        initialExercise={exerciseToEdit!}
+        loading={isPending}
+        mode={dialogMode}
       />
       <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-between sm:items-center">
         <h2 className="text-2xl font-bold text-white">All Exercises</h2>
