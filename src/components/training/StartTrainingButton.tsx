@@ -10,17 +10,20 @@ interface StartTrainingButtonProps {
   isVisible: boolean;
   workoutType?: string;
   duration?: number;
+  isLoading?: boolean;
 }
 
 export const StartTrainingButton = ({ 
   onClick, 
   isVisible, 
   workoutType = "Strength",
-  duration = 45
+  duration = 45,
+  isLoading = false
 }: StartTrainingButtonProps) => {
   return (
     <motion.button
       onClick={onClick}
+      disabled={isLoading}
       animate={{
         opacity: isVisible ? 1 : 0,
         scale: isVisible ? 1 : 0.8,
@@ -31,8 +34,8 @@ export const StartTrainingButton = ({
         stiffness: 300,
         damping: 30
       }}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: isLoading ? 1 : 1.05 }}
+      whileTap={{ scale: isLoading ? 1 : 0.95 }}
       className={cn(
         "relative flex flex-col items-center justify-center",
         "bg-gradient-to-r from-purple-600 to-pink-500",
@@ -40,7 +43,8 @@ export const StartTrainingButton = ({
         "rounded-full border border-purple-500/30",
         "h-36 w-36",
         "group",
-        !isVisible && "pointer-events-none"
+        !isVisible && "pointer-events-none",
+        isLoading && "opacity-90 cursor-not-allowed"
       )}
     >
       <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
@@ -61,6 +65,21 @@ export const StartTrainingButton = ({
         />
       </div>
       
+      {/* Loading spinner animation */}
+      {isLoading && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ 
+            duration: 1, 
+            repeat: Infinity, 
+            ease: "linear"
+          }}
+        >
+          <div className="absolute top-0 right-[43%] w-4 h-4 bg-white rounded-full opacity-80" />
+        </motion.div>
+      )}
+      
       {/* Outer subtle rotating gradient */}
       <motion.div
         className="absolute inset-0 rounded-full opacity-30 overflow-hidden"
@@ -79,7 +98,7 @@ export const StartTrainingButton = ({
       <Zap size={28} className="relative z-10 mb-1 text-white" />
       <span className={cn(typography.text.primary, "relative z-10 text-2xl font-bold")}>Start</span>
       <span className={cn(typography.text.secondary, "relative z-10 text-xs mt-1")}>
-        {`${workoutType} · ${duration} min`}
+        {`${workoutType} · ${Math.round(duration)} min`}
       </span>
     </motion.button>
   );

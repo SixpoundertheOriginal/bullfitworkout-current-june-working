@@ -76,6 +76,7 @@ export function ConfigureTrainingDialog({
   const [showAchievement, setShowAchievement] = useState(false);
   const [achievementType, setAchievementType] = useState("");
   const [xpEarned, setXpEarned] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const [stepCompleteSound, setStepCompleteSound] = useState<HTMLAudioElement | null>(null);
   const [selectSound, setSelectSound] = useState<HTMLAudioElement | null>(null);
@@ -110,6 +111,7 @@ export function ConfigureTrainingDialog({
     if (open) {
       setCurrentStep(ConfigurationStep.TrainingType);
       setXpEarned(0);
+      setIsProcessing(false);
     }
   }, [open]);
 
@@ -131,9 +133,12 @@ export function ConfigureTrainingDialog({
       return;
     }
     
+    setIsProcessing(true);
+    
     setAchievementType(trainingType);
     setShowAchievement(true);
     stepCompleteSound?.play().catch(() => {});
+    
     setTimeout(() => {
       onStartTraining({
         trainingType,
@@ -143,6 +148,7 @@ export function ConfigureTrainingDialog({
       
       setShowAchievement(false);
       onOpenChange(false);
+      setIsProcessing(false);
     }, 3000);
   };
 
@@ -156,6 +162,7 @@ export function ConfigureTrainingDialog({
     });
     
     onOpenChange(false);
+    setIsProcessing(false);
   };
 
   const handleTypeSelect = (type: string) => {
@@ -172,6 +179,10 @@ export function ConfigureTrainingDialog({
         description: "Please select a training type to continue"
       });
       return;
+    }
+
+    if (currentStep === ConfigurationStep.Review) {
+      setIsProcessing(true);
     }
 
     stepCompleteSound?.play().catch(() => {});
@@ -490,7 +501,12 @@ export function ConfigureTrainingDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={(newOpen) => {
+        if (isProcessing && open && !newOpen) {
+          return;
+        }
+        onOpenChange(newOpen);
+      }}>
         <DialogContent className={cn(
           "p-0 overflow-visible max-w-[420px] max-h-[85vh]",
           "bg-gradient-to-br from-gray-900/95 via-gray-900/98 to-gray-900/95",
@@ -528,7 +544,7 @@ export function ConfigureTrainingDialog({
             maxHeight: 'calc(80vh - 104px)',
             overscrollBehavior: 'contain'
           }}>
-            <div className="space-y-6 pb-24"> {/* Increased bottom padding from pb-2 to pb-24 */}
+            <div className="space-y-6 pb-24">
               {renderStepIndicator()}
               {renderStepContent()}
             </div>
@@ -537,7 +553,7 @@ export function ConfigureTrainingDialog({
           <footer className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-gray-900/70 backdrop-blur-sm relative z-50">
             <Button 
               onClick={handlePrevStep}
-              disabled={currentStep === ConfigurationStep.TrainingType}
+              disabled={currentStep === ConfigurationStep.TrainingType || isProcessing}
               variant="outline"
               size="sm"
               className={cn(
@@ -545,7 +561,7 @@ export function ConfigureTrainingDialog({
                 "border border-white/5 bg-black/20",
                 "hover:bg-black/40 hover:border-white/10",
                 "text-white/80",
-                currentStep === ConfigurationStep.TrainingType && "opacity-0 pointer-events-none"
+                (currentStep === ConfigurationStep.TrainingType || isProcessing) && "opacity-0 pointer-events-none"
               )}
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
@@ -554,31 +570,33 @@ export function ConfigureTrainingDialog({
             
             <Button 
               onClick={handleNextStep}
+              disabled={isProcessing}
               variant="nav-action"
               size="sm"
               shape="pill"
               className={cn(
-                "w-40", // slightly wider
+                "w-40",
                 "text-base font-bold tracking-wide",
                 "rounded-full px-6 py-4",
-                // Glassmorphism/gradient
                 "bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400",
                 "hover:from-purple-400 hover:via-pink-400 hover:to-yellow-300",
                 "border-0 shadow-xl shadow-purple-500/10",
-                // Text shadow for better readability (optional)
                 "transition-all duration-200",
-                // Unique elevation/effect for the Review Quest step
                 currentStep === ConfigurationStep.Duration ? "scale-105 ring-2 ring-yellow-300/30" : "",
-                "focus:ring-4 focus:ring-pink-500/30"
+                "focus:ring-4 focus:ring-pink-500/30",
+                isProcessing && "opacity-90 cursor-not-allowed"
               )}
               iconPosition="right"
               icon={
-                currentStep === ConfigurationStep.Review
-                  ? <Check className="w-4 h-4" />
-                  : <ChevronRight className="w-4 h-4" />
+                isProcessing ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                ) : currentStep === ConfigurationStep.Review ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )
               }
               style={
-                // Add a custom shadow for this final step
                 currentStep === ConfigurationStep.Duration
                   ? { boxShadow: "0 0 0 4px rgba(253, 224, 71, 0.12), 0 2px 12px 2px rgba(168,85,247,0.20)" }
                   : {}
