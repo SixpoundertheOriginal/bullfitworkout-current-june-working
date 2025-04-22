@@ -178,7 +178,11 @@ export function useExperiencePoints() {
 
       try {
         // Ensure xp is converted to a number
-        const xpAmount = typeof xp === 'string' ? Number(xp) : xp;
+        const xpAmount = typeof xp === 'string' ? parseInt(xp, 10) : xp;
+        
+        if (isNaN(xpAmount)) {
+          throw new Error("Invalid XP amount");
+        }
         
         const { data: currentData, error: fetchError } = await supabase
           .from('user_profiles')
@@ -204,9 +208,13 @@ export function useExperiencePoints() {
             
         // Ensure we're working with numbers by explicitly converting
         const currentTotalXp = typeof currentExp.totalXp === 'string' 
-          ? Number(currentExp.totalXp)
-          : Number(currentExp.totalXp || 0);
+          ? parseInt(currentExp.totalXp, 10)
+          : (currentExp.totalXp as number || 0);
           
+        if (isNaN(currentTotalXp)) {
+          throw new Error("Invalid current XP value");
+        }
+        
         const newTotalXp = currentTotalXp + xpAmount;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
@@ -215,9 +223,13 @@ export function useExperiencePoints() {
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
           const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
           const currentTypeXp = typeof typeXpValue === 'string'
-            ? Number(typeXpValue)
-            : Number(typeXpValue || 0);
+            ? parseInt(typeXpValue, 10)
+            : (typeXpValue as number || 0);
             
+          if (isNaN(currentTypeXp)) {
+            throw new Error("Invalid training type XP value");
+          }
+          
           updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
         }
         
