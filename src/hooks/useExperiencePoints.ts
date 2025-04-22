@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +28,13 @@ interface TrainingExperience {
       progress?: number;
     }
   };
+}
+
+// Add extension to user profiles type for our custom fields
+interface UserProfileWithExperience {
+  id: string;
+  training_experience?: TrainingExperience;
+  // other fields can remain the same...
 }
 
 // This function calculates the XP required for each level
@@ -72,16 +78,87 @@ export function useExperiencePoints() {
         throw new Error("User not authenticated");
       }
       
-      // Get user experience data from profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      try {
+        // Get user experience data from profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
         
-      if (profileError) {
-        console.error("Error fetching user experience:", profileError);
-        // Return default experience data
+        if (profileError) {
+          console.error("Error fetching user experience:", profileError);
+          throw profileError;
+        }
+        
+        // Create a default experience object
+        const defaultExpData: ExperienceData = {
+          totalXp: 0,
+          level: 1,
+          currentLevelXp: 0,
+          nextLevelThreshold: calculateLevelRequirement(1),
+          progress: 0,
+          trainingTypeLevels: {
+            "Strength": { level: 1, xp: 0, progress: 0 },
+            "Cardio": { level: 1, xp: 0, progress: 0 },
+            "Yoga": { level: 1, xp: 0, progress: 0 },
+            "Calisthenics": { level: 1, xp: 0, progress: 0 }
+          }
+        };
+        
+        // If no training experience data exists (either the column doesn't exist yet or it's null)
+        if (!profileData || !('training_experience' in profileData) || !profileData.training_experience) {
+          return defaultExpData;
+        }
+        
+        // Safely access the training experience data using type assertion
+        const trainingExperienceData = profileData.training_experience as unknown as TrainingExperience;
+        
+        // Calculate level and progress based on total XP
+        const totalXp = Number(trainingExperienceData.totalXp || 0);
+        const { level, progress } = calculateLevelFromXP(totalXp);
+        
+        // Calculate current level XP and next threshold
+        const currentLevelXp = totalXp - 
+          Array.from({ length: level - 1 }).reduce((sum, _, i) => 
+            sum + calculateLevelRequirement(i + 1), 0);
+        
+        const nextLevelThreshold = calculateLevelRequirement(level + 1);
+        
+        // Process training type levels
+        const trainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
+          "Strength": { xp: 0 },
+          "Cardio": { xp: 0 },
+          "Yoga": { xp: 0 },
+          "Calisthenics": { xp: 0 }
+        };
+        
+        // Calculate progress for each training type
+        const processedTrainingTypes: ExperienceData['trainingTypeLevels'] = {};
+        
+        Object.keys(trainingTypeLevels).forEach(type => {
+          const typeData = trainingTypeLevels[type];
+          const typeXp = Number(typeData.xp || 0);
+          const levelData = calculateLevelFromXP(typeXp);
+          
+          processedTrainingTypes[type] = {
+            xp: typeXp,
+            level: levelData.level,
+            progress: levelData.progress
+          };
+        });
+        
+        return {
+          totalXp,
+          level,
+          currentLevelXp,
+          nextLevelThreshold,
+          progress,
+          trainingTypeLevels: processedTrainingTypes
+        };
+      } catch (error) {
+        console.error("Error in experience query:", error);
+        // Return default experience data in case of errors
         return {
           totalXp: 0,
           level: 1,
@@ -96,72 +173,6 @@ export function useExperiencePoints() {
           }
         };
       }
-      
-      // Handle the training_experience data, even if the types don't match yet
-      const trainingExperienceData = profileData?.training_experience as unknown as TrainingExperience;
-      
-      // If no training experience data exists, return defaults
-      if (!trainingExperienceData) {
-        // Create default training experience data
-        const defaultData: ExperienceData = {
-          totalXp: 0,
-          level: 1,
-          currentLevelXp: 0,
-          nextLevelThreshold: calculateLevelRequirement(1),
-          progress: 0,
-          trainingTypeLevels: {
-            "Strength": { level: 1, xp: 0, progress: 0 },
-            "Cardio": { level: 1, xp: 0, progress: 0 },
-            "Yoga": { level: 1, xp: 0, progress: 0 },
-            "Calisthenics": { level: 1, xp: 0, progress: 0 }
-          }
-        };
-        
-        return defaultData;
-      }
-      
-      // Calculate level and progress based on total XP
-      const totalXp = Number(trainingExperienceData.totalXp || 0);
-      const { level, progress } = calculateLevelFromXP(totalXp);
-      
-      // Calculate current level XP and next threshold
-      const currentLevelXp = totalXp - 
-        Array.from({ length: level - 1 }).reduce((sum, _, i) => 
-          sum + calculateLevelRequirement(i + 1), 0);
-      
-      const nextLevelThreshold = calculateLevelRequirement(level + 1);
-      
-      // Process training type levels
-      const trainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
-        "Strength": { xp: 0 },
-        "Cardio": { xp: 0 },
-        "Yoga": { xp: 0 },
-        "Calisthenics": { xp: 0 }
-      };
-      
-      // Calculate progress for each training type
-      const processedTrainingTypes: ExperienceData['trainingTypeLevels'] = {};
-      
-      Object.keys(trainingTypeLevels).forEach(type => {
-        const typeData = trainingTypeLevels[type];
-        const typeXp = Number(typeData.xp || 0);
-        const levelData = calculateLevelFromXP(typeXp);
-        
-        processedTrainingTypes[type] = {
-          xp: typeXp,
-          level: levelData.level,
-          progress: levelData.progress
-        };
-      });
-      
-      return {
-        totalXp,
-        level,
-        currentLevelXp,
-        nextLevelThreshold,
-        progress,
-        trainingTypeLevels: processedTrainingTypes
-      };
     },
     enabled: !!user
   });
@@ -186,9 +197,9 @@ export function useExperiencePoints() {
           .single();
           
         if (fetchError) throw fetchError;
-        
-        // Cast to our internal type to handle the type mismatch
-        const currentExp = (currentData?.training_experience as unknown as TrainingExperience) || {
+
+        // Create default experience data structure if it doesn't exist
+        const defaultExp: TrainingExperience = {
           totalXp: 0,
           trainingTypeLevels: {
             "Strength": { xp: 0 },
@@ -198,11 +209,17 @@ export function useExperiencePoints() {
           }
         };
         
+        // Get the current experience data or use default
+        const currentExp = 
+          ('training_experience' in currentData && currentData.training_experience)
+          ? (currentData.training_experience as unknown as TrainingExperience)
+          : defaultExp;
+            
         // Update total XP
         const newTotalXp = Number(currentExp.totalXp || 0) + xp;
         
         // Create a deep copy of the current exp to avoid mutation issues
-        const updatedExp = JSON.parse(JSON.stringify(currentExp));
+        const updatedExp = JSON.parse(JSON.stringify(currentExp)) as TrainingExperience;
         updatedExp.totalXp = newTotalXp;
         
         // Update training type XP if specified
@@ -224,17 +241,23 @@ export function useExperiencePoints() {
         
         // Try to log experience - this might fail if the table doesn't exist yet
         try {
-          await supabase
-            .from('experience_logs')
-            .insert({
+          // Use raw SQL query instead
+          const { error: logError } = await supabase.rpc(
+            'log_experience_gain', 
+            { 
               user_id: user.id,
-              amount: xp,
-              training_type: trainingType || null,
-              source: 'workout_completion',
-              metadata: {
+              xp_amount: xp,
+              training_type_value: trainingType || null,
+              source_value: 'workout_completion',
+              metadata_value: {
                 timestamp: new Date().toISOString()
               }
-            } as any); // Use 'as any' to bypass TypeScript check
+            }
+          );
+          
+          if (logError) {
+            console.error("Error logging experience gain:", logError);
+          }
         } catch (logError) {
           console.error("Error logging experience gain:", logError);
           // Non-critical error, so we can continue
