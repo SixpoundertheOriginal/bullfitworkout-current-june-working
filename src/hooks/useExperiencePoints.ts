@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -199,22 +198,14 @@ export function useExperiencePoints() {
           ? (currentData.training_experience as unknown as TrainingExperience)
           : defaultExp;
             
-        // Explicitly convert totalXp to number for arithmetic operations
-        const currentTotalXp: number = typeof currentExp.totalXp === 'number' 
-          ? currentExp.totalXp 
-          : Number(currentExp.totalXp || 0);
-          
-        const newTotalXp: number = currentTotalXp + xp;
+        const currentTotalXp = Number(currentExp.totalXp || 0);
+        const newTotalXp = currentTotalXp + xp;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
         updatedExp.totalXp = newTotalXp;
         
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
-          // Explicitly convert type-specific XP to number for arithmetic operations
-          const currentTypeXp: number = typeof updatedExp.trainingTypeLevels[trainingType].xp === 'number' 
-            ? (updatedExp.trainingTypeLevels[trainingType].xp as number)
-            : Number(updatedExp.trainingTypeLevels[trainingType].xp || 0);
-            
+          const currentTypeXp = Number(updatedExp.trainingTypeLevels[trainingType].xp || 0);
           updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xp;
         }
         
