@@ -88,6 +88,16 @@ const exerciseHistoryData = {
   ],
 };
 
+const popularExercises = [
+  "Bench Press",
+  "Squats",
+  "Deadlift",
+  "Pull-ups",
+  "Push-ups",
+  "Shoulder Press",
+  "Decline Push-Up on Handrails"
+];
+
 const getPreviousSessionData = (exerciseName: string) => {
   const history = exerciseHistoryData[exerciseName] || [];
   if (history.length > 0) {
@@ -784,7 +794,7 @@ const TrainingSession: React.FC = () => {
         <SmartExerciseFAB 
           onSelectExercise={handleAddExerciseFromFAB} 
           trainingType={trainingType}
-          tags={[]}
+          tags={popularExercises}
         />
       </div>
       

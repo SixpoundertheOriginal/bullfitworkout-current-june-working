@@ -15,7 +15,8 @@ const popularExercises = [
   "Deadlift",
   "Pull-ups",
   "Push-ups",
-  "Shoulder Press"
+  "Shoulder Press",
+  "Decline Push-Up on Handrails"
 ];
 
 export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplateSelect }) => {
