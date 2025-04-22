@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -113,14 +112,13 @@ export function useExperiencePoints() {
         const totalXp = toSafeNumber(trainingExperienceData.totalXp);
 
         const { level, progress } = calculateLevelFromXP(totalXp);
-        const previousLevelsXp = Array.from({ length: level - 1 }).reduce((sum, _, i) =>
+        
+        // Fix: Explicitly type the reduce function to return a number
+        const previousLevelsXp = Array.from({ length: level - 1 }).reduce<number>((sum, _, i) =>
           sum + calculateLevelRequirement(i + 1), 0);
 
-        // Fix for error on line 117: Ensure previousLevelsXp is a number before subtraction 
-        const previousLevelsXpNumber: number = previousLevelsXp;
-        const currentLevelXp = totalXp - previousLevelsXpNumber;
-        // Fix for error on line 119: Ensure level is a number before addition
-        const nextLevelThreshold = calculateLevelRequirement(Number(level) + 1);
+        const currentLevelXp = totalXp - previousLevelsXp;
+        const nextLevelThreshold = calculateLevelRequirement(level + 1);
 
         // Defensive: ensure all type XPs are numbers
         const rawTrainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
