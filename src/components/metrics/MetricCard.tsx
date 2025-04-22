@@ -1,7 +1,9 @@
+
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { theme, withTheme } from "@/lib/theme";
 import { typography } from "@/lib/typography";
 
 interface MetricCardProps {
@@ -40,13 +42,13 @@ export const MetricCard = ({
         >
           {/* Subtle glow effect in background */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 opacity-80" />
-          
+
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center">
             <div className="mb-2 rounded-full bg-white/8 shadow-inner flex h-12 w-12 items-center justify-center">
-              <Icon className="h-6 w-6 text-purple-300" />
+              <Icon className={cn("h-6 w-6", theme.colors.text.accent)} />
             </div>
-            
+
             {/* Value (prominent heading) */}
             <div
               className={cn(
@@ -57,16 +59,16 @@ export const MetricCard = ({
             >
               {value}
             </div>
-            
+
             {/* Label (subheading, muted) */}
             <div className={cn(
-              typography.sections.label,
-              "text-center mt-1.5 text-white/70",
+              theme.textStyles.secondary,
+              "text-center mt-1.5",
               labelClass
             )}>
               {label}
             </div>
-            
+
             {/* Progress (if present) */}
             {progressValue !== undefined && (
               <div className="w-full mt-3">
@@ -82,7 +84,7 @@ export const MetricCard = ({
       {tooltip && (
         <TooltipContent
           side="bottom"
-          className="bg-gray-900 border border-gray-800 text-white"
+          className={withTheme("bg-gray-900 border border-gray-800", theme.colors.text.light)}
         >
           {tooltip}
         </TooltipContent>
@@ -90,3 +92,4 @@ export const MetricCard = ({
     </Tooltip>
   );
 };
+

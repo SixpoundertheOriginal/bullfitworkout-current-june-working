@@ -6,7 +6,7 @@ import { typography } from './typography';
 
 export const theme = {
   colors: {
-    // Text colors
+    // Text colors - tokens for critical use within cards/components
     text: {
       light: "text-white",
       lightMuted: "text-white/80",
@@ -14,7 +14,7 @@ export const theme = {
       // Adding high-contrast variations
       highContrast: "text-white font-medium",
       highContrastMuted: "text-purple-200",
-      accent: "text-purple-400",
+      accent: "text-purple-400", // Use for icons and accent text throughout UI
     },
     // Background colors
     background: {
@@ -31,18 +31,19 @@ export const theme = {
   
   // Updated to use typography system
   textStyles: {
-    primary: typography.text.primary,
-    secondary: typography.text.secondary,
-    tertiary: typography.text.muted,
+    primary: "text-white font-normal text-base",
+    secondary: "text-white/80 text-base",
+    tertiary: "text-white/60 text-sm",
     data: "font-mono text-white",
-    heading: typography.headings.primary,
-    button: typography.interactive.button,
-    sectionHeading: typography.headings.section,
+    heading: "text-white font-bold text-2xl leading-tight",
+    button: "text-white hover:text-white/90 font-medium",
+    sectionHeading: "text-white font-semibold text-lg",
     sectionSubheading: "text-lg font-medium text-purple-300"
   }
 };
 
-// Helper function to combine theme classes with custom classes
+// Documentation: Use theme.colors.text.accent for all metric card icons and accent text. Use theme.textStyles.secondary for supporting muted text.
+
 export const withTheme = (baseClasses: string, customClasses?: string) => {
   return customClasses ? `${baseClasses} ${customClasses}` : baseClasses;
 };
