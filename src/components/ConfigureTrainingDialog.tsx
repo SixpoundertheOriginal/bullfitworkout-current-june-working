@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { TrainingAchievementCard } from "./training/TrainingAchievementCard";
 import { processExerciseRanking } from "@/utils/processExerciseRanking";
 import { useExercises } from "@/hooks/useExercises";
+import { Exercise, MuscleGroup } from "@/types/exercise";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -81,6 +82,7 @@ export function ConfigureTrainingDialog({
   const [xpEarned, setXpEarned] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [rankedResults, setRankedResults] = useState<{ recommended: Exercise[]; other: Exercise[]; matchData: Record<string, { score: number, reasons: string[] }> }>({ recommended: [], other: [], matchData: {} });
+  const { exercises } = useExercises();
 
   const [stepCompleteSound, setStepCompleteSound] = useState<HTMLAudioElement | null>(null);
   const [selectSound, setSelectSound] = useState<HTMLAudioElement | null>(null);
@@ -120,16 +122,16 @@ export function ConfigureTrainingDialog({
   }, [open]);
 
   useEffect(() => {
-    if (allExercises && allExercises.length && trainingType) {
+    if (exercises && exercises.length && trainingType) {
       const criteria = {
         trainingType,
         bodyFocus: selectedTags as MuscleGroup[],
         movementPattern: [], // We could allow selection in UI if available
         difficulty: undefined,
       };
-      setRankedResults(processExerciseRanking(allExercises, criteria));
+      setRankedResults(processExerciseRanking(exercises, criteria));
     }
-  }, [allExercises, trainingType, selectedTags]);
+  }, [exercises, trainingType, selectedTags]);
 
   const handleTagToggle = (tag: string) => {
     if (selectedTags.includes(tag)) {
