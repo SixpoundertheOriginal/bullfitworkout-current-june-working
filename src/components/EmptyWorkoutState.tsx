@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Typography } from "@/components/ui/typography";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ExerciseSelector } from "@/components/exercises/ExerciseSelector";

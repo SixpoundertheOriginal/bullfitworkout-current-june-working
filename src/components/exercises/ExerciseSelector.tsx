@@ -20,16 +20,16 @@ export function ExerciseSelector({
   className
 }: ExerciseSelectorProps) {
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
-  const { data: workoutHistory } = useWorkoutHistory();
+  const { data } = useWorkoutHistory();
   
   // Extract recently used exercises from workout history
   const recentExercises = React.useMemo(() => {
-    if (!workoutHistory?.length) return [];
+    if (!data?.workouts?.length) return [];
     
     const exerciseMap = new Map<string, Exercise>();
     
     // Get unique exercises from recent workouts
-    workoutHistory.slice(0, 5).forEach(workout => {
+    data.workouts.slice(0, 5).forEach(workout => {
       workout.exercises?.forEach(exercise => {
         if (exercise.exercise && !exerciseMap.has(exercise.exercise.id)) {
           exerciseMap.set(exercise.exercise.id, exercise.exercise);
@@ -38,7 +38,7 @@ export function ExerciseSelector({
     });
     
     return Array.from(exerciseMap.values());
-  }, [workoutHistory]);
+  }, [data]);
 
   if (useLegacyDesign) {
     return (
