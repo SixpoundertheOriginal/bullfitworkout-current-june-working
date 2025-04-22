@@ -1,8 +1,7 @@
-
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
-// CUSTOM COLORS
+// CUSTOM COLORS - keep as before
 const colors = {
   primary: "#9b87f5",          // Purple
   secondary: "#F97316",        // Orange
@@ -15,7 +14,6 @@ const colors = {
 };
 
 const config = {
-  darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -39,7 +37,7 @@ const config = {
         sans: ["Inter", ...fontFamily.sans],
       },
       colors: {
-        // Core palette override
+        // Core palette override (only dark)
         primary: {
           DEFAULT: colors.primary,
         },

@@ -1,6 +1,5 @@
+
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
-import { DarkModeToggle } from "./DarkModeToggle";
 
 export const MainMenu = () => {
   return (
@@ -24,7 +23,7 @@ export const MainMenu = () => {
             </a>
           </nav>
         </div>
-        <DarkModeToggle />
+        {/* DarkModeToggle removed: always dark */}
       </SheetContent>
     </Sheet>
   )
