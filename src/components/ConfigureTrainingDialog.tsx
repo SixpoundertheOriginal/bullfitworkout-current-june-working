@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -202,11 +201,11 @@ export function ConfigureTrainingDialog({
   const getNextButtonText = () => {
     switch (currentStep) {
       case ConfigurationStep.TrainingType:
-        return "Focus → What are your training goals?";
+        return "Next: Focus";
       case ConfigurationStep.TrainingFocus:
-        return "Duration → Select session length";
+        return "Next: Duration";
       case ConfigurationStep.Duration:
-        return "Review → Confirm and Start";
+        return "Review Quest";
       case ConfigurationStep.Review:
         return "Start Quest";
       default:
