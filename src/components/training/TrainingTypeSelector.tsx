@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -96,15 +97,15 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const [isDragging, setIsDragging] = useState(false);
   
   const options = {
-    align: "start" as const,
-    loop: false,
-    dragFree: true,
-    containScroll: "trimSnaps" as const,
+    align: "center" as const,
+    loop: true,
+    dragFree: false,
+    containScroll: false,
     slidesToScroll: 1,
-    duration: 30,
-    inViewThreshold: 0.6,
+    duration: 20,
+    inViewThreshold: 0.7,
     breakpoints: {
-      '(min-width: 768px)': { slidesToScroll: 3 }
+      '(min-width: 768px)': { slidesToScroll: 1 }
     }
   };
   
@@ -234,14 +235,14 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
       <div 
         ref={emblaRef} 
-        className="overflow-hidden"
+        className="overflow-hidden w-full"
         onTouchStart={() => setTouchActive(true)}
         onTouchEnd={() => {
           setTouchActive(false);
           setIsDragging(false);
         }}
       >
-        <div className="flex flex-row">
+        <div className="flex">
           {DEFAULT_TRAINING_TYPES.map((type, index) => {
             const isSelected = selectedType === type.name;
             
@@ -265,15 +266,15 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                     "bg-gradient-to-br backdrop-blur-sm",
                     "cursor-pointer relative overflow-hidden",
                     "transition-all duration-300 ease-out",
-                    "border-2 border-white/10",
+                    "border-2",
                     "shadow-lg",
                     isSelected ? [
                       `${type.activeGradient}`,
-                      "ring-2 ring-white/30 ring-offset-2 ring-offset-gray-900",
+                      "border-white ring-2 ring-white/30 ring-offset-2 ring-offset-gray-900",
                       "transform"
                     ] : [
                       type.gradient,
-                      "hover:border-white/20 hover:shadow-xl"
+                      "border-white/10 hover:border-white/20 hover:shadow-xl"
                     ]
                   )}
                 >
