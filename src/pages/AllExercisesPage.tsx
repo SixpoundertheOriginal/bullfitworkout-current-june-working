@@ -1,18 +1,18 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { Edit, Trash2, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 
 export default function AllExercisesPage() {
-  const { exercises, isLoading, isError } = useExercises();
-  const navigate = useNavigate();
+  const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
+  const { toast } = useToast();
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const handleEdit = (exerciseId: string) => {
-    // Placeholder for edit logic - can open a modal or navigate to edit page
     toast({
       title: "Edit Exercise",
       description: `Editing exercise with ID: ${exerciseId}`,
@@ -20,7 +20,6 @@ export default function AllExercisesPage() {
   };
 
   const handleDelete = (exerciseId: string) => {
-    // Placeholder for delete logic
     toast({
       title: "Delete Exercise",
       description: `Deleting exercise with ID: ${exerciseId}`,
@@ -29,10 +28,34 @@ export default function AllExercisesPage() {
   };
 
   const handleAdd = () => {
-    // Placeholder for add new exercise logic
-    toast({
-      title: "Add Exercise",
-      description: "Opening new exercise form",
+    setShowAddDialog(true);
+  };
+
+  const handleAddExercise = async (exercise: { name: string; description: string }) => {
+    // Compose minimal exercise for createExercise mutation
+    await new Promise(resolve => setTimeout(resolve, 350)); // Intentional small delay for UX
+    return new Promise<void>((resolve, reject) => {
+      createExercise(
+        {
+          name: exercise.name,
+          description: exercise.description,
+          primary_muscle_groups: ["full body"],
+          secondary_muscle_groups: [],
+          equipment_type: [],
+          movement_pattern: "push",
+          difficulty: "beginner",
+          instructions: {},
+          is_compound: false,
+          tips: [],
+          variations: [],
+          metadata: {},
+          user_id: "", // Will be set by backend OR from user context
+        },
+        {
+          onSuccess: () => resolve(),
+          onError: err => reject(err),
+        }
+      );
     });
   };
 
@@ -41,9 +64,14 @@ export default function AllExercisesPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-6 px-2 space-y-6">
-      <div className="flex justify-between items-center">
+      <AddExerciseDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onAdd={handleAddExercise}
+      />
+      <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-between sm:items-center">
         <h2 className="text-2xl font-bold text-white">All Exercises</h2>
-        <Button onClick={handleAdd} variant="gradient" size="sm">
+        <Button onClick={handleAdd} variant="gradient" size="sm" className="flex items-center justify-center mt-2 sm:mt-0">
           <Plus className="w-4 h-4 mr-1" />
           Add New
         </Button>
