@@ -266,7 +266,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                     "bg-gradient-to-br backdrop-blur-sm",
                     "cursor-pointer relative overflow-hidden",
                     "transition-all duration-300 ease-out",
-                    // Unified border style for all cards
+                    // Unified border style for all cards, including left border
                     "border border-white/10 hover:border-white/20",
                     "shadow-lg hover:shadow-xl",
                     isSelected ? [
