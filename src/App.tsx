@@ -17,23 +17,24 @@ import { AuthProvider } from "./context/AuthContext";
 import { WeightUnitProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
 
+// Create a client
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <WeightUnitProvider>
-          <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <WeightUnitProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
               <RouterProvider />
             </TooltipProvider>
-          </QueryClientProvider>
-        </WeightUnitProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </WeightUnitProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

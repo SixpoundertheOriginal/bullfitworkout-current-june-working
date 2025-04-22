@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -692,7 +691,7 @@ const TrainingSession: React.FC = () => {
       {trainingTypeObj && (
         <div className="px-4 py-2 mb-2">
           <TrainingTypeTag
-            type={trainingTypeObj.name}
+            type={trainingTypeObj.name as any}
             className="mb-2"
           />
         </div>
@@ -777,7 +776,7 @@ const TrainingSession: React.FC = () => {
       
       <div className="sticky bottom-16 right-0 p-4">
         <SmartExerciseFAB 
-          onSelectExercise={(exercise: Exercise) => handleAddExerciseFromFAB(exercise)} 
+          onSelectExercise={handleAddExerciseFromFAB} 
           trainingType={trainingType}
           tags={[]}
         />
