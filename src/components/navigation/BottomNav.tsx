@@ -1,5 +1,5 @@
 
-import { Clock, Zap, User as UserIcon } from "lucide-react";
+import { Clock, Zap, User as UserIcon, Dumbbell } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const BottomNav = () => {
@@ -20,7 +20,7 @@ export const BottomNav = () => {
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-3 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10">
+    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-4 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Home" 
@@ -32,6 +32,12 @@ export const BottomNav = () => {
         label="Training" 
         active={isActive('/training')}
         onClick={() => navigate('/training')} 
+      />
+      <NavButton 
+        icon={<Dumbbell size={20} />} 
+        label="Exercises"
+        active={isActive('/all-exercises')}
+        onClick={() => navigate('/all-exercises')}
       />
       <NavButton 
         icon={<UserIcon size={20} />} 
