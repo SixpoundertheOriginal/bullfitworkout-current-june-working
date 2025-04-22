@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
@@ -10,7 +11,10 @@ export type ExerciseMetadata = {
   display_unit?: string;
 };
 
-type ExerciseInput = Omit<Exercise, 'id' | 'created_at'> & { created_at?: string };
+type ExerciseInput = Omit<Exercise, 'id' | 'created_at'> & { 
+  created_at?: string;
+  instructions?: Record<string, any>; // Making instructions optional in the input
+};
 
 export const useExercises = () => {
   const queryClient = useQueryClient();
@@ -62,7 +66,7 @@ export const useExercises = () => {
           equipment_type: newExercise.equipment_type || [],
           movement_pattern: newExercise.movement_pattern,
           difficulty: newExercise.difficulty,
-          instructions: newExercise.instructions || {},
+          instructions: newExercise.instructions || {}, // Default empty object if not provided
           is_compound: Boolean(newExercise.is_compound),
           tips: newExercise.tips || [],
           variations: newExercise.variations || [],

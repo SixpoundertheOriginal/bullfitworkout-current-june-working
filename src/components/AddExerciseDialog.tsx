@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { MuscleGroup, EquipmentType, MovementPattern, Difficulty } from "@/types
 interface AddExerciseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (exercise: {
+  onAdd?: (exercise: {
     name: string;
     description: string;
     primary_muscle_groups: MuscleGroup[];

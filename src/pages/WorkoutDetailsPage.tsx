@@ -101,7 +101,7 @@ const WorkoutDetailsPage = () => {
   const [currentExercise, setCurrentExercise] = useState<string>("");
   const [exerciseSetsToEdit, setExerciseSetsToEdit] = useState<ExerciseSet[]>([]);
   
-  const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
+  const [addExerciseModalOpen, setShowAddDialog] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState<string>("");
   
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
@@ -379,7 +379,7 @@ const WorkoutDetailsPage = () => {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setAddExerciseModalOpen(true)}
+                      onClick={() => setShowAddDialog(true)}
                       className="text-sm flex items-center text-gray-400 hover:text-white"
                     >
                       <PlusCircle size={16} className="mr-1" />
@@ -470,9 +470,15 @@ const WorkoutDetailsPage = () => {
       />
       
       <AddExerciseDialog
-        open={addExerciseModalOpen}
-        onOpenChange={setAddExerciseModalOpen}
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
         onAddExercise={handleAddExercise}
+        onAdd={async (exercise) => {
+          if (exercise.name) {
+            return handleAddExercise(exercise.name);
+          }
+          return Promise.resolve();
+        }}
       />
       
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
