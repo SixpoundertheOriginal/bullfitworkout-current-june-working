@@ -398,7 +398,11 @@ const TrainingSession: React.FC = () => {
     };
   }, []);
   
-  const handleAddExercise = (exerciseName: string) => {
+  const handleAddExercise = (exerciseNameOrObj: string | Exercise) => {
+    const exerciseName = typeof exerciseNameOrObj === 'object' && exerciseNameOrObj !== null && 'name' in exerciseNameOrObj 
+      ? exerciseNameOrObj.name 
+      : String(exerciseNameOrObj);
+    
     setExercises(prev => {
       if (prev[exerciseName]) {
         return prev;
@@ -423,7 +427,9 @@ const TrainingSession: React.FC = () => {
   };
   
   const handleAddExerciseFromFAB = (exercise: Exercise) => {
-    handleAddExercise(exercise.name);
+    if (exercise && typeof exercise === 'object' && 'name' in exercise) {
+      handleAddExercise(exercise.name);
+    }
   };
   
   const handleAddSet = (exerciseName: string) => {
@@ -783,7 +789,10 @@ const TrainingSession: React.FC = () => {
       </div>
       
       <div className="fixed bottom-16 left-0 right-0 p-4 z-20">
-        <AddExerciseBar onAddExercise={handleAddExercise} />
+        <AddExerciseBar 
+          onSelectExercise={handleAddExercise} 
+          onAddExercise={() => {}} 
+        />
       </div>
     </div>
   );

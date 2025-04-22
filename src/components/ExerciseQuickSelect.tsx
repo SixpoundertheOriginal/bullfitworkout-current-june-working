@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { theme } from "@/lib/theme";
 
 interface ExerciseQuickSelectProps {
-  onSelectExercise: (exercise: Exercise) => void;
+  onSelectExercise: (exercise: string | Exercise) => void;
   suggestedExercises?: Exercise[];
   recentExercises?: Exercise[];
   className?: string;

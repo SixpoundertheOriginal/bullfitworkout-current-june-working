@@ -1,66 +1,60 @@
 
-import React from "react";
-import { Dumbbell, Plus } from "lucide-react";
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dumbbell, Plus, Search } from "lucide-react";
+import { Exercise } from "@/types/exercise";
 
 interface EmptyWorkoutStateProps {
-  onTemplateSelect: (name: string) => void;
-  className?: string;
+  onTemplateSelect: (exercise: string | Exercise) => void;
 }
 
-export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ 
-  onTemplateSelect, 
-  className 
-}) => {
-  const suggestedExercises = [
-    "Bench Press",
-    "Squats", 
-    "Deadlift",
-    "Pull-ups",
-    "Leg Press"
-  ];
+const popularExercises = [
+  "Bench Press",
+  "Squats",
+  "Deadlift",
+  "Pull-ups",
+  "Push-ups",
+  "Shoulder Press"
+];
 
+export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplateSelect }) => {
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center py-12 px-4 text-center",
-      "bg-gray-800/40 rounded-xl border border-gray-700/50",
-      "backdrop-blur-sm",
-      className
-    )}>
-      <div className="bg-gray-800/80 p-4 rounded-full mb-6">
-        <Dumbbell className="h-10 w-10 text-purple-400" />
+    <div className="flex flex-col items-center justify-center space-y-6 py-10">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Begin Your Workout</h2>
+        <p className="text-gray-400">Add exercises to start tracking your session</p>
       </div>
       
-      <h3 className="text-xl font-semibold text-white mb-2">Start Your Workout</h3>
-      <p className="text-gray-400 mb-8 max-w-md">
-        Add exercises to your workout to start tracking your sets and reps. 
-        Choose from suggested exercises or add your own.
-      </p>
-      
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
-        {suggestedExercises.map((exercise) => (
-          <Button
-            key={exercise}
-            variant="outline"
-            size="sm"
-            className="bg-gray-700/80 hover:bg-gray-600 border-gray-600 text-white"
-            onClick={() => onTemplateSelect(exercise)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {exercise}
-          </Button>
-        ))}
-      </div>
-      
-      <Button
-        className="bg-gradient-to-r from-purple-600 to-pink-500 
-          hover:from-purple-700 hover:to-pink-600 text-white"
-        onClick={() => onTemplateSelect("Custom Exercise")}
-      >
-        <Plus className="h-5 w-5 mr-2" />
-        Browse All Exercises
-      </Button>
+      <Card className="w-full max-w-md bg-gray-900 border-gray-800">
+        <CardContent className="p-6">
+          <h3 className="font-semibold mb-3">Popular Exercises</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {popularExercises.map(exercise => (
+              <Button
+                key={exercise}
+                variant="outline"
+                size="sm"
+                className="justify-start bg-gray-800/50 border-gray-700/50 text-white"
+                onClick={() => onTemplateSelect(exercise)}
+              >
+                <Dumbbell className="w-4 h-4 mr-2 text-purple-400" />
+                {exercise}
+              </Button>
+            ))}
+          </div>
+          
+          <div className="mt-6">
+            <Button 
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
+              size="lg"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Browse All Exercises
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
