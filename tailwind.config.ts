@@ -120,13 +120,22 @@ export default {
         fadeIn: {
           from: { opacity: '0' },
           to: { opacity: '1' }
+        },
+        pulse: {
+          '0%, 100%': { 
+            opacity: '1'
+          },
+          '50%': { 
+            opacity: '0.85'
+          }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         enter: 'enter 0.4s ease-out forwards',
-        fadeIn: 'fadeIn 0.3s ease-out forwards'
+        fadeIn: 'fadeIn 0.3s ease-out forwards',
+        'pulse-slow': 'pulse 2.2s cubic-bezier(0.4,0,0.6,1) infinite'
       }
     }
   },

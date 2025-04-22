@@ -1,11 +1,11 @@
 
 import React from "react";
 import { Exercise } from "@/types/exercise";
-import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseQuickRadialSelect } from "./ExerciseQuickRadialSelect";
+import { typography } from "@/lib/typography";
 
 interface ExerciseQuickSelectProps {
   onSelectExercise: (exercise: string | Exercise) => void;
@@ -70,7 +70,9 @@ export function ExerciseQuickSelect({
               onClick={() => onSelectExercise(exercise)}
             >
               <Dumbbell className="w-5 h-5 mb-0.5 text-white" />
-              <span className="text-xs font-semibold text-white px-0.5 whitespace-nowrap">{exercise.name}</span>
+              <span className={cn(typography.text.primary, "text-xs font-semibold px-0.5 whitespace-nowrap")}>
+                {exercise.name}
+              </span>
             </button>
           ))}
         </div>

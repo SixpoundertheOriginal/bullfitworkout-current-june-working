@@ -3,6 +3,7 @@ import React from "react";
 import { Exercise } from "@/types/exercise";
 import { cn } from "@/lib/utils";
 import { Dumbbell } from "lucide-react";
+import { typography } from "@/lib/typography";
 
 interface ExerciseQuickRadialSelectProps {
   exercises: Exercise[];
@@ -55,7 +56,7 @@ export function ExerciseQuickRadialSelect({
             className={cn(
               "absolute flex flex-col items-center justify-center rounded-full shadow-lg transition transform hover:scale-110",
               "w-[58px] h-[58px] focus:outline-none border-2 border-white/10",
-              "animate-pulse-slow", // defined in tailwind animate plugin/fallback below
+              "animate-pulse-slow", 
               `bg-gradient-to-br ${CIRCLE_COLORS[idx % CIRCLE_COLORS.length]}`
             )}
             style={style}
@@ -63,7 +64,9 @@ export function ExerciseQuickRadialSelect({
             onClick={() => onSelectExercise(exercise)}
           >
             <Dumbbell className="w-4 h-4 mb-1 text-white drop-shadow" />
-            <span className="text-white font-semibold text-[11px] leading-tight px-1.5 whitespace-nowrap">{exercise.name}</span>
+            <span className={cn(typography.text.primary, "text-[11px] leading-tight px-1.5 whitespace-nowrap")}>
+              {exercise.name}
+            </span>
           </button>
         );
       })}
@@ -74,7 +77,3 @@ export function ExerciseQuickRadialSelect({
     </div>
   );
 }
-
-// Add keyframes for slower pulse if not defined
-// .animate-pulse-slow { animation: pulse 2.2s cubic-bezier(0.4,0,0.6,1) infinite; }
-// Add this via Tailwind config if missing.
