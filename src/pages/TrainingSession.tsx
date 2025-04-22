@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -314,11 +315,435 @@ const ExerciseCard = ({
 };
 
 const TrainingSession: React.FC = () => {
-  // Add your component implementation here
+  const [exercises, setExercises] = useState<Record<string, ExerciseSet[]>>({});
+  const [activeExercise, setActiveExercise] = useState<string | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { weightUnit } = useWeightUnit();
+  const isMobile = useIsMobile();
+  
+  // Get training type from location state or search params
+  const locationState = location.state as LocationState;
+  const trainingType = locationState?.trainingType || searchParams.get('type') || 'strength';
+  
+  // Find training type object
+  const trainingTypeObj = trainingTypes.find(t => t.id === trainingType);
+  
+  // Track visibility for metrics panel
+  const { ref: metricsRef, isVisible: metricsVisible } = useElementVisibility();
+  
+  // Create workout metrics from exercises state
+  const { 
+    intensity, 
+    volume, 
+    completedSets, 
+    totalSets,
+    efficiency,
+    projectedCalories
+  } = useWorkoutMetrics(exercises);
+  
+  useEffect(() => {
+    // Start timer
+    timerRef.current = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+    
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+  
+  const handleAddExercise = (exerciseName: string) => {
+    setExercises(prev => {
+      // If already exists, don't add it again
+      if (prev[exerciseName]) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        [exerciseName]: [
+          { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: true }
+        ]
+      };
+    });
+    
+    setActiveExercise(exerciseName);
+    
+    setTimeout(() => {
+      const element = document.getElementById(`exercise-${exerciseName}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+  
+  const handleAddSet = (exerciseName: string) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      const lastSet = exerciseSets[exerciseSets.length - 1];
+      
+      // Create new set with values from last set if available
+      const newSet = lastSet ? {
+        weight: lastSet.weight,
+        reps: lastSet.reps,
+        restTime: lastSet.restTime,
+        completed: false,
+        isEditing: false
+      } : {
+        weight: 0,
+        reps: 0,
+        restTime: 60,
+        completed: false,
+        isEditing: true
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: [...exerciseSets, newSet]
+      };
+    });
+  };
+  
+  const handleCompleteSet = (exerciseName: string, setIndex: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        completed: true,
+        isEditing: false 
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleRemoveSet = (exerciseName: string, setIndex: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets.splice(setIndex, 1);
+      
+      // If no sets left, remove the exercise
+      if (exerciseSets.length === 0) {
+        const newExercises = { ...prev };
+        delete newExercises[exerciseName];
+        return newExercises;
+      }
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleEditSet = (exerciseName: string, setIndex: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        isEditing: true 
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleSaveSet = (exerciseName: string, setIndex: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        isEditing: false 
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleWeightChange = (exerciseName: string, setIndex: number, value: string) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        weight: parseFloat(value) || 0
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleRepsChange = (exerciseName: string, setIndex: number, value: string) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        reps: parseInt(value) || 0
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleRestTimeChange = (exerciseName: string, setIndex: number, value: string) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        restTime: parseInt(value) || 0
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleWeightIncrement = (exerciseName: string, setIndex: number, increment: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      const currentWeight = exerciseSets[setIndex].weight || 0;
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        weight: Math.max(0, currentWeight + increment)
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleRepsIncrement = (exerciseName: string, setIndex: number, increment: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      const currentReps = exerciseSets[setIndex].reps || 0;
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        reps: Math.max(0, currentReps + increment)
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleRestTimeIncrement = (exerciseName: string, setIndex: number, increment: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exerciseName] || [])];
+      const currentRestTime = exerciseSets[setIndex].restTime || 0;
+      exerciseSets[setIndex] = { 
+        ...exerciseSets[setIndex], 
+        restTime: Math.max(0, currentRestTime + increment)
+      };
+      
+      return {
+        ...prev,
+        [exerciseName]: exerciseSets
+      };
+    });
+  };
+  
+  const handleCompleteWorkout = async () => {
+    // Save workout data
+    if (user) {
+      try {
+        const workoutData = {
+          user_id: user.id,
+          date: new Date().toISOString(),
+          training_type: trainingType,
+          duration: elapsedTime,
+          exercises: Object.entries(exercises).map(([name, sets]) => ({
+            name,
+            sets: sets.map(set => ({
+              weight: set.weight,
+              reps: set.reps,
+              rest_time: set.restTime,
+              completed: set.completed
+            }))
+          })),
+          intensity,
+          volume,
+          calories: projectedCalories
+        };
+        
+        const { data, error } = await supabase
+          .from('workouts')
+          .insert(workoutData)
+          .select();
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Navigate to workout complete page with workout data
+        navigate('/workout-complete', {
+          state: {
+            workoutId: data[0].id,
+            duration: elapsedTime,
+            training_type: trainingType,
+            intensity,
+            volume,
+            calories: projectedCalories,
+            completed_sets: completedSets,
+            total_sets: totalSets
+          }
+        });
+      } catch (error) {
+        console.error('Error saving workout:', error);
+        toast.error('Failed to save your workout. Please try again.');
+      }
+    } else {
+      // If not logged in, still go to complete page but without saving
+      navigate('/workout-complete', {
+        state: {
+          duration: elapsedTime,
+          training_type: trainingType,
+          intensity,
+          volume,
+          calories: projectedCalories,
+          completed_sets: completedSets,
+          total_sets: totalSets
+        }
+      });
+    }
+  };
+  
+  const handleShowRestTimer = () => {
+    setShowRestTimer(true);
+  };
+  
+  const handleResetRestTimer = () => {
+    // This will be called when a set is completed,
+    // we use it to reset the timer in TopRestTimer component
+  };
+  
+  const handleRestTimerComplete = () => {
+    setShowRestTimer(false);
+  };
+  
+  const totalExercises = Object.keys(exercises).length;
+  
+  // Render UI
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-4">Training Session</h1>
-      <p>This component needs to be implemented.</p>
+    <div className="pb-20">
+      {trainingTypeObj && (
+        <div className="px-4 py-2 mb-2">
+          <TrainingTypeTag
+            icon={trainingTypeObj.icon}
+            type={trainingTypeObj.name}
+            color={trainingTypeObj.color}
+            className="mb-2"
+          />
+        </div>
+      )}
+      
+      <div className="sticky top-16 z-10 bg-gray-900/80 backdrop-blur-lg" ref={metricsRef}>
+        <WorkoutMetrics
+          time={elapsedTime}
+          exerciseCount={totalExercises}
+          completedSets={completedSets}
+          totalSets={totalSets}
+          showRestTimer={showRestTimer}
+          onRestTimerComplete={handleRestTimerComplete}
+          onManualRestStart={handleShowRestTimer}
+          onResetRestTimer={handleResetRestTimer}
+        />
+      </div>
+      
+      <div className="px-4 py-2">
+        {totalExercises > 0 ? (
+          <>
+            <div className="mb-4">
+              {Object.entries(exercises).map(([exerciseName, sets]) => (
+                <div 
+                  key={exerciseName} 
+                  id={`exercise-${exerciseName}`}
+                  className="mb-4"
+                >
+                  <ExerciseCard
+                    exercise={exerciseName}
+                    sets={sets}
+                    onAddSet={handleAddSet}
+                    onCompleteSet={handleCompleteSet}
+                    onRemoveSet={handleRemoveSet}
+                    onEditSet={handleEditSet}
+                    onSaveSet={handleSaveSet}
+                    onWeightChange={handleWeightChange}
+                    onRepsChange={handleRepsChange}
+                    onRestTimeChange={handleRestTimeChange}
+                    onWeightIncrement={handleWeightIncrement}
+                    onRepsIncrement={handleRepsIncrement}
+                    onRestTimeIncrement={handleRestTimeIncrement}
+                    isActive={activeExercise === exerciseName}
+                    onShowRestTimer={handleShowRestTimer}
+                    onResetRestTimer={handleResetRestTimer}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 flex flex-col items-center">
+              <div className="flex w-full">
+                <Button
+                  className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-500 
+                    hover:from-green-700 hover:to-emerald-600 text-white font-medium 
+                    rounded-full shadow-lg hover:shadow-xl mb-4"
+                  onClick={handleCompleteWorkout}
+                >
+                  Complete Workout
+                </Button>
+              </div>
+              
+              <IntelligentMetricsDisplay 
+                exercises={exercises} 
+                intensity={intensity}
+                efficiency={efficiency}
+              />
+              
+              <div className="mt-4 bg-gray-900/50 p-4 rounded-xl border border-gray-800 w-full">
+                <ExerciseVolumeChart exercises={exercises} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <EmptyWorkoutState onAddExercise={handleAddExercise} />
+        )}
+      </div>
+      
+      <div className="sticky bottom-16 right-0 p-4">
+        <SmartExerciseFAB onAddExercise={handleAddExercise} />
+      </div>
+      
+      <div className="fixed bottom-16 left-0 right-0 p-4 z-20">
+        <AddExerciseBar onAddExercise={handleAddExercise} />
+      </div>
     </div>
   );
 };
