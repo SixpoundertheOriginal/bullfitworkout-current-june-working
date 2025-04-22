@@ -768,12 +768,18 @@ const TrainingSession: React.FC = () => {
             </div>
           </>
         ) : (
-          <EmptyWorkoutState onAddExercise={handleAddExercise} />
+          <EmptyWorkoutState 
+            onTemplateSelect={handleAddExercise} 
+          />
         )}
       </div>
       
       <div className="sticky bottom-16 right-0 p-4">
-        <SmartExerciseFAB onSelectExercise={handleAddExerciseFromFAB} />
+        <SmartExerciseFAB 
+          onSelectExercise={handleAddExerciseFromFAB} 
+          trainingType={trainingType}
+          tags={[]}
+        />
       </div>
       
       <div className="fixed bottom-16 left-0 right-0 p-4 z-20">

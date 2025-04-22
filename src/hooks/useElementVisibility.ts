@@ -1,19 +1,17 @@
 
-import { useEffect, useState, RefObject } from 'react';
+import { useRef, useState, useEffect, RefObject } from 'react';
 
 interface UseElementVisibilityOptions {
   threshold?: number;
   rootMargin?: string;
 }
 
-export const useElementVisibility = (
-  elementRef: RefObject<Element>,
-  options: UseElementVisibilityOptions = {}
-): boolean => {
+export const useElementVisibility = (options: UseElementVisibilityOptions = {}) => {
   const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<Element>(null);
   
   useEffect(() => {
-    const element = elementRef.current;
+    const element = ref.current;
     if (!element) return;
     
     const observer = new IntersectionObserver(
@@ -31,7 +29,7 @@ export const useElementVisibility = (
     return () => {
       observer.disconnect();
     };
-  }, [elementRef, options.threshold, options.rootMargin]);
+  }, [options.threshold, options.rootMargin]);
   
-  return isVisible;
+  return { ref, isVisible };
 };

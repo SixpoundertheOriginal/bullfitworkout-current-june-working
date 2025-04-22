@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -227,4 +226,3 @@ export const SmartExerciseFAB = ({
     </div>
   );
 };
-
