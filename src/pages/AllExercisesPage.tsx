@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Edit, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
+import { MuscleGroup, EquipmentType, MovementPattern, Difficulty } from "@/types/exercise";
 
 export default function AllExercisesPage() {
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
@@ -50,6 +52,7 @@ export default function AllExercisesPage() {
         {
           ...exercise,
           user_id: "",
+          metadata: exercise.metadata || {}
         },
         {
           onSuccess: () => resolve(),

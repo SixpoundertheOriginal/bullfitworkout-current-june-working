@@ -22,22 +22,23 @@ interface AddExerciseDialogProps {
     variations?: string[];
     metadata?: Record<string, any>;
   }) => Promise<void>;
+  onAddExercise?: (exerciseName: string) => Promise<void>;
 }
 
 const MUSCLE_GROUPS: MuscleGroup[] = [
   "full body", "chest", "back", "shoulders", "arms", "legs", "core", "glutes", "triceps", "biceps", "hamstrings", "quads", "calves", "forearms", "traps", "lats"
 ];
 const EQUIPMENT_TYPES: EquipmentType[] = [
-  "barbell", "dumbbell", "machine", "bodyweight", "cable", "kettlebell", "band", "other"
+  "barbell", "dumbbell", "machine", "bodyweight", "cable", "kettlebell", "resistance band", "smith machine", "other"
 ];
 const MOVEMENT_PATTERNS: MovementPattern[] = [
-  "push", "pull", "squat", "hinge", "carry", "rotation", "isolation", "other"
+  "push", "pull", "squat", "hinge", "carry", "rotation", "lunge", "isometric"
 ];
 const DIFFICULTIES: Difficulty[] = [
   "beginner", "intermediate", "advanced"
 ];
 
-export function AddExerciseDialog({ open, onOpenChange, onAdd }: AddExerciseDialogProps) {
+export function AddExerciseDialog({ open, onOpenChange, onAdd, onAddExercise }: AddExerciseDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [primaryMuscleGroups, setPrimaryMuscleGroups] = useState<MuscleGroup[]>([]);
@@ -62,20 +63,24 @@ export function AddExerciseDialog({ open, onOpenChange, onAdd }: AddExerciseDial
     e.preventDefault();
     setLoading(true);
     try {
-      await onAdd({
-        name: name.trim(),
-        description: description.trim(),
-        primary_muscle_groups: primaryMuscleGroups,
-        secondary_muscle_groups: secondaryMuscleGroups,
-        equipment_type: equipmentType,
-        movement_pattern: movementPattern,
-        difficulty,
-        instructions: {},
-        is_compound: false,
-        tips: [],
-        variations: [],
-        metadata: {}
-      });
+      if (onAdd) {
+        await onAdd({
+          name: name.trim(),
+          description: description.trim(),
+          primary_muscle_groups: primaryMuscleGroups,
+          secondary_muscle_groups: secondaryMuscleGroups,
+          equipment_type: equipmentType,
+          movement_pattern: movementPattern,
+          difficulty,
+          instructions: {},
+          is_compound: false,
+          tips: [],
+          variations: [],
+          metadata: {}
+        });
+      } else if (onAddExercise && name) {
+        await onAddExercise(name.trim());
+      }
       clearForm();
       onOpenChange(false);
       toast({ title: "Exercise Added", description: `"${name}" was added to your exercises.` });
