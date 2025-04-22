@@ -64,7 +64,7 @@
   /* Remove the circular @apply reference */
 }
 .animate-checkmark {
-  @apply animate-checkmark;
+  /* Remove the circular @apply reference */
 }
 
 /* Grid & spacing */
