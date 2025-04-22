@@ -14,7 +14,7 @@ import {
   CarouselContent, 
   CarouselItem,
 } from "@/components/ui/carousel";
-import useEmblaCarousel from "embla-carousel-react";
+import useEmblaCarousel, { EmblaOptionsType } from "embla-carousel-react";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -102,15 +102,17 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const [touchActive, setTouchActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  const [emblaRef, emblaApi] = useEmblaCarousel({
+  const options: EmblaOptionsType = {
     align: "center",
     loop: false,
-    dragFree: false, // Changed to false for smoother snapping
+    dragFree: false,
     containScroll: "trimSnaps",
     slidesToScroll: 1,
-    speed: 20, // Increased animation speed
-    inViewThreshold: 0.7, // Improved threshold for better snap
-  });
+    duration: 25,
+    inViewThreshold: 0.7,
+  };
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel(options);
   
   const [current, setCurrent] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -148,12 +150,15 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   useEffect(() => {
     if (!emblaApi) return;
 
-    emblaApi.on("dragStart", () => setIsDragging(true));
-    emblaApi.on("dragEnd", () => setIsDragging(false));
+    const onDragStart = () => setIsDragging(true);
+    const onDragEnd = () => setIsDragging(false);
+
+    emblaApi.on("pointerDown", onDragStart);
+    emblaApi.on("pointerUp", onDragEnd);
 
     return () => {
-      emblaApi.off("dragStart", () => setIsDragging(true));
-      emblaApi.off("dragEnd", () => setIsDragging(false));
+      emblaApi.off("pointerDown", onDragStart);
+      emblaApi.off("pointerUp", onDragEnd);
     };
   }, [emblaApi]);
 
@@ -192,9 +197,9 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     if (!emblaApi) return;
     
     if (direction === 'prev' && canScrollPrev) {
-      emblaApi.scrollPrev({ duration: 300 });
+      emblaApi.scrollPrev();
     } else if (direction === 'next' && canScrollNext) {
-      emblaApi.scrollNext({ duration: 300 });
+      emblaApi.scrollNext();
     }
   };
 
