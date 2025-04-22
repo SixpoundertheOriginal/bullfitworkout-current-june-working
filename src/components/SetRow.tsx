@@ -1,3 +1,4 @@
+
 import React from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -105,14 +106,16 @@ export const SetRow = ({
   };
 
   return (
-    <div className={`${isEditing ? 'py-2' : 'py-3'} grid grid-cols-[auto_3fr_3fr_3fr_2fr_2fr] items-center gap-2 px-2 border-b border-gray-800 transition-all duration-200`}>
-      <div className="text-center font-medium text-gray-400">
-        #{setNumber}
-      </div>
-      
+    <div className={`${isEditing ? 'py-2' : 'py-3'} border-b border-gray-800 transition-all duration-200`}>
       {isEditing ? (
-        <>
-          <div className="col-span-2 flex items-center gap-1">
+        <div className="grid grid-cols-12 gap-2 items-center">
+          {/* Set number */}
+          <div className="col-span-1 text-center font-medium text-gray-400">
+            #{setNumber}
+          </div>
+          
+          {/* Weight input with +/- buttons */}
+          <div className="col-span-4 flex items-center gap-1">
             <button 
               type="button"
               onClick={() => onWeightIncrement(-1)} 
@@ -153,61 +156,65 @@ export const SetRow = ({
             </button>
           </div>
           
-          {isIsometric ? (
-            <div className="col-span-2 flex items-center gap-1">
-              <button 
-                type="button"
-                onClick={() => onDurationIncrement?.(-5)} 
-                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-              >
-                <MinusCircle size={isMobile ? 20 : 18} />
-              </button>
-              <Input 
-                type="number"
-                min="0"
-                step="5"
-                value={duration}
-                onChange={onDurationChange}
-                className="workout-number-input text-center flex-1 value-text"
-                placeholder="Duration (seconds)"
-              />
-              <button 
-                type="button"
-                onClick={() => onDurationIncrement?.(5)} 
-                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-              >
-                <PlusCircle size={isMobile ? 20 : 18} />
-              </button>
-            </div>
-          ) : (
-            <div className="col-span-2 flex items-center gap-1">
-              <button 
-                type="button"
-                onClick={() => onRepsIncrement(-1)} 
-                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-              >
-                <MinusCircle size={isMobile ? 20 : 18} />
-              </button>
-              <Input 
-                type="number"
-                min="0"
-                step="1"
-                value={reps}
-                onChange={onRepsChange}
-                className="workout-number-input text-center flex-1 value-text"
-                placeholder="Reps"
-              />
-              <button 
-                type="button"
-                onClick={() => onRepsIncrement(1)} 
-                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-              >
-                <PlusCircle size={isMobile ? 20 : 18} />
-              </button>
-            </div>
-          )}
+          {/* Reps or Duration input with +/- buttons */}
+          <div className="col-span-4 flex items-center gap-1">
+            {isIsometric ? (
+              <>
+                <button 
+                  type="button"
+                  onClick={() => onDurationIncrement?.(-5)} 
+                  className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+                >
+                  <MinusCircle size={isMobile ? 20 : 18} />
+                </button>
+                <Input 
+                  type="number"
+                  min="0"
+                  step="5"
+                  value={duration}
+                  onChange={onDurationChange}
+                  className="workout-number-input text-center flex-1 value-text"
+                  placeholder="Duration (seconds)"
+                />
+                <button 
+                  type="button"
+                  onClick={() => onDurationIncrement?.(5)} 
+                  className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+                >
+                  <PlusCircle size={isMobile ? 20 : 18} />
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  type="button"
+                  onClick={() => onRepsIncrement(-1)} 
+                  className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+                >
+                  <MinusCircle size={isMobile ? 20 : 18} />
+                </button>
+                <Input 
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={reps}
+                  onChange={onRepsChange}
+                  className="workout-number-input text-center flex-1 value-text"
+                  placeholder="Reps"
+                />
+                <button 
+                  type="button"
+                  onClick={() => onRepsIncrement(1)} 
+                  className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
+                >
+                  <PlusCircle size={isMobile ? 20 : 18} />
+                </button>
+              </>
+            )}
+          </div>
           
-          <div className="col-span-2 flex items-center gap-1">
+          {/* Rest Time Input */}
+          <div className="col-span-3 flex items-center gap-1">
             {onRestTimeIncrement && (
               <button 
                 type="button"
@@ -246,7 +253,8 @@ export const SetRow = ({
             )}
           </div>
           
-          <div className="col-span-2 flex justify-end gap-2">
+          {/* Action Buttons */}
+          <div className="col-span-12 flex justify-end gap-2 mt-2">
             <Button
               size="icon"
               onClick={onSave}
@@ -262,52 +270,64 @@ export const SetRow = ({
               <Trash2 size={isMobile ? 20 : 18} />
             </Button>
           </div>
-        </>
+        </div>
       ) : (
-        <>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div 
-                  className={cn(
-                    "flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200",
-                    isAutoWeight && "italic text-gray-400",
-                    "value-text"
-                  )}
-                  onClick={onEdit}
-                >
-                  <span className="font-mono font-semibold text-white value-text">
-                    {displayWeight}
-                  </span>
-                  {isAutoWeight && (
-                    <span className="italic text-gray-400 value-text"> (auto)</span>
-                  )}
-                  <span className="text-xs text-gray-300 ml-1 value-text">{globalWeightUnit}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isAutoWeight ? `Auto-calculated from bodyweight (${userWeight}kg)` : "Manual weight"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <div 
-            className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
-            onClick={onEdit}
-          >
-            {isIsometric ? (
-              <span className="text-sm text-white/90 value-text">
-                {duration > 0 ? formatDuration(duration) : "Not set"} hold
-              </span>
-            ) : (
-              <>
-                <span className="font-mono font-semibold text-white value-text">{reps}</span>
-                <span className="text-xs text-gray-300 ml-1 value-text">reps</span>
-              </>
-            )}
+        <div className="grid grid-cols-12 gap-2 items-center">
+          {/* Set Number */}
+          <div className="col-span-1 text-center font-medium text-gray-400">
+            #{setNumber}
           </div>
           
-          <div className="flex items-center justify-start gap-2 text-gray-400">
+          {/* Weight Display */}
+          <div className="col-span-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={cn(
+                      "flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200",
+                      isAutoWeight && "italic text-gray-400",
+                      "value-text"
+                    )}
+                    onClick={onEdit}
+                  >
+                    <span className="font-mono font-semibold text-white value-text">
+                      {displayWeight}
+                    </span>
+                    {isAutoWeight && (
+                      <span className="italic text-gray-400 value-text"> (auto)</span>
+                    )}
+                    <span className="text-xs text-gray-300 ml-1 value-text">{globalWeightUnit}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isAutoWeight ? `Auto-calculated from bodyweight (${userWeight}kg)` : "Manual weight"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          {/* Reps/Duration Display */}
+          <div className="col-span-3">
+            <div 
+              className="flex gap-1 items-center px-3 py-2 rounded min-h-[44px] hover:bg-gray-800/70 cursor-pointer transition-all duration-200"
+              onClick={onEdit}
+            >
+              {isIsometric ? (
+                <span className="text-sm text-white/90 value-text">
+                  {duration > 0 ? formatDuration(duration) : "Not set"} hold
+                </span>
+              ) : (
+                <>
+                  <span className="font-mono font-semibold text-white value-text">{reps}</span>
+                  <span className="text-xs text-gray-300 ml-1 value-text">reps</span>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Rest Time and Volume Display */}
+          <div className="col-span-3 flex items-center justify-start gap-2 text-gray-400">
             <Timer size={16} className="text-purple-400" />
             <span className="font-mono text-sm text-white value-text">
               {formatRestTime(restTime)}
@@ -319,7 +339,8 @@ export const SetRow = ({
             )}
           </div>
           
-          <div className="flex justify-end gap-2">
+          {/* Action Buttons */}
+          <div className="col-span-2 flex justify-end gap-2">
             {completed ? (
               <Button
                 size="icon"
@@ -345,7 +366,7 @@ export const SetRow = ({
               <Trash2 size={20} />
             </Button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
