@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -216,7 +215,7 @@ export function useExperiencePoints() {
         }
         
         // Fix for line 111 - ensure we're adding numbers
-        const newTotalXp: number = currentTotalXp + xpAmount;
+        const newTotalXp = currentTotalXp + xpAmount;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
         updatedExp.totalXp = newTotalXp;
@@ -232,7 +231,7 @@ export function useExperiencePoints() {
           }
           
           // Fix for line 113 - ensure we're using a number for the calculation
-          updatedExp.trainingTypeLevels[trainingType].xp = (currentTypeXp + xpAmount) as number;
+          updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
         }
         
         const { error: updateError } = await supabase
