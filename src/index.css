@@ -106,7 +106,7 @@
 
 @layer utilities {
   .card-gradient {
-    @apply bg-gradient-to-br from-card to-secondary/80 backdrop-blur-sm;
+    @apply bg-gradient-to-br from-neutral to-secondary/80 backdrop-blur-sm;
   }
 }
 
