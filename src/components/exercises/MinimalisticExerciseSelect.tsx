@@ -1,17 +1,20 @@
 
 import React from "react";
 import { Exercise } from "@/types/exercise";
-import { Dumbbell, ArrowRight, Plus } from "lucide-react";
+import { Dumbbell, ArrowRight, Plus, Star, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { typography } from "@/lib/typography";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MinimalisticExerciseSelectProps {
   onSelectExercise: (exercise: string | Exercise) => void;
   suggestedExercises?: Exercise[];
   recentExercises?: Exercise[];
+  otherExercises?: Exercise[];
+  matchData?: Record<string, { score: number; reasons: string[] }>;
   trainingType?: string;
   className?: string;
 }
@@ -20,19 +23,22 @@ export function MinimalisticExerciseSelect({
   onSelectExercise,
   suggestedExercises = [],
   recentExercises = [],
+  otherExercises = [],
+  matchData = {},
   trainingType = "",
   className
 }: MinimalisticExerciseSelectProps) {
-  // Combine recent and suggested exercises, ensuring no duplicates
+  // Take the first 3 recent exercises
   const recentFirst = [...recentExercises.slice(0, 3)];
-  const remaining = suggestedExercises.filter(
-    e => !recentFirst.some(r => r.id === e.id)
-  );
-  const allExercises = [...recentFirst, ...remaining].slice(0, 12); // Show up to 12 exercises
   
-  // Split into recommended and other exercises
-  const recommendedExercises = allExercises.slice(0, 4);
-  const otherExercises = allExercises.slice(4);
+  // Limit recommended exercises to first 4 if we have them
+  const recommendedExercises = suggestedExercises.slice(0, 4);
+  
+  // For other exercises, ensure no duplicates with recommended or recent
+  const filteredOther = otherExercises.filter(
+    e => !recommendedExercises.some(r => r.id === e.id) && 
+         !recentFirst.some(r => r.id === e.id)
+  ).slice(0, 4); // Show up to 4 other exercises
 
   return (
     <div className={cn("space-y-5", className)}>
@@ -48,6 +54,7 @@ export function MinimalisticExerciseSelect({
                 exercise={exercise}
                 onSelectExercise={onSelectExercise}
                 isRecent={true}
+                matchData={matchData[exercise.id]}
               />
             ))}
           </div>
@@ -66,23 +73,25 @@ export function MinimalisticExerciseSelect({
                 exercise={exercise}
                 onSelectExercise={onSelectExercise}
                 isRecommended={true}
+                matchData={matchData[exercise.id]}
               />
             ))}
           </div>
         </div>
       )}
 
-      {otherExercises.length > 0 && (
+      {filteredOther.length > 0 && (
         <div className="space-y-2">
           <h3 className={cn(typography.headings.h4, "text-gray-400 px-1")}>
             Other Exercises
           </h3>
           <div className="space-y-2">
-            {otherExercises.map((exercise) => (
+            {filteredOther.map((exercise) => (
               <ExerciseItem 
                 key={exercise.id}
                 exercise={exercise}
                 onSelectExercise={onSelectExercise}
+                matchData={matchData[exercise.id]}
               />
             ))}
           </div>
@@ -107,11 +116,22 @@ interface ExerciseItemProps {
   onSelectExercise: (exercise: string | Exercise) => void;
   isRecent?: boolean;
   isRecommended?: boolean;
+  matchData?: { score: number; reasons: string[] };
 }
 
-function ExerciseItem({ exercise, onSelectExercise, isRecent, isRecommended }: ExerciseItemProps) {
+function ExerciseItem({ 
+  exercise, 
+  onSelectExercise, 
+  isRecent, 
+  isRecommended,
+  matchData
+}: ExerciseItemProps) {
   // Determine main muscle group for badge
   const primaryMuscle = exercise.primary_muscle_groups?.[0] || "general";
+  
+  // Determine score display (if available)
+  const hasScore = matchData && matchData.score > 0;
+  const scorePercentage = hasScore ? Math.min(100, Math.round(matchData.score * 1.25)) : 0;
   
   return (
     <Card 
@@ -120,7 +140,8 @@ function ExerciseItem({ exercise, onSelectExercise, isRecent, isRecommended }: E
         "border border-gray-800 bg-gradient-to-r",
         isRecent ? "from-purple-900/20 to-purple-800/5" : 
         isRecommended ? "from-blue-900/20 to-blue-800/5" : 
-        "from-gray-900 to-gray-800/50"
+        "from-gray-900 to-gray-800/50",
+        hasScore && scorePercentage > 70 ? "ring-1 ring-green-500/30" : ""
       )}
       onClick={() => onSelectExercise(exercise)}
     >
@@ -141,9 +162,15 @@ function ExerciseItem({ exercise, onSelectExercise, isRecent, isRecommended }: E
               )} />
             </div>
             <div>
-              <p className={cn(typography.text.primary, "font-medium")}>
-                {exercise.name}
-              </p>
+              <div className="flex items-center gap-1">
+                <p className={cn(typography.text.primary, "font-medium")}>
+                  {exercise.name}
+                </p>
+                
+                {hasScore && scorePercentage > 75 && (
+                  <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                )}
+              </div>
               <div className="flex items-center gap-2 mt-0.5">
                 <Badge 
                   variant="outline" 
@@ -165,11 +192,52 @@ function ExerciseItem({ exercise, onSelectExercise, isRecent, isRecommended }: E
                     {exercise.equipment_type[0]}
                   </span>
                 )}
+
+                {/* Match reasons tooltip */}
+                {hasScore && matchData.reasons.length > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="cursor-help ml-auto">
+                          <Info size={14} className="text-blue-400" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        side="top" 
+                        className="max-w-xs bg-gray-900 border border-gray-700"
+                      >
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold text-blue-300">Recommended because:</p>
+                          <ul className="list-disc pl-4 text-gray-300">
+                            {matchData.reasons.slice(0, 3).map((reason, i) => (
+                              <li key={i}>{reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
             </div>
           </div>
           <ArrowRight size={16} className="text-gray-500" />
         </div>
+        
+        {/* Score indicator (only shown for high scores) */}
+        {hasScore && scorePercentage > 50 && (
+          <div className="w-full h-1 bg-gray-800">
+            <div 
+              className={cn(
+                "h-full transition-all duration-300",
+                scorePercentage > 80 ? "bg-green-500" : 
+                scorePercentage > 60 ? "bg-blue-500" : 
+                "bg-gray-500"
+              )}
+              style={{ width: `${scorePercentage}%` }}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

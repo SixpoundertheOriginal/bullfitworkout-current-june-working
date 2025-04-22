@@ -6,23 +6,31 @@ import { MinimalisticExerciseSelect } from "./MinimalisticExerciseSelect";
 import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { useExercises } from "@/hooks/useExercises";
+import { rankExercises, getCurrentTimeOfDay, RankingCriteria } from "@/utils/exerciseRankingUtils";
 
 interface ExerciseSelectorProps {
   onSelectExercise: (exercise: string | Exercise) => void;
   trainingType?: string;
   useLegacyDesign?: boolean;
   className?: string;
+  bodyFocus?: string[];
+  movementPattern?: string[];
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }
 
 export function ExerciseSelector({
   onSelectExercise,
   trainingType = "",
   useLegacyDesign = false,
-  className
+  className,
+  bodyFocus = [],
+  movementPattern = [],
+  difficulty
 }: ExerciseSelectorProps) {
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
   const { data } = useWorkoutHistory();
   const { exercises: allExercises } = useExercises();
+  const timeOfDay = getCurrentTimeOfDay();
   
   // Extract recently used exercises from workout history
   const recentExercises = React.useMemo(() => {
@@ -51,12 +59,39 @@ export function ExerciseSelector({
     return Array.from(exerciseMap.values());
   }, [data, allExercises]);
 
+  // Process and rank exercises based on user preferences
+  const rankedExercises = React.useMemo(() => {
+    // Combine recent and suggested exercises to be ranked
+    const combinedExercises = [...suggestedExercises];
+    
+    // Add recent exercises that aren't already in the suggested list
+    recentExercises.forEach(exercise => {
+      if (!combinedExercises.some(e => e.id === exercise.id)) {
+        combinedExercises.push(exercise);
+      }
+    });
+    
+    // Create ranking criteria from props
+    const criteria: RankingCriteria = {
+      trainingType,
+      bodyFocus: bodyFocus as any[],
+      movementPattern: movementPattern as any[],
+      timeOfDay,
+      difficulty: difficulty
+    };
+    
+    // Apply ranking algorithm
+    return rankExercises(combinedExercises, criteria);
+  }, [suggestedExercises, recentExercises, trainingType, bodyFocus, movementPattern, timeOfDay, difficulty]);
+
   if (useLegacyDesign) {
     return (
       <ExerciseQuickSelect
         onSelectExercise={onSelectExercise}
-        suggestedExercises={suggestedExercises}
+        suggestedExercises={rankedExercises.recommended}
         recentExercises={recentExercises}
+        otherExercises={rankedExercises.other}
+        matchData={rankedExercises.matchData}
         className={className}
       />
     );
@@ -65,8 +100,10 @@ export function ExerciseSelector({
   return (
     <MinimalisticExerciseSelect
       onSelectExercise={onSelectExercise}
-      suggestedExercises={suggestedExercises}
+      suggestedExercises={rankedExercises.recommended}
       recentExercises={recentExercises}
+      otherExercises={rankedExercises.other}
+      matchData={rankedExercises.matchData}
       trainingType={trainingType}
       className={className}
     />
