@@ -492,6 +492,36 @@ export type Database = {
         }
         Relationships: []
       }
+      experience_logs: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          source: string
+          training_type: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          source: string
+          training_type?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          source?: string
+          training_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       favorite_exercises: {
         Row: {
           created_at: string
@@ -1213,6 +1243,7 @@ export type Database = {
           height: number | null
           height_unit: string | null
           id: string
+          training_experience: Json | null
           training_preferences: Json | null
           updated_at: string
           weight: number | null
@@ -1227,6 +1258,7 @@ export type Database = {
           height?: number | null
           height_unit?: string | null
           id: string
+          training_experience?: Json | null
           training_preferences?: Json | null
           updated_at?: string
           weight?: number | null
@@ -1241,6 +1273,7 @@ export type Database = {
           height?: number | null
           height_unit?: string | null
           id?: string
+          training_experience?: Json | null
           training_preferences?: Json | null
           updated_at?: string
           weight?: number | null
