@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -17,7 +16,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,8 +67,18 @@ const WorkoutComplete = () => {
   }>({ pending: false, exerciseName: null });
 
   useEffect(() => {
+    if (location.state?.workoutId) {
+      setWorkoutId(location.state.workoutId);
+    }
+    
     if (location.state?.workoutData) {
       setWorkoutData(location.state.workoutData);
+      // Set a default template name based on the workout name or training type
+      if (location.state.workoutData.name) {
+        setTemplateName(location.state.workoutData.name);
+      } else if (location.state.workoutData.trainingType) {
+        setTemplateName(`${location.state.workoutData.trainingType} Template`);
+      }
     } else {
       toast({
         title: "No workout data found",
@@ -116,22 +124,82 @@ const WorkoutComplete = () => {
   };
 
   const saveWorkout = async () => {
-    if (!workoutData || !user) return null;
+    if (!workoutData) return null;
     
     setSaving(true);
     
     try {
+      // If the workout is already saved (we have a workoutId),
+      // just update it with notes
+      if (workoutId && user) {
+        try {
+          const { error: updateError } = await supabase
+            .from('workout_sessions')
+            .update({
+              notes: notes || null
+            })
+            .eq('id', workoutId);
+
+          if (updateError) {
+            console.error("Error updating workout notes:", updateError);
+            throw updateError;
+          }
+
+          // Save as template if requested
+          if (saveAsTemplate) {
+            await saveWorkoutTemplate();
+          }
+          
+          setSavingStats({
+            completed: true,
+            error: false
+          });
+          
+          toast({
+            title: "Workout updated!",
+            description: "Your workout notes have been saved"
+          });
+          
+          return workoutId;
+        } catch (error) {
+          console.error("Error updating workout:", error);
+          setSavingStats({
+            completed: true,
+            error: true
+          });
+          
+          toast({
+            title: "Error updating workout",
+            description: "There was a problem saving your workout notes",
+            variant: "destructive",
+          });
+          
+          return null;
+        }
+      }
+      
+      // If no workoutId or user, we need to create a new workout
+      if (!user) {
+        toast({
+          title: "Please log in",
+          description: "You need to be logged in to save workouts",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return null;
+      }
+      
       const trainingTypeValue = isValidTrainingType(workoutData.trainingType) 
         ? workoutData.trainingType 
         : 'Strength';
       
-      console.log("Saving workout with data:", {
+      console.log("Saving new workout with data:", {
         user_id: user.id,
-        name: workoutData.name || workoutData.trainingType,
+        name: workoutData.name || workoutData.trainingType || "Workout",
         training_type: trainingTypeValue,
         start_time: workoutData.startTime.toISOString(),
         end_time: workoutData.endTime.toISOString(),
-        duration: workoutData.duration,
+        duration: workoutData.duration || 0,
         notes: notes || null
       });
       
@@ -140,11 +208,11 @@ const WorkoutComplete = () => {
         .from('workout_sessions')
         .insert({
           user_id: user.id,
-          name: workoutData.name || workoutData.trainingType,
+          name: workoutData.name || workoutData.trainingType || "Workout",
           training_type: trainingTypeValue,
           start_time: workoutData.startTime.toISOString(),
           end_time: workoutData.endTime.toISOString(),
-          duration: workoutData.duration,
+          duration: workoutData.duration || 0,
           notes: notes || null
         })
         .select('id')
@@ -159,91 +227,11 @@ const WorkoutComplete = () => {
         setWorkoutId(workoutSession.id);
         
         // Build the exercise sets array
-        const exerciseSets = [];
-        
-        for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
-          sets.forEach((set, index) => {
-            if (set.completed) {
-              exerciseSets.push({
-                workout_id: workoutSession.id,
-                exercise_name: exerciseName,
-                weight: set.weight,
-                reps: set.reps,
-                completed: set.completed,
-                set_number: index + 1
-              });
-            }
-          });
-        }
-        
-        console.log("Saving exercise sets:", exerciseSets);
-        
-        // Only attempt to save exercise sets if there are any
-        if (exerciseSets.length > 0) {
-          try {
-            // Split the exercise sets into smaller batches to avoid request size limits
-            const batchSize = 50;
-            const batches = [];
-            
-            for (let i = 0; i < exerciseSets.length; i += batchSize) {
-              batches.push(exerciseSets.slice(i, i + batchSize));
-            }
-            
-            // Process each batch sequentially
-            for (const batch of batches) {
-              const { error: batchError } = await supabase
-                .from('exercise_sets')
-                .insert(batch);
-                
-              if (batchError) {
-                console.error("Error saving exercise set batch:", batchError);
-                throw batchError;
-              }
-            }
-          } catch (setsError) {
-            console.error("Error saving exercise sets:", setsError);
-            // Don't throw here, we still want to consider the workout saved
-            toast({
-              title: "Workout saved, but there was an issue saving exercise details.",
-              variant: "default",
-            });
-          }
-        }
+        await saveExerciseSets(workoutSession.id);
         
         // Save as template if requested
         if (saveAsTemplate) {
-          try {
-            const validTrainingType = isValidTrainingType(workoutData.trainingType)
-              ? workoutData.trainingType
-              : 'Strength';
-            
-            const { error: templateError } = await supabase
-              .from('workout_templates')
-              .insert({
-                name: templateName || `${workoutData.trainingType} Template`,
-                description: `Created from workout on ${new Date().toLocaleDateString()}`,
-                training_type: validTrainingType,
-                exercises: JSON.stringify(workoutData.exercises),
-                created_by: user.id,
-                estimated_duration: workoutData.duration
-              });
-              
-            if (templateError) {
-              console.error("Error saving workout template:", templateError);
-              // Don't throw here, we still want to consider the workout saved
-              toast({
-                title: "Workout saved, but template could not be created.",
-                variant: "default",
-              });
-            }
-          } catch (templateError) {
-            console.error("Error saving workout template:", templateError);
-            // Don't throw here, we still want to consider the workout saved
-            toast({
-              title: "Workout saved, but template could not be created.",
-              variant: "default",
-            });
-          }
+          await saveWorkoutTemplate(workoutSession.id);
         }
         
         setSavingStats({
@@ -278,6 +266,105 @@ const WorkoutComplete = () => {
       setSaving(false);
     }
   };
+  
+  const saveExerciseSets = async (sessionId: string) => {
+    if (!workoutData) return;
+    
+    try {
+      // Build the exercise sets array
+      const exerciseSets = [];
+      
+      for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
+        sets.forEach((set, index) => {
+          // Only include completed sets to reduce database load
+          if (set.completed) {
+            exerciseSets.push({
+              workout_id: sessionId,
+              exercise_name: exerciseName,
+              weight: set.weight || 0,
+              reps: set.reps || 0,
+              set_number: index + 1,
+              completed: true
+            });
+          }
+        });
+      }
+      
+      // Skip if no sets to save
+      if (exerciseSets.length === 0) {
+        console.log("No completed sets to save");
+        return;
+      }
+      
+      // Split into smaller batches to avoid request size limits
+      const batchSize = 25;
+      const batches = [];
+      
+      for (let i = 0; i < exerciseSets.length; i += batchSize) {
+        batches.push(exerciseSets.slice(i, i + batchSize));
+      }
+      
+      // Process each batch sequentially
+      for (const batch of batches) {
+        const { error: batchError } = await supabase
+          .from('exercise_sets')
+          .insert(batch);
+          
+        if (batchError) {
+          console.error("Error saving exercise set batch:", batchError);
+          // Continue with next batch rather than stopping completely
+        }
+      }
+    } catch (error) {
+      console.error("Error saving exercise sets:", error);
+      // Don't throw here, we still want to consider the workout saved
+      toast({
+        title: "Workout saved, but there was an issue saving exercise details.",
+        variant: "default",
+      });
+    }
+  };
+  
+  const saveWorkoutTemplate = async (sessionId?: string) => {
+    if (!user || !workoutData) return;
+    
+    try {
+      const validTrainingType = isValidTrainingType(workoutData.trainingType)
+        ? workoutData.trainingType
+        : 'Strength';
+      
+      const { error: templateError } = await supabase
+        .from('workout_templates')
+        .insert({
+          name: templateName || `${workoutData.trainingType || 'Workout'} Template`,
+          description: `Created from workout on ${new Date().toLocaleDateString()}`,
+          training_type: validTrainingType,
+          exercises: JSON.stringify(workoutData.exercises),
+          created_by: user.id,
+          estimated_duration: workoutData.duration || 0
+        });
+        
+      if (templateError) {
+        console.error("Error saving workout template:", templateError);
+        toast({
+          title: "Workout saved, but template could not be created.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Template saved!",
+          description: "Your workout template has been created",
+          variant: "default",
+        });
+      }
+    } catch (templateError) {
+      console.error("Error saving workout template:", templateError);
+      toast({
+        title: "Workout saved, but template could not be created.",
+        variant: "default",
+      });
+    }
+  };
 
   const getVolumeChartData = () => {
     if (!workoutData) return [];
@@ -285,8 +372,8 @@ const WorkoutComplete = () => {
     return Object.keys(workoutData.exercises).map(exercise => {
       const totalExerciseVolume = workoutData.exercises[exercise].reduce((total, set) => {
         if (set.completed) {
-          const convertedWeight = convertWeight(set.weight, "lb", weightUnit);
-          return total + (convertedWeight * set.reps);
+          const convertedWeight = convertWeight(set.weight || 0, "lb", weightUnit);
+          return total + (convertedWeight * (set.reps || 0));
         }
         return total;
       }, 0);

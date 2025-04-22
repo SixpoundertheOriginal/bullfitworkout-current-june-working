@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -332,113 +331,123 @@ const TrainingSession: React.FC = () => {
   };
   
   const handleCompleteWorkout = async () => {
-    if (user) {
-      try {
-        const now = new Date();
+    if (!Object.keys(exercises).length) {
+      toast({
+        title: "No exercises added",
+        description: "Please add at least one exercise before completing your workout",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const now = new Date();
+      const startTime = new Date(now.getTime() - elapsedTime * 1000);
+      
+      const workoutData = {
+        user_id: user?.id,
+        name: `Workout ${now.toLocaleDateString()}`,
+        training_type: trainingType || 'strength',
+        start_time: startTime.toISOString(),
+        end_time: now.toISOString(),
+        duration: elapsedTime || 0,
+        notes: null
+      };
+      
+      console.log("Saving workout with data:", workoutData);
+      
+      if (!user) {
+        navigateToComplete(null);
+        return;
+      }
+      
+      const { data: workoutSession, error: workoutError } = await supabase
+        .from('workout_sessions')
+        .insert(workoutData)
+        .select()
+        .single();
+          
+      if (workoutError) {
+        console.error("Error saving workout session:", workoutError);
         
-        // First, create the workout session record
-        const { data: workoutSession, error: workoutError } = await supabase
-          .from('workout_sessions')
-          .insert({
-            user_id: user.id,
-            name: `Workout ${now.toLocaleDateString()}`,
-            training_type: trainingType,
-            start_time: new Date(now.getTime() - elapsedTime * 1000).toISOString(),
-            end_time: now.toISOString(),
-            duration: elapsedTime,
-            notes: null
-          })
-          .select()
-          .single();
-          
-        if (workoutError) {
-          console.error("Error saving workout session:", workoutError);
-          toast({
-            title: "Failed to save your workout. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (workoutSession) {
-          // Now prepare the exercise sets data
-          const exerciseSets = [];
-          
-          for (const [exerciseName, sets] of Object.entries(exercises)) {
-            sets.forEach((set, index) => {
-              if (set.completed) {
-                exerciseSets.push({
-                  workout_id: workoutSession.id,
-                  exercise_name: exerciseName,
-                  weight: set.weight,
-                  reps: set.reps,
-                  set_number: index + 1,
-                  completed: set.completed
-                });
-              }
-            });
-          }
-          
-          // Only try to insert if we have any completed sets
-          if (exerciseSets.length > 0) {
-            try {
-              const { error: setsError } = await supabase
-                .from('exercise_sets')
-                .insert(exerciseSets);
-                
-              if (setsError) {
-                console.error("Error saving exercise sets:", setsError);
-                toast({
-                  title: "Workout saved, but there was an issue saving exercise details.",
-                  variant: "default",
-                });
-              }
-            } catch (setInsertError) {
-              console.error("Exception when saving exercise sets:", setInsertError);
-              toast({
-                title: "Workout saved, but there was an issue saving exercise details.",
-                variant: "default",
-              });
-            }
-          }
-          
-          navigate('/workout-complete', {
-            state: {
-              workoutId: workoutSession.id,
-              workoutData: {
-                exercises,
-                duration: elapsedTime,
-                startTime: new Date(now.getTime() - elapsedTime * 1000),
-                endTime: now,
-                trainingType,
-                name: `Workout ${now.toLocaleDateString()}`
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error saving workout:', error);
         toast({
-          title: 'Failed to save your workout. Please try again.',
+          title: "Failed to save your workout. Please try again.",
+          description: `Error: ${workoutError.message || "Unknown error"}`,
           variant: "destructive",
         });
+        return;
       }
-    } else {
-      // User not logged in, just pass the data to the workout complete page
-      const now = new Date();
-      navigate('/workout-complete', {
-        state: {
-          workoutData: {
-            exercises,
-            duration: elapsedTime,
-            startTime: new Date(now.getTime() - elapsedTime * 1000),
-            endTime: now,
-            trainingType,
-            name: `Workout ${now.toLocaleDateString()}`
-          }
-        }
+      
+      if (workoutSession) {
+        await saveExerciseSets(workoutSession.id);
+        navigateToComplete(workoutSession.id);
+      }
+    } catch (error) {
+      console.error('Error in workout completion process:', error);
+      toast({
+        title: 'Failed to save your workout. Please try again.',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: "destructive",
       });
     }
+  };
+  
+  const saveExerciseSets = async (workoutId: string) => {
+    try {
+      const exerciseSets = [];
+      
+      for (const [exerciseName, sets] of Object.entries(exercises)) {
+        sets.forEach((set, index) => {
+          exerciseSets.push({
+            workout_id: workoutId,
+            exercise_name: exerciseName,
+            weight: set.weight || 0,
+            reps: set.reps || 0,
+            set_number: index + 1,
+            completed: set.completed || false
+          });
+        });
+      }
+      
+      const batchSize = 25;
+      const batches = [];
+      
+      for (let i = 0; i < exerciseSets.length; i += batchSize) {
+        batches.push(exerciseSets.slice(i, i + batchSize));
+      }
+      
+      for (const batch of batches) {
+        const { error: batchError } = await supabase
+          .from('exercise_sets')
+          .insert(batch);
+          
+        if (batchError) {
+          console.error("Error saving exercise set batch:", batchError);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Exception saving exercise sets:", error);
+      throw error;
+    }
+  };
+  
+  const navigateToComplete = (workoutId: string | null) => {
+    const now = new Date();
+    navigate('/workout-complete', {
+      state: {
+        workoutId,
+        workoutData: {
+          exercises,
+          duration: elapsedTime,
+          startTime: new Date(now.getTime() - elapsedTime * 1000),
+          endTime: now,
+          trainingType: trainingType || 'strength',
+          name: `Workout ${now.toLocaleDateString()}`
+        }
+      }
+    });
   };
   
   const handleShowRestTimer = () => {
