@@ -1,13 +1,15 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
+import { Dumbbell, Bike, Heart, Activity, ArrowRight } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { typography } from '@/lib/typography';
+import { Card } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TrainingTypeSelectorProps {
   selectedType: string;
@@ -94,8 +96,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const { stats } = useWorkoutStats();
   const [touchActive, setTouchActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [centerPoint, setCenterPoint] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const { data: customTypes } = useQuery<CustomTrainingType[]>({
     queryKey: ['customTrainingTypes'],
@@ -126,71 +128,90 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     }))
   ];
 
-  useEffect(() => {
-    const updateContainerSize = () => {
-      const container = document.getElementById('radial-menu-container');
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        setContainerSize({ width: rect.width, height: rect.height });
-        setCenterPoint({
-          x: rect.width / 2,
-          y: rect.height / 2
-        });
-      }
-    };
-
-    updateContainerSize();
-    window.addEventListener('resize', updateContainerSize);
-    return () => window.removeEventListener('resize', updateContainerSize);
-  }, []);
-
   const handleTypeSelect = (type: string) => {
     if (!isDragging) {
       onSelect(type);
     }
   };
 
-  // Calculate the radius based on container size
-  const radius = Math.min(containerSize.width, containerSize.height) * 0.35;
+  const selectedTrainingType = DEFAULT_TRAINING_TYPES.find(type => type.name === selectedType) || DEFAULT_TRAINING_TYPES[0];
 
   return (
     <div className="w-full relative">
+      {/* Indicator dots */}
       <div className="flex justify-center gap-2 mb-6">
-        {DEFAULT_TRAINING_TYPES.map((_, index) => (
+        {DEFAULT_TRAINING_TYPES.map((type, index) => (
           <motion.div
             key={index}
             className={cn(
               "h-1 rounded-full transition-all duration-300",
-              selectedType === DEFAULT_TRAINING_TYPES[index].name ? "w-8 bg-white" : "w-2 bg-white/20"
+              selectedType === type.name ? "w-8 bg-white" : "w-2 bg-white/20"
             )}
           />
         ))}
       </div>
 
-      <div 
-        id="radial-menu-container"
-        className="relative h-[500px] w-full flex items-center justify-center overflow-hidden"
-        onTouchStart={() => setTouchActive(true)}
-        onTouchEnd={() => {
-          setTouchActive(false);
-          setIsDragging(false);
-        }}
-      >
+      {/* Radial menu container */}
+      <div className="w-full aspect-square relative flex items-center justify-center">
+        {/* Center circle with selected training type */}
+        <div className="absolute z-10 w-1/2 h-1/2 rounded-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-800/90 to-gray-900/90 border border-white/10 shadow-xl">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedType}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center justify-center gap-2 p-4 w-full h-full"
+            >
+              <div className={cn(
+                "p-4 rounded-full",
+                "bg-gradient-to-br", 
+                selectedTrainingType.gradient,
+                "shadow-lg"
+              )}>
+                {selectedTrainingType.icon}
+              </div>
+              
+              <h3 className={cn(typography.headings.primary, "text-lg")}>
+                {selectedTrainingType.name}
+              </h3>
+              
+              <p className={cn(typography.text.muted, "text-xs text-center")}>
+                {selectedTrainingType.description}
+              </p>
+              
+              <div className="mt-2 flex items-center gap-1 text-xs text-white/60">
+                <span>Level {selectedTrainingType.level}</span>
+                <span>•</span>
+                <span>{selectedTrainingType.xp} XP</span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Radial menu items */}
         {DEFAULT_TRAINING_TYPES.map((type, index) => {
-          const angle = (index * (360 / DEFAULT_TRAINING_TYPES.length)) * (Math.PI / 180);
+          const totalItems = DEFAULT_TRAINING_TYPES.length;
+          const angleStep = (2 * Math.PI) / totalItems;
+          const angle = index * angleStep - Math.PI / 2; // Start from top (- Math.PI/2)
+          
+          // Calculate position on the circle
+          const radius = 38; // % of container width
           const x = Math.cos(angle) * radius;
           const y = Math.sin(angle) * radius;
+          
           const isSelected = selectedType === type.name;
-          const cardSize = 180; // Fixed card size
           
           return (
             <motion.div
               key={type.name}
-              initial={{ scale: 0, x: 0, y: 0 }}
-              animate={{
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ 
+                opacity: 1, 
                 scale: 1,
-                x: centerPoint.x + x - (cardSize / 2),
-                y: centerPoint.y + y - (cardSize / 2),
+                x: `${x}%`,
+                y: `${y}%`,
               }}
               transition={{
                 type: "spring",
@@ -198,67 +219,48 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 damping: 20,
                 delay: index * 0.1,
               }}
-              className="absolute"
-              style={{ width: cardSize, height: cardSize }}
+              onClick={() => handleTypeSelect(type.name)}
+              className={cn(
+                "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+                "w-20 h-20 flex flex-col items-center justify-center gap-1",
+                "cursor-pointer"
+              )}
             >
               <motion.div
-                onClick={() => handleTypeSelect(type.name)}
-                whileHover={{ scale: isSelected ? 1 : 1.05 }}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "w-full h-full rounded-2xl p-5",
-                  "flex flex-col items-center justify-center gap-3",
-                  "bg-gradient-to-br backdrop-blur-sm",
-                  "cursor-pointer relative overflow-hidden",
-                  "transition-all duration-300 ease-out",
-                  "border-2 shadow-lg",
-                  isSelected ? [
-                    `${type.activeGradient}`,
-                    "border-white ring-2 ring-white/30",
-                    "transform scale-110 z-10"
-                  ] : [
-                    type.gradient,
-                    "border-white/10 hover:border-white/20"
-                  ]
+                  "rounded-full p-4",
+                  "bg-gradient-to-br shadow-lg",
+                  isSelected 
+                    ? [type.activeGradient, "ring-2 ring-white/30"] 
+                    : [type.gradient, "border border-white/10"]
                 )}
               >
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className={cn(
-                    "p-4 rounded-xl",
-                    "bg-white/10 backdrop-blur-sm",
-                    "shadow-inner border border-white/5"
-                  )}
-                >
-                  {type.icon}
-                </motion.div>
-                
-                <motion.h3
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={cn(typography.headings.primary, "text-base")}
-                >
-                  {type.name}
-                </motion.h3>
-
-                {isSelected && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="absolute bottom-2 left-2 right-2"
-                  >
-                    <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${type.xp || 50}%` }}
-                        transition={{ delay: 0.2, duration: 0.8 }}
-                        className="h-full bg-white/30"
-                      />
-                    </div>
-                  </motion.div>
-                )}
+                {type.icon}
               </motion.div>
+              
+              <span className={cn(
+                "text-sm font-medium",
+                isSelected ? "text-white" : "text-white/70"
+              )}>
+                {type.name}
+              </span>
+              
+              {/* Radial connector line */}
+              <div 
+                className={cn(
+                  "absolute h-px bg-white/10",
+                  "top-1/2 left-1/2 origin-left",
+                  isSelected ? "bg-white/30" : "bg-white/10"
+                )}
+                style={{
+                  width: `${radius}%`,
+                  transform: `rotate(${angle}rad) scaleX(0.7)`,
+                  transformOrigin: '0 0',
+                  opacity: 0.3,
+                }}
+              />
             </motion.div>
           );
         })}
