@@ -1,18 +1,19 @@
 
-// Main typography utility with stronger hierarchy and section titles
 export const typography = {
-  // Main text styles
+  // Strengthened text styles
   text: {
-    primary: "text-white font-medium text-base",
+    primary: "text-white font-normal text-base",
     secondary: "text-white/80 text-base",
     muted: "text-white/60 text-sm",
+    small: "text-white/70 text-xs",
   },
 
-  // Headings (strong separation of levels)
+  // Headings (clear separation & consistency)
   headings: {
-    primary: "text-white font-bold text-2xl sm:text-3xl",
-    section: "text-white font-semibold text-lg sm:text-xl",
-    collapsible: "text-sm font-medium text-white",
+    h1: "text-white font-bold text-3xl sm:text-4xl leading-tight",
+    h2: "text-white font-bold text-2xl sm:text-3xl leading-snug",
+    h3: "text-white font-semibold text-xl sm:text-2xl",
+    h4: "text-white font-semibold text-lg",
   },
 
   // Interactive elements
@@ -21,7 +22,7 @@ export const typography = {
     link: "text-purple-400 hover:text-purple-300 font-medium",
   },
 
-  // Special sections
+  // Sections & labels
   sections: {
     title: "text-white font-bold text-xl",
     subtitle: "text-white/80 text-lg",
@@ -29,7 +30,6 @@ export const typography = {
   }
 };
 
-// Helper function to combine typography classes
 export const combineTypography = (...classes: string[]) => {
   return classes.join(" ");
 };

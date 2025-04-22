@@ -5,9 +5,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { typography } from "@/lib/typography";
 
-// Subtle, glassy neutral background for metric cards
-// Add a max-width for better alignment on mobile
-
 interface MetricCardProps {
   icon: React.ElementType;
   value: string | number;
@@ -34,26 +31,33 @@ export const MetricCard = ({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            // New glassy background + subtle gradient
-            "flex flex-col items-center justify-center p-4 rounded-2xl border border-white/8 backdrop-blur-2xl transition-all duration-300",
+            "flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl border border-white/8 backdrop-blur-2xl transition-all duration-300",
             "bg-gradient-to-br from-card/85 via-card/90 to-secondary/60",
             gradientClass,
             "hover:scale-[1.015] shadow-sm",
             "min-w-[84px] max-w-[108px] w-full"
           )}
         >
-          {/* Icon circle with softened bg */}
           <div className="mb-1 rounded-full bg-white/10 shadow-sm flex h-9 w-9 items-center justify-center">
             <Icon className="h-5 w-5 text-purple-300" />
           </div>
-          {/* Value (prominent) */}
-          <div className={cn("text-xl font-bold", valueClass ?? typography.headings.primary, "mt-1")}>
+          {/* Value (prominent heading) */}
+          <div
+            className={cn(
+              typography.headings.h3,
+              "mt-1 text-center",
+              valueClass
+            )}
+            style={{lineHeight: 1.05}}
+          >
             {value}
           </div>
-          {/* Label (muted, defined style) */}
-          <div className={
-            cn("text-xs mt-1 tracking-wide", labelClass ?? typography.sections.label, "text-gray-400 font-medium")
-          }>
+          {/* Label (subheading, muted) */}
+          <div className={cn(
+            typography.sections.label,
+            "text-center mt-1",
+            labelClass
+          )}>
             {label}
           </div>
           {/* Progress (if present) */}
