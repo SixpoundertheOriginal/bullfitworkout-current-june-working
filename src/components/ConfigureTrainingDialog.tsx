@@ -246,7 +246,9 @@ export function ConfigureTrainingDialog({
                 }}
                 className={cn(
                   "relative w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300",
-                  isActive
+                  index === (steps.length - 1)
+                    ? "bg-purple-600 border border-purple-400/30"
+                    : isActive
                     ? "bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-white/20"
                     : isCompleted
                     ? "bg-purple-600 border border-purple-400/30"
@@ -428,7 +430,7 @@ export function ConfigureTrainingDialog({
                       <span className={typography.text.muted}>Quest Duration</span>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={cn(typography.text.primary, "text-2xl font-bold")}>
-                          {duration}
+                          {Math.round(duration)}
                         </span>
                         <span className={typography.text.secondary}>minutes</span>
                       </div>
