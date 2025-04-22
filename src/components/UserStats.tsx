@@ -27,8 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
-import { StatCard } from "@/components/ui/StatCard";
-import StatsLoadingSkeleton from "@/components/ui/StatsLoadingSkeleton";
+import { StatCard } from "@/components/metrics/StatCard";
+import StatsLoadingSkeleton from "@/components/metrics/StatsLoadingSkeleton";
 
 // Define an interface for the workout data structure from Supabase
 interface WorkoutSession {

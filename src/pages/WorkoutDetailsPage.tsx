@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
-import { StatsCard } from "@/components/workouts/StatsCard";
+import { EnhancedStatsCard } from "@/components/metrics/EnhancedStatsCard";
 import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
 import { TopExercisesTable } from "@/components/workouts/TopExercisesTable";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
@@ -56,7 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExerciseDialog } from "@/components/ExerciseDialog";  // Update this import
+import { ExerciseDialog } from "@/components/ExerciseDialog";
 
 interface WorkoutDetails {
   id: string;
@@ -175,12 +175,12 @@ const WorkoutDetailsPage = () => {
     return (
       <div className="grid grid-cols-1 gap-4">
         <div className="grid grid-cols-2 gap-4">
-          <StatsCard 
+          <EnhancedStatsCard 
             title="Total Workouts" 
             value={stats.totalWorkouts}
             icon={<Dumbbell size={20} />}
           />
-          <StatsCard 
+          <EnhancedStatsCard 
             title="Workout Time" 
             value={`${stats.totalDuration} min`}
             icon={<Clock size={20} />}
@@ -469,7 +469,7 @@ const WorkoutDetailsPage = () => {
         onSave={handleSaveExerciseSets}
       />
       
-      <ExerciseDialog  // Replace AddExerciseDialog with ExerciseDialog
+      <ExerciseDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSubmit={async (exercise) => {
@@ -478,7 +478,7 @@ const WorkoutDetailsPage = () => {
           }
           return Promise.resolve();
         }}
-        mode="add"  // Specify the mode explicitly
+        mode="add"
       />
       
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
