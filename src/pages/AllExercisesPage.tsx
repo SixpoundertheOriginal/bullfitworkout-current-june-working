@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
@@ -31,25 +30,26 @@ export default function AllExercisesPage() {
     setShowAddDialog(true);
   };
 
-  const handleAddExercise = async (exercise: { name: string; description: string }) => {
-    // Compose minimal exercise for createExercise mutation
-    await new Promise(resolve => setTimeout(resolve, 350)); // Intentional small delay for UX
+  const handleAddExercise = async (exercise: {
+    name: string;
+    description: string;
+    primary_muscle_groups: MuscleGroup[];
+    secondary_muscle_groups: MuscleGroup[];
+    equipment_type: EquipmentType[];
+    movement_pattern: MovementPattern;
+    difficulty: Difficulty;
+    instructions?: Record<string, any>;
+    is_compound?: boolean;
+    tips?: string[];
+    variations?: string[];
+    metadata?: Record<string, any>;
+  }) => {
+    await new Promise(resolve => setTimeout(resolve, 350));
     return new Promise<void>((resolve, reject) => {
       createExercise(
         {
-          name: exercise.name,
-          description: exercise.description,
-          primary_muscle_groups: ["full body"],
-          secondary_muscle_groups: [],
-          equipment_type: [],
-          movement_pattern: "push",
-          difficulty: "beginner",
-          instructions: {},
-          is_compound: false,
-          tips: [],
-          variations: [],
-          metadata: {},
-          user_id: "", // Will be set by backend OR from user context
+          ...exercise,
+          user_id: "",
         },
         {
           onSuccess: () => resolve(),
