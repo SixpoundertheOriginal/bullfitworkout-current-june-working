@@ -162,6 +162,8 @@ export function ConfigureTrainingDialog({
     setTrainingType(type);
     selectSound?.play().catch(() => {});
     setXpEarned(prev => prev + 15);
+    setCurrentStep(ConfigurationStep.TrainingFocus);
+    stepCompleteSound?.play().catch(() => {});
   };
 
   const handleNextStep = () => {

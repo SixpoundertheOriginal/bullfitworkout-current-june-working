@@ -212,6 +212,12 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     }
   };
 
+  const handleTypeSelect = (type: string) => {
+    if (!isDragging) {
+      onSelect(type);
+    }
+  };
+
   return (
     <div 
       className="w-full overflow-visible relative"
@@ -268,7 +274,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                       "transition-all duration-300",
                       isSelected ? "scale-100" : "scale-95 hover:scale-98"
                     )}
-                    onClick={() => !isDragging && onSelect(type.name)}
+                    onClick={() => handleTypeSelect(type.name)}
                     whileHover={{ scale: isSelected ? 1 : 0.98 }}
                     whileTap={{ scale: 0.95 }}
                   >
