@@ -11,9 +11,21 @@ export type ExerciseMetadata = {
   display_unit?: string;
 };
 
-type ExerciseInput = Omit<Exercise, 'id' | 'created_at'> & { 
+type ExerciseInput = {
+  name: string;
+  description: string;
+  user_id: string;
+  primary_muscle_groups: MuscleGroup[];
+  secondary_muscle_groups: MuscleGroup[];
+  equipment_type: EquipmentType[];
+  movement_pattern: MovementPattern;
+  difficulty: Difficulty;
+  instructions?: Record<string, any>;
+  is_compound?: boolean;
+  tips?: string[];
+  variations?: string[];
+  metadata?: Record<string, any>;
   created_at?: string;
-  instructions?: Record<string, any>; // Making instructions optional in the input
 };
 
 export const useExercises = () => {

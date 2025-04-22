@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,6 @@ export default function AllExercisesPage() {
         {
           ...exercise,
           user_id: "",
-          metadata: exercise.metadata || {}
         },
         {
           onSuccess: () => resolve(),

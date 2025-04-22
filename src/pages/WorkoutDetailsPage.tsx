@@ -101,7 +101,7 @@ const WorkoutDetailsPage = () => {
   const [currentExercise, setCurrentExercise] = useState<string>("");
   const [exerciseSetsToEdit, setExerciseSetsToEdit] = useState<ExerciseSet[]>([]);
   
-  const [addExerciseModalOpen, setShowAddDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState<string>("");
   
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
