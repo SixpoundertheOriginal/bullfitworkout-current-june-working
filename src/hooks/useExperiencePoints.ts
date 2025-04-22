@@ -27,10 +27,10 @@ export interface ExperienceData {
 }
 
 interface TrainingExperience {
-  totalXp: number | string;
+  totalXp: number;
   trainingTypeLevels: {
     [key: string]: {
-      xp: number | string;
+      xp: number;
       level?: number;
       progress?: number;
     }
@@ -39,7 +39,7 @@ interface TrainingExperience {
 
 interface UserProfileWithExperience {
   id: string;
-  training_experience?: TrainingExperience;
+  training_experience?: TrainingExperience | Record<string, any>;
 }
 
 export const calculateLevelRequirement = (level: number): number => {
@@ -88,6 +88,7 @@ export function useExperiencePoints() {
           throw profileError;
         }
 
+        // Default structure with XP as number
         const defaultExpData: ExperienceData = {
           totalXp: 0,
           level: 1,
@@ -106,21 +107,19 @@ export function useExperiencePoints() {
           return defaultExpData;
         }
 
-        const trainingExperienceData = profileData.training_experience as unknown as TrainingExperience;
-
-        // Safe conversion of totalXp
+        // Defensive conversion: ensure all XP values are numbers at the root
+        const trainingExperienceData = profileData.training_experience as Record<string, any>;
         const totalXp = toSafeNumber(trainingExperienceData.totalXp);
 
         const { level, progress } = calculateLevelFromXP(totalXp);
-
         const previousLevelsXp = Array.from({ length: level - 1 }).reduce((sum, _, i) =>
           sum + calculateLevelRequirement(i + 1), 0);
 
         const currentLevelXp = totalXp - previousLevelsXp;
-
         const nextLevelThreshold = calculateLevelRequirement(level + 1);
 
-        const trainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
+        // Always process types as numbers
+        const rawTrainingTypeLevels = trainingExperienceData.trainingTypeLevels || {
           "Strength": { xp: 0 },
           "Cardio": { xp: 0 },
           "Yoga": { xp: 0 },
@@ -128,16 +127,12 @@ export function useExperiencePoints() {
         };
 
         const processedTrainingTypes: ExperienceData['trainingTypeLevels'] = {};
-
-        Object.keys(trainingTypeLevels).forEach(type => {
-          const typeData = trainingTypeLevels[type];
-          // Safe conversion of xp for each type
-          const typeXp = toSafeNumber(typeData.xp);
-
+        Object.entries(rawTrainingTypeLevels).forEach(([key, value]) => {
+          const typeXp = toSafeNumber((value as any)?.xp);
           const levelData = calculateLevelFromXP(typeXp);
 
-          processedTrainingTypes[type] = {
-            xp: typeXp,
+          processedTrainingTypes[key] = {
+            xp: typeXp,      // Always a number
             level: levelData.level,
             progress: levelData.progress
           };
@@ -181,7 +176,7 @@ export function useExperiencePoints() {
     }) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Ensure xp is a number
+      // Ensure xp is a number at all times
       const xpAmount = toSafeNumber(xp);
 
       if (isNaN(xpAmount)) {
@@ -206,20 +201,30 @@ export function useExperiencePoints() {
         }
       };
 
-      const currentExp = currentData.training_experience 
-        ? (currentData.training_experience as unknown as TrainingExperience)
-        : defaultExp;
+      // Defensive: ensure all XP values are numbers NOW
+      let currentExp: TrainingExperience;
+      if (currentData?.training_experience) {
+        const teRaw = currentData.training_experience as Record<string, any>;
+        currentExp = {
+          totalXp: toSafeNumber(teRaw.totalXp),
+          trainingTypeLevels: {}
+        };
+        const typeLevels = teRaw.trainingTypeLevels || {};
+        ["Strength", "Cardio", "Yoga", "Calisthenics"].forEach(type => {
+          currentExp.trainingTypeLevels[type] = {
+            xp: toSafeNumber((typeLevels[type]?.xp))
+          };
+        });
+      } else {
+        currentExp = defaultExp;
+      }
 
-      // Defensive: ensure totalXp is a number
-      const currentTotalXp = toSafeNumber(currentExp.totalXp);
-
+      const currentTotalXp = currentExp.totalXp;
       if (isNaN(currentTotalXp)) {
         throw new Error("Invalid current XP value");
       }
 
       const newTotalXp = currentTotalXp + xpAmount;
-
-      // Defensive: deep copy
       const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
       updatedExp.totalXp = newTotalXp;
 
@@ -228,8 +233,7 @@ export function useExperiencePoints() {
         updatedExp.trainingTypeLevels &&
         Object.prototype.hasOwnProperty.call(updatedExp.trainingTypeLevels, trainingType)
       ) {
-        const typeXpValue = updatedExp.trainingTypeLevels[trainingType].xp;
-        const currentTypeXp = toSafeNumber(typeXpValue);
+        const currentTypeXp = toSafeNumber(updatedExp.trainingTypeLevels[trainingType].xp);
 
         if (isNaN(currentTypeXp)) {
           throw new Error("Invalid training type XP value");
