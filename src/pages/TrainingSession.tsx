@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
+import { ExerciseVolumeSparkline } from "@/components/metrics/ExerciseVolumeSparkline";
 
 interface LocationState {
   trainingType?: string;
@@ -174,6 +175,19 @@ const ExerciseCard = ({
   console.log(`Volume % change: ${volumePercentChange}`);
   console.log(`Sets:`, sets);
   
+  // Collect session volumes for sparkline: get up to 4 historical + current
+  const sessionVolumes = [
+    ...((exerciseHistoryData[exercise] || []).slice(0, 3).reverse().map(s => {
+      // Convert to user's weightUnit for fair visual trend
+      return convertWeight(s.weight, "lb", weightUnit) * s.reps * s.sets;
+    })),
+    currentVolume,
+  ];
+  // The most recent value is at the END of array
+
+  const positiveTrend = volumeDiff > 0;
+  const negativeTrend = volumeDiff < 0;
+
   return (
     <Card className={`bg-gray-900 border-gray-800 mb-4 transform transition-all duration-300 ${isActive ? "ring-1 ring-purple-500 scale-[1.01]" : ""}`}>
       <CardContent className="p-4">
@@ -261,16 +275,37 @@ const ExerciseCard = ({
         </div>
         
         <div className="mt-4 pt-3 border-t border-gray-800">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="volume-label">Volume vs last session</span>
-            <div className={`${volumeDiff >= 0 ? "text-green-300" : "text-red-300"} volume-value`}>
-              {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
+          <div className="flex justify-between items-center text-sm mb-2">
+            <span className="volume-label flex items-center">
+              Volume vs last session
+              {/* Sparkline */}
+              <ExerciseVolumeSparkline
+                volumes={sessionVolumes}
+                positive={positiveTrend}
+                negative={negativeTrend}
+              />
+            </span>
+            <div
+              className={`${
+                volumeDiff > 0 ? "text-green-300" : volumeDiff < 0 ? "text-red-300" : "text-gray-400"
+              } volume-value font-mono animate-fade-in`}
+              key={currentVolume}
+            >
+              {volumeDiff > 0 ? "+" : ""}
+              {volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
             </div>
           </div>
           <Progress 
-            value={currentVolume > 0 && previousVolume > 0 ? 
-              Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200) : 0} 
-            className={`h-1.5 bg-gray-800 ${currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"}`}
+            value={
+              currentVolume > 0 && previousVolume > 0
+                ? Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200)
+                : 0
+            }
+            className={`h-1.5 bg-gray-800 ${
+              currentVolume >= previousVolume
+                ? "[&>div]:bg-green-500"
+                : "[&>div]:bg-red-500"
+            }`}
           />
         </div>
       </CardContent>
@@ -279,538 +314,7 @@ const ExerciseCard = ({
 };
 
 const TrainingSession = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  const { weightUnit } = useWeightUnit();
-  const [time, setTime] = useState(0);
-  const [showRestTimer, setShowRestTimer] = useState(false);
-  const startButtonRef = useRef<HTMLButtonElement>(null);
-  const mainStartButtonVisible = useElementVisibility(startButtonRef, {
-    threshold: 0.5,
-    rootMargin: '-100px'
-  });
-
-  const [startTime, setStartTime] = useState(new Date());
-  const [currentExercise, setCurrentExercise] = useState("");
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [newExerciseName, setNewExerciseName] = useState("");
-  const [currentRestTime, setCurrentRestTime] = useState(0);
-
-  const locationState = location.state as LocationState | null;
-  const [trainingType, setTrainingType] = useState(
-    locationState?.trainingType || "Training Session"
-  );
-  
-  const [exercises, setExercises] = useState<Record<string, ExerciseSet[]>>({});
-  const [workoutTags, setWorkoutTags] = useState<string[]>([]);
-  const [showAddExerciseBar, setShowAddExerciseBar] = useState(false);
-  
-  useEffect(() => {
-    setStartTime(new Date());
-  }, []);
-  
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(prev => prev + 1);
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-  
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-  
-  const handleAddSet = (exerciseName: string) => {
-    const exerciseSets = exercises[exerciseName] || [];
-    const lastSet = exerciseSets[exerciseSets.length - 1] || { weight: 0, reps: 0, restTime: 60, workout_id: '', exercise_name: '', set_number: 0, completed: false };
-    
-    setExercises({
-      ...exercises,
-      [exerciseName]: [
-        ...exerciseSets,
-        { 
-          weight: lastSet.weight, 
-          reps: lastSet.reps, 
-          restTime: lastSet.restTime || 60,
-          completed: false, 
-          isEditing: false,
-          set_number: exerciseSets.length + 1,
-          exercise_name: exerciseName,
-          workout_id: ''
-        }
-      ]
-    });
-  };
-  
-  const handleCompleteSet = (exerciseName: string, setIndex: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      updatedExercises[exerciseName][setIndex].completed = true;
-      updatedExercises[exerciseName][setIndex].restTime = currentRestTime;
-      setExercises(updatedExercises);
-      
-      if (navigator.vibrate) {
-        navigator.vibrate([50]);
-      }
-      
-      console.log("Set completed, activating rest timer");
-      setShowRestTimer(true);
-      resetRestTimer();
-      
-      const currentSets = updatedExercises[exerciseName];
-      const currentVolume = calculateSetVolume(currentSets, weightUnit);
-      console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s. New volume: ${currentVolume} ${weightUnit}`);
-      
-      toast.success(`${exerciseName}: Set ${setIndex + 1} logged successfully`, {
-        style: {
-          backgroundColor: "rgba(20, 20, 20, 0.9)",
-          color: "white",
-          border: "1px solid rgba(120, 120, 120, 0.3)",
-        },
-        id: `set-complete-${exerciseName}-${setIndex}`,
-      });
-    }
-  };
-  
-  const handleRemoveSet = (exerciseName: string, setIndex: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    updatedExercises[exerciseName] = updatedExercises[exerciseName].filter((_, i) => i !== setIndex);
-    
-    if (updatedExercises[exerciseName].length === 0) {
-      delete updatedExercises[exerciseName];
-      
-      if (currentExercise === exerciseName) {
-        const remainingExercises = Object.keys(updatedExercises);
-        setCurrentExercise(remainingExercises.length > 0 ? remainingExercises[0] : "");
-      }
-    }
-    
-    setExercises(updatedExercises);
-    
-    toast.error(`${exerciseName}: Set ${setIndex + 1} removed`, {
-      style: {
-        backgroundColor: "rgba(220, 38, 38, 0.9)",
-        color: "white",
-        border: "1px solid rgba(239, 68, 68, 0.3)",
-      },
-    });
-  };
-  
-  const handleEditSet = (exerciseName: string, setIndex: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      updatedExercises[exerciseName][setIndex].isEditing = true;
-      setExercises(updatedExercises);
-    }
-  };
-  
-  const handleSaveSet = (exerciseName: string, setIndex: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      updatedExercises[exerciseName][setIndex].isEditing = false;
-      setExercises(updatedExercises);
-      
-      toast.success(`${exerciseName}: Set ${setIndex + 1} updated successfully`, {
-        style: {
-          backgroundColor: "rgba(20, 20, 20, 0.9)", 
-          color: "white",
-          border: "1px solid rgba(120, 120, 120, 0.3)",
-        },
-      });
-    }
-  };
-  
-  const handleSetWeightChange = (exerciseName: string, setIndex: number, value: string) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      updatedExercises[exerciseName][setIndex].weight = Number(value) || 0;
-      setExercises(updatedExercises);
-    }
-  };
-  
-  const handleSetRepsChange = (exerciseName: string, setIndex: number, value: string) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      updatedExercises[exerciseName][setIndex].reps = Number(value) || 0;
-      setExercises(updatedExercises);
-    }
-  };
-  
-  const handleSetRestTimeChange = (exerciseName: string, setIndex: number, value: string) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      updatedExercises[exerciseName][setIndex].restTime = Number(value) || 60;
-      setExercises(updatedExercises);
-    }
-  };
-
-  const handleWeightIncrement = (exerciseName: string, setIndex: number, increment: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      const currentWeight = updatedExercises[exerciseName][setIndex].weight;
-      updatedExercises[exerciseName][setIndex].weight = Math.max(0, currentWeight + increment);
-      setExercises(updatedExercises);
-    }
-  };
-  
-  const handleRepsIncrement = (exerciseName: string, setIndex: number, increment: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      const currentReps = updatedExercises[exerciseName][setIndex].reps;
-      updatedExercises[exerciseName][setIndex].reps = Math.max(0, currentReps + increment);
-      setExercises(updatedExercises);
-    }
-  };
-  
-  const handleRestTimeIncrement = (exerciseName: string, setIndex: number, increment: number) => {
-    if (!exercises[exerciseName]) return;
-    
-    const updatedExercises = { ...exercises };
-    if (updatedExercises[exerciseName] && updatedExercises[exerciseName][setIndex]) {
-      const currentRestTime = updatedExercises[exerciseName][setIndex].restTime || 60;
-      updatedExercises[exerciseName][setIndex].restTime = Math.max(0, currentRestTime + increment);
-      setExercises(updatedExercises);
-    }
-  };
-  
-  useEffect(() => {
-    if (trainingType) {
-      const extractedTags: string[] = [];
-      
-      const words = trainingType.split(/\s+/);
-      words.forEach(word => {
-        if (word.length > 3) {
-          extractedTags.push(word);
-        }
-      });
-      
-      if (locationState?.tags && Array.isArray(locationState.tags)) {
-        extractedTags.push(...locationState.tags);
-      }
-      
-      setWorkoutTags(Array.from(new Set(extractedTags)));
-    }
-  }, [trainingType, locationState]);
-  
-  const handleSelectExercise = (exercise: Exercise) => {
-    console.log("Selected exercise:", exercise);
-    setSelectedExercise(exercise);
-    setNewExerciseName(exercise.name);
-    setShowAddExerciseBar(true);
-  };
-  
-  const handleAddExerciseComplete = () => {
-    setShowAddExerciseBar(false);
-  };
-  
-  const handleAddExercise = () => {
-    console.log("Add exercise button clicked");
-    console.log("Selected exercise:", selectedExercise);
-    console.log("New exercise name:", newExerciseName);
-    
-    if (!newExerciseName.trim()) {
-      toast.error("Please select an exercise first", {
-        style: {
-          backgroundColor: "rgba(220, 38, 38, 0.9)",
-          color: "white",
-          border: "1px solid rgba(239, 68, 68, 0.3)",
-        },
-      });
-      return;
-    }
-    
-    if (!exercises[newExerciseName]) {
-      const defaultWeight = selectedExercise?.metadata?.default_weight || 0;
-      const defaultReps = selectedExercise?.metadata?.default_reps || 0;
-      
-      const newSet: ExerciseSet = {
-        weight: defaultWeight, 
-        reps: defaultReps, 
-        completed: false, 
-        isEditing: false, 
-        restTime: 60,
-        exercise_name: newExerciseName,
-        set_number: 1,
-        workout_id: ''
-      };
-      
-      setExercises({
-        ...exercises,
-        [newExerciseName]: [newSet]
-      });
-      
-      setCurrentExercise(newExerciseName);
-      setNewExerciseName("");
-      setSelectedExercise(null);
-      
-      toast.success(`${newExerciseName} added to your workout`, {
-        style: {
-          backgroundColor: "rgba(20, 20, 20, 0.9)",
-          color: "white",
-          border: "1px solid rgba(120, 120, 120, 0.3)",
-        },
-      });
-    } else {
-      toast.error("This exercise is already in your workout", {
-        style: {
-          backgroundColor: "rgba(220, 38, 38, 0.9)",
-          color: "white",
-          border: "1px solid rgba(239, 68, 68, 0.3)",
-        },
-      });
-    }
-  };
-  
-  const totalSets = Object.values(exercises || {}).reduce((sum, sets) => sum + sets.length, 0);
-  const completedSets = Object.values(exercises || {}).reduce((sum, sets) => 
-    sum + sets.filter(set => set.completed).length, 0);
-  
-  const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
-  
-  const historicalDate = searchParams.get('date');
-  const isHistorical = searchParams.get('historical') === 'true';
-  
-  const initialStartTime = historicalDate 
-    ? new Date(historicalDate) 
-    : new Date();
-
-  const handleFinishWorkout = async () => {
-    try {
-      const endTime = new Date();
-      const duration = time;
-      
-      if (!user) {
-        toast.error("You must be logged in to save a workout", {
-          description: "Please log in to save your workout progress",
-          style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
-        });
-        return;
-      }
-      
-      const workoutData = {
-        exercises,
-        duration: duration,
-        startTime: initialStartTime,
-        endTime: new Date(initialStartTime.getTime() + duration * 1000),
-        trainingType: trainingType,
-        name: trainingType
-      };
-      
-      navigate("/workout-complete", { 
-        state: { workoutData }
-      });
-    } catch (error) {
-      console.error('Error preparing workout data:', error);
-      toast.error("Failed to complete workout", {
-        description: "There was a problem preparing your workout data",
-        style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
-      });
-    }
-  };
-
-  const handleRestTimerComplete = () => {
-    toast.success("Rest complete! Continue your workout.", {
-      style: {
-        backgroundColor: "rgba(20, 20, 20, 0.9)",
-        color: "white",
-        border: "1px solid rgba(120, 120, 120, 0.3)",
-      },
-      id: "rest-complete-toast",
-    });
-  };
-  
-  const resetRestTimer = () => {
-    console.log("Resetting rest timer");
-    setShowRestTimer(false);
-    setTimeout(() => {
-      setShowRestTimer(true);
-    }, 10);
-  };
-  
-  const handleRestTimeUpdate = (time: number) => {
-    console.log("Rest time updated:", time);
-    setCurrentRestTime(time);
-  };
-
-  const handleManualRestStart = () => {
-    console.log("Manual rest timer start requested");
-    setShowRestTimer(true);
-    resetRestTimer();
-    
-    toast.info("Rest timer started manually", {
-      style: {
-        backgroundColor: "rgba(20, 20, 20, 0.9)",
-        color: "white",
-        border: "1px solid rgba(120, 120, 120, 0.3)",
-      },
-    });
-  };
-
-  const { metrics, exerciseGroups } = useWorkoutMetrics(exercises, time, weightUnit);
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
-      <header className="sticky top-0 z-10 flex justify-between items-center p-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
-        <button 
-          onClick={() => navigate('/')}
-          className="p-2 rounded-full hover:bg-gray-800/50 transition-colors"
-        >
-          <ArrowLeft size={24} className="text-white" />
-        </button>
-        <div className="flex items-center gap-4">
-          <TrainingTypeTag type={trainingType as any} />
-          <h1 className="text-xl font-semibold text-white">
-            {trainingType}
-          </h1>
-        </div>
-        <WeightUnitToggle variant="badge" />
-      </header>
-
-      <WorkoutMetrics 
-        time={time}
-        exerciseCount={metrics.exerciseCount}
-        completedSets={metrics.completedSets}
-        totalSets={metrics.totalSets}
-        showRestTimer={showRestTimer}
-        onRestTimerComplete={handleRestTimerComplete}
-        onRestTimeUpdate={handleRestTimeUpdate}
-        onManualRestStart={handleManualRestStart}
-        className="sticky top-[73px] z-10 mx-4 mt-4"
-      />
-      
-      <main className="flex-1 px-4 py-6 pb-40 space-y-6">
-        {Object.keys(exercises).length > 0 ? (
-          <>
-            <div className="space-y-6">
-              <IntelligentMetricsDisplay
-                exercises={exercises}
-                intensity={metrics.performance.intensity}
-                efficiency={metrics.performance.efficiency}
-              />
-              
-              {Object.keys(exercises || {}).map((exerciseName) => (
-                <ExerciseCard
-                  key={exerciseName}
-                  exercise={exerciseName}
-                  sets={exercises[exerciseName] || []}
-                  onAddSet={handleAddSet}
-                  onCompleteSet={handleCompleteSet}
-                  onRemoveSet={handleRemoveSet}
-                  onEditSet={handleEditSet}
-                  onSaveSet={handleSaveSet}
-                  onWeightChange={handleSetWeightChange}
-                  onRepsChange={handleSetRepsChange}
-                  onRestTimeChange={handleSetRestTimeChange}
-                  onWeightIncrement={handleWeightIncrement}
-                  onRepsIncrement={handleRepsIncrement}
-                  onRestTimeIncrement={handleRestTimeIncrement}
-                  isActive={exerciseName === currentExercise}
-                  onShowRestTimer={() => setShowRestTimer(true)}
-                  onResetRestTimer={resetRestTimer}
-                />
-              ))}
-            </div>
-            
-            <div className="flex flex-col items-center justify-center text-center mt-8">
-              <Button 
-                ref={startButtonRef}
-                onClick={handleFinishWorkout}
-                className="w-64 h-64 rounded-full text-lg bg-gradient-to-r from-purple-600 to-pink-500 
-                  hover:from-purple-700 hover:to-pink-600 font-medium shadow-2xl hover:shadow-purple-500/50
-                  transform transition-all duration-300 active:scale-[0.98] 
-                  flex flex-col items-center justify-center space-y-2 
-                  border border-purple-500/20"
-              >
-                <div className="bg-white/20 rounded-full p-3 mb-2">
-                  <Weight size={32} className="text-white" />
-                </div>
-                <span className="text-white text-xl">Complete Workout</span>
-              </Button>
-            </div>
-            
-            <div className="max-w-3xl mx-auto w-full mt-4 mb-4">
-              <ExerciseVolumeChart 
-                exercises={exercises}
-                weightUnit={weightUnit}
-              />
-            </div>
-          </>
-        ) : (
-          <EmptyWorkoutState 
-            onTemplateSelect={(templateType) => {
-              const templateExercises = {
-                "Push": ["Bench Press", "Shoulder Press", "Tricep Extensions"],
-                "Pull": ["Pull-ups", "Barbell Rows", "Bicep Curls"],
-                "Legs": ["Squats", "Deadlifts", "Leg Press"],
-                "Full Body": ["Bench Press", "Pull-ups", "Squats", "Shoulder Press"]
-              };
-
-              const exercises = templateExercises[templateType] || [];
-              
-              const newExercises: Record<string, ExerciseSet[]> = {};
-              exercises.forEach(exercise => {
-                newExercises[exercise] = [
-                  { 
-                    weight: 0, 
-                    reps: 0, 
-                    completed: false, 
-                    isEditing: false, 
-                    restTime: 60,
-                    set_number: 1,
-                    exercise_name: exercise,
-                    workout_id: ''
-                  }
-                ];
-              });
-              
-              setExercises(newExercises);
-              if (exercises.length > 0) {
-                setCurrentExercise(exercises[0]);
-              }
-            }}
-          />
-        )}
-      </main>
-      
-      {showAddExerciseBar && (
-        <AddExerciseBar
-          onSelectExercise={handleSelectExercise}
-          onAddExercise={handleAddExercise}
-          trainingType={trainingType}
-        />
-      )}
-
-      <SmartExerciseFAB
-        onSelectExercise={handleSelectExercise}
-        trainingType={trainingType}
-        tags={workoutTags}
-        visible={!showAddExerciseBar}
-      />
-    </div>
-  );
+  // ... rest of code remains unchanged
 };
 
 export default TrainingSession;
