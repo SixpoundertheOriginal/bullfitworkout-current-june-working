@@ -29,7 +29,10 @@ export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ onTemplate
       >
         <CardContent className="p-6 space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">Begin Your Workout</h2>
+            <h2 className="text-2xl font-bold text-white mb-1">Begin Your Workout</h2>
+            <div className="mb-1 mt-0.5 text-purple-100 text-md font-medium">
+              Embark on a new fitness adventure.
+            </div>
             <p className="text-purple-200 text-sm">
               Sculpt your strength, one rep at a time. Your fitness journey starts now.
             </p>
