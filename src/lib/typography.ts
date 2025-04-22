@@ -14,6 +14,10 @@ export const typography = {
     h2: "text-white font-bold text-2xl sm:text-3xl leading-snug",
     h3: "text-white font-semibold text-xl sm:text-2xl",
     h4: "text-white font-semibold text-lg",
+    // Add the missing properties that are being referenced
+    primary: "text-white font-bold text-2xl leading-tight",
+    section: "text-white font-semibold text-lg",
+    collapsible: "text-white font-medium text-base"
   },
 
   // Interactive elements
