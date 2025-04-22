@@ -107,7 +107,7 @@ export function useExperiencePoints() {
         };
         
         // If no training experience data exists (either the column doesn't exist yet or it's null)
-        if (!profileData || !('training_experience' in profileData) || !profileData.training_experience) {
+        if (!profileData || !profileData.training_experience) {
           return defaultExpData;
         }
         
@@ -115,13 +115,18 @@ export function useExperiencePoints() {
         const trainingExperienceData = profileData.training_experience as unknown as TrainingExperience;
         
         // Calculate level and progress based on total XP
-        const totalXp = Number(trainingExperienceData.totalXp || 0);
+        // Ensure totalXp is a number
+        const totalXp = typeof trainingExperienceData.totalXp === 'number' 
+          ? trainingExperienceData.totalXp 
+          : Number(trainingExperienceData.totalXp || 0);
+          
         const { level, progress } = calculateLevelFromXP(totalXp);
         
         // Calculate current level XP and next threshold
-        const currentLevelXp = totalXp - 
-          Array.from({ length: level - 1 }).reduce((sum, _, i) => 
+        const previousLevelsXp = Array.from({ length: level - 1 }).reduce((sum, _, i) => 
             sum + calculateLevelRequirement(i + 1), 0);
+            
+        const currentLevelXp = totalXp - previousLevelsXp;
         
         const nextLevelThreshold = calculateLevelRequirement(level + 1);
         
@@ -138,7 +143,10 @@ export function useExperiencePoints() {
         
         Object.keys(trainingTypeLevels).forEach(type => {
           const typeData = trainingTypeLevels[type];
-          const typeXp = Number(typeData.xp || 0);
+          const typeXp = typeof typeData.xp === 'number' 
+            ? typeData.xp 
+            : Number(typeData.xp || 0);
+            
           const levelData = calculateLevelFromXP(typeXp);
           
           processedTrainingTypes[type] = {
@@ -210,13 +218,16 @@ export function useExperiencePoints() {
         };
         
         // Get the current experience data or use default
-        const currentExp = 
-          ('training_experience' in currentData && currentData.training_experience)
+        const currentExp = currentData.training_experience 
           ? (currentData.training_experience as unknown as TrainingExperience)
           : defaultExp;
             
-        // Update total XP
-        const newTotalXp = Number(currentExp.totalXp || 0) + xp;
+        // Update total XP - ensure we're working with numbers
+        const currentTotalXp = typeof currentExp.totalXp === 'number' 
+          ? currentExp.totalXp 
+          : Number(currentExp.totalXp || 0);
+          
+        const newTotalXp = currentTotalXp + xp;
         
         // Create a deep copy of the current exp to avoid mutation issues
         const updatedExp = JSON.parse(JSON.stringify(currentExp)) as TrainingExperience;
@@ -224,7 +235,10 @@ export function useExperiencePoints() {
         
         // Update training type XP if specified
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
-          const currentTypeXp = Number(updatedExp.trainingTypeLevels[trainingType].xp || 0);
+          const currentTypeXp = typeof updatedExp.trainingTypeLevels[trainingType].xp === 'number' 
+            ? updatedExp.trainingTypeLevels[trainingType].xp 
+            : Number(updatedExp.trainingTypeLevels[trainingType].xp || 0);
+            
           updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xp;
         }
         
@@ -232,28 +246,26 @@ export function useExperiencePoints() {
         const { error: updateError } = await supabase
           .from('user_profiles')
           .update({
-            // Use as any to bypass TypeScript check until types are updated
-            training_experience: updatedExp as any
+            training_experience: updatedExp as unknown as Json
           })
           .eq('id', user.id);
           
         if (updateError) throw updateError;
         
-        // Try to log experience - this might fail if the table doesn't exist yet
+        // Try to log experience using REST API call instead of RPC
         try {
-          // Use raw SQL query instead
-          const { error: logError } = await supabase.rpc(
-            'log_experience_gain', 
-            { 
+          // Use direct POST request to the experience_logs table
+          const { error: logError } = await supabase
+            .from('experience_logs')
+            .insert({
               user_id: user.id,
-              xp_amount: xp,
-              training_type_value: trainingType || null,
-              source_value: 'workout_completion',
-              metadata_value: {
+              amount: xp,
+              training_type: trainingType || null,
+              source: 'workout_completion',
+              metadata: {
                 timestamp: new Date().toISOString()
               }
-            }
-          );
+            });
           
           if (logError) {
             console.error("Error logging experience gain:", logError);
