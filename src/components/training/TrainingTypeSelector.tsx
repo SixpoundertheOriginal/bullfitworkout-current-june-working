@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -90,8 +91,11 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
       <div className="absolute inset-0 w-full h-full">
         {TRAINING_TYPES.map((type, index) => {
-          const angle = (index * (360 / TRAINING_TYPES.length)) * (Math.PI / 180);
-          const radius = 160; // Distance from center
+          // Adjust radius to bring buttons closer
+          const radius = 120; // Reduced from 160
+          const totalTypes = TRAINING_TYPES.length;
+          const angle = (index * (360 / totalTypes)) * (Math.PI / 180);
+          
           const x = Math.cos(angle) * radius + radius;
           const y = Math.sin(angle) * radius + radius;
           
