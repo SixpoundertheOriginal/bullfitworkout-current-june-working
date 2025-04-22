@@ -31,44 +31,53 @@ export const MetricCard = ({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            "flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl border border-white/8 backdrop-blur-2xl transition-all duration-300",
-            "bg-gradient-to-br from-card/85 via-card/90 to-secondary/60",
+            "flex flex-col items-center justify-center p-4 rounded-2xl border border-white/10 backdrop-blur-xl transition-all duration-300",
+            "bg-gradient-to-br from-gray-900/80 via-gray-800/40 to-gray-900/90",
             gradientClass,
-            "hover:scale-[1.015] shadow-sm",
-            "min-w-[84px] max-w-[108px] w-full"
+            "hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10",
+            "min-w-[100px] w-full",
+            "relative overflow-hidden"
           )}
         >
-          <div className="mb-1 rounded-full bg-white/10 shadow-sm flex h-9 w-9 items-center justify-center">
-            <Icon className="h-5 w-5 text-purple-300" />
-          </div>
-          {/* Value (prominent heading) */}
-          <div
-            className={cn(
-              typography.headings.h3,
-              "mt-1 text-center",
-              valueClass
-            )}
-            style={{lineHeight: 1.05}}
-          >
-            {value}
-          </div>
-          {/* Label (subheading, muted) */}
-          <div className={cn(
-            typography.sections.label,
-            "text-center mt-1",
-            labelClass
-          )}>
-            {label}
-          </div>
-          {/* Progress (if present) */}
-          {progressValue !== undefined && (
-            <div className="w-full mt-2">
-              <Progress
-                value={progressValue}
-                className="h-1 bg-gray-800 [&>div]:bg-purple-500"
-              />
+          {/* Subtle glow effect in background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 opacity-80" />
+          
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="mb-2 rounded-full bg-white/8 shadow-inner flex h-12 w-12 items-center justify-center">
+              <Icon className="h-6 w-6 text-purple-300" />
             </div>
-          )}
+            
+            {/* Value (prominent heading) */}
+            <div
+              className={cn(
+                typography.headings.h3,
+                "mt-1 text-center font-bold text-2xl",
+                valueClass
+              )}
+            >
+              {value}
+            </div>
+            
+            {/* Label (subheading, muted) */}
+            <div className={cn(
+              typography.sections.label,
+              "text-center mt-1.5 text-white/70",
+              labelClass
+            )}>
+              {label}
+            </div>
+            
+            {/* Progress (if present) */}
+            {progressValue !== undefined && (
+              <div className="w-full mt-3">
+                <Progress
+                  value={progressValue}
+                  className="h-1.5 bg-gray-800/60 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 rounded-full"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </TooltipTrigger>
       {tooltip && (

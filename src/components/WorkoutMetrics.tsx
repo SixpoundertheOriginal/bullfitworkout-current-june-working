@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Timer, Dumbbell, Clock, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -83,14 +84,14 @@ export const WorkoutMetrics = ({
 
   return (
     <div className={cn("relative w-full", className)}>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-2 py-3 sm:p-4 rounded-3xl bg-white/2">
+      <div className="grid grid-cols-4 gap-3 px-2 py-3 sm:p-4 rounded-3xl bg-gray-900/40 backdrop-blur-md border border-white/5">
         <MetricCard
           icon={Clock}
           value={formatTime(time)}
           label="Time"
           tooltip={`Tracked since ${formattedStartTime}`}
-          gradientClass="from-transparent via-white/5 to-slate-900/5"
-          valueClass="text-sky-600 font-semibold"
+          gradientClass="from-sky-600/10 via-black/5 to-sky-900/10 hover:from-sky-600/20 hover:to-sky-900/20"
+          valueClass="text-sky-300 font-semibold bg-gradient-to-br from-sky-200 to-sky-400 bg-clip-text text-transparent"
           labelClass={typography.sections.label}
         />
 
@@ -99,8 +100,8 @@ export const WorkoutMetrics = ({
           value={exerciseCount}
           label="Exercises"
           tooltip="Active exercises in your workout"
-          gradientClass="from-transparent via-white/5 to-slate-900/5"
-          valueClass="text-emerald-600 font-semibold"
+          gradientClass="from-emerald-600/10 via-black/5 to-emerald-900/10 hover:from-emerald-600/20 hover:to-emerald-900/20"
+          valueClass="text-emerald-300 font-semibold bg-gradient-to-br from-emerald-200 to-emerald-400 bg-clip-text text-transparent"
           labelClass={typography.sections.label}
         />
 
@@ -110,49 +111,53 @@ export const WorkoutMetrics = ({
           label="Sets"
           tooltip={`${Math.round(completionPercentage)}% sets completed`}
           progressValue={completionPercentage}
-          gradientClass="from-transparent via-white/5 to-slate-900/5"
-          valueClass="text-violet-600 font-semibold"
+          gradientClass="from-violet-600/10 via-black/5 to-violet-900/10 hover:from-violet-600/20 hover:to-violet-900/20"
+          valueClass="text-violet-300 font-semibold bg-gradient-to-br from-violet-200 to-violet-400 bg-clip-text text-transparent"
           labelClass={typography.sections.label}
         />
 
         <div className={cn(
-          "relative group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/8 backdrop-blur-2xl transition-all duration-300",
-          "bg-gradient-to-br from-card/85 via-white/10 to-secondary/70",
-          "hover:scale-[1.015] shadow-sm min-w-[84px] max-w-[108px] w-full"
+          "relative flex flex-col items-center justify-center p-4 rounded-2xl border border-white/10 backdrop-blur-xl transition-all duration-300",
+          "bg-gradient-to-br from-gray-900/80 via-gray-800/40 to-gray-900/90 hover:from-orange-600/20 hover:to-orange-900/20",
+          "hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/10",
+          "min-w-[100px] w-full",
+          "relative overflow-hidden"
         )}>
-          <div className="relative mb-1 rounded-full bg-orange-300/10 shadow-sm flex h-9 w-9 items-center justify-center">
-            <CircularProgress
-              value={showRestTimer ? 100 : 0}
-              size={36}
-              className="text-orange-500/20"
-            >
-              <Timer
-                size={18}
-                className={cn(
-                  "text-orange-500 absolute inset-0 m-auto",
-                  showRestTimer && "animate-pulse"
-                )}
-              />
-            </CircularProgress>
-          </div>
-          <TopRestTimer
-            isActive={showRestTimer}
-            onComplete={onRestTimerComplete}
-            resetSignal={resetCounter}
-            onTimeUpdate={onRestTimeUpdate}
-            onManualStart={onManualRestStart}
-          />
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="relative mb-2 rounded-full bg-white/8 shadow-inner flex h-12 w-12 items-center justify-center">
+              <CircularProgress
+                value={showRestTimer ? 100 : 0}
+                size={48}
+                className="text-orange-500/20"
+              >
+                <Timer
+                  size={22}
+                  className={cn(
+                    "text-orange-300 absolute inset-0 m-auto",
+                    showRestTimer && "animate-pulse"
+                  )}
+                />
+              </CircularProgress>
+            </div>
+            <TopRestTimer
+              isActive={showRestTimer}
+              onComplete={onRestTimerComplete}
+              resetSignal={resetCounter}
+              onTimeUpdate={onRestTimeUpdate}
+              onManualStart={onManualRestStart}
+            />
 
-          {!showRestTimer && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onManualRestStart}
-              className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-600 transition-all duration-300 text-xs font-medium"
-            >
-              <Play size={12} className="mr-1" /> Start Timer
-            </Button>
-          )}
+            {!showRestTimer && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onManualRestStart}
+                className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300 transition-all duration-300 text-xs font-medium"
+              >
+                <Play size={12} className="mr-1" /> Start Timer
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
