@@ -12,6 +12,7 @@ const Card = React.forwardRef<
     className={cn(
       "rounded-lg border bg-gray-900/80 text-white/90 shadow-sm backdrop-blur-sm",
       "border-gray-800 hover:bg-gray-900/90 transition-colors",
+      "dark:bg-[#1A1F2C] dark:border-gray-700/50", // Dark Purple background for dark mode
       className
     )}
     {...props}
@@ -79,3 +80,4 @@ const CardFooter = React.forwardRef<
 CardFooter.displayName = "CardFooter"
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
