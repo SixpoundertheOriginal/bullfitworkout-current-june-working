@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -143,6 +144,7 @@ export function useExperiencePoints() {
         
         Object.keys(trainingTypeLevels).forEach(type => {
           const typeData = trainingTypeLevels[type];
+          // Fix: Ensure typeXp is a number
           const typeXp = typeof typeData.xp === 'number' 
             ? typeData.xp 
             : Number(typeData.xp || 0);
@@ -235,6 +237,7 @@ export function useExperiencePoints() {
         
         // Update training type XP if specified
         if (trainingType && updatedExp.trainingTypeLevels?.[trainingType]) {
+          // Fix: Ensure we convert typeXp to a number before adding
           const currentTypeXp = typeof updatedExp.trainingTypeLevels[trainingType].xp === 'number' 
             ? updatedExp.trainingTypeLevels[trainingType].xp 
             : Number(updatedExp.trainingTypeLevels[trainingType].xp || 0);
