@@ -73,19 +73,20 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       ? TRAINING_TYPES.find((type) => type.name === hoveredType)
       : selectedTrainingTypeData;
 
-  // Increased radius for more spacing (was 120, now 100 for 95-105 middle ground)
-  const BUTTON_RADIUS = 102; 
+  // Decreased radius slightly to ensure icons fit within the containing view
+  // Changed from 102 to 98 to prevent bottom icon from being cut off
+  const BUTTON_RADIUS = 98; 
 
   return (
     <div
       className={cn(
         "relative w-full max-w-[340px] mx-auto aspect-square flex items-center justify-center",
-        // Added overflow-visible and responsive inclusive
-        "overflow-visible"
+        // Added overflow-visible to ensure buttons don't get clipped
+        "overflow-visible mb-6" // Added bottom margin to provide more space
       )}
       style={{
         // Make sure mobile allows vertical overflow (for scroll) and radial for desktop
-        minHeight: isMobile ? 280 : 0,
+        minHeight: isMobile ? 300 : 0, // Increased from 280 to 300
       }}
     >
       <div className="absolute w-40 h-40 rounded-full bg-gray-800/80 border border-white/10 flex flex-col items-center justify-center z-20 overflow-visible">
@@ -107,7 +108,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
       {TRAINING_TYPES.map((type, index) => {
         const totalTypes = TRAINING_TYPES.length;
-        // Place further from center (radius changed)
+        // Adjust angle calculation to position buttons better
         const angle = ((index * (360 / totalTypes)) - 90) * (Math.PI / 180);
 
         const x = Math.cos(angle) * BUTTON_RADIUS;
@@ -156,4 +157,3 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     </div>
   );
 }
-
