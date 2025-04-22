@@ -385,7 +385,7 @@ const TrainingSession: React.FC = () => {
               console.error("Error saving exercise sets:", setsError);
               toast({
                 title: "Workout saved, but there was an issue saving exercise details.",
-                variant: "warning",
+                variant: "default",
               });
             }
           }
