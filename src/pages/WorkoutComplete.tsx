@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChartContainer } from "@/components/ui/chart";
@@ -71,9 +71,10 @@ const WorkoutComplete = () => {
     if (location.state?.workoutData) {
       setWorkoutData(location.state.workoutData);
     } else {
-      toast("No workout data found", {
+      toast({
+        title: "No workout data found",
         description: "Please complete a workout session first",
-        style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
+        variant: "destructive",
       });
       navigate("/");
     }
@@ -147,7 +148,10 @@ const WorkoutComplete = () => {
         .select('id')
         .single();
 
-      if (workoutError) throw workoutError;
+      if (workoutError) {
+        console.error("Error saving workout session:", workoutError);
+        throw workoutError;
+      }
       
       if (workoutSession) {
         setWorkoutId(workoutSession.id);
@@ -176,7 +180,10 @@ const WorkoutComplete = () => {
             .from('exercise_sets')
             .insert(exerciseSets);
             
-          if (setsError) throw setsError;
+          if (setsError) {
+            console.error("Error saving exercise sets:", setsError);
+            throw setsError;
+          }
         }
         
         if (saveAsTemplate) {
@@ -195,7 +202,10 @@ const WorkoutComplete = () => {
               estimated_duration: workoutData.duration
             });
             
-          if (templateError) throw templateError;
+          if (templateError) {
+            console.error("Error saving workout template:", templateError);
+            throw templateError;
+          }
         }
         
         setSavingStats({
@@ -203,7 +213,8 @@ const WorkoutComplete = () => {
           error: false
         });
         
-        toast("Workout saved!", {
+        toast({
+          title: "Workout saved!",
           description: "Your workout has been successfully recorded"
         });
         
@@ -223,9 +234,10 @@ const WorkoutComplete = () => {
         error: true
       });
       
-      toast("Error saving workout", {
+      toast({
+        title: "Error saving workout",
         description: "There was a problem saving your workout data",
-        style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
+        variant: "destructive",
       });
       
       return null;

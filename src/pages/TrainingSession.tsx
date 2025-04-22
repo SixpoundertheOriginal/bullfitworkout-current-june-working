@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -589,76 +588,35 @@ const TrainingSession = () => {
 
   const handleFinishWorkout = async () => {
     try {
+      const endTime = new Date();
       const duration = time;
       
       if (!user) {
-        toast.error("You must be logged in to save a workout");
+        toast.error("You must be logged in to save a workout", {
+          description: "Please log in to save your workout progress",
+          style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
+        });
         return;
       }
       
       const workoutData = {
-        user_id: user.id,
-        start_time: initialStartTime.toISOString(),
-        end_time: new Date(initialStartTime.getTime() + duration * 60000).toISOString(),
+        exercises,
         duration: duration,
-        name: trainingType,
-        training_type: trainingType,
-        is_historical: isHistorical,
+        startTime: initialStartTime,
+        endTime: new Date(initialStartTime.getTime() + duration * 1000),
+        trainingType: trainingType,
+        name: trainingType
       };
-
-      const { data: workout, error } = await supabase
-        .from('workout_sessions')
-        .insert(workoutData)
-        .select('id')
-        .single();
-        
-      if (error) {
-        console.error('Error saving workout:', error);
-        toast.error("Failed to save workout");
-        return;
-      }
       
-      const workoutId = workout.id;
-      
-      const allSets: any[] = [];
-      
-      Object.entries(exercises).forEach(([exerciseName, sets]) => {
-        sets.forEach(set => {
-          allSets.push({
-            workout_id: workoutId,
-            exercise_name: exerciseName,
-            weight: set.weight,
-            reps: set.reps,
-            set_number: set.set_number,
-            completed: set.completed
-          });
-        });
+      navigate("/workout-complete", { 
+        state: { workoutData }
       });
-      
-      if (allSets.length > 0) {
-        const { error: setsError } = await supabase
-          .from('exercise_sets')
-          .insert(allSets);
-          
-        if (setsError) {
-          console.error('Error saving exercise sets:', setsError);
-          toast.error("Failed to save exercise sets");
-          return;
-        }
-      }
-      
-      toast.success("Workout saved successfully", {
-        style: {
-          backgroundColor: "rgba(20, 20, 20, 0.9)",
-          color: "white",
-          border: "1px solid rgba(120, 120, 120, 0.3)",
-        },
-      });
-      
-      navigate(`/workout-details/${workoutId}`);
     } catch (error) {
-      console.error('Error saving workout:', error);
-      toast.error("Failed to save workout");
+      console.error('Error preparing workout data:', error);
+      toast.error("Failed to complete workout", {
+        description: "There was a problem preparing your workout data",
+        style: { backgroundColor: 'rgb(127, 29, 29)', color: 'white' }
+      });
     }
   };
 
