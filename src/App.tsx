@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,23 +9,26 @@ import { AuthProvider } from "./context/AuthContext";
 import { WeightUnitProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
 
+// Create the query client outside of the component
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <WeightUnitProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <RouterProvider />
-            </TooltipProvider>
-          </WeightUnitProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthProvider>
+            <WeightUnitProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <RouterProvider />
+              </TooltipProvider>
+            </WeightUnitProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
 
