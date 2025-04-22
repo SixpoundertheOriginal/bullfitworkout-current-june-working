@@ -36,13 +36,14 @@ import { convertWeight } from "@/utils/unitConversion";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { SetRow } from "@/components/SetRow";
 import { useExercises } from "@/hooks/useExercises";
-import { AddExerciseBar } from "@/components/AddExerciseBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { ExerciseVolumeSparkline } from "@/components/metrics/ExerciseVolumeSparkline";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import AllExercisesPage from "@/pages/AllExercisesPage";
 
 interface TrainingTypeObj {
   id: string;
@@ -202,13 +203,9 @@ const ExerciseCard = ({
       navigator.vibrate([50]);
     }
     
-    toast.success(`${exercise}: Set ${index + 1} logged successfully`, {
-      style: {
-        backgroundColor: "rgba(20, 20, 20, 0.9)",
-        color: "white",
-        border: "1px solid rgba(120, 120, 120, 0.3)",
-      },
-      id: `set-complete-${exercise}-${index}`,
+    toast({
+      title: `${exercise}: Set ${index + 1} logged successfully`,
+      variant: "success",
     });
   };
 
@@ -364,6 +361,7 @@ const TrainingSession: React.FC = () => {
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showRestTimer, setShowRestTimer] = useState(false);
+  const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -427,7 +425,8 @@ const TrainingSession: React.FC = () => {
     });
     
     setActiveExercise(exerciseName);
-    
+    setShowAddExerciseSheet(false);
+
     setTimeout(() => {
       const element = document.getElementById(`exercise-${exerciseName}`);
       if (element) {
@@ -435,13 +434,10 @@ const TrainingSession: React.FC = () => {
       }
     }, 100);
   };
-  
-  const handleAddExerciseFromFAB = (exercise: Exercise) => {
-    if (exercise && typeof exercise === 'object' && 'name' in exercise) {
-      handleAddExercise(exercise.name);
-    }
-  };
-  
+
+  const handleOpenAddExercise = () => setShowAddExerciseSheet(true);
+  const handleCloseAddExercise = () => setShowAddExerciseSheet(false);
+
   const handleAddSet = (exerciseName: string) => {
     setExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
@@ -671,7 +667,10 @@ const TrainingSession: React.FC = () => {
         });
       } catch (error) {
         console.error('Error saving workout:', error);
-        toast.error('Failed to save your workout. Please try again.');
+        toast({
+          title: 'Failed to save your workout. Please try again.',
+          variant: "destructive",
+        });
       }
     } else {
       navigate('/workout-complete', {
@@ -704,6 +703,21 @@ const TrainingSession: React.FC = () => {
   
   return (
     <div className="pb-20">
+      <Sheet open={showAddExerciseSheet} onOpenChange={setShowAddExerciseSheet}>
+        <SheetContent side={isMobile ? "bottom" : "right"} className="overflow-y-scroll max-h-[90vh]">
+          <SheetHeader>
+            <SheetTitle>
+              Add an Exercise
+            </SheetTitle>
+          </SheetHeader>
+          {/* Use the actual AllExercisesPage for selection */}
+          <AllExercisesPage
+            {...{
+            }}
+            onSelectExercise={handleAddExercise}
+          />
+        </SheetContent>
+      </Sheet>
       {trainingTypeObj && (
         <div className="px-4 py-2 mb-2">
           <TrainingTypeTag
@@ -790,19 +804,14 @@ const TrainingSession: React.FC = () => {
         )}
       </div>
       
-      <div className="sticky bottom-16 right-0 p-4">
-        <SmartExerciseFAB 
-          onSelectExercise={handleAddExerciseFromFAB} 
-          trainingType={trainingType}
-          tags={popularExercises}
-        />
-      </div>
-      
-      <div className="fixed bottom-16 left-0 right-0 p-4 z-20">
-        <AddExerciseBar 
-          onSelectExercise={handleAddExercise} 
-          onAddExercise={() => {}} 
-        />
+      <div className="sticky bottom-16 right-0 p-4 flex justify-end">
+        <Button
+          onClick={handleOpenAddExercise}
+          className="rounded-full w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-500 shadow-lg hover:from-purple-700 hover:to-pink-600 flex items-center justify-center text-white"
+          aria-label="Add Exercise"
+        >
+          <Plus size={28} />
+        </Button>
       </div>
     </div>
   );
