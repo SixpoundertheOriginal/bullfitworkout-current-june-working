@@ -94,6 +94,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const { stats } = useWorkoutStats();
   const [touchActive, setTouchActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [centerPoint, setCenterPoint] = useState({ x: 0, y: 0 });
 
   const { data: customTypes } = useQuery<CustomTrainingType[]>({
@@ -126,10 +127,11 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   ];
 
   useEffect(() => {
-    const updateCenterPoint = () => {
+    const updateContainerSize = () => {
       const container = document.getElementById('radial-menu-container');
       if (container) {
         const rect = container.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
         setCenterPoint({
           x: rect.width / 2,
           y: rect.height / 2
@@ -137,9 +139,9 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       }
     };
 
-    updateCenterPoint();
-    window.addEventListener('resize', updateCenterPoint);
-    return () => window.removeEventListener('resize', updateCenterPoint);
+    updateContainerSize();
+    window.addEventListener('resize', updateContainerSize);
+    return () => window.removeEventListener('resize', updateContainerSize);
   }, []);
 
   const handleTypeSelect = (type: string) => {
@@ -147,6 +149,9 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       onSelect(type);
     }
   };
+
+  // Calculate the radius based on container size
+  const radius = Math.min(containerSize.width, containerSize.height) * 0.35;
 
   return (
     <div className="w-full relative">
@@ -164,7 +169,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
       <div 
         id="radial-menu-container"
-        className="relative h-[400px] w-full flex items-center justify-center"
+        className="relative h-[500px] w-full flex items-center justify-center overflow-hidden"
         onTouchStart={() => setTouchActive(true)}
         onTouchEnd={() => {
           setTouchActive(false);
@@ -173,10 +178,10 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
       >
         {DEFAULT_TRAINING_TYPES.map((type, index) => {
           const angle = (index * (360 / DEFAULT_TRAINING_TYPES.length)) * (Math.PI / 180);
-          const radius = 150; // Adjust this value to change the circle size
           const x = Math.cos(angle) * radius;
           const y = Math.sin(angle) * radius;
           const isSelected = selectedType === type.name;
+          const cardSize = 180; // Fixed card size
           
           return (
             <motion.div
@@ -184,8 +189,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
               initial={{ scale: 0, x: 0, y: 0 }}
               animate={{
                 scale: 1,
-                x: centerPoint.x + x - 100, // Adjusted to center cards better
-                y: centerPoint.y + y - 100, // Adjusted to center cards better
+                x: centerPoint.x + x - (cardSize / 2),
+                y: centerPoint.y + y - (cardSize / 2),
               }}
               transition={{
                 type: "spring",
@@ -194,22 +199,22 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 delay: index * 0.1,
               }}
               className="absolute"
-              style={{ width: 200, height: 200 }} // Increased size
+              style={{ width: cardSize, height: cardSize }}
             >
               <motion.div
                 onClick={() => handleTypeSelect(type.name)}
                 whileHover={{ scale: isSelected ? 1 : 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "w-full h-full rounded-3xl p-6", // Increased border radius
-                  "flex flex-col items-center justify-center gap-4", // Increased gap
+                  "w-full h-full rounded-2xl p-5",
+                  "flex flex-col items-center justify-center gap-3",
                   "bg-gradient-to-br backdrop-blur-sm",
                   "cursor-pointer relative overflow-hidden",
                   "transition-all duration-300 ease-out",
                   "border-2 shadow-lg",
                   isSelected ? [
                     `${type.activeGradient}`,
-                    "border-white ring-4 ring-white/30 ring-offset-2 ring-offset-gray-900",
+                    "border-white ring-2 ring-white/30",
                     "transform scale-110 z-10"
                   ] : [
                     type.gradient,
@@ -221,7 +226,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   className={cn(
-                    "mb-4 p-4 rounded-2xl", // Increased padding and border radius
+                    "p-4 rounded-xl",
                     "bg-white/10 backdrop-blur-sm",
                     "shadow-inner border border-white/5"
                   )}
@@ -229,21 +234,19 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   {type.icon}
                 </motion.div>
                 
-                <div className="text-center">
-                  <motion.h3
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(typography.headings.primary, "text-xl")} // Increased text size
-                  >
-                    {type.name}
-                  </motion.h3>
-                </div>
+                <motion.h3
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn(typography.headings.primary, "text-base")}
+                >
+                  {type.name}
+                </motion.h3>
 
                 {isSelected && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="absolute bottom-3 left-3 right-3" // Adjusted positioning
+                    className="absolute bottom-2 left-2 right-2"
                   >
                     <div className="h-1 bg-white/20 rounded-full overflow-hidden">
                       <motion.div
