@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -100,7 +99,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
     align: "center" as const,
     loop: true,
     dragFree: false,
-    containScroll: false,
+    containScroll: false as const,
     slidesToScroll: 1,
     duration: 20,
     inViewThreshold: 0.7,
