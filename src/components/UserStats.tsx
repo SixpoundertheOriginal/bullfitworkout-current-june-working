@@ -27,6 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
+import { StatCard } from "@/components/ui/StatCard";
+import StatsLoadingSkeleton from "@/components/ui/StatsLoadingSkeleton";
 
 // Define an interface for the workout data structure from Supabase
 interface WorkoutSession {
@@ -308,62 +310,6 @@ export function UserStats() {
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
-  return (
-    <Card className="bg-gray-900 border-gray-800">
-      <CardContent className="p-4">
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-2">{icon}</div>
-          <div className="text-xl font-semibold text-white">{value}</div>
-          <div className="text-xs text-gray-400">{label}</div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatsLoadingSkeleton() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-white">Your Fitness Stats</h2>
-      
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => (
-          <Card key={i} className="bg-gray-900 border-gray-800">
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center text-center">
-                <Skeleton className="h-5 w-5 rounded-full bg-gray-800 mb-2" />
-                <Skeleton className="h-7 w-14 bg-gray-800 mb-1" />
-                <Skeleton className="h-4 w-16 bg-gray-800" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-4">
-            <Skeleton className="h-5 w-40 bg-gray-800 mb-4" />
-            <Skeleton className="h-[200px] w-full bg-gray-800 rounded-lg" />
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gray-900 border-gray-800">
-          <CardContent className="p-4">
-            <Skeleton className="h-5 w-40 bg-gray-800 mb-4" />
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-16 w-full bg-gray-800 rounded-lg" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
