@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Dumbbell, Bike, Heart, Activity } from "lucide-react";
@@ -163,7 +164,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
 
       <div 
         id="radial-menu-container"
-        className="relative h-[400px] w-full"
+        className="relative h-[400px] w-full flex items-center justify-center"
         onTouchStart={() => setTouchActive(true)}
         onTouchEnd={() => {
           setTouchActive(false);
@@ -183,8 +184,8 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
               initial={{ scale: 0, x: 0, y: 0 }}
               animate={{
                 scale: 1,
-                x: centerPoint.x + x - 80, // Adjust based on card width
-                y: centerPoint.y + y - 80, // Adjust based on card height
+                x: centerPoint.x + x - 100, // Adjusted to center cards better
+                y: centerPoint.y + y - 100, // Adjusted to center cards better
               }}
               transition={{
                 type: "spring",
@@ -193,23 +194,22 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                 delay: index * 0.1,
               }}
               className="absolute"
-              style={{ width: 160, height: 160 }}
+              style={{ width: 200, height: 200 }} // Increased size
             >
               <motion.div
                 onClick={() => handleTypeSelect(type.name)}
                 whileHover={{ scale: isSelected ? 1 : 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "w-full h-full rounded-2xl p-4",
-                  "flex flex-col items-center justify-center gap-3",
+                  "w-full h-full rounded-3xl p-6", // Increased border radius
+                  "flex flex-col items-center justify-center gap-4", // Increased gap
                   "bg-gradient-to-br backdrop-blur-sm",
                   "cursor-pointer relative overflow-hidden",
                   "transition-all duration-300 ease-out",
-                  "border-2",
-                  "shadow-lg",
+                  "border-2 shadow-lg",
                   isSelected ? [
                     `${type.activeGradient}`,
-                    "border-white ring-2 ring-white/30 ring-offset-2 ring-offset-gray-900",
+                    "border-white ring-4 ring-white/30 ring-offset-2 ring-offset-gray-900",
                     "transform scale-110 z-10"
                   ] : [
                     type.gradient,
@@ -221,7 +221,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   className={cn(
-                    "mb-2 p-3 rounded-xl",
+                    "mb-4 p-4 rounded-2xl", // Increased padding and border radius
                     "bg-white/10 backdrop-blur-sm",
                     "shadow-inner border border-white/5"
                   )}
@@ -233,7 +233,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   <motion.h3
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={cn(typography.headings.primary, "text-lg")}
+                    className={cn(typography.headings.primary, "text-xl")} // Increased text size
                   >
                     {type.name}
                   </motion.h3>
@@ -243,7 +243,7 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="absolute bottom-2 left-2 right-2"
+                    className="absolute bottom-3 left-3 right-3" // Adjusted positioning
                   >
                     <div className="h-1 bg-white/20 rounded-full overflow-hidden">
                       <motion.div
