@@ -554,12 +554,14 @@ export function ConfigureTrainingDialog({
               onClick={handleNextStep}
               size="sm"
               className={cn(
-                "rounded-xl w-24",
-                "bg-gradient-to-r from-purple-600 to-pink-500",
+                "rounded-xl w-32", // Increased width slightly
+                "bg-gradient-to-r from-purple-600 to-pink-500", // Vibrant gradient
                 "hover:from-purple-500 hover:to-pink-400",
                 "transform transition-all duration-300",
                 "shadow-lg hover:shadow-purple-500/25",
-                "border border-white/10"
+                "border border-white/10",
+                "text-base font-semibold", // Adjusted font size and weight
+                "tracking-wider" // Added letter spacing for better readability
               )}
             >
               {getNextButtonText()}
