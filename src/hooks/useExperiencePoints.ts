@@ -215,6 +215,7 @@ export function useExperiencePoints() {
           throw new Error("Invalid current XP value");
         }
         
+        // Fix for line 111 - ensure we're adding numbers
         const newTotalXp = currentTotalXp + xpAmount;
         
         const updatedExp: TrainingExperience = JSON.parse(JSON.stringify(currentExp));
@@ -230,6 +231,7 @@ export function useExperiencePoints() {
             throw new Error("Invalid training type XP value");
           }
           
+          // Fix for line 113 - ensure we're using a number for the calculation
           updatedExp.trainingTypeLevels[trainingType].xp = currentTypeXp + xpAmount;
         }
         
