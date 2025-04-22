@@ -98,11 +98,11 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
   const options = {
     align: "center" as const,
     loop: true,
-    dragFree: false,
-    containScroll: "trimSnaps" as const,
+    dragFree: true,
+    containScroll: false,
     slidesToScroll: 1,
-    duration: 20,
-    inViewThreshold: 0.9,
+    duration: 30,
+    inViewThreshold: 0.6,
     breakpoints: {
       '(min-width: 768px)': { slidesToScroll: 2 }
     }
@@ -265,14 +265,15 @@ export function TrainingTypeSelector({ selectedType, onSelect }: TrainingTypeSel
                     "bg-gradient-to-br backdrop-blur-sm",
                     "cursor-pointer relative overflow-hidden",
                     "transition-all duration-300 ease-out",
-                    "border-2 border-white/10 hover:border-white/20",
-                    "shadow-lg hover:shadow-xl",
+                    "border-2 border-white/10",
+                    "shadow-lg",
                     isSelected ? [
                       `${type.activeGradient}`,
-                      "ring-2 ring-white/20 ring-offset-2 ring-offset-gray-900"
+                      "ring-2 ring-white/30 ring-offset-2 ring-offset-gray-900",
+                      "transform"
                     ] : [
                       type.gradient,
-                      "hover:from-opacity-90 hover:to-opacity-90"
+                      "hover:border-white/20 hover:shadow-xl"
                     ]
                   )}
                 >
