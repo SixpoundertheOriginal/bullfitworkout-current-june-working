@@ -1,18 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
 import { supabase } from "@/integrations/supabase/client";
-
-// The return type needs to match what TrainingSession.tsx expects
-export interface LocalExerciseSet {
-  weight: number;
-  reps: number;
-  restTime: number;
-  completed: boolean;
-  isEditing: boolean;
-  saveStatus?: 'pending' | 'saving' | 'saved' | 'failed';
-  retryCount?: number;
-}
 
 const STORAGE_VERSION = '1.0.0';
 
@@ -29,15 +18,13 @@ export const useWorkoutState = () => {
     isRecoveryMode: false
   });
 
-  // Separate getters to maintain backward compatibility with existing code
   const exercises = state.exercises;
   const activeExercise = state.activeExercise;
   const elapsedTime = state.elapsedTime;
   const restTimerActive = state.restTimerActive;
   const restTimerResetSignal = state.restTimerResetSignal;
   const currentRestTime = state.currentRestTime;
-  
-  // Load workout state from localStorage if it exists
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
     if (!user?.id) return;
@@ -47,10 +34,8 @@ export const useWorkoutState = () => {
       try {
         const parsed = JSON.parse(savedWorkout);
         
-        // Check if we have a version mismatch and need to migrate data
         const version = parsed.version || '0.0.0';
         
-        // Update state with saved values
         setState(prevState => ({
           ...prevState,
           exercises: parsed.exercises || {},
@@ -60,12 +45,10 @@ export const useWorkoutState = () => {
           currentRestTime: parsed.currentRestTime || 60,
           workoutId: parsed.workoutId || null,
           lastSyncTimestamp: parsed.lastUpdated || new Date().toISOString(),
-          // If workout was in the middle of saving, mark as partial
           workoutStatus: parsed.workoutStatus === 'saving' ? 'partial' : (parsed.workoutStatus || 'idle'),
           isRecoveryMode: parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial'
         }));
         
-        // If we detect a partially saved workout, show a recovery toast
         if (parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial') {
           toast("Workout recovery available", {
             description: "We found an unsaved workout. Continue your session or reset to start fresh.",
@@ -81,8 +64,7 @@ export const useWorkoutState = () => {
       }
     }
   }, []);
-  
-  // Save workout state to localStorage when it changes
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
     if (!user?.id) return;
@@ -100,15 +82,13 @@ export const useWorkoutState = () => {
     }));
   }, [state]);
 
-  // Helper function to update state immutably
   const updateState = useCallback((updates: Partial<WorkoutState>) => {
     setState(prevState => ({
       ...prevState,
       ...updates
     }));
   }, []);
-  
-  // Set exercise state
+
   const setExercises = useCallback((
     newExercises: Record<string, LocalExerciseSet[]> | ((prev: Record<string, LocalExerciseSet[]>) => Record<string, LocalExerciseSet[]>)
   ) => {
@@ -123,26 +103,26 @@ export const useWorkoutState = () => {
       };
     });
   }, []);
-  
+
   const setActiveExercise = useCallback((exercise: string | null) => {
     updateState({ activeExercise: exercise });
   }, [updateState]);
-  
+
   const setElapsedTime = useCallback((time: number | ((prev: number) => number)) => {
     setState(prevState => ({
       ...prevState,
       elapsedTime: typeof time === 'function' ? time(prevState.elapsedTime) : time
     }));
   }, []);
-  
+
   const setRestTimerActive = useCallback((active: boolean) => {
     updateState({ restTimerActive: active });
   }, [updateState]);
-  
+
   const setCurrentRestTime = useCallback((time: number) => {
     updateState({ currentRestTime: time });
   }, [updateState]);
-  
+
   const resetSession = useCallback(() => {
     updateState({
       exercises: {},
@@ -162,14 +142,12 @@ export const useWorkoutState = () => {
       localStorage.removeItem(`workout_session_${user.id}`);
     }
   }, [updateState]);
-  
+
   const triggerRestTimerReset = useCallback((restTime?: number) => {
-    // Update current rest time if provided
     if (restTime && restTime > 0) {
       setCurrentRestTime(restTime);
     }
     
-    // Increment the reset signal to trigger the timer reset
     setState(prev => ({
       ...prev,
       restTimerResetSignal: prev.restTimerResetSignal + 1
@@ -181,7 +159,7 @@ export const useWorkoutState = () => {
       workoutStatus: 'saving',
       saveProgress: {
         step: 'workout',
-        total: 3, // workout, sets, analytics
+        total: 3,
         completed: 0,
         errors: []
       }
@@ -194,10 +172,8 @@ export const useWorkoutState = () => {
       savingErrors: [...state.savingErrors, ...errors]
     });
 
-    // Notify user about partial save
     toast("Workout partially saved", {
       description: "Some data couldn't be saved. You can try again later.",
-      variant: "destructive",
       duration: 5000,
     });
   }, [updateState, state.savingErrors]);
@@ -216,10 +192,8 @@ export const useWorkoutState = () => {
       savingErrors: [...state.savingErrors, error]
     });
 
-    // Notify user about save failure
     toast("Workout save failed", {
       description: error.message,
-      variant: "destructive",
       duration: 5000,
     });
   }, [updateState, state.savingErrors]);
@@ -245,7 +219,6 @@ export const useWorkoutState = () => {
     try {
       updateState({ workoutStatus: 'recovering' });
       
-      // Here we'll attempt to recover a partially saved workout
       const { error } = await supabase.functions.invoke('recover-workout', {
         body: { workoutId: state.workoutId }
       });
@@ -280,15 +253,13 @@ export const useWorkoutState = () => {
       
       toast("Recovery failed", {
         description: "We couldn't recover your workout data. Please try again.",
-        variant: "destructive",
       });
       
       return false;
     }
   }, [state.workoutId, updateState, state.savingErrors]);
-  
+
   return {
-    // Original return values for backward compatibility
     exercises,
     setExercises,
     activeExercise,
@@ -302,15 +273,11 @@ export const useWorkoutState = () => {
     triggerRestTimerReset,
     currentRestTime,
     setCurrentRestTime,
-    
-    // New enhanced functionality
     workoutStatus: state.workoutStatus,
     isRecoveryMode: state.isRecoveryMode,
     saveProgress: state.saveProgress,
     savingErrors: state.savingErrors,
     workoutId: state.workoutId,
-    
-    // New methods
     markAsSaving,
     markAsPartialSave,
     markAsSaved,

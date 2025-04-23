@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -209,7 +208,6 @@ const TrainingSession: React.FC = () => {
     if (!Object.keys(exercises).length) {
       toast("No exercises added", {
         description: "Please add at least one exercise before completing your workout",
-        variant: "destructive",
       });
       return;
     }
@@ -217,7 +215,6 @@ const TrainingSession: React.FC = () => {
     if (!user) {
       toast("Authentication required", {
         description: "You need to be logged in to save workouts",
-        variant: "destructive",
       });
       return;
     }
@@ -305,13 +302,11 @@ const TrainingSession: React.FC = () => {
     if (errorMessage.includes("materialized view")) {
       toast("Partial save", {
         description: "Your workout data was saved but some analytics couldn't be processed.",
-        variant: "default",
       });
       navigateToComplete(null);
     } else {
       toast("Error", {
         description: errorMessage,
-        variant: "destructive",
       });
     }
   };

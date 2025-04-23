@@ -22,6 +22,14 @@ export function Toaster({ ...props }: ToasterProps) {
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          error:
+            "group-[.toast]:bg-red-900 group-[.toast]:border-red-800 group-[.toast]:text-white",
+          success:
+            "group-[.toast]:bg-green-900 group-[.toast]:border-green-800 group-[.toast]:text-white",
+          warning:
+            "group-[.toast]:bg-amber-900 group-[.toast]:border-amber-800 group-[.toast]:text-white",
+          info:
+            "group-[.toast]:bg-blue-900 group-[.toast]:border-blue-800 group-[.toast]:text-white",
         },
       }}
       {...props}
