@@ -4,7 +4,10 @@ import { toast } from "@/components/ui/sonner";
 import { updateWorkout, updateExerciseSets, addExerciseToWorkout, removeExerciseFromWorkout } from "@/services/workoutService";
 import { ExerciseSet } from "@/types/exercise";
 
-export function useExerciseManagement(workoutId: string | undefined, onUpdate: (exerciseSets: Record<string, ExerciseSet[]>) => void) {
+// Define a type for the update function to make the code more maintainable
+type UpdateExerciseSetsFunction = (exerciseSets: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => void;
+
+export function useExerciseManagement(workoutId: string | undefined, onUpdate: UpdateExerciseSetsFunction) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [exerciseSetModalOpen, setExerciseSetModalOpen] = useState(false);
   const [currentExercise, setCurrentExercise] = useState("");
@@ -41,6 +44,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: (
       const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
       toast.success("Exercise sets updated");
       
+      // Create a new object first, then pass it to onUpdate
       onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSets = { ...prev };
         newSets[currentExercise] = updated;
@@ -60,6 +64,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: (
     try {
       const newSets = await addExerciseToWorkout(workoutId, exerciseName, 3);
       
+      // Create a new object first, then pass it to onUpdate
       onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSetsRecord = { ...prev };
         newSetsRecord[exerciseName] = newSets;
@@ -80,6 +85,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: (
     try {
       await removeExerciseFromWorkout(workoutId, exerciseToDelete);
       
+      // Create a new object first, then pass it to onUpdate
       onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSets = { ...prev };
         delete newSets[exerciseToDelete];
