@@ -1,8 +1,6 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
@@ -11,7 +9,9 @@ import { EditWorkoutModal } from "@/components/EditWorkoutModal";
 import { EditExerciseSetModal } from "@/components/EditExerciseSetModal";
 import { WorkoutDetailsHeader } from "@/components/workouts/WorkoutDetailsHeader";
 import { WorkoutExercisesSection } from "@/components/workouts/WorkoutExercisesSection";
-import { updateWorkout, updateExerciseSets, addExerciseToWorkout, removeExerciseFromWorkout } from "@/services/workoutService";
+import { useAuth } from "@/context/AuthContext";
+import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
+import { useExerciseManagement } from "@/hooks/useExerciseManagement";
 
 const WorkoutDetailsPage = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
@@ -20,143 +20,33 @@ const WorkoutDetailsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const [workoutDetails, setWorkoutDetails] = useState(null);
-  const [exerciseSets, setExerciseSets] = useState({});
-  const [loading, setLoading] = useState(workoutId ? true : false);
+  const { 
+    workoutDetails, 
+    exerciseSets, 
+    loading, 
+    setWorkoutDetails, 
+    setExerciseSets 
+  } = useWorkoutDetails(workoutId);
   
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [exerciseSetModalOpen, setExerciseSetModalOpen] = useState(false);
-  const [currentExercise, setCurrentExercise] = useState("");
-  const [exerciseSetsToEdit, setExerciseSetsToEdit] = useState([]);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
-  const [exerciseToDelete, setExerciseToDelete] = useState("");
-
-  useEffect(() => {
-    if (!user || !workoutId) return;
-    
-    const fetchWorkoutDetails = async () => {
-      try {
-        setLoading(true);
-        
-        const { data: workout, error: workoutError } = await supabase
-          .from('workout_sessions')
-          .select('*')
-          .eq('id', workoutId)
-          .single();
-          
-        if (workoutError) {
-          console.error('Error fetching workout:', workoutError);
-          navigate('/workout-details');
-          return;
-        }
-        
-        setWorkoutDetails(workout);
-        
-        const { data: sets, error: setsError } = await supabase
-          .from('exercise_sets')
-          .select('*')
-          .eq('workout_id', workoutId)
-          .order('exercise_name', { ascending: true })
-          .order('set_number', { ascending: true });
-          
-        if (setsError) {
-          console.error('Error fetching exercise sets:', setsError);
-          return;
-        }
-        
-        const groupedSets = sets.reduce((acc, set) => {
-          if (!acc[set.exercise_name]) {
-            acc[set.exercise_name] = [];
-          }
-          acc[set.exercise_name].push(set);
-          return acc;
-        }, {});
-        
-        setExerciseSets(groupedSets);
-      } catch (error) {
-        console.error('Error in workout details fetch:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchWorkoutDetails();
-  }, [workoutId, user, navigate]);
-
-  const handleSaveWorkoutEdit = async (updatedWorkout) => {
-    if (!workoutId) return;
-    
-    try {
-      const updated = await updateWorkout(workoutId, updatedWorkout);
-      setWorkoutDetails(updated);
-      toast.success("Workout updated successfully");
-    } catch (error) {
-      console.error("Error updating workout:", error);
-      toast.error("Failed to update workout");
-    }
-  };
-
-  const handleEditExercise = (exerciseName) => {
-    const setsForExercise = exerciseSets[exerciseName];
-    setCurrentExercise(exerciseName);
-    setExerciseSetsToEdit(setsForExercise);
-    setExerciseSetModalOpen(true);
-  };
-
-  const handleSaveExerciseSets = async (updatedSets) => {
-    if (!workoutId || !currentExercise) return;
-    
-    try {
-      const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
-      setExerciseSets(prev => ({
-        ...prev,
-        [currentExercise]: updated
-      }));
-      toast.success("Exercise sets updated");
-    } catch (error) {
-      console.error("Error updating exercise sets:", error);
-      toast.error("Failed to update exercise sets");
-    }
-  };
-
-  const handleAddExercise = async (exerciseName) => {
-    if (!workoutId) return;
-    
-    try {
-      const newSets = await addExerciseToWorkout(workoutId, exerciseName, 3);
-      setExerciseSets(prev => ({
-        ...prev,
-        [exerciseName]: newSets
-      }));
-      toast.success(`Added ${exerciseName} to workout`);
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Error adding exercise:", error);
-      toast.error("Failed to add exercise");
-      return Promise.reject(error);
-    }
-  };
-
-  const handleDeleteExercise = async () => {
-    if (!workoutId || !exerciseToDelete) return;
-    
-    try {
-      await removeExerciseFromWorkout(workoutId, exerciseToDelete);
-      setExerciseSets(prev => {
-        const newSets = { ...prev };
-        delete newSets[exerciseToDelete];
-        return newSets;
-      });
-      toast.success(`Removed ${exerciseToDelete} from workout`);
-    } catch (error) {
-      console.error("Error removing exercise:", error);
-      toast.error("Failed to remove exercise");
-    } finally {
-      setDeleteAlertOpen(false);
-      setExerciseToDelete("");
-    }
-  };
+  const {
+    editModalOpen,
+    setEditModalOpen,
+    exerciseSetModalOpen,
+    setExerciseSetModalOpen,
+    currentExercise,
+    exerciseSetsToEdit,
+    deleteAlertOpen,
+    setDeleteAlertOpen,
+    exerciseToDelete,
+    showAddDialog,
+    setShowAddDialog,
+    handleSaveWorkoutEdit,
+    handleEditExercise,
+    handleSaveExerciseSets,
+    handleAddExercise,
+    handleDeleteExercise,
+    confirmDeleteExercise
+  } = useExerciseManagement(workoutId, setExerciseSets);
 
   if (loading) {
     return (
@@ -180,11 +70,8 @@ const WorkoutDetailsPage = () => {
             <WorkoutExercisesSection
               exerciseSets={exerciseSets}
               onAddExercise={() => setShowAddDialog(true)}
-              onEditExercise={handleEditExercise}
-              onDeleteExercise={(name) => {
-                setExerciseToDelete(name);
-                setDeleteAlertOpen(true);
-              }}
+              onEditExercise={(name) => handleEditExercise(name, exerciseSets)}
+              onDeleteExercise={confirmDeleteExercise}
             />
 
             {workoutDetails.notes && (
@@ -201,7 +88,12 @@ const WorkoutDetailsPage = () => {
         workout={workoutDetails}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        onSave={handleSaveWorkoutEdit}
+        onSave={async (updatedWorkout) => {
+          const updated = await handleSaveWorkoutEdit(updatedWorkout);
+          if (updated) {
+            setWorkoutDetails(updated);
+          }
+        }}
       />
 
       <EditExerciseSetModal

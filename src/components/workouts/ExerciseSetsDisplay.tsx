@@ -49,8 +49,8 @@ export const ExerciseSetsDisplay: React.FC<ExerciseSetsDisplayProps> = ({
         <div className="text-right">Volume</div>
       </div>
       <Separator className="my-1 bg-gray-700" />
-      {sets.map((set) => (
-        <div key={set.id} className="grid grid-cols-4 gap-1 text-sm py-1">
+      {sets.map((set, index) => (
+        <div key={index} className="grid grid-cols-4 gap-1 text-sm py-1">
           <div>{set.set_number}</div>
           <div className="text-right font-mono">{set.weight}</div>
           <div className="text-right font-mono">{set.reps}</div>
