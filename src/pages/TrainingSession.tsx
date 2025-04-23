@@ -1,10 +1,9 @@
-
 import React, { useRef } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,9 @@ import { ExerciseList } from "@/components/training/ExerciseList";
 import { WorkoutHeader } from "@/components/training/WorkoutHeader";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 import { ExerciseSet } from "@/types/exercise";
+import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
+import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
+import { SaveProgress } from "@/types/workout";
 
 interface LocationState {
   trainingType?: string;
@@ -34,7 +36,19 @@ const TrainingSession: React.FC = () => {
     restTimerActive,
     setRestTimerActive,
     restTimerResetSignal,
-    triggerRestTimerReset
+    triggerRestTimerReset,
+    currentRestTime,
+    
+    workoutStatus,
+    isRecoveryMode,
+    saveProgress,
+    workoutId,
+    markAsSaving,
+    markAsPartialSave,
+    markAsSaved,
+    markAsFailed,
+    updateSaveProgress,
+    attemptRecovery
   } = useWorkoutState();
   
   const [showAddExerciseSheet, setShowAddExerciseSheet] = React.useState(false);
@@ -163,7 +177,6 @@ const TrainingSession: React.FC = () => {
       const currentRestTime = currentSet.restTime;
       console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s`);
       
-      // Pass the current rest time when triggering the reset
       triggerRestTimerReset(currentRestTime);
       
       return {
@@ -200,12 +213,21 @@ const TrainingSession: React.FC = () => {
       return;
     }
     
+    if (!user) {
+      toast({
+        description: "You need to be logged in to save workouts",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
+      markAsSaving();
+      
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
       
       const workoutData = {
-        user_id: user?.id,
         name: `Workout ${now.toLocaleDateString()}`,
         training_type: trainingType || 'strength',
         start_time: startTime.toISOString(),
@@ -214,37 +236,63 @@ const TrainingSession: React.FC = () => {
         notes: null
       };
       
-      if (!user) {
-        navigateToComplete(null);
-        return;
-      }
+      const saveResult = await saveWorkout({
+        userData: user,
+        workoutData,
+        exercises,
+        onProgressUpdate: updateSaveProgress
+      });
       
-      try {
-        const { data: workoutSession, error: workoutError } = await supabase
-          .from('workout_sessions')
-          .insert(workoutData)
-          .select()
-          .single();
-            
-        if (workoutError) {
-          handleWorkoutError(workoutError);
-          return;
-        }
-        
-        if (workoutSession) {
-          await saveExerciseSets(workoutSession.id);
+      if (saveResult.success) {
+        if (saveResult.partialSave) {
+          markAsPartialSave(saveResult.error ? [saveResult.error] : []);
+          navigateToComplete(saveResult.workoutId || null);
+        } else {
+          markAsSaved(saveResult.workoutId || '');
           resetSession();
-          navigateToComplete(workoutSession.id);
+          navigateToComplete(saveResult.workoutId || null);
         }
-      } catch (error) {
-        handleWorkoutError(error);
+      } else {
+        markAsFailed(saveResult.error || {
+          type: 'unknown',
+          message: 'Unknown error during save',
+          timestamp: new Date().toISOString(),
+          recoverable: false
+        });
       }
     } catch (error) {
       console.error('Error in workout completion process:', error);
+      markAsFailed({
+        type: 'unknown',
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        timestamp: new Date().toISOString(),
+        recoverable: true
+      });
+      
       toast({
         description: error instanceof Error ? error.message : 'Unknown error occurred',
         variant: "destructive",
       });
+    }
+  };
+
+  const handleRetrySave = async () => {
+    if (!user || !workoutId) return;
+    
+    if (workoutId) {
+      toast({
+        title: "Attempting recovery",
+        description: "Trying to recover your workout data..."
+      });
+      
+      await attemptRecovery();
+      
+      if (user.id) {
+        await processRetryQueue(user.id);
+      }
+      
+    } else {
+      handleCompleteWorkout();
     }
   };
 
@@ -463,6 +511,16 @@ const TrainingSession: React.FC = () => {
         />
       </div>
       
+      {workoutStatus !== 'idle' && workoutStatus !== 'active' && (
+        <div className="px-4 mt-2">
+          <WorkoutSaveStatus 
+            status={workoutStatus}
+            saveProgress={saveProgress}
+            onRetry={handleRetrySave}
+          />
+        </div>
+      )}
+      
       <div className="px-4 py-2">
         {Object.keys(exercises).length > 0 ? (
           <>
@@ -495,6 +553,18 @@ const TrainingSession: React.FC = () => {
           <EmptyWorkoutState onTemplateSelect={handleAddExercise} />
         )}
       </div>
+      
+      {workoutStatus === 'partial' && (
+        <div className="fixed bottom-20 left-0 right-0 flex justify-center px-4">
+          <Button
+            variant="default"
+            onClick={handleRetrySave}
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+          >
+            Retry Saving Workout Data
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
