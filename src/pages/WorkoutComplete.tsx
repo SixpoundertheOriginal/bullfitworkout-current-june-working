@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -74,7 +73,6 @@ const WorkoutComplete = () => {
     
     if (location.state?.workoutData) {
       setWorkoutData(location.state.workoutData);
-      // Set a default template name based on the workout name or training type
       if (location.state.workoutData.name) {
         setTemplateName(location.state.workoutData.name);
       } else if (location.state.workoutData.trainingType) {
@@ -130,8 +128,6 @@ const WorkoutComplete = () => {
     setSaving(true);
     
     try {
-      // If the workout is already saved (we have a workoutId),
-      // just update it with notes
       if (workoutId && user) {
         try {
           const { error: updateError } = await supabase
@@ -146,7 +142,6 @@ const WorkoutComplete = () => {
             throw updateError;
           }
 
-          // Save as template if requested
           if (saveAsTemplate) {
             try {
               await saveWorkoutTemplate();
@@ -195,7 +190,6 @@ const WorkoutComplete = () => {
         }
       }
       
-      // If no workoutId or user, we need to create a new workout
       if (!user) {
         toast({
           title: "Please log in",
@@ -220,7 +214,6 @@ const WorkoutComplete = () => {
         notes: notes || null
       });
       
-      // Create the workout session first - this is the top priority
       try {
         const { data: workoutSession, error: workoutError } = await supabase
           .from('workout_sessions')
@@ -242,15 +235,12 @@ const WorkoutComplete = () => {
         }
         
         if (workoutSession) {
-          // Successfully created the workout session
           setWorkoutId(workoutSession.id);
           
-          // Now try to save the exercise sets, but don't block on failure
           try {
             await saveExerciseSets(workoutSession.id);
           } catch (exerciseError) {
             console.error("Error saving exercise sets:", exerciseError);
-            // Just log this error, don't throw or prevent completion
             toast({
               title: "Workout saved with limited details",
               description: "We couldn't save all exercise details, but your workout was recorded",
@@ -258,7 +248,6 @@ const WorkoutComplete = () => {
             });
           }
           
-          // Now try to save as template if requested, but don't block on failure
           if (saveAsTemplate) {
             try {
               await saveWorkoutTemplate(workoutSession.id);
@@ -290,23 +279,17 @@ const WorkoutComplete = () => {
           return workoutSession.id;
         }
       } catch (error: any) {
-        // Handle database-specific errors
         console.error("Error saving workout session:", error);
         
-        // Specifically handle the jsonb_set error from the experience function
         if (error.message && error.message.includes("jsonb_set") && error.message.includes("does not exist")) {
-          // This is a known error with the experience points system
-          // The workout might still have been created
-          
+          console.warn("Possible experience points update issue:", error.message);
           toast({
             title: "Workout may have been saved",
-            description: "There was an issue updating your experience points, but your workout data was sent to the server.",
+            description: "There was an issue with the experience points system, but your workout data was sent to the server.",
             variant: "default",
           });
           
-          // Try to recover the workout ID if possible
           try {
-            // Check if the workout was actually created despite the error
             const { data: latestWorkout } = await supabase
               .from('workout_sessions')
               .select('id')
@@ -323,7 +306,6 @@ const WorkoutComplete = () => {
             console.error("Error recovering workout ID:", recoveryError);
           }
         } else {
-          // Handle other errors
           setSavingStats({
             completed: true,
             error: true
@@ -361,12 +343,10 @@ const WorkoutComplete = () => {
     if (!workoutData) return;
     
     try {
-      // Build the exercise sets array
       const exerciseSets = [];
       
       for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
         sets.forEach((set, index) => {
-          // Include all sets, not just completed ones
           exerciseSets.push({
             workout_id: sessionId,
             exercise_name: exerciseName,
@@ -378,13 +358,11 @@ const WorkoutComplete = () => {
         });
       }
       
-      // Skip if no sets to save
       if (exerciseSets.length === 0) {
         console.log("No sets to save");
         return;
       }
       
-      // Split into smaller batches to avoid request size limits
       const batchSize = 25;
       const batches = [];
       
@@ -392,7 +370,6 @@ const WorkoutComplete = () => {
         batches.push(exerciseSets.slice(i, i + batchSize));
       }
       
-      // Process each batch sequentially
       let errorCount = 0;
       for (const batch of batches) {
         try {
@@ -412,11 +389,9 @@ const WorkoutComplete = () => {
       
       if (errorCount > 0) {
         console.warn(`${errorCount} batches failed to save properly`);
-        // Don't throw here, as the workout session is already saved
       }
     } catch (error) {
       console.error("Error saving exercise sets:", error);
-      // Log error but don't throw, as we want to consider the workout saved
     }
   };
   
@@ -428,7 +403,6 @@ const WorkoutComplete = () => {
         ? workoutData.trainingType
         : 'Strength';
       
-      // Use direct JSON object insertion instead of jsonb_set
       const { error: templateError } = await supabase
         .from('workout_templates')
         .insert({

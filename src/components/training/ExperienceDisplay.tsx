@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CircularProgress } from '@/components/ui/circular-progress';
 import { typography } from '@/lib/typography';
-import { Trophy, Star, TrendingUp } from 'lucide-react';
+import { Trophy, Star, TrendingUp, Award } from 'lucide-react';
 
 interface ExperienceDisplayProps {
   level: number;
@@ -40,10 +40,10 @@ const typeColors = {
     progress: "from-blue-600 to-indigo-500",
   },
   "default": {
-    bg: "bg-purple-500",
-    text: "text-purple-100",
-    border: "border-purple-400",
-    progress: "from-purple-600 to-pink-500",
+    bg: "bg-secondary",
+    text: "text-white",
+    border: "border-blue-400",
+    progress: "from-secondary to-accent",
   }
 };
 
@@ -67,7 +67,12 @@ export function ExperienceDisplay({
         <span className={cn(typography.text.primary, "text-lg font-bold")}>Level {level}</span>
       </div>
       
-      <div className="relative mb-4">
+      <motion.div 
+        className="relative mb-4"
+        initial={{ scale: 0.9, opacity: 0.5 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <CircularProgress 
           value={progress} 
           size={100} 
@@ -81,7 +86,7 @@ export function ExperienceDisplay({
           </span>
           <span className="text-xs text-white/60">Next Level</span>
         </div>
-      </div>
+      </motion.div>
       
       <div className="flex items-center space-x-2 text-white/80">
         <Trophy className="h-4 w-4 text-yellow-500" />
@@ -98,6 +103,13 @@ export function ExperienceDisplay({
           </span>
         </div>
       </div>
+
+      {level >= 5 && (
+        <div className="mt-3 flex items-center justify-center">
+          <Award className="h-4 w-4 text-amber-500 mr-1" />
+          <span className="text-xs text-amber-500/90 font-medium">Achievement Unlocked</span>
+        </div>
+      )}
     </div>
   );
 }
