@@ -204,9 +204,8 @@ export const useWorkoutState = () => {
       savingErrors: [...state.savingErrors, error]
     });
 
-    toast("Workout save failed", {
+    toast.error("Workout save failed", {
       description: error.message,
-      type: "error",
       duration: 5000,
     });
   }, [updateState, state.savingErrors]);
@@ -237,7 +236,23 @@ export const useWorkoutState = () => {
       });
       
       if (error) {
-        throw error;
+        console.error("Recovery failed:", error);
+        updateState({
+          workoutStatus: 'partial',
+          savingErrors: [...state.savingErrors, {
+            type: 'database',
+            message: 'Failed to recover workout data',
+            details: error,
+            timestamp: new Date().toISOString(),
+            recoverable: false
+          }]
+        });
+        
+        toast.error("Recovery failed", {
+          description: "We couldn't recover your workout data. Please try again.",
+        });
+        
+        return false;
       }
       
       updateState({ 
@@ -264,9 +279,8 @@ export const useWorkoutState = () => {
         }]
       });
       
-      toast("Recovery failed", {
+      toast.error("Recovery failed", {
         description: "We couldn't recover your workout data. Please try again.",
-        type: "error",
       });
       
       return false;

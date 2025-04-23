@@ -3,7 +3,7 @@ import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -213,7 +213,7 @@ const TrainingSession: React.FC = () => {
     }
     
     if (!user) {
-      toast("Authentication required", {
+      toast.error("Authentication required", {
         description: "You need to be logged in to save workouts",
       });
       return;
@@ -300,12 +300,12 @@ const TrainingSession: React.FC = () => {
     const errorMessage = error?.message || "Unknown error";
     
     if (errorMessage.includes("materialized view")) {
-      toast("Partial save", {
+      toast.success("Partial save", {
         description: "Your workout data was saved but some analytics couldn't be processed.",
       });
       navigateToComplete(null);
     } else {
-      toast("Error", {
+      toast.error("Error", {
         description: errorMessage,
       });
     }
