@@ -15,6 +15,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   },
   global: {
-    fetch: (...args) => fetch(...args),
+    // Fix: Remove the spread operator and directly assign the fetch function
+    fetch: function(url, options) {
+      return fetch(url, options);
+    }
   },
 });
