@@ -1,11 +1,12 @@
+
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
-// CUSTOM COLORS - keep as before
+// CUSTOM COLORS - updated with new blue gradient
 const colors = {
   primary: "#9b87f5",          // Purple
-  secondary: "#F97316",        // Orange
-  accent: "#F2FCE2",           // Soft Green
+  secondary: "#2563eb",        // Updated to start of blue gradient
+  accent: "#4f46e5",           // End of blue gradient
   neutral: "#1A1F2C",          // Very dark background
   neutralLight: "#23263A",
   info: "#90cdf4",             // Light blue
