@@ -38,11 +38,39 @@ export const MuscleFocusChart: React.FC<MuscleFocusChartProps> = ({
     );
   }
 
+  // Create chart config for muscle groups
+  const chartConfig = {
+    chest: {
+      label: 'Chest',
+      color: COLORS.chest
+    },
+    back: {
+      label: 'Back',
+      color: COLORS.back
+    },
+    legs: {
+      label: 'Legs',
+      color: COLORS.legs
+    },
+    shoulders: {
+      label: 'Shoulders',
+      color: COLORS.shoulders
+    },
+    arms: {
+      label: 'Arms',
+      color: COLORS.arms
+    },
+    core: {
+      label: 'Core',
+      color: COLORS.core
+    }
+  };
+
   return (
     <div className={cn("w-full bg-gray-800/50 rounded-lg p-4", className)}>
       <h3 className="text-sm font-medium mb-2 text-gray-400">Muscle Group Focus</h3>
       <div className="h-64">
-        <ChartContainer>
+        <ChartContainer config={chartConfig}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
