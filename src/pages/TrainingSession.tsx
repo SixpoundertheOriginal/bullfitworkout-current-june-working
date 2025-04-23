@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { Plus } from "lucide-react";
 import { TrainingTypeTag } from "@/components/TrainingTypeTag";
@@ -493,15 +492,7 @@ const TrainingSession: React.FC = () => {
         )}
       </div>
       
-      <div className="sticky bottom-16 right-0 p-4 flex justify-end">
-        <Button
-          onClick={handleOpenAddExercise}
-          className="rounded-full w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-500 shadow-lg hover:from-purple-700 hover:to-pink-600 flex items-center justify-center text-white"
-          aria-label="Add Exercise"
-        >
-          <Plus size={28} />
-        </Button>
-      </div>
+      
     </div>
   );
 };
