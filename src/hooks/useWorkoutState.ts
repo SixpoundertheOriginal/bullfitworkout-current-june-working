@@ -28,6 +28,8 @@ export const useWorkoutState = () => {
       if (parsed.exercises) setExercises(parsed.exercises);
       if (parsed.activeExercise) setActiveExercise(parsed.activeExercise);
       if (parsed.elapsedTime) setElapsedTime(parsed.elapsedTime);
+      if (parsed.restTimerActive !== undefined) setRestTimerActive(parsed.restTimerActive);
+      if (parsed.currentRestTime) setCurrentRestTime(parsed.currentRestTime);
     }
   }, []);
   
@@ -40,15 +42,18 @@ export const useWorkoutState = () => {
       exercises,
       activeExercise,
       elapsedTime,
+      restTimerActive,
+      currentRestTime,
       lastUpdated: new Date().toISOString()
     }));
-  }, [exercises, activeExercise, elapsedTime]);
+  }, [exercises, activeExercise, elapsedTime, restTimerActive, currentRestTime]);
   
   const resetSession = useCallback(() => {
     setExercises({});
     setActiveExercise(null);
     setElapsedTime(0);
     setRestTimerActive(false);
+    setCurrentRestTime(60);
     
     const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
     if (user?.id) {
@@ -78,6 +83,7 @@ export const useWorkoutState = () => {
     setRestTimerActive,
     restTimerResetSignal,
     triggerRestTimerReset,
-    currentRestTime
+    currentRestTime,
+    setCurrentRestTime
   };
 };
