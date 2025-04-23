@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -48,14 +47,17 @@ export function AddExerciseBar({
           )}>
             <ExerciseAutocomplete 
               onSelectExercise={handleSelectExercise} 
-              className="w-full bg-gray-800/50 border-gray-700/50 text-white"
+              className={cn(
+                "w-full bg-gray-800/50 border-gray-700/50",
+                typography.text.primary
+              )}
             />
           </div>
           {onAddExercise && (
             <Button 
               onClick={onAddExercise}
               className={cn(
-                "px-8 py-6 font-medium rounded-xl",
+                "px-8 py-6 rounded-xl",
                 "bg-gradient-to-r from-purple-600 to-pink-500",
                 "hover:from-purple-700 hover:to-pink-600",
                 "transform transition-all duration-300",
@@ -63,6 +65,7 @@ export function AddExerciseBar({
                 "shadow-lg hover:shadow-purple-500/25",
                 "border border-purple-500/20",
                 "text-white",
+                typography.text.primary,
                 isMobile ? "order-1 w-full flex justify-center items-center gap-2" : "order-2"
               )}
             >

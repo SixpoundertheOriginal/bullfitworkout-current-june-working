@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -53,7 +52,7 @@ export const MetricCard = ({
             <div
               className={cn(
                 typography.headings.h3,
-                "mt-1 text-center font-bold text-2xl",
+                "mt-1 text-center font-bold text-2xl", // Removed previously custom Tailwind only
                 valueClass
               )}
             >

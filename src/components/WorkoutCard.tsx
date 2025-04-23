@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -138,7 +137,7 @@ export const WorkoutCard = ({
                     size="icon"
                     data-action="edit"
                     onClick={onEdit}
-                    className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-700"
+                    className={cn("h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-700", typography.text.primary)}
                     disabled={isDeleting}
                   >
                     <Edit size={16} />
@@ -150,7 +149,7 @@ export const WorkoutCard = ({
                     size="icon"
                     data-action="delete"
                     onClick={onDelete}
-                    className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-gray-700"
+                    className={cn("h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-gray-700", typography.text.primary)}
                     disabled={isDeleting}
                   >
                     {isDeleting ? (
@@ -209,7 +208,7 @@ export const WorkoutCard = ({
                 size="icon"
                 data-action="edit"
                 onClick={onEdit}
-                className="h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-700"
+                className={cn("h-8 w-8 text-gray-400 hover:text-purple-400 hover:bg-gray-700", typography.text.primary)}
                 disabled={isDeleting}
               >
                 <Edit size={16} />
@@ -219,7 +218,7 @@ export const WorkoutCard = ({
                 size="icon"
                 data-action="delete"
                 onClick={onDelete}
-                className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-gray-700"
+                className={cn("h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-gray-700", typography.text.primary)}
                 disabled={isDeleting}
               >
                 {isDeleting ? (

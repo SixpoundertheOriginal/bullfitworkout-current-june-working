@@ -159,7 +159,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
   return (
     <Card className={`bg-gray-900 border-gray-800 ${className}`}>
       <CardContent className="p-4">
-        <h3 className={cn("font-medium mb-3 flex items-center gap-2", theme.colors.accent.purple)}>
+        <h3 className={cn("mb-3 flex items-center gap-2", theme.colors.accent.purple, typography.headings.h3)}>
           <BarChart3 size={18} />
           Workout Summary
         </h3>
@@ -167,7 +167,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div className="bg-gray-800/50 rounded-lg p-3 flex items-center justify-between">
             <div>
-              <div className={cn("text-sm flex items-center gap-1", typography.text.secondary)}>
+              <div className={cn("flex items-center gap-1", typography.text.secondary, "text-sm")}>
                 {metrics.hasBodyweightExercises || metrics.hasIsometricExercises ? (
                   <>
                     <span>Effort Volume</span>
@@ -194,7 +194,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
                   metrics.effortVolume : metrics.totalVolume * 10) / 10} <span className={typography.text.secondary}>{weightUnit}</span>
               </div>
               {(metrics.hasBodyweightExercises || metrics.hasIsometricExercises) && (
-                <div className={cn("text-xs mt-1", typography.text.muted)}>
+                <div className={cn("mt-1", typography.text.muted, "text-xs")}>
                   Based on body weight and exercise type
                 </div>
               )}
@@ -206,7 +206,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
           
           <div className="bg-gray-800/50 rounded-lg p-3 flex items-center justify-between">
             <div>
-              <div className={cn("text-sm", typography.text.secondary)}>Total Sets</div>
+              <div className={cn(typography.text.secondary, "text-sm")}>Total Sets</div>
               <div className={cn("text-xl", typography.text.primary)}>
                 {metrics.completedSets}/{metrics.totalSets}
               </div>
@@ -220,21 +220,21 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-gray-800/50 rounded-lg p-2 text-center">
             <div className={cn("text-sm", typography.text.secondary)}>Avg Weight</div>
-            <div className={cn("text-lg font-mono", typography.text.primary)}>
+            <div className={cn("font-mono", typography.text.primary, "text-lg")}>
               {Math.round(metrics.averageWeight * 10) / 10}
             </div>
           </div>
           
           <div className="bg-gray-800/50 rounded-lg p-2 text-center">
             <div className={cn("text-sm", typography.text.secondary)}>Total Reps</div>
-            <div className={cn("text-lg font-mono", typography.text.primary)}>
+            <div className={cn("font-mono", typography.text.primary, "text-lg")}>
               {metrics.totalReps}
             </div>
           </div>
           
           <div className="bg-gray-800/50 rounded-lg p-2 text-center">
             <div className={cn("text-sm", typography.text.secondary)}>Max Weight</div>
-            <div className={cn("text-lg font-mono", typography.text.primary)}>
+            <div className={cn("font-mono", typography.text.primary, "text-lg")}>
               {Math.round(metrics.highestWeight * 10) / 10}
             </div>
           </div>
@@ -242,7 +242,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
         
         {metrics.totalExercises > 0 && (
           <div className="mt-4">
-            <div className={cn("text-sm mb-2", typography.text.secondary)}>Volume Distribution</div>
+            <div className={cn("mb-2", typography.text.secondary, "text-sm")}>Volume Distribution</div>
             {Object.entries(metrics.volumePerExercise).map(([exercise, volumes]) => {
               const displayVolume = metrics.hasBodyweightExercises || metrics.hasIsometricExercises ? 
                 volumes.effort : volumes.standard;
