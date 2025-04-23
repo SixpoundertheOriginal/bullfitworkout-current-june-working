@@ -39,7 +39,7 @@ export function useAsyncOperation<T extends (...args: any[]) => Promise<any>>(
         if (showErrorToast) {
           toast(errorMessage, {
             description: error.message,
-            intent: "destructive"
+            variant: "destructive"
           });
         }
       } finally {
