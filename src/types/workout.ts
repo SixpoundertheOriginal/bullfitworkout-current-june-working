@@ -1,4 +1,5 @@
 
+
 export type WorkoutStatus = 
   | 'idle'        // Initial state
   | 'active'      // Workout in progress

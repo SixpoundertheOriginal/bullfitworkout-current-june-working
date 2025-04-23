@@ -240,7 +240,9 @@ const TrainingSession: React.FC = () => {
         userData: user,
         workoutData,
         exercises,
-        onProgressUpdate: updateSaveProgress
+        onProgressUpdate: (progress) => {
+          updateSaveProgress(progress.step, progress.completed);
+        }
       });
       
       if (saveResult.success) {

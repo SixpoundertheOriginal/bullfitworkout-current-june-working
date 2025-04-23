@@ -75,13 +75,15 @@ export const saveWorkout = async ({
         }));
       });
 
-      // Try to use our atomic transaction RPC function
-      const { data: transactionResult, error: rpcError } = await supabase.rpc('save_complete_workout', {
-        p_workout_data: {
-          ...workoutData,
-          user_id: userData.id
-        },
-        p_exercise_sets: formattedSets
+      // Try to use our atomic transaction function
+      const { data: transactionResult, error: rpcError } = await supabase.functions.invoke('save-complete-workout', {
+        body: {
+          workout_data: {
+            ...workoutData,
+            user_id: userData.id
+          },
+          exercise_sets: formattedSets
+        }
       });
       
       // If successful, return with workoutId
@@ -99,8 +101,8 @@ export const saveWorkout = async ({
         };
       }
       
-      // If the RPC doesn't exist or fails, we'll fall back to the manual approach
-      console.warn("RPC save failed, falling back to manual save:", rpcError);
+      // If the function doesn't exist or fails, we'll fall back to the manual approach
+      console.warn("Function invocation failed, falling back to manual save:", rpcError);
     } catch (rpcError) {
       console.warn("RPC call failed, using fallback:", rpcError);
       // Continue with fallback approach
@@ -236,9 +238,9 @@ export const saveWorkout = async ({
     });
     
     try {
-      // Attempt to refresh the materialized views
-      await supabase.rpc('refresh_workout_analytics', {
-        p_workout_id: workoutId
+      // Attempt to refresh the analytics
+      await supabase.functions.invoke('refresh-workout-analytics', {
+        body: { workoutId }
       }).then(({ error: refreshError }) => {
         if (refreshError) {
           console.warn("Analytics refresh failed:", refreshError);

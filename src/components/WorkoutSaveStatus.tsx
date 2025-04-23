@@ -1,7 +1,6 @@
-
 import React from "react";
 import { SaveProgress, WorkoutStatus } from "@/types/workout";
-import { Loader2, CheckCircle, AlertCircle, Clock, ArrowPathIcon, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Clock, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
