@@ -2,11 +2,12 @@
 import React, { useState } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
+import { Accordion } from "@/components/ui/accordion";
+import ExerciseAccordionCard from "@/components/exercises/ExerciseAccordionCard";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -16,6 +17,7 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
+  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
 
   // For add/edit
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -59,9 +61,15 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
     setShowDialog(true);
   };
 
+  const handleAccordionSelect = (value: string) => {
+    setActiveAccordion(prev => (prev === value ? null : value));
+  };
+
   const handleSelectExercise = (exercise: Exercise) => {
     if (onSelectExercise) {
       onSelectExercise(exercise);
+    } else {
+      handleAccordionSelect(exercise.id);
     }
   };
 
@@ -126,46 +134,23 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
             No exercises found. Click "Add New" to create one!
           </div>
         )}
-        {exercises.map((exercise) => (
-          <Card 
-            key={exercise.id} 
-            className="bg-gray-900 border-gray-700 hover:bg-gray-800 transition-colors cursor-pointer"
-            onClick={() => handleSelectExercise(exercise)}
-          >
-            <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <div className="font-semibold text-white">{exercise.name}</div>
-                <div className="text-xs text-gray-400">{exercise.description}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click
-                    handleEdit(exercise.id);
-                  }}
-                  className="text-white bg-gray-800 hover:bg-gray-700"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click
-                    handleDelete(exercise.id);
-                  }}
-                  className="bg-red-900/50 hover:bg-red-800 text-white"
-                >
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Accordion
+          type="single"
+          collapsible
+          value={activeAccordion ? activeAccordion : ""}
+          onValueChange={val => setActiveAccordion(val as string)}
+        >
+          {exercises.map((exercise) => (
+            <ExerciseAccordionCard
+              key={exercise.id}
+              exercise={exercise}
+              expanded={activeAccordion === exercise.id}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onSelect={handleSelectExercise}
+            />
+          ))}
+        </Accordion>
       </div>
     </div>
   );
