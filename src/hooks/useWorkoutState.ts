@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
@@ -71,14 +70,10 @@ export const useWorkoutState = () => {
           toast({
             title: "Workout recovery available",
             description: "We found an unsaved workout. Continue your session or reset to start fresh.",
-            action: (
-              <button 
-                onClick={() => resetSession()}
-                className="bg-red-600 px-3 py-1.5 text-xs font-medium text-white rounded-md"
-              >
-                Reset
-              </button>
-            ),
+            action: {
+              label: "Reset",
+              onClick: () => resetSession()
+            },
             duration: 10000,
           });
         }
