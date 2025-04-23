@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -83,7 +82,6 @@ export const useWorkoutStats = (days?: number) => {
         throw new Error("User is not authenticated");
       }
 
-      // Fetch workout sessions
       const { data: workouts, error: workoutsError } = await supabase
         .from("workout_sessions")
         .select("*")
@@ -94,7 +92,6 @@ export const useWorkoutStats = (days?: number) => {
         throw workoutsError;
       }
 
-      // Fetch exercise sets
       const { data: exerciseSets, error: setsError } = await supabase
         .from("exercise_sets")
         .select("*, workout_sessions!inner(*)")
@@ -104,7 +101,6 @@ export const useWorkoutStats = (days?: number) => {
         throw setsError;
       }
 
-      // Additional data fetching for more detailed stats
       const { data: progressionData, error: progressionError } = await supabase
         .from("exercise_progression")
         .select("*")
@@ -116,7 +112,6 @@ export const useWorkoutStats = (days?: number) => {
         // Continue with other data, don't throw
       }
 
-      // Calculate muscle focus from exercise sets
       const groupedExercises: Record<string, any[]> = {};
       exerciseSets?.forEach(set => {
         if (!groupedExercises[set.exercise_name]) {
@@ -127,7 +122,6 @@ export const useWorkoutStats = (days?: number) => {
       
       const muscleFocus = calculateMuscleFocus(groupedExercises);
 
-      // Process workout metrics
       let totalDuration = 0;
       let completedSets = 0;
       let totalVolume = 0;
@@ -170,7 +164,6 @@ export const useWorkoutStats = (days?: number) => {
       const preferredDay = Object.keys(daysFrequency).reduce((a, b) => daysFrequency[a] > daysFrequency[b] ? a : b, '');
       const preferredTime = Object.keys(durationByTimeOfDay).reduce((a, b) => durationByTimeOfDay[a] > durationByTimeOfDay[b] ? a : b, '');
 
-      // Calculate volume change percentage
       let volumeChangePercentage = 0;
       if (progressionData && progressionData.length > 1) {
         const firstVolume = progressionData[0].performance_rating || 0;
@@ -178,28 +171,30 @@ export const useWorkoutStats = (days?: number) => {
         volumeChangePercentage = firstVolume ? ((lastVolume - firstVolume) / firstVolume) * 100 : 0;
       }
 
-      // Calculate consistency score (example: percentage of weeks with at least one workout)
       const weeks: Record<string, boolean> = {};
       workouts?.forEach(workout => {
         const weekStart = new Date(workout.start_time);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Get the first day of the week
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         const weekKey = weekStart.toLocaleDateString();
         weeks[weekKey] = true;
       });
       const consistentWeeks = Object.keys(weeks).length;
-      const totalWeeks = 52; // Assuming a year-long tracking
+      const totalWeeks = 52;
       const consistencyScore = (consistentWeeks / totalWeeks) * 100;
 
-      // Calculate weight progression rate (example: average increase in weight per exercise over time)
       let weightProgressionRate = 0;
       if (progressionData && progressionData.length > 1) {
         let totalWeightIncrease = 0;
         let validProgressions = 0;
         
         for (let i = 1; i < progressionData.length; i++) {
-          // Check if metadata contains weight information
-          const prevWeight = progressionData[i-1]?.metadata?.weight || 0;
-          const currWeight = progressionData[i]?.metadata?.weight || 0;
+          const prevMetadata = progressionData[i-1]?.metadata;
+          const currMetadata = progressionData[i]?.metadata;
+          
+          const prevWeight = typeof prevMetadata === 'object' && prevMetadata !== null && 'weight' in prevMetadata ? 
+            Number(prevMetadata.weight) : 0;
+          const currWeight = typeof currMetadata === 'object' && currMetadata !== null && 'weight' in currMetadata ? 
+            Number(currMetadata.weight) : 0;
           
           if (prevWeight > 0 && currWeight > 0) {
             totalWeightIncrease += (currWeight - prevWeight);
@@ -210,7 +205,6 @@ export const useWorkoutStats = (days?: number) => {
         weightProgressionRate = validProgressions > 0 ? totalWeightIncrease / validProgressions : 0;
       }
 
-      // Calculate exercise volume history
       const volumeHistoryData: ExerciseVolumeHistory[] = [];
       const exerciseNames = [...new Set(exerciseSets?.map(set => set.exercise_name))];
 
@@ -227,7 +221,6 @@ export const useWorkoutStats = (days?: number) => {
           if (percentChange > 5) trend = 'increasing';
           else if (percentChange < -5) trend = 'decreasing';
           else {
-            // Check for fluctuation
             let fluctuationCount = 0;
             for (let i = 1; i < volumes.length; i++) {
               const prevVolume = volumes[i - 1];
@@ -248,7 +241,6 @@ export const useWorkoutStats = (days?: number) => {
         }
       });
       
-      // Define strength trend based on overall volume changes
       let strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating' = 'stable';
       if (volumeChangePercentage > 5) strengthTrend = 'increasing';
       else if (volumeChangePercentage < -5) strengthTrend = 'decreasing';
@@ -256,7 +248,6 @@ export const useWorkoutStats = (days?: number) => {
         strengthTrend = 'fluctuating';
       }
 
-      // Calculate top exercises
       const exerciseStats: Record<string, { sets: number, volume: number, weightSum: number }> = {};
       exerciseSets?.forEach(set => {
         if (set.completed) {
@@ -272,7 +263,6 @@ export const useWorkoutStats = (days?: number) => {
       const topExercisesData: TopExerciseStats[] = Object.entries(exerciseStats)
         .sort(([, a], [, b]) => b.sets - a.sets)
         .map(([exerciseName, { sets, volume, weightSum }]) => {
-          // Find the corresponding entry in volumeHistoryData
           const volumeHistoryEntry = volumeHistoryData.find(entry => entry.exercise_name === exerciseName);
           
           return {
@@ -285,7 +275,6 @@ export const useWorkoutStats = (days?: number) => {
           };
         });
         
-      // Calculate workout types stats
       const workoutTypesMap: Record<string, {count: number, totalDuration: number}> = {};
       workouts?.forEach(workout => {
         if (!workoutTypesMap[workout.training_type]) {
@@ -305,7 +294,6 @@ export const useWorkoutStats = (days?: number) => {
         };
       });
       
-      // Calculate streak
       let streakDays = 0;
       if (workouts && workouts.length > 0) {
         const workoutDates = [...new Set(workouts.map(w => 
@@ -329,7 +317,6 @@ export const useWorkoutStats = (days?: number) => {
         }
       }
       
-      // Mock tags data for now - this would come from a real query in production
       const mockTags = [
         { name: "Upper Body", count: 12 },
         { name: "Lower Body", count: 8 },
@@ -338,7 +325,6 @@ export const useWorkoutStats = (days?: number) => {
         { name: "Evening", count: 9 }
       ];
       
-      // Return the processed stats
       return {
         totalWorkouts: workouts?.length || 0,
         totalDuration: totalDuration,
@@ -379,7 +365,6 @@ export const useWorkoutStats = (days?: number) => {
   return { stats: stats || defaultStats(), loading, error };
 };
 
-// Provide default stats for when data is loading or unavailable
 function defaultStats(): WorkoutStats {
   return {
     totalWorkouts: 0,
@@ -416,18 +401,14 @@ function defaultStats(): WorkoutStats {
   };
 }
 
-// Helper function to determine recommended workout based on muscle focus
 function determineRecommendedWorkout(muscleFocus: Record<string, number>): string {
-  // Find the least worked muscle group
   const entries = Object.entries(muscleFocus);
   
   if (entries.length === 0) return "Full Body";
   
-  // Sort by least worked first
   entries.sort((a, b) => a[1] - b[1]);
   const leastWorked = entries[0][0];
   
-  // Map muscle groups to workout types
   const muscleToWorkout: Record<string, string> = {
     chest: "Push",
     back: "Pull",
@@ -446,16 +427,13 @@ function determineRecommendedTags(muscleFocus: Record<string, number>): string[]
   
   if (entries.length === 0) return ["Balanced", "Full Body"];
   
-  // Sort by least worked first
   entries.sort((a, b) => a[1] - b[1]);
   
-  // Add the least worked areas as tags
   const leastWorked = entries.slice(0, 2).map(e => e[0]);
   leastWorked.forEach(muscle => {
     tags.push(`${muscle.charAt(0).toUpperCase() + muscle.slice(1)} focus`);
   });
   
-  // Check balance - if all muscle groups are within 20% of each other, consider it balanced
   const vals = entries.map(e => e[1]);
   const min = Math.min(...vals);
   const max = Math.max(...vals);

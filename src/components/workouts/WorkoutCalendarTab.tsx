@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -82,7 +81,6 @@ export function WorkoutCalendarTab() {
       
       if (error) throw error;
       
-      // Group by workout_id
       const setsByWorkout: Record<string, ExerciseSet[]> = {};
       data?.forEach(set => {
         if (!setsByWorkout[set.workout_id]) {
@@ -96,7 +94,6 @@ export function WorkoutCalendarTab() {
     enabled: !!selectedDayWorkouts && selectedDayWorkouts.length > 0,
   });
   
-  // Generate workout dates map for highlighting calendar
   const workoutDates: Record<string, boolean> = {};
   workouts?.forEach(workout => {
     const date = parseISO(workout.start_time);
@@ -246,7 +243,7 @@ export function WorkoutCalendarTab() {
                   day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
                 }}
                 components={{
-                  day: renderDateCell
+                  Day: renderDateCell
                 }}
               />
             </div>
