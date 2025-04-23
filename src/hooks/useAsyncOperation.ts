@@ -30,7 +30,7 @@ export function useAsyncOperation<T extends (...args: any[]) => Promise<any>>(
         setError(null);
         const result = await operation(...args);
         if (showSuccessToast) {
-          toast(successMessage);
+          toast.success(successMessage);
         }
         return result;
       } catch (err) {
