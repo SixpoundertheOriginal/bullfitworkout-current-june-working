@@ -10,6 +10,7 @@ interface TopRestTimerProps {
   onTimeUpdate?: (time: number) => void;
   onManualStart?: () => void;
   defaultRestTime?: number;
+  currentRestTime?: number;
 }
 
 export const TopRestTimer = ({ 
@@ -18,16 +19,23 @@ export const TopRestTimer = ({
   resetSignal,
   onTimeUpdate,
   onManualStart,
-  defaultRestTime = 60
+  defaultRestTime = 60,
+  currentRestTime
 }: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
-  const [currentRestTime, setCurrentRestTime] = useState(defaultRestTime);
+  const [restDuration, setRestDuration] = useState(currentRestTime || defaultRestTime);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
   const lastResetSignalRef = useRef<number>(0);
 
-  // This effect handles the reset signal
+  useEffect(() => {
+    if (currentRestTime && currentRestTime > 0) {
+      console.log(`TopRestTimer: Updated rest time to ${currentRestTime}s`);
+      setRestDuration(currentRestTime);
+    }
+  }, [currentRestTime]);
+
   useEffect(() => {
     if (resetSignal > 0 && resetSignal !== lastResetSignalRef.current) {
       console.log(`TopRestTimer: Reset signal received: ${resetSignal}, previous: ${lastResetSignalRef.current}`);
@@ -39,7 +47,6 @@ export const TopRestTimer = ({
     }
   }, [resetSignal]);
   
-  // This effect handles activation state changes
   useEffect(() => {
     console.log("TopRestTimer: isActive changed:", isActive);
     if (isActive) {
@@ -56,7 +63,6 @@ export const TopRestTimer = ({
     };
   }, [isActive]);
 
-  // Update the rest time from localStorage if a set was completed
   useEffect(() => {
     const handleSetCompletedToast = (mutations: MutationRecord[]) => {
       for (const mutation of mutations) {
@@ -64,27 +70,24 @@ export const TopRestTimer = ({
           for (const node of mutation.addedNodes) {
             if (node instanceof HTMLElement && node.textContent && 
                 node.textContent.includes('logged successfully')) {
-              // Extract the current exercise name from the toast message
               const toastText = node.textContent;
               const exerciseMatch = toastText.match(/^(.+?):/);
               if (exerciseMatch && exerciseMatch[1]) {
                 const exerciseName = exerciseMatch[1].trim();
                 
-                // Try to find the current active exercise and set in localStorage
                 const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
                 if (user?.id) {
                   const savedSession = localStorage.getItem(`workout_session_${user.id}`);
                   if (savedSession) {
                     const session = JSON.parse(savedSession);
                     if (session.exercises && session.exercises[exerciseName]) {
-                      // Find the latest completed set (highest index)
                       const sets = session.exercises[exerciseName];
                       const completedSets = sets.filter((s: any) => s.completed);
                       if (completedSets.length > 0) {
                         const lastCompletedSet = completedSets[completedSets.length - 1];
                         if (lastCompletedSet && lastCompletedSet.restTime) {
                           console.log(`Found rest time from last completed set: ${lastCompletedSet.restTime}s`);
-                          setCurrentRestTime(lastCompletedSet.restTime);
+                          setRestDuration(lastCompletedSet.restTime);
                           return;
                         }
                       }
@@ -125,10 +128,7 @@ export const TopRestTimer = ({
         setElapsedTime(prev => {
           const newTime = prev + deltaSeconds;
           
-          // Check if we should show "complete" when target time is reached
-          // but keep counting up regardless
-          if (newTime >= currentRestTime && prev < currentRestTime) {
-            // Only trigger complete once when crossing the threshold
+          if (newTime >= restDuration && prev < restDuration) {
             if (onComplete) onComplete();
           }
           
@@ -139,7 +139,6 @@ export const TopRestTimer = ({
     }, 250); // Check more frequently for smoother updates
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearTimerInterval();
@@ -171,9 +170,8 @@ export const TopRestTimer = ({
     );
   }
 
-  // Calculate percentage progress for visual indicator
-  const progressPercentage = Math.min((elapsedTime / currentRestTime) * 100, 100);
-  const showTargetTime = elapsedTime < currentRestTime;
+  const progressPercentage = Math.min((elapsedTime / restDuration) * 100, 100);
+  const showTargetTime = elapsedTime < restDuration;
 
   return (
     <div className="flex flex-col items-center">
@@ -190,7 +188,7 @@ export const TopRestTimer = ({
         </span>
         {showTargetTime && (
           <span className="text-xs font-mono text-gray-400">
-            Target: {formatTime(currentRestTime)}
+            Target: {formatTime(restDuration)}
           </span>
         )}
       </div>

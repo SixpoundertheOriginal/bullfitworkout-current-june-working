@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,14 +87,11 @@ export const ExerciseCard = ({
     onCompleteSet(exercise, index);
     setActiveRestTimer(index);
     
-    // Get the rest time from the current set
     const restTime = sets[index]?.restTime || 60;
     console.log(`Set ${index + 1} completed with rest time: ${restTime}s`);
     
-    // Trigger rest timer with the right duration
     onShowRestTimer();
     
-    // Reset the timer
     onResetRestTimer();
     
     if (navigator.vibrate) {
@@ -108,7 +104,7 @@ export const ExerciseCard = ({
   };
 
   const handleAutoAdvanceNext = (index: number) => {
-    if (sets[index + 1] && sets[index + 1].isEditing) {
+    if (sets[index + 1] && !sets[index + 1].isEditing) {
       onEditSet(exercise, index + 1);
     }
   };

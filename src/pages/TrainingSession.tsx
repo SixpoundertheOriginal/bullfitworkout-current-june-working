@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -159,10 +160,11 @@ const TrainingSession: React.FC = () => {
         };
       }
       
-      const currentRestTime = exerciseSets[setIndex].restTime;
+      const currentRestTime = currentSet.restTime;
       console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s`);
       
-      triggerRestTimerReset();
+      // Pass the current rest time when triggering the reset
+      triggerRestTimerReset(currentRestTime);
       
       return {
         ...prev,
@@ -456,6 +458,8 @@ const TrainingSession: React.FC = () => {
           onManualRestStart={handleShowRestTimer}
           onRestTimerReset={handleResetRestTimer}
           restTimerResetSignal={restTimerResetSignal}
+          currentRestTime={activeExercise && exercises[activeExercise]?.length > 0 ? 
+            exercises[activeExercise].find(set => !set.completed)?.restTime || 60 : 60}
         />
       </div>
       

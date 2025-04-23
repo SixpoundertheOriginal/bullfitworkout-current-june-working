@@ -1,6 +1,5 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect, useCallback } from 'react';
 
 export interface LocalExerciseSet {
   weight: number;
@@ -10,97 +9,75 @@ export interface LocalExerciseSet {
   isEditing: boolean;
 }
 
-export type ExerciseSessionState = Record<string, LocalExerciseSet[]>;
-
-export function useWorkoutState() {
-  const [exercises, setExercises] = useState<ExerciseSessionState>({});
+export const useWorkoutState = () => {
+  const [exercises, setExercises] = useState<Record<string, LocalExerciseSet[]>>({});
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [restTimerActive, setRestTimerActive] = useState(false);
   const [restTimerResetSignal, setRestTimerResetSignal] = useState(0);
-  const { user } = useAuth();
+  const [currentRestTime, setCurrentRestTime] = useState(60);
   
-  // Load state from localStorage on component mount
+  // Load workout state from localStorage if it exists
   useEffect(() => {
-    if (!user) return;
+    const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
+    if (!user?.id) return;
     
-    try {
-      const savedSession = localStorage.getItem(`workout_session_${user.id}`);
-      if (savedSession) {
-        const session = JSON.parse(savedSession);
-        setExercises(session.exercises || {});
-        setElapsedTime(session.elapsedTime || 0);
-        setActiveExercise(session.activeExercise || null);
-        setRestTimerActive(session.restTimerActive || false);
-        
-        console.log("Restored workout session from localStorage:", session);
-      }
-    } catch (error) {
-      console.error("Error loading workout session from localStorage:", error);
+    const savedWorkout = localStorage.getItem(`workout_session_${user.id}`);
+    if (savedWorkout) {
+      const parsed = JSON.parse(savedWorkout);
+      if (parsed.exercises) setExercises(parsed.exercises);
+      if (parsed.activeExercise) setActiveExercise(parsed.activeExercise);
+      if (parsed.elapsedTime) setElapsedTime(parsed.elapsedTime);
     }
-  }, [user]);
+  }, []);
   
-  // Save state to localStorage whenever it changes
+  // Save workout state to localStorage when it changes
   useEffect(() => {
-    if (!user) return;
+    const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
+    if (!user?.id) return;
     
-    try {
-      const sessionData = {
-        exercises,
-        elapsedTime,
-        activeExercise,
-        restTimerActive,
-        lastUpdated: new Date().toISOString()
-      };
-      
-      localStorage.setItem(`workout_session_${user.id}`, JSON.stringify(sessionData));
-    } catch (error) {
-      console.error("Error saving workout session to localStorage:", error);
-    }
-  }, [exercises, elapsedTime, activeExercise, restTimerActive, user]);
+    localStorage.setItem(`workout_session_${user.id}`, JSON.stringify({
+      exercises,
+      activeExercise,
+      elapsedTime,
+      lastUpdated: new Date().toISOString()
+    }));
+  }, [exercises, activeExercise, elapsedTime]);
   
-  // Wrapper for setExercises that also updates localStorage
-  const updateExercises = (
-    exercisesUpdate: ExerciseSessionState | ((prev: ExerciseSessionState) => ExerciseSessionState)
-  ) => {
-    setExercises(exercisesUpdate);
-  };
-  
-  // Wrapper for setElapsedTime that also updates localStorage
-  const updateElapsedTime = (
-    timeUpdate: number | ((prev: number) => number)
-  ) => {
-    setElapsedTime(timeUpdate);
-  };
-  
-  const resetSession = () => {
-    if (!user) return;
-    
+  const resetSession = useCallback(() => {
     setExercises({});
-    setElapsedTime(0);
     setActiveExercise(null);
+    setElapsedTime(0);
     setRestTimerActive(false);
     
-    localStorage.removeItem(`workout_session_${user.id}`);
-    console.log("Workout session reset");
-  };
-
-  const triggerRestTimerReset = () => {
+    const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
+    if (user?.id) {
+      localStorage.removeItem(`workout_session_${user.id}`);
+    }
+  }, []);
+  
+  const triggerRestTimerReset = useCallback((restTime?: number) => {
+    // Update current rest time if provided
+    if (restTime && restTime > 0) {
+      setCurrentRestTime(restTime);
+    }
+    
+    // Increment the reset signal to trigger the timer reset
     setRestTimerResetSignal(prev => prev + 1);
-    setRestTimerActive(true);
-  };
+  }, []);
   
   return {
     exercises,
-    setExercises: updateExercises,
+    setExercises,
     activeExercise,
     setActiveExercise,
     elapsedTime,
-    setElapsedTime: updateElapsedTime,
+    setElapsedTime,
     resetSession,
     restTimerActive,
     setRestTimerActive,
     restTimerResetSignal,
-    triggerRestTimerReset
+    triggerRestTimerReset,
+    currentRestTime
   };
-}
+};
