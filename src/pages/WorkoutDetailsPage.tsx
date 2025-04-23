@@ -12,6 +12,7 @@ import { WorkoutExercisesSection } from "@/components/workouts/WorkoutExercisesS
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useExerciseManagement } from "@/hooks/useExerciseManagement";
+import { ExerciseSet } from "@/types/exercise";
 
 const WorkoutDetailsPage = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
