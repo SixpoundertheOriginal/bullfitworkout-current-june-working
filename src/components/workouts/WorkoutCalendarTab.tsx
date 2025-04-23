@@ -7,10 +7,11 @@ import { ArrowLeft, Info, BarChart3, Calendar } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IntelligentMetricsDisplay } from "../metrics/IntelligentMetricsDisplay";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { EnhancedMetricsDisplay } from "../metrics/EnhancedMetricsDisplay";
+import { WorkoutPerformanceCard } from "../metrics/WorkoutPerformanceCard";
 
 export const WorkoutCalendarTab = () => {
   const [searchParams] = useSearchParams();
@@ -120,6 +121,83 @@ export const WorkoutCalendarTab = () => {
     return { intensity, efficiency };
   }, [exerciseSets?.sets]);
 
+  // Fetch exercise progression data for trends
+  const { data: exerciseTrends } = useQuery({
+    queryKey: ['exercise-trends', exerciseSets?.workoutId],
+    queryFn: async () => {
+      if (!user || !exerciseSets?.workoutId) return [];
+      
+      // Get exercise names from the current workout
+      const exerciseNames = Object.keys(exerciseSets.exerciseMap || {});
+      
+      if (exerciseNames.length === 0) return [];
+      
+      // Fetch progression data for these exercises
+      const { data, error } = await supabase
+        .from('exercise_progression')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('exercise_name', exerciseNames)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        console.error("Error fetching exercise progression:", error);
+        return [];
+      }
+      
+      // Calculate trends
+      const trends = exerciseNames.map(name => {
+        const exerciseData = data?.filter(d => d.exercise_name === name) || [];
+        
+        if (exerciseData.length < 2) {
+          return {
+            exerciseName: name,
+            trend: 'stable' as const,
+            percentChange: 0,
+            volumes: []
+          };
+        }
+        
+        // Get performance metrics
+        const volumes = exerciseData.map(d => 
+          d.performance_rating || 0
+        );
+        
+        // Calculate percent change
+        const first = exerciseData[0].performance_rating || 0;
+        const last = exerciseData[exerciseData.length - 1].performance_rating || 0;
+        const percentChange = first > 0 ? ((last - first) / first) * 100 : 0;
+        
+        // Determine trend
+        let trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating' = 'stable';
+        if (percentChange > 5) trend = 'increasing';
+        else if (percentChange < -5) trend = 'decreasing';
+        else {
+          // Check for fluctuation
+          let fluctuationCount = 0;
+          for (let i = 1; i < exerciseData.length; i++) {
+            const prev = exerciseData[i-1].performance_rating || 0;
+            const curr = exerciseData[i].performance_rating || 0;
+            if (prev > 0 && Math.abs((curr - prev) / prev) > 0.1) {
+              fluctuationCount++;
+            }
+          }
+          if (fluctuationCount > exerciseData.length / 3) trend = 'fluctuating';
+        }
+        
+        return {
+          exerciseName: name,
+          trend,
+          percentChange,
+          volumes
+        };
+      });
+      
+      return trends;
+    },
+    enabled: !!user && !!exerciseSets?.workoutId
+  });
+
   return (
     <div className="mt-4">
       {selectedDate && !window.matchMedia("(min-width: 768px)").matches ? (
@@ -156,32 +234,32 @@ export const WorkoutCalendarTab = () => {
             
             <TabsContent value="metrics">
               {exerciseSets?.sets?.length > 0 ? (
-                <Card className="bg-gray-900 border-gray-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md flex items-center">
-                      <BarChart3 className="h-4 w-4 mr-2 text-purple-400" />
-                      Workout Performance
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <IntelligentMetricsDisplay 
-                      exercises={exerciseSets.exerciseMap || {}}
-                      intensity={workoutMetrics.intensity}
-                      efficiency={workoutMetrics.efficiency}
-                    />
-                    
-                    {exerciseSets.workoutId && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/workout-details/${exerciseSets.workoutId}`)}
-                        className="w-full mt-4 border-purple-500/20 text-purple-400"
-                      >
-                        View Full Workout Details
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                <div className="space-y-4">
+                  <WorkoutPerformanceCard
+                    intensity={workoutMetrics.intensity}
+                    efficiency={workoutMetrics.efficiency}
+                    volume={exerciseSets.sets.reduce((sum, set) => sum + (set.weight * set.reps), 0)}
+                    duration={0} // You can calculate actual duration if available
+                    trendExercises={exerciseTrends}
+                  />
+                
+                  <EnhancedMetricsDisplay 
+                    exercises={exerciseSets.exerciseMap || {}}
+                    intensity={workoutMetrics.intensity}
+                    efficiency={workoutMetrics.efficiency}
+                  />
+                  
+                  {exerciseSets.workoutId && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/workout-details/${exerciseSets.workoutId}`)}
+                      className="w-full mt-4 border-purple-500/20 text-purple-400"
+                    >
+                      View Full Workout Details
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <Card className="bg-gray-900 border-gray-800">
                   <CardContent className="p-6 text-center">

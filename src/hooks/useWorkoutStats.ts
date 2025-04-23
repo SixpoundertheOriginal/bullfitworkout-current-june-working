@@ -1,758 +1,340 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { ExerciseSet } from "@/types/exercise";
+import { useWeightUnit } from '@/context/WeightUnitContext';
+import { calculateMuscleFocus } from "@/utils/exerciseUtils";
 
-// Define an interface for the workout data structure from Supabase
-interface WorkoutSession {
-  id: string;
-  user_id: string;
-  name: string;
-  training_type: string;
-  start_time: string;
-  end_time: string;
-  duration: number;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  tags?: string[]; // Added tags as optional property
+export interface WorkoutStats {
+  totalWorkouts: number;
+  totalDuration: number;
+  completedSets: number;
+  averageWorkoutLength: number;
+  completionRate: number;
+  timePatterns: {
+    daysFrequency: Record<string, number>;
+    preferredDay: string;
+    preferredTime: string;
+    durationByTimeOfDay: Record<string, number>;
+  };
+  workoutTypes: WorkoutTypeStats[];
+  topExercises: TopExerciseStats[];
+  progressMetrics: {
+    volumeChangePercentage: number;
+    consistencyScore: number;
+    weightProgressionRate: number;
+  };
+  exerciseVolumeHistory?: ExerciseVolumeHistory[];
+  muscleFocus: Record<string, number>;
+  recommendedType?: string;
+  recommendedDuration?: number;
+  recommendedTags?: string[];
 }
 
 export interface WorkoutTypeStats {
   type: string;
   count: number;
   totalDuration: number;
-  percentage: number;
-  // Add time of day distribution
-  timeOfDay: {
-    morning: number;   // 5am-11am
-    afternoon: number; // 11am-5pm
-    evening: number;   // 5pm-10pm
-    night: number;     // 10pm-5am
-  };
-  // Add average duration
   averageDuration: number;
 }
 
 export interface TopExerciseStats {
   exerciseName: string;
-  count: number;
   totalSets: number;
-  averageWeight: number;
   totalVolume: number;
-  // Add preferred tags association
-  associatedTags: string[];
-  // Add trend and percentChange properties
+  averageWeight: number;
   trend?: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
   percentChange?: number;
 }
 
-export interface TagStats {
-  name: string;
-  count: number;
-  category: 'strength' | 'cardio' | 'recovery' | 'flexibility' | 'other';
-  associatedTypes: string[];
-  timeOfDay: {
-    morning: number;
-    afternoon: number;
-    evening: number;
-    night: number;
-  };
-}
-
-export interface TimePatternStats {
-  preferredDuration: number;
-  preferredTimeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-  durationByTimeOfDay: {
-    morning: number;
-    afternoon: number;
-    evening: number;
-    night: number;
-  };
-  // Day of week patterns
-  daysFrequency: {
-    monday: number;
-    tuesday: number;
-    wednesday: number;
-    thursday: number;
-    friday: number;
-    saturday: number;
-    sunday: number;
-  };
-}
-
-// Add new interface for exercise volume tracking
 export interface ExerciseVolumeHistory {
   exercise_name: string;
-  workouts: {
-    date: string;
-    volume: number;
-    sets: number;
-    avgWeight: number;
-  }[];
   trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
   percentChange: number;
+  volume_history: number[];
 }
 
-// Add muscle group tracking to workout stats
-export interface MuscleGroupDistribution {
-  group: string;
-  volume: number;
-  frequency: number;
-  percentage: number;
-}
-
-// Updated ProgressMetrics interface with correct types
-export interface ProgressMetrics {
-  volumeChange: number;
-  volumeChangePercentage: number;
-  strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
-  frequencyChange: number;
-  consistencyScore: number;
-}
-
-// Extend WorkoutStats to include advanced metrics
-export interface WorkoutStats {
-  totalWorkouts: number;
-  totalDuration: number;
-  avgDuration: number;
-  totalExercises: number;
-  totalSets: number;
-  topExercises: TopExerciseStats[];
-  workoutTypes: WorkoutTypeStats[];
-  lastWorkoutDate: string | null;
-  streakDays: number;
-  // New analytics
-  tags: TagStats[];
-  timePatterns: TimePatternStats;
-  // Personalized recommendations
-  recommendedType: string | null;
-  recommendedDuration: number | null;
-  recommendedTags: string[];
-  
-  // Advanced analytics
-  exerciseVolumeHistory: ExerciseVolumeHistory[];
-  muscleGroups: MuscleGroupDistribution[];
-  progressMetrics: ProgressMetrics;
-}
-
-export function useWorkoutStats(limit: number = 50) {
+export const useWorkoutStats = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<WorkoutStats>({
-    totalWorkouts: 0,
-    totalDuration: 0,
-    avgDuration: 0,
-    totalExercises: 0,
-    totalSets: 0,
-    topExercises: [],
-    workoutTypes: [],
-    lastWorkoutDate: null,
-    streakDays: 0,
-    // Initialize new analytics
-    tags: [],
-    timePatterns: {
-      preferredDuration: 30,
-      preferredTimeOfDay: 'evening',
-      durationByTimeOfDay: {
+  const { weightUnit } = useWeightUnit();
+
+  const {
+    data: stats,
+    isLoading: loading,
+    error
+  } = useQuery({
+    queryKey: ["workout-stats", user?.id, weightUnit],
+    queryFn: async (): Promise<WorkoutStats> => {
+      if (!user) {
+        throw new Error("User is not authenticated");
+      }
+
+      // Fetch workout sessions
+      const { data: workouts, error: workoutsError } = await supabase
+        .from("workout_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("start_time", { ascending: false });
+
+      if (workoutsError) {
+        throw workoutsError;
+      }
+
+      // Fetch exercise sets
+      const { data: exerciseSets, error: setsError } = await supabase
+        .from("exercise_sets")
+        .select("*, workout_sessions!inner(*)")
+        .eq("workout_sessions.user_id", user.id);
+
+      if (setsError) {
+        throw setsError;
+      }
+
+      // Additional data fetching for more detailed stats
+      const { data: progressionData, error: progressionError } = await supabase
+        .from("exercise_progression")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+        
+      if (progressionError) {
+        console.error("Error fetching progression data:", progressionError);
+        // Continue with other data, don't throw
+      }
+
+      // Calculate muscle focus from exercise sets
+      const groupedExercises: Record<string, any[]> = {};
+      exerciseSets?.forEach(set => {
+        if (!groupedExercises[set.exercise_name]) {
+          groupedExercises[set.exercise_name] = [];
+        }
+        groupedExercises[set.exercise_name].push(set);
+      });
+      
+      const muscleFocus = calculateMuscleFocus(groupedExercises);
+
+      // Process workout metrics
+      let totalDuration = 0;
+      let completedSets = 0;
+      let totalVolume = 0;
+      const daysFrequency: Record<string, number> = {};
+      const durationByTimeOfDay: Record<string, number> = {
         morning: 0,
         afternoon: 0,
         evening: 0,
         night: 0
-      },
-      daysFrequency: {
-        monday: 0,
-        tuesday: 0,
-        wednesday: 0,
-        thursday: 0,
-        friday: 0,
-        saturday: 0,
-        sunday: 0
+      };
+
+      workouts?.forEach(workout => {
+        totalDuration += workout.duration;
+
+        const day = new Date(workout.start_time).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        daysFrequency[day] = (daysFrequency[day] || 0) + 1;
+
+        const hour = new Date(workout.start_time).getHours();
+        if (hour >= 5 && hour < 12) {
+          durationByTimeOfDay.morning += workout.duration;
+        } else if (hour >= 12 && hour < 17) {
+          durationByTimeOfDay.afternoon += workout.duration;
+        } else if (hour >= 17 && hour < 22) {
+          durationByTimeOfDay.evening += workout.duration;
+        } else {
+          durationByTimeOfDay.night += workout.duration;
+        }
+      });
+
+      exerciseSets?.forEach(set => {
+        if (set.completed) {
+          completedSets++;
+          totalVolume += set.weight * set.reps;
+        }
+      });
+
+      const avgWorkoutLength = workouts?.length ? totalDuration / workouts.length : 0;
+      const completionRate = exerciseSets?.length ? (completedSets / exerciseSets.length) * 100 : 0;
+
+      const preferredDay = Object.keys(daysFrequency).reduce((a, b) => daysFrequency[a] > daysFrequency[b] ? a : b, '');
+      const preferredTime = Object.keys(durationByTimeOfDay).reduce((a, b) => durationByTimeOfDay[a] > durationByTimeOfDay[b] ? a : b, '');
+
+      // Calculate volume change percentage
+      let volumeChangePercentage = 0;
+      if (progressionData && progressionData.length > 1) {
+        const firstVolume = progressionData[0].performance_rating || 0;
+        const lastVolume = progressionData[progressionData.length - 1].performance_rating || 0;
+        volumeChangePercentage = firstVolume ? ((lastVolume - firstVolume) / firstVolume) * 100 : 0;
       }
+
+      // Calculate consistency score (example: percentage of weeks with at least one workout)
+      const weeks: Record<string, boolean> = {};
+      workouts?.forEach(workout => {
+        const weekStart = new Date(workout.start_time);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Get the first day of the week
+        const weekKey = weekStart.toLocaleDateString();
+        weeks[weekKey] = true;
+      });
+      const consistentWeeks = Object.keys(weeks).length;
+      const totalWeeks = 52; // Assuming a year-long tracking
+      const consistencyScore = (consistentWeeks / totalWeeks) * 100;
+
+      // Calculate weight progression rate (example: average increase in weight per exercise over time)
+      let weightProgressionRate = 0;
+      if (progressionData && progressionData.length > 1) {
+        let totalWeightIncrease = 0;
+        for (let i = 1; i < progressionData.length; i++) {
+          totalWeightIncrease += (progressionData[i].weight || 0) - (progressionData[i - 1].weight || 0);
+        }
+        weightProgressionRate = totalWeightIncrease / (progressionData.length - 1);
+      }
+
+      // Calculate exercise volume history
+      const volumeHistoryData: ExerciseVolumeHistory[] = [];
+      const exerciseNames = [...new Set(exerciseSets?.map(set => set.exercise_name))];
+
+      exerciseNames.forEach(exerciseName => {
+        const exerciseData = progressionData?.filter(prog => prog.exercise_name === exerciseName) || [];
+
+        if (exerciseData.length > 1) {
+          const volumes = exerciseData.map(prog => prog.performance_rating || 0);
+          const firstVolume = volumes[0];
+          const lastVolume = volumes[volumes.length - 1];
+          const percentChange = firstVolume ? ((lastVolume - firstVolume) / firstVolume) * 100 : 0;
+
+          let trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating' = 'stable';
+          if (percentChange > 5) trend = 'increasing';
+          else if (percentChange < -5) trend = 'decreasing';
+          else {
+            // Check for fluctuation
+            let fluctuationCount = 0;
+            for (let i = 1; i < volumes.length; i++) {
+              const prevVolume = volumes[i - 1];
+              const currVolume = volumes[i];
+              if (Math.abs((currVolume - prevVolume) / prevVolume) > 0.1) {
+                fluctuationCount++;
+              }
+            }
+            if (fluctuationCount > volumes.length / 3) trend = 'fluctuating';
+          }
+
+          volumeHistoryData.push({
+            exercise_name: exerciseName,
+            trend: trend,
+            percentChange: percentChange,
+            volume_history: volumes
+          });
+        }
+      });
+
+      // Calculate top exercises
+      const exerciseStats: Record<string, { sets: number, volume: number, weightSum: number }> = {};
+      exerciseSets?.forEach(set => {
+        if (set.completed) {
+          if (!exerciseStats[set.exercise_name]) {
+            exerciseStats[set.exercise_name] = { sets: 0, volume: 0, weightSum: 0 };
+          }
+          exerciseStats[set.exercise_name].sets++;
+          exerciseStats[set.exercise_name].volume += set.weight * set.reps;
+          exerciseStats[set.exercise_name].weightSum += set.weight;
+        }
+      });
+
+      const topExercisesData: TopExerciseStats[] = Object.entries(exerciseStats)
+        .sort(([, a], [, b]) => b.sets - a.sets)
+        .map(([exerciseName, { sets, volume, weightSum }]) => {
+          // Find the corresponding entry in volumeHistoryData
+          const volumeHistoryEntry = volumeHistoryData.find(entry => entry.exercise_name === exerciseName);
+          
+          return {
+            exerciseName,
+            totalSets: sets,
+            totalVolume: volume,
+            averageWeight: weightSum / sets,
+            trend: volumeHistoryEntry?.trend,
+            percentChange: volumeHistoryEntry?.percentChange
+          };
+        });
+      
+      // Return the processed stats
+      return {
+        totalWorkouts: workouts?.length || 0,
+        totalDuration: totalDuration,
+        completedSets: completedSets,
+        averageWorkoutLength: avgWorkoutLength,
+        completionRate: completionRate,
+        timePatterns: {
+          daysFrequency: daysFrequency,
+          preferredDay: preferredDay,
+          preferredTime: preferredTime,
+          durationByTimeOfDay: durationByTimeOfDay
+        },
+        workoutTypes: workoutTypeStats,
+        topExercises: topExercisesData,
+        progressMetrics: {
+          volumeChangePercentage: volumeChangePercentage,
+          consistencyScore: consistencyScore,
+          weightProgressionRate: weightProgressionRate
+        },
+        exerciseVolumeHistory: volumeHistoryData,
+        muscleFocus: muscleFocus,
+        recommendedType: determineRecommendedWorkout(muscleFocus),
+        recommendedDuration: avgWorkoutLength,
+        recommendedTags: determineRecommendedTags(muscleFocus)
+      };
     },
-    recommendedType: null,
-    recommendedDuration: null,
-    recommendedTags: [],
-    
-    // Initialize new analytics
-    exerciseVolumeHistory: [],
-    muscleGroups: [],
-    progressMetrics: {
-      volumeChange: 0,
-      volumeChangePercentage: 0,
-      strengthTrend: 'stable',
-      frequencyChange: 0,
-      consistencyScore: 0
-    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  useEffect(() => {
-    async function fetchWorkoutStats() {
-      if (!user) return;
+  return { stats, loading, error };
+};
 
-      try {
-        setLoading(true);
-        
-        // Fetch all workouts
-        const { data: workouts, error: workoutsError } = await supabase
-          .from('workout_sessions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('start_time', { ascending: false })
-          .limit(limit);
-          
-        if (workoutsError) throw workoutsError;
-        
-        if (!workouts || workouts.length === 0) {
-          setLoading(false);
-          return;
-        }
-        
-        // Cast the workouts to the WorkoutSession type
-        const typedWorkouts = workouts as WorkoutSession[];
-        
-        // Fetch exercise sets for these workouts
-        const workoutIds = typedWorkouts.map(w => w.id);
-        const { data: exerciseSets, error: setsError } = await supabase
-          .from('exercise_sets')
-          .select('*')
-          .in('workout_id', workoutIds);
-          
-        if (setsError) throw setsError;
-        
-        // Calculate basic stats
-        const totalWorkouts = typedWorkouts.length;
-        const totalDuration = typedWorkouts.reduce((sum, w) => sum + w.duration, 0);
-        const avgDuration = totalDuration / totalWorkouts;
-        const lastWorkoutDate = typedWorkouts[0]?.start_time || null;
-        
-        // Calculate workout types distribution with time of day analysis
-        const typeCount: Record<string, { 
-          count: number; 
-          duration: number; 
-          morning: number; 
-          afternoon: number; 
-          evening: number; 
-          night: number;
-          totalDuration: number;
-        }> = {};
-        
-        typedWorkouts.forEach(workout => {
-          const type = workout.training_type;
-          const hour = new Date(workout.start_time).getHours();
-          const timeOfDay = 
-            hour >= 5 && hour < 11 ? 'morning' :
-            hour >= 11 && hour < 17 ? 'afternoon' :
-            hour >= 17 && hour < 22 ? 'evening' : 'night';
-          
-          if (!typeCount[type]) {
-            typeCount[type] = { 
-              count: 0, 
-              duration: 0, 
-              morning: 0, 
-              afternoon: 0, 
-              evening: 0, 
-              night: 0,
-              totalDuration: 0
-            };
-          }
-          
-          typeCount[type].count++;
-          typeCount[type].duration += workout.duration;
-          typeCount[type][timeOfDay]++;
-          typeCount[type].totalDuration += workout.duration;
-        });
-        
-        const workoutTypes: WorkoutTypeStats[] = Object.entries(typeCount).map(([type, data]) => ({
-          type,
-          count: data.count,
-          totalDuration: data.totalDuration,
-          percentage: (data.count / totalWorkouts) * 100,
-          timeOfDay: {
-            morning: data.morning,
-            afternoon: data.afternoon,
-            evening: data.evening,
-            night: data.night
-          },
-          averageDuration: data.duration / data.count
-        })).sort((a, b) => b.count - a.count);
-        
-        // Calculate exercise stats
-        const exerciseData: Record<string, { 
-          count: number; 
-          sets: number; 
-          totalWeight: number;
-          totalReps: number;
-          tags: Set<string>;
-        }> = {};
-        
-        // Extract all tags used across workouts - handle case where tags might not exist
-        const allTags = typedWorkouts.flatMap(w => w.tags || []).filter(Boolean);
-        const tagMap: Record<string, {
-          count: number;
-          types: Set<string>;
-          morning: number;
-          afternoon: number;
-          evening: number;
-          night: number;
-          category: 'strength' | 'cardio' | 'recovery' | 'flexibility' | 'other';
-        }> = {};
-        
-        // Process tags from workouts
-        typedWorkouts.forEach(workout => {
-          const hour = new Date(workout.start_time).getHours();
-          const timeOfDay = 
-            hour >= 5 && hour < 11 ? 'morning' :
-            hour >= 11 && hour < 17 ? 'afternoon' :
-            hour >= 17 && hour < 22 ? 'evening' : 'night';
-          
-          // Handle case where tags might not exist
-          const tags = workout.tags || [];
-          tags.forEach(tag => {
-            if (!tag) return;
-            
-            if (!tagMap[tag]) {
-              // Determine category based on tag name (simplified logic)
-              let category: 'strength' | 'cardio' | 'recovery' | 'flexibility' | 'other' = 'other';
-              const tagLower = tag.toLowerCase();
-              
-              if (tagLower.includes('strength') || tagLower.includes('weight') || 
-                  tagLower.includes('muscle') || tagLower.includes('lift')) {
-                category = 'strength';
-              } else if (tagLower.includes('cardio') || tagLower.includes('run') || 
-                         tagLower.includes('endurance') || tagLower.includes('hiit')) {
-                category = 'cardio';
-              } else if (tagLower.includes('recovery') || tagLower.includes('rest') || 
-                         tagLower.includes('stretch') || tagLower.includes('massage')) {
-                category = 'recovery';
-              } else if (tagLower.includes('flex') || tagLower.includes('mobility') || 
-                         tagLower.includes('yoga') || tagLower.includes('stretch')) {
-                category = 'flexibility';
-              }
-              
-              tagMap[tag] = {
-                count: 0,
-                types: new Set(),
-                morning: 0,
-                afternoon: 0,
-                evening: 0,
-                night: 0,
-                category
-              };
-            }
-            
-            tagMap[tag].count++;
-            tagMap[tag].types.add(workout.training_type);
-            tagMap[tag][timeOfDay]++;
-          });
-        });
-        
-        // Process exercise sets
-        exerciseSets?.forEach(set => {
-          const name = set.exercise_name;
-          const workout = typedWorkouts.find(w => w.id === set.workout_id);
-          // Handle case where tags might not exist
-          const tags = workout?.tags || [];
-          
-          if (!exerciseData[name]) {
-            exerciseData[name] = { 
-              count: 0, 
-              sets: 0, 
-              totalWeight: 0, 
-              totalReps: 0,
-              tags: new Set()
-            };
-          }
-          
-          exerciseData[name].count++;
-          exerciseData[name].sets++;
-          exerciseData[name].totalWeight += set.weight;
-          exerciseData[name].totalReps += set.reps;
-          
-          // Associate tags with exercises
-          tags.forEach(tag => {
-            if (tag) exerciseData[name].tags.add(tag);
-          });
-        });
-        
-        const topExercises: TopExerciseStats[] = Object.entries(exerciseData)
-          .map(([exerciseName, data]) => ({
-            exerciseName,
-            count: data.count,
-            totalSets: data.sets,
-            averageWeight: data.totalWeight / data.sets,
-            totalVolume: data.totalWeight * data.totalReps,
-            associatedTags: Array.from(data.tags)
-          }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
-          
-        // Calculate unique exercises and total sets
-        const totalExercises = Object.keys(exerciseData).length;
-        const totalSets = exerciseSets?.length || 0;
-        
-        // Process tag statistics
-        const tags: TagStats[] = Object.entries(tagMap)
-          .map(([name, data]) => ({
-            name,
-            count: data.count,
-            category: data.category,
-            associatedTypes: Array.from(data.types),
-            timeOfDay: {
-              morning: data.morning,
-              afternoon: data.afternoon,
-              evening: data.evening,
-              night: data.night
-            }
-          }))
-          .sort((a, b) => b.count - a.count);
-          
-        // Calculate time patterns
-        const timePatterns: TimePatternStats = {
-          preferredDuration: avgDuration,
-          preferredTimeOfDay: 'evening', // Default
-          durationByTimeOfDay: {
-            morning: 0,
-            afternoon: 0,
-            evening: 0,
-            night: 0
-          },
-          daysFrequency: {
-            monday: 0,
-            tuesday: 0,
-            wednesday: 0,
-            thursday: 0,
-            friday: 0,
-            saturday: 0,
-            sunday: 0
-          }
-        };
-        
-        // Time of day analysis
-        const timeOfDayCount = { morning: 0, afternoon: 0, evening: 0, night: 0 };
-        const timeOfDayDuration = { morning: 0, afternoon: 0, evening: 0, night: 0 };
-        
-        // Day of week analysis
-        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const dayCount = { 
-          monday: 0, tuesday: 0, wednesday: 0, thursday: 0, 
-          friday: 0, saturday: 0, sunday: 0 
-        };
-        
-        typedWorkouts.forEach(workout => {
-          const date = new Date(workout.start_time);
-          const hour = date.getHours();
-          const day = dayNames[date.getDay()];
-          
-          const timeOfDay = 
-            hour >= 5 && hour < 11 ? 'morning' :
-            hour >= 11 && hour < 17 ? 'afternoon' :
-            hour >= 17 && hour < 22 ? 'evening' : 'night';
-          
-          timeOfDayCount[timeOfDay]++;
-          timeOfDayDuration[timeOfDay] += workout.duration;
-          dayCount[day]++;
-        });
-        
-        // Find preferred time of day
-        let maxCount = 0;
-        Object.entries(timeOfDayCount).forEach(([time, count]) => {
-          if (count > maxCount) {
-            maxCount = count;
-            timePatterns.preferredTimeOfDay = time as any;
-          }
-          
-          // Calculate average duration by time of day
-          if (count > 0) {
-            timePatterns.durationByTimeOfDay[time] = timeOfDayDuration[time] / count;
-          }
-        });
-        
-        timePatterns.daysFrequency = dayCount;
-        
-        // Calculate workout streak
-        let streakDays = 0;
-        if (typedWorkouts.length > 0) {
-          // Convert dates to YYYY-MM-DD format for comparison
-          const workoutDates = typedWorkouts.map(w => 
-            new Date(w.start_time).toISOString().split('T')[0]
-          );
-          
-          // Remove duplicates (multiple workouts on same day)
-          const uniqueDates = [...new Set(workoutDates)].sort();
-          
-          // Check for consecutive days
-          const today = new Date().toISOString().split('T')[0];
-          if (uniqueDates[0] === today) {
-            streakDays = 1;
-            
-            for (let i = 1; i < uniqueDates.length; i++) {
-              const currentDate = new Date(uniqueDates[i-1]);
-              currentDate.setDate(currentDate.getDate() - 1);
-              const expectedPrevious = currentDate.toISOString().split('T')[0];
-              
-              if (uniqueDates[i] === expectedPrevious) {
-                streakDays++;
-              } else {
-                break;
-              }
-            }
-          }
-        }
-        
-        // Generate personalized recommendations
-        // 1. Recommended type based on time of day and frequency
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentDay = dayNames[now.getDay()];
-        
-        const currentTimeOfDay = 
-          currentHour >= 5 && currentHour < 11 ? 'morning' :
-          currentHour >= 11 && currentHour < 17 ? 'afternoon' :
-          currentHour >= 17 && currentHour < 22 ? 'evening' : 'night';
-          
-        // Find most common workout type for this time of day
-        let recommendedType = null;
-        let maxTypeCount = 0;
-        
-        workoutTypes.forEach(type => {
-          if (type.timeOfDay[currentTimeOfDay] > maxTypeCount) {
-            maxTypeCount = type.timeOfDay[currentTimeOfDay];
-            recommendedType = type.type;
-          }
-        });
-        
-        // If no strong preference for current time, use most frequent overall
-        if (maxTypeCount < 2 && workoutTypes.length > 0) {
-          recommendedType = workoutTypes[0].type;
-        }
-        
-        // 2. Recommended duration based on time of day pattern
-        let recommendedDuration = timePatterns.durationByTimeOfDay[currentTimeOfDay] || avgDuration;
-        
-        // Round to nearest 5 minutes
-        recommendedDuration = Math.round(recommendedDuration / 5) * 5;
-        
-        // If no data for current time, use average
-        if (recommendedDuration === 0) {
-          recommendedDuration = Math.round(avgDuration / 5) * 5;
-        }
-        
-        // 3. Recommended tags based on training type and time of day
-        const recommendedTags: string[] = [];
-        
-        if (recommendedType) {
-          // Find tags most commonly associated with the recommended type
-          tags.forEach(tag => {
-            if (tag.associatedTypes.includes(recommendedType) && 
-                tag.timeOfDay[currentTimeOfDay] > 0) {
-              recommendedTags.push(tag.name);
-            }
-          });
-          
-          // Limit to top 3 most relevant tags
-          recommendedTags.sort((a, b) => {
-            const tagA = tagMap[a];
-            const tagB = tagMap[b];
-            return (tagB?.count || 0) - (tagA?.count || 0);
-          }).slice(0, 3);
-        }
-        
-        // New: Calculate exercise volume history and trends
-        const exerciseVolumeHistory: ExerciseVolumeHistory[] = [];
-        const exerciseNames = Object.keys(exerciseData);
-        
-        if (exerciseNames.length > 0 && workouts.length > 1) {
-          // Group exercise sets by workout and exercise
-          const workoutExercises: Record<string, Record<string, ExerciseSet[]>> = {};
-          
-          exerciseSets?.forEach(set => {
-            if (!workoutExercises[set.workout_id]) {
-              workoutExercises[set.workout_id] = {};
-            }
-            
-            if (!workoutExercises[set.workout_id][set.exercise_name]) {
-              workoutExercises[set.workout_id][set.exercise_name] = [];
-            }
-            
-            workoutExercises[set.workout_id][set.exercise_name].push(set);
-          });
-          
-          // Create volume history for top exercises
-          for (const exerciseName of exerciseNames) {
-            const workoutData = [];
-            
-            for (const workout of workouts) {
-              const sets = workoutExercises[workout.id]?.[exerciseName] || [];
-              if (sets.length > 0) {
-                let volume = 0;
-                let totalWeight = 0;
-                
-                sets.forEach(set => {
-                  if (set.completed) {
-                    volume += set.weight * set.reps;
-                    totalWeight += set.weight;
-                  }
-                });
-                
-                workoutData.push({
-                  date: new Date(workout.start_time).toISOString().split('T')[0],
-                  volume,
-                  sets: sets.length,
-                  avgWeight: sets.length > 0 ? totalWeight / sets.length : 0
-                });
-              }
-            }
-            
-            // Only include exercises that have been done more than once
-            if (workoutData.length > 1) {
-              // Calculate trend
-              workoutData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-              
-              const firstVolume = workoutData[0].volume;
-              const lastVolume = workoutData[workoutData.length - 1].volume;
-              const percentChange = firstVolume > 0 
-                ? ((lastVolume - firstVolume) / firstVolume) * 100 
-                : 0;
-              
-              // Determine trend based on recent workouts
-              let trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating' = 'stable';
-              
-              if (percentChange > 5) {
-                trend = 'increasing';
-              } else if (percentChange < -5) {
-                trend = 'decreasing';
-              } else {
-                // Check for fluctuation
-                let fluctuationCount = 0;
-                for (let i = 1; i < workoutData.length; i++) {
-                  if (
-                    (workoutData[i].volume > workoutData[i-1].volume * 1.1) ||
-                    (workoutData[i].volume < workoutData[i-1].volume * 0.9)
-                  ) {
-                    fluctuationCount++;
-                  }
-                }
-                
-                if (fluctuationCount > workoutData.length / 3) {
-                  trend = 'fluctuating';
-                }
-              }
-              
-              exerciseVolumeHistory.push({
-                exercise_name: exerciseName,
-                workouts: workoutData,
-                trend,
-                percentChange
-              });
-            }
-          }
-        }
-        
-        // New: Calculate muscle group distribution
-        // This is a simplified approach since we don't have muscle group data in this example
-        const muscleGroups: MuscleGroupDistribution[] = [];
-        // In a real implementation, you would map exercises to muscle groups and calculate volume per group
-        
-        // New: Calculate progress metrics
-        const progressMetrics: ProgressMetrics = {
-          volumeChange: 0,
-          volumeChangePercentage: 0,
-          strengthTrend: 'stable',
-          frequencyChange: 0,
-          consistencyScore: 0
-        };
-        
-        // Calculate volume change if there are at least 2 workouts
-        if (workouts.length >= 2) {
-          // Get volumes for first and last workout
-          const sortedWorkouts = [...workouts].sort(
-            (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-          );
-          
-          // Get volume for earliest and latest workout
-          const firstWorkout = sortedWorkouts[0];
-          const lastWorkout = sortedWorkouts[sortedWorkouts.length - 1];
-          
-          let firstWorkoutVolume = 0;
-          let lastWorkoutVolume = 0;
-          
-          exerciseSets?.forEach(set => {
-            if (set.completed) {
-              if (set.workout_id === firstWorkout.id) {
-                firstWorkoutVolume += set.weight * set.reps;
-              } else if (set.workout_id === lastWorkout.id) {
-                lastWorkoutVolume += set.weight * set.reps;
-              }
-            }
-          });
-          
-          progressMetrics.volumeChange = lastWorkoutVolume - firstWorkoutVolume;
-          progressMetrics.volumeChangePercentage = firstWorkoutVolume > 0 
-            ? (progressMetrics.volumeChange / firstWorkoutVolume) * 100 
-            : 0;
-            
-          // Determine overall strength trend based on all tracked exercises
-          if (progressMetrics.volumeChangePercentage > 10) {
-            progressMetrics.strengthTrend = 'increasing';
-          } else if (progressMetrics.volumeChangePercentage < -10) {
-            progressMetrics.strengthTrend = 'decreasing';
-          } else {
-            progressMetrics.strengthTrend = 'stable';
-          }
-          
-          // Calculate workout frequency change (workouts per week)
-          // This would need timestamps spanning multiple weeks to be accurate
-          
-          // Calculate consistency score (0-100)
-          // Simplified version: percentage of days with workouts in the last 30 days
-          if (lastWorkoutDate) {
-            const lastDate = new Date(lastWorkoutDate);
-            const thirtyDaysAgo = new Date(lastDate);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
-            // Count unique workout days in the last 30 days
-            const recentWorkouts = workouts.filter(
-              w => new Date(w.start_time) >= thirtyDaysAgo && new Date(w.start_time) <= lastDate
-            );
-            
-            // Get unique dates
-            const uniqueDates = new Set(
-              recentWorkouts.map(w => new Date(w.start_time).toISOString().split('T')[0])
-            );
-            
-            progressMetrics.consistencyScore = (uniqueDates.size / 30) * 100;
-          }
-        }
-        
-        setStats({
-          totalWorkouts,
-          totalDuration,
-          avgDuration,
-          totalExercises,
-          totalSets,
-          topExercises,
-          workoutTypes,
-          lastWorkoutDate,
-          streakDays,
-          tags,
-          timePatterns,
-          recommendedType,
-          recommendedDuration,
-          recommendedTags,
-          exerciseVolumeHistory,
-          muscleGroups,
-          progressMetrics
-        });
-      } catch (error) {
-        console.error('Error fetching workout stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchWorkoutStats();
-  }, [user, limit]);
+// Helper function to determine recommended workout based on muscle focus
+function determineRecommendedWorkout(muscleFocus: Record<string, number>): string {
+  // Find the least worked muscle group
+  const entries = Object.entries(muscleFocus);
   
-  return { stats, loading };
+  if (entries.length === 0) return "Full Body";
+  
+  // Sort by least worked first
+  entries.sort((a, b) => a[1] - b[1]);
+  const leastWorked = entries[0][0];
+  
+  // Map muscle groups to workout types
+  const muscleToWorkout: Record<string, string> = {
+    chest: "Push",
+    back: "Pull",
+    shoulders: "Push",
+    arms: "Arms",
+    legs: "Legs",
+    core: "Core"
+  };
+  
+  return muscleToWorkout[leastWorked] || "Full Body";
+}
+
+function determineRecommendedTags(muscleFocus: Record<string, number>): string[] {
+  const tags: string[] = [];
+  const entries = Object.entries(muscleFocus);
+  
+  if (entries.length === 0) return ["Balanced", "Full Body"];
+  
+  // Sort by least worked first
+  entries.sort((a, b) => a[1] - b[1]);
+  
+  // Add the least worked areas as tags
+  const leastWorked = entries.slice(0, 2).map(e => e[0]);
+  leastWorked.forEach(muscle => {
+    tags.push(`${muscle.charAt(0).toUpperCase() + muscle.slice(1)} focus`);
+  });
+  
+  // Check balance - if all muscle groups are within 20% of each other, consider it balanced
+  const vals = entries.map(e => e[1]);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  
+  if (max - min < min * 0.2) {
+    tags.push("Balanced");
+  } else {
+    tags.push("Rebalancing");
+  }
+  
+  return tags;
 }

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WorkoutHistory } from "@/components/WorkoutHistory";
@@ -9,6 +10,7 @@ import { Calendar, Loader2, History, Sparkles } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InsightsDashboard } from "@/components/workouts/InsightsDashboard";
+import { EnhancedMetricsDisplay } from "@/components/metrics/EnhancedMetricsDisplay";
 
 const Training = () => {
   const { stats, loading } = useWorkoutStats();
@@ -96,7 +98,7 @@ const Training = () => {
                     stats={stats} 
                     className="bg-gray-900/80 rounded-lg p-4" 
                   />
-
+                  
                   <div className="flex flex-col gap-4">
                     <WorkoutTypeChart data={stats.workoutTypes} className="bg-gray-900/80 rounded-lg p-4" />
                     <TopExercisesTable 
