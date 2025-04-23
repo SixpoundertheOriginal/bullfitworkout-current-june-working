@@ -42,7 +42,7 @@ export interface WorkoutTypeStats {
   count: number;
   totalDuration: number;
   averageDuration: number;
-  percentage?: number;
+  percentage: number;
   timeOfDay?: {
     morning: number;
     afternoon: number;
@@ -191,10 +191,10 @@ export const useWorkoutStats = (days?: number) => {
           const prevMetadata = progressionData[i-1]?.metadata;
           const currMetadata = progressionData[i]?.metadata;
           
-          const prevWeight = typeof prevMetadata === 'object' && prevMetadata !== null && 'weight' in prevMetadata ? 
-            Number(prevMetadata.weight) : 0;
-          const currWeight = typeof currMetadata === 'object' && currMetadata !== null && 'weight' in currMetadata ? 
-            Number(currMetadata.weight) : 0;
+          const prevWeight = prevMetadata && typeof prevMetadata === 'object' ? 
+            Number(prevMetadata && 'weight' in prevMetadata ? prevMetadata.weight : 0) : 0;
+          const currWeight = currMetadata && typeof currMetadata === 'object' ? 
+            Number(currMetadata && 'weight' in currMetadata ? currMetadata.weight : 0) : 0;
           
           if (prevWeight > 0 && currWeight > 0) {
             totalWeightIncrease += (currWeight - prevWeight);

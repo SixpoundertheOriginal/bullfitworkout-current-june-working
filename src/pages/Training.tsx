@@ -100,22 +100,9 @@ const Training = () => {
                   />
                   
                   <div className="flex flex-col gap-4">
-                    {/* Fixed: Ensure proper type conversion for workoutTypes */}
-                    {stats.workoutTypes && (
+                    {stats.workoutTypes && stats.workoutTypes.length > 0 && (
                       <WorkoutTypeChart 
-                        data={stats.workoutTypes.map(wt => ({
-                          type: wt.type,
-                          count: wt.count,
-                          totalDuration: wt.totalDuration,
-                          percentage: wt.percentage || 0,  // Ensure percentage is always defined
-                          timeOfDay: wt.timeOfDay || {
-                            morning: 0,
-                            afternoon: 0,
-                            evening: 0,
-                            night: 0
-                          },
-                          averageDuration: wt.averageDuration
-                        }))} 
+                        data={stats.workoutTypes} 
                         className="bg-gray-900/80 rounded-lg p-4" 
                       />
                     )}
