@@ -28,7 +28,10 @@ type ExerciseInput = {
   created_at?: string;
 };
 
-export const useExercises = () => {
+export type ExerciseSortBy = 'name' | 'created_at' | 'difficulty';
+export type SortOrder = 'asc' | 'desc';
+
+export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSortOrder: SortOrder = 'asc') => {
   const queryClient = useQueryClient();
   
   const { data: exercises, isLoading, error } = useQuery({
@@ -105,10 +108,40 @@ export const useExercises = () => {
     }
   });
 
+  // Sort exercises
+  const getSortedExercises = (
+    sortBy: ExerciseSortBy = initialSortBy, 
+    sortOrder: SortOrder = initialSortOrder
+  ) => {
+    if (!exercises) return [];
+
+    return [...exercises].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'created_at':
+          comparison = (new Date(a.created_at)).getTime() - (new Date(b.created_at)).getTime();
+          break;
+        case 'difficulty': {
+          const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
+          comparison = 
+            (difficultyOrder[a.difficulty] || 0) - (difficultyOrder[b.difficulty] || 0);
+          break;
+        }
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  };
+
   const isError = !!error;
 
   return {
     exercises: exercises || [],
+    getSortedExercises,
     isLoading,
     error,
     createExercise,
