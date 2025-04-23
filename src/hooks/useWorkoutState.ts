@@ -5,6 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_VERSION = '1.0.0';
 
+// Define and export the LocalExerciseSet interface
+export interface LocalExerciseSet {
+  weight: number;
+  reps: number;
+  restTime: number;
+  completed: boolean;
+  isEditing: boolean;
+  id?: string;
+  saveStatus?: 'pending' | 'saving' | 'saved' | 'failed';
+  retryCount?: number;
+}
+
 export const useWorkoutState = () => {
   const [state, setState] = useState<WorkoutState>({
     exercises: {},
@@ -94,7 +106,7 @@ export const useWorkoutState = () => {
   ) => {
     setState(prevState => {
       const updatedExercises = typeof newExercises === 'function'
-        ? newExercises(prevState.exercises)
+        ? newExercises(prevState.exercises as Record<string, LocalExerciseSet[]>)
         : newExercises;
         
       return {
@@ -194,6 +206,7 @@ export const useWorkoutState = () => {
 
     toast("Workout save failed", {
       description: error.message,
+      type: "error",
       duration: 5000,
     });
   }, [updateState, state.savingErrors]);
@@ -253,6 +266,7 @@ export const useWorkoutState = () => {
       
       toast("Recovery failed", {
         description: "We couldn't recover your workout data. Please try again.",
+        type: "error",
       });
       
       return false;
