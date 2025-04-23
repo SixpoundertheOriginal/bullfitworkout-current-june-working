@@ -27,7 +27,7 @@ import { useWorkoutMetrics } from "@/hooks/useWorkoutMetrics";
 import { IntelligentMetricsDisplay } from "@/components/metrics/IntelligentMetricsDisplay";
 import { ExerciseVolumeChart } from '@/components/metrics/ExerciseVolumeChart';
 import { SmartExerciseFAB } from '@/components/SmartExerciseFAB';
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +51,7 @@ import {
 } from "@/utils/exerciseUtils";
 import { trainingTypes } from "@/constants/trainingTypes";
 import { exerciseHistoryData, getPreviousSessionData, popularExercises } from "@/constants/exerciseData";
+import { useWorkoutState, type ExerciseSessionState } from "@/hooks/useWorkoutState";
 
 interface LocationState {
   trainingType?: string;
@@ -66,9 +67,16 @@ interface LocalExerciseSet {
 }
 
 const TrainingSession: React.FC = () => {
-  const [exercises, setExercises] = useState<Record<string, LocalExerciseSet[]>>({});
-  const [activeExercise, setActiveExercise] = useState<string | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
+  const { 
+    exercises, 
+    setExercises, 
+    activeExercise, 
+    setActiveExercise, 
+    elapsedTime, 
+    setElapsedTime,
+    resetSession
+  } = useWorkoutState();
+  
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [showAddExerciseSheet, setShowAddExerciseSheet] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -103,6 +111,13 @@ const TrainingSession: React.FC = () => {
   const efficiency = 85;
   const projectedCalories = 320;
   
+  useBeforeUnload(event => {
+    if (Object.keys(exercises).length > 0) {
+      event.preventDefault();
+      return "You have an unsaved workout in progress. Are you sure you want to leave?";
+    }
+  });
+  
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setElapsedTime(prev => prev + 1);
@@ -113,7 +128,7 @@ const TrainingSession: React.FC = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, []);
+  }, [setElapsedTime]);
   
   const handleAddExercise = (exerciseNameOrObj: string | Exercise) => {
     const exerciseName = typeof exerciseNameOrObj === 'object' && exerciseNameOrObj !== null && 'name' in exerciseNameOrObj 
@@ -408,6 +423,7 @@ const TrainingSession: React.FC = () => {
         
         if (workoutSession) {
           await saveExerciseSets(workoutSession.id);
+          resetSession();
           navigateToComplete(workoutSession.id);
         }
       } catch (error) {
