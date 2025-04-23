@@ -69,7 +69,6 @@ export const useWorkoutMetricsEnhanced = (
 
   useEffect(() => {
     if (!exercises || Object.keys(exercises).length === 0) {
-      // Return early with default values if no exercises
       return;
     }
 

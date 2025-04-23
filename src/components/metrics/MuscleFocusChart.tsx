@@ -29,15 +29,6 @@ export const MuscleFocusChart: React.FC<MuscleFocusChartProps> = ({
     color: COLORS[group as keyof typeof COLORS] || '#6b7280'
   })).filter(item => item.value > 0);
   
-  // If no data, return a placeholder
-  if (data.length === 0) {
-    return (
-      <div className={cn("w-full bg-gray-800/50 rounded-lg p-4 h-64 flex items-center justify-center", className)}>
-        <p className="text-gray-400">No muscle focus data available</p>
-      </div>
-    );
-  }
-
   // Create chart config for muscle groups
   const chartConfig = {
     chest: {
@@ -65,6 +56,15 @@ export const MuscleFocusChart: React.FC<MuscleFocusChartProps> = ({
       color: COLORS.core
     }
   };
+  
+  // If no data, return a placeholder
+  if (data.length === 0) {
+    return (
+      <div className={cn("w-full bg-gray-800/50 rounded-lg p-4 h-64 flex items-center justify-center", className)}>
+        <p className="text-gray-400">No muscle focus data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("w-full bg-gray-800/50 rounded-lg p-4", className)}>
