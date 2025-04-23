@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,7 +23,6 @@ export const TopRestTimer = ({
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
   const [currentRestTime, setCurrentRestTime] = useState(defaultRestTime);
-  const maxTime = currentRestTime; // Use the current rest time as max time
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
   const lastResetSignalRef = useRef<number>(0);
@@ -35,7 +33,7 @@ export const TopRestTimer = ({
       console.log(`TopRestTimer: Reset signal received: ${resetSignal}, previous: ${lastResetSignalRef.current}`);
       lastResetSignalRef.current = resetSignal;
       clearTimerInterval();
-      setElapsedTime(0);
+      setElapsedTime(0); // Reset to 0 for count-up timer
       setIsTimerActive(true);
       startTimerInterval();
     }
@@ -127,11 +125,11 @@ export const TopRestTimer = ({
         setElapsedTime(prev => {
           const newTime = prev + deltaSeconds;
           
-          if (newTime >= maxTime) {
-            clearTimerInterval();
-            setIsTimerActive(false);
+          // Check if we should show "complete" when target time is reached
+          // but keep counting up regardless
+          if (newTime >= currentRestTime && prev < currentRestTime) {
+            // Only trigger complete once when crossing the threshold
             if (onComplete) onComplete();
-            return maxTime;
           }
           
           if (onTimeUpdate) onTimeUpdate(newTime);
@@ -163,8 +161,6 @@ export const TopRestTimer = ({
     if (onManualStart) onManualStart();
   };
 
-  const remainingTime = Math.max(0, maxTime - elapsedTime);
-
   if (!isActive) {
     return (
       <div className="flex flex-col items-center gap-1">
@@ -175,6 +171,10 @@ export const TopRestTimer = ({
     );
   }
 
+  // Calculate percentage progress for visual indicator
+  const progressPercentage = Math.min((elapsedTime / currentRestTime) * 100, 100);
+  const showTargetTime = elapsedTime < currentRestTime;
+
   return (
     <div className="flex flex-col items-center">
       <Timer 
@@ -184,9 +184,16 @@ export const TopRestTimer = ({
           isTimerActive && "animate-pulse"
         )} 
       />
-      <span className="text-lg font-mono text-white">
-        {formatTime(remainingTime)}
-      </span>
+      <div className="flex flex-col items-center">
+        <span className="text-lg font-mono text-white">
+          {formatTime(elapsedTime)}
+        </span>
+        {showTargetTime && (
+          <span className="text-xs font-mono text-gray-400">
+            Target: {formatTime(currentRestTime)}
+          </span>
+        )}
+      </div>
       
       {!isTimerActive && (
         <Button 
