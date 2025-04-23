@@ -19,6 +19,7 @@ interface WorkoutMetricsProps {
   onRestTimerComplete: () => void;
   onRestTimeUpdate?: (time: number) => void;
   onManualRestStart?: () => void;
+  onRestTimerReset?: () => void; // Added this prop
   restTimerResetSignal?: number;
   className?: string;
 }
@@ -32,6 +33,7 @@ export const WorkoutMetrics = ({
   onRestTimerComplete,
   onRestTimeUpdate,
   onManualRestStart,
+  onRestTimerReset, // Added this prop
   restTimerResetSignal = 0,
   className
 }: WorkoutMetricsProps) => {

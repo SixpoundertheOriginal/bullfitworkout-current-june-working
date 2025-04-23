@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,6 +15,7 @@ import { trainingTypes } from "@/constants/trainingTypes";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { WorkoutHeader } from "@/components/training/WorkoutHeader";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
+import { ExerciseSet } from "@/types/exercise";
 
 interface LocationState {
   trainingType?: string;
@@ -446,7 +448,6 @@ const TrainingSession: React.FC = () => {
           totalSets={totalSets}
           showRestTimer={restTimerActive}
           onRestTimerComplete={handleRestTimerComplete}
-          onRestTimerReset={handleResetRestTimer}
           onManualRestStart={handleShowRestTimer}
           restTimerResetSignal={restTimerResetSignal}
         />
