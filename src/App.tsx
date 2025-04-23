@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { WeightUnitProvider } from "@/context/WeightUnitContext";
+import { WeightUnitContextProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
 
 // Create the query client outside of the component
@@ -18,13 +18,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <WeightUnitProvider>
+            <WeightUnitContextProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
                 <RouterProvider />
               </TooltipProvider>
-            </WeightUnitProvider>
+            </WeightUnitContextProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>

@@ -17,7 +17,7 @@ interface WeightUnitContextType {
 
 const [WeightUnitProvider, useWeightUnit] = createContext<WeightUnitContextType>();
 
-export { useWeightUnit };
+export { useWeightUnit, WeightUnitProvider };
 
 export const WeightUnitContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
   children 
