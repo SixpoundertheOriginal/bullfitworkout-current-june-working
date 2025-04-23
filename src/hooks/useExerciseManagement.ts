@@ -41,7 +41,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: (
       const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
       toast.success("Exercise sets updated");
       
-      onUpdate((prev) => {
+      onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSets = { ...prev };
         newSets[currentExercise] = updated;
         return newSets;
@@ -60,7 +60,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: (
     try {
       const newSets = await addExerciseToWorkout(workoutId, exerciseName, 3);
       
-      onUpdate((prev) => {
+      onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSetsRecord = { ...prev };
         newSetsRecord[exerciseName] = newSets;
         return newSetsRecord;
@@ -80,7 +80,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: (
     try {
       await removeExerciseFromWorkout(workoutId, exerciseToDelete);
       
-      onUpdate((prev) => {
+      onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSets = { ...prev };
         delete newSets[exerciseToDelete];
         return newSets;
