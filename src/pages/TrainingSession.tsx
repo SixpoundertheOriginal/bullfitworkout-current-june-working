@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { Plus } from "lucide-react";
 import { TrainingTypeTag } from "@/components/TrainingTypeTag";
@@ -7,7 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +16,7 @@ import { WorkoutCompletion } from "@/components/training/WorkoutCompletion";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { trainingTypes } from "@/constants/trainingTypes";
+import { ExerciseSet } from "@/types/exercise";
 
 interface LocationState {
   trainingType?: string;
@@ -179,8 +179,7 @@ const TrainingSession: React.FC = () => {
   const handleCompleteWorkout = async () => {
     if (!Object.keys(exercises).length) {
       toast({
-        title: "No exercises added",
-        description: "Please add at least one exercise before completing your workout",
+        description: "No exercises added. Please add at least one exercise before completing your workout",
         variant: "destructive",
       });
       return;
@@ -228,7 +227,6 @@ const TrainingSession: React.FC = () => {
     } catch (error) {
       console.error('Error in workout completion process:', error);
       toast({
-        title: 'Failed to save your workout. Please try again.',
         description: error instanceof Error ? error.message : 'Unknown error occurred',
         variant: "destructive",
       });
@@ -241,14 +239,12 @@ const TrainingSession: React.FC = () => {
     
     if (errorMessage.includes("materialized view")) {
       toast({
-        title: "Workout partially saved",
         description: "Your workout data was saved but some analytics couldn't be processed.",
         variant: "default",
       });
       navigateToComplete(null);
     } else {
       toast({
-        title: 'Failed to save your workout. Please try again.',
         description: errorMessage,
         variant: "destructive",
       });
@@ -297,7 +293,7 @@ const TrainingSession: React.FC = () => {
       state: {
         workoutId,
         workoutData: {
-          exercises,
+          exercises: exercises as unknown as Record<string, ExerciseSet[]>,
           duration: elapsedTime,
           startTime: new Date(now.getTime() - elapsedTime * 1000),
           endTime: now,

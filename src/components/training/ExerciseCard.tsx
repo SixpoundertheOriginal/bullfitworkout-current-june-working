@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { SetRow } from "@/components/SetRow";
 import { ExerciseSet } from "@/types/exercise";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { ExerciseVolumeSparkline } from '@/components/metrics/ExerciseVolumeSparkline';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/use-toast";
 import { calculateSetVolume } from '@/utils/exerciseUtils';
 import { exerciseHistoryData, getPreviousSessionData } from "@/constants/exerciseData";
 import { convertWeight } from "@/utils/unitConversion";
@@ -96,8 +95,7 @@ export const ExerciseCard = ({
     onResetRestTimer();
     
     toast({
-      title: `${exercise}: Set ${index + 1} logged successfully`,
-      variant: "default",
+      description: `${exercise}: Set ${index + 1} logged successfully`
     });
   };
 

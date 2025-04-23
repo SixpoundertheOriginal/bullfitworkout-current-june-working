@@ -6,8 +6,17 @@ import { ExerciseVolumeChart } from '@/components/metrics/ExerciseVolumeChart';
 import { ExerciseSet } from "@/types/exercise";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 
+// Define a local version of ExerciseSet to match what's used in the workout state
+interface LocalExerciseSet {
+  weight: number;
+  reps: number;
+  restTime: number;
+  completed: boolean;
+  isEditing: boolean;
+}
+
 interface WorkoutCompletionProps {
-  exercises: Record<string, ExerciseSet[]>;
+  exercises: Record<string, LocalExerciseSet[]>;
   intensity: number;
   efficiency: number;
   onComplete: () => void;
@@ -20,6 +29,21 @@ export const WorkoutCompletion = ({
   onComplete
 }: WorkoutCompletionProps) => {
   const { weightUnit } = useWeightUnit();
+
+  // Convert LocalExerciseSet to ExerciseSet for the chart components
+  const convertedExercises = Object.entries(exercises).reduce((acc, [exerciseName, sets]) => {
+    acc[exerciseName] = sets.map((set, index) => ({
+      id: `temp-${exerciseName}-${index}`,
+      weight: set.weight,
+      reps: set.reps,
+      completed: set.completed,
+      set_number: index + 1,
+      exercise_name: exerciseName,
+      workout_id: 'temp-workout',
+      ...(set.restTime !== undefined && { restTime: set.restTime })
+    })) as ExerciseSet[];
+    return acc;
+  }, {} as Record<string, ExerciseSet[]>);
 
   return (
     <div className="mt-8 flex flex-col items-center">
@@ -35,14 +59,14 @@ export const WorkoutCompletion = ({
       </div>
       
       <IntelligentMetricsDisplay 
-        exercises={exercises} 
+        exercises={convertedExercises}
         intensity={intensity}
         efficiency={efficiency}
       />
       
       <div className="mt-4 bg-gray-900/50 p-4 rounded-xl border border-gray-800 w-full">
         <ExerciseVolumeChart 
-          exercises={exercises}
+          exercises={convertedExercises} 
           weightUnit={weightUnit}
         />
       </div>

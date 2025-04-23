@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-interface LocalExerciseSet {
+export interface LocalExerciseSet {
   weight: number;
   reps: number;
   restTime: number;
