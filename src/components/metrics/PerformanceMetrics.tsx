@@ -2,6 +2,8 @@
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { BaseCard } from "@/components/ui/BaseCard";
+import { typography } from "@/lib/typography";
 
 interface PerformanceMetricsProps {
   className?: string;
@@ -9,14 +11,10 @@ interface PerformanceMetricsProps {
 
 export const PerformanceMetrics = ({ className }: PerformanceMetricsProps) => {
   return (
-    <div className={cn(
-      "space-y-4 bg-gray-900/70 p-4 rounded-xl border border-gray-800", 
-      "relative w-full",
-      className
-    )}>
+    <BaseCard className={cn("relative w-full", className)}>
       <div className="flex items-center gap-2 mb-2">
         <BarChart3 className="text-purple-400" size={20} />
-        <h3 className="text-sm font-medium text-gray-300">Performance Metrics</h3>
+        <h3 className={typography.text.secondary}>Performance Metrics</h3>
       </div>
       
       <div className="space-y-3">
@@ -25,7 +23,7 @@ export const PerformanceMetrics = ({ className }: PerformanceMetricsProps) => {
         <MetricBar label="Density" value={65} color="from-emerald-500 to-teal-500" />
         <MetricBar label="Efficiency" value={70} color="from-orange-500 to-yellow-500" />
       </div>
-    </div>
+    </BaseCard>
   );
 };
 
@@ -37,9 +35,9 @@ interface MetricBarProps {
 
 const MetricBar = ({ label, value, color }: MetricBarProps) => (
   <div className="space-y-1.5">
-    <div className="flex justify-between text-xs">
-      <span className="text-gray-400">{label}</span>
-      <span className="text-gray-300">{value}%</span>
+    <div className="flex justify-between">
+      <span className={typography.text.secondary}>{label}</span>
+      <span className={typography.text.primary}>{value}%</span>
     </div>
     <div className={cn(
       "h-1.5 bg-gray-800/50 rounded-full overflow-hidden",
