@@ -81,12 +81,12 @@ export const WorkoutCard = ({
       
       <div className="flex justify-between">
         <div>
-          <h3 className={typography.headings.card}>{name}</h3>
+          <h3 className={typography.headings.h3}>{name}</h3>
           <div className="flex items-center text-gray-400 text-sm mt-1">
             <span 
               className="w-3 h-3 rounded-full mr-2" 
               style={{ 
-                backgroundColor: trainingType.colorStart
+                backgroundColor: trainingType.color
               }} 
             />
             <span className="mr-3">{trainingType.name}</span>

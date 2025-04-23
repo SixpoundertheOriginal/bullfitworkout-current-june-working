@@ -171,13 +171,11 @@ export const WorkoutHistory = ({
           });
         } else {
           toast({
-            title: "Workout is already complete",
             description: "No issues were found with this workout.",
           });
         }
       } else {
         toast({
-          title: "Could not fix workout",
           description: result.error || "An unknown error occurred",
           variant: "destructive",
         });
@@ -220,7 +218,6 @@ export const WorkoutHistory = ({
       
       if (!recentWorkouts || recentWorkouts.length === 0) {
         toast({
-          title: "No recent workouts found",
           description: "There are no workouts from the last hour to recover.",
         });
         setShowRecoverPrompt(false);
@@ -249,12 +246,10 @@ export const WorkoutHistory = ({
         });
       } else if (errorCount === 0) {
         toast({
-          title: "No workouts needed recovery",
           description: "Your recent workouts appear to be properly saved."
         });
       } else {
         toast({
-          title: "Recovery partially successful",
           description: `${errorCount} workout${errorCount !== 1 ? 's' : ''} could not be recovered.`
         });
       }

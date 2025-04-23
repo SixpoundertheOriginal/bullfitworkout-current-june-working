@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -292,14 +293,14 @@ export async function recoverPartialWorkout(workoutId: string) {
     // 2. Check if there are exercise sets associated with this workout
     const { data: sets, error: setsError } = await supabase
       .from('exercise_sets')
-      .select('count(*)')
+      .select('count')
       .eq('workout_id', workoutId);
       
     if (setsError) {
       console.error("Error checking exercise sets during recovery:", setsError);
     }
     
-    const setCount = sets && sets.length > 0 ? parseInt(sets[0].count as any, 10) : 0;
+    const setCount = sets && sets.length > 0 ? parseInt(sets[0].count, 10) : 0;
     console.log(`Found ${setCount} sets for workout ${workoutId}`);
     
     // 3. Update the workout to ensure it's visible in history
@@ -324,9 +325,12 @@ export async function recoverPartialWorkout(workoutId: string) {
     // This is done manually rather than relying on the trigger
     try {
       // Execute a SQL function to refresh analytics if it exists
-      // This is a no-op if the function doesn't exist
-      const { error: refreshError } = await supabase.rpc('manual_refresh_workout_analytics');
-      if (refreshError && !refreshError.message.includes('does not exist')) {
+      // Using fetch to call custom RPC functions
+      const { error: refreshError } = await supabase.functions.invoke('manual-refresh-analytics', {
+        body: { workoutId }
+      });
+      
+      if (refreshError) {
         console.error("Error refreshing analytics during recovery:", refreshError);
       }
     } catch (error) {
