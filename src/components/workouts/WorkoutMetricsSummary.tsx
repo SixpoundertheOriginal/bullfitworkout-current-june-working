@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Dumbbell, Weight, Zap, Info } from "lucide-react";
@@ -7,6 +6,7 @@ import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
 import { isBodyweightExercise, isIsometricExercise } from "@/utils/exerciseUtils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { theme } from "@/lib/theme";
+import { typography } from "@/lib/typography";
 import { cn } from "@/lib/utils";
 
 interface ExerciseSet {
@@ -62,9 +62,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
     const volumePerExercise: Record<string, { standard: number, effort: number }> = {};
     const exerciseTypes = { weighted: 0, bodyweight: 0, isometric: 0 };
     
-    // Helper to get exercise load factor
     const getLoadFactor = (exerciseName: string) => {
-      // Simple mapping for demo purposes
       const factors: Record<string, number> = {
         "Pull-ups": 1.0,
         "Push-ups": 0.65,
@@ -77,10 +75,9 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
           return factor;
         }
       }
-      return 0.5; // Default factor
+      return 0.5;
     };
     
-    // Group sets by exercise
     const exerciseSetsMap: Record<string, ExerciseSet[]> = {};
     exerciseSets.forEach(set => {
       if (!exerciseSetsMap[set.exercise_name]) {
@@ -88,7 +85,6 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
       }
       exerciseSetsMap[set.exercise_name].push(set);
       
-      // Check exercise type
       if (isIsometricExercise(set.exercise_name)) {
         hasIsometricExercises = true;
         exerciseTypes.isometric++;
@@ -100,7 +96,6 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
       }
     });
     
-    // Process each exercise
     Object.entries(exerciseSetsMap).forEach(([exerciseName, sets]) => {
       if (!volumePerExercise[exerciseName]) {
         volumePerExercise[exerciseName] = { standard: 0, effort: 0 };
@@ -111,29 +106,23 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
           const loadFactor = getLoadFactor(exerciseName);
           const convertedWeight = convertWeight(set.weight, "lb", weightUnit);
           
-          // Standard volume calculation (weight × reps)
           const standardVolume = convertedWeight > 0 && set.reps > 0 ? 
             convertedWeight * set.reps : 0;
           
-          // Enhanced effort-based volume calculation
           let effortBasedVolume = 0;
           
           if (isIsometricExercise(exerciseName) && set.duration) {
-            // For isometric holds: (weight or bodyweight) × time / 10
             const effectiveWeight = convertedWeight > 0 ? 
               convertedWeight : convertWeight(userBodyweight, "kg", weightUnit) * loadFactor;
             
             effortBasedVolume = effectiveWeight * set.duration / 10;
           } else if (isBodyweightExercise(exerciseName) && set.reps > 0) {
-            // For bodyweight exercises: bodyweight × reps × load factor
             effortBasedVolume = convertWeight(userBodyweight, "kg", weightUnit) * 
               set.reps * loadFactor;
           } else if (convertedWeight > 0 && set.reps > 0) {
-            // For weighted exercises: standard calculation
             effortBasedVolume = standardVolume;
           }
           
-          // Update metrics
           totalVolume += standardVolume;
           effortVolume += effortBasedVolume;
           totalWeight += convertedWeight;
@@ -143,7 +132,6 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
             highestWeight = convertedWeight;
           }
           
-          // Track volume per exercise
           volumePerExercise[exerciseName].standard += standardVolume;
           volumePerExercise[exerciseName].effort += effortBasedVolume;
         }
@@ -179,7 +167,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div className="bg-gray-800/50 rounded-lg p-3 flex items-center justify-between">
             <div>
-              <div className={cn("text-sm flex items-center gap-1", theme.textStyles.secondary)}>
+              <div className={cn("text-sm flex items-center gap-1", typography.text.secondary)}>
                 {metrics.hasBodyweightExercises || metrics.hasIsometricExercises ? (
                   <>
                     <span>Effort Volume</span>
@@ -201,12 +189,12 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
                   "Total Volume"
                 )}
               </div>
-              <div className={cn("text-xl", theme.textStyles.primary)}>
+              <div className={cn("text-xl", typography.text.primary)}>
                 {Math.round(metrics.hasBodyweightExercises || metrics.hasIsometricExercises ? 
-                  metrics.effortVolume : metrics.totalVolume * 10) / 10} <span className={theme.textStyles.secondary}>{weightUnit}</span>
+                  metrics.effortVolume : metrics.totalVolume * 10) / 10} <span className={typography.text.secondary}>{weightUnit}</span>
               </div>
               {(metrics.hasBodyweightExercises || metrics.hasIsometricExercises) && (
-                <div className={cn("text-xs mt-1", theme.textStyles.tertiary)}>
+                <div className={cn("text-xs mt-1", typography.text.muted)}>
                   Based on body weight and exercise type
                 </div>
               )}
@@ -218,8 +206,8 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
           
           <div className="bg-gray-800/50 rounded-lg p-3 flex items-center justify-between">
             <div>
-              <div className={cn("text-sm", theme.textStyles.secondary)}>Total Sets</div>
-              <div className={cn("text-xl", theme.textStyles.primary)}>
+              <div className={cn("text-sm", typography.text.secondary)}>Total Sets</div>
+              <div className={cn("text-xl", typography.text.primary)}>
                 {metrics.completedSets}/{metrics.totalSets}
               </div>
             </div>
@@ -231,22 +219,22 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
         
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-gray-800/50 rounded-lg p-2 text-center">
-            <div className={cn("text-sm", theme.textStyles.secondary)}>Avg Weight</div>
-            <div className={cn("text-lg font-mono", theme.textStyles.primary)}>
+            <div className={cn("text-sm", typography.text.secondary)}>Avg Weight</div>
+            <div className={cn("text-lg font-mono", typography.text.primary)}>
               {Math.round(metrics.averageWeight * 10) / 10}
             </div>
           </div>
           
           <div className="bg-gray-800/50 rounded-lg p-2 text-center">
-            <div className={cn("text-sm", theme.textStyles.secondary)}>Total Reps</div>
-            <div className={cn("text-lg font-mono", theme.textStyles.primary)}>
+            <div className={cn("text-sm", typography.text.secondary)}>Total Reps</div>
+            <div className={cn("text-lg font-mono", typography.text.primary)}>
               {metrics.totalReps}
             </div>
           </div>
           
           <div className="bg-gray-800/50 rounded-lg p-2 text-center">
-            <div className={cn("text-sm", theme.textStyles.secondary)}>Max Weight</div>
-            <div className={cn("text-lg font-mono", theme.textStyles.primary)}>
+            <div className={cn("text-sm", typography.text.secondary)}>Max Weight</div>
+            <div className={cn("text-lg font-mono", typography.text.primary)}>
               {Math.round(metrics.highestWeight * 10) / 10}
             </div>
           </div>
@@ -254,7 +242,7 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
         
         {metrics.totalExercises > 0 && (
           <div className="mt-4">
-            <div className={cn("text-sm mb-2", theme.textStyles.secondary)}>Volume Distribution</div>
+            <div className={cn("text-sm mb-2", typography.text.secondary)}>Volume Distribution</div>
             {Object.entries(metrics.volumePerExercise).map(([exercise, volumes]) => {
               const displayVolume = metrics.hasBodyweightExercises || metrics.hasIsometricExercises ? 
                 volumes.effort : volumes.standard;
@@ -262,8 +250,8 @@ export const WorkoutMetricsSummary = ({ exerciseSets, className = "", userBodywe
               return (
                 <div key={exercise} className="mb-2">
                   <div className="flex justify-between text-sm">
-                    <span className={theme.textStyles.primary}>{exercise}</span>
-                    <span className={cn("font-mono", theme.textStyles.primary)}>{Math.round(displayVolume * 10) / 10}</span>
+                    <span className={typography.text.primary}>{exercise}</span>
+                    <span className={cn("font-mono", typography.text.primary)}>{Math.round(displayVolume * 10) / 10}</span>
                   </div>
                   <div className="h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden">
                     <div 

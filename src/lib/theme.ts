@@ -30,11 +30,11 @@ export const theme = {
     }
   },
   
-  // Reference typography system instead of duplicating styles
+  // Reference typography system
   textStyles: typography
 };
 
-// Documentation: Use theme.colors.text.accent for all metric card icons and accent text. Use theme.textStyles.secondary for supporting muted text.
+// Documentation: Use theme.colors.text.accent for all metric card icons and accent text. Use theme.textStyles.text.secondary for supporting muted text.
 
 // Helper to combine theme classes with custom classes
 export const withTheme = (baseClasses: string, customClasses?: string) => {

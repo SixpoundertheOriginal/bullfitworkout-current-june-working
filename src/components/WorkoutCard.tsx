@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, BarChart3, Dumbbell, Edit, Trash2, Loader2, SquareCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { theme } from "@/lib/theme";
+import { typography } from "@/lib/typography";
 import { WorkoutMetricsBadge } from "@/components/metrics/WorkoutMetricsBadge";
 import { getExerciseGroup } from "@/utils/exerciseUtils";
 
@@ -115,8 +117,8 @@ export const WorkoutCard = ({
               </Button>
             )}
             <div>
-              <h3 className={cn(theme.textStyles.primary, "text-lg")}>{name}</h3>
-              <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm mt-1")}>
+              <h3 className={cn(typography.text.primary, "text-lg")}>{name}</h3>
+              <div className={cn(typography.text.secondary, "flex items-center gap-2 text-sm mt-1")}>
                 <Calendar size={14} className={theme.colors.accent.purple} />
                 <span>{formattedDate}</span>
                 <Clock size={14} className={theme.colors.accent.purple} />
@@ -164,7 +166,7 @@ export const WorkoutCard = ({
         </div>
         
         <div className="space-y-3">
-          <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm")}>
+          <div className={cn(typography.text.secondary, "flex items-center gap-2 text-sm")}>
             <Calendar size={14} className={theme.colors.accent.purple} />
             <span>{formattedDate}</span>
             <Clock size={14} className={theme.colors.accent.purple} />
@@ -190,11 +192,11 @@ export const WorkoutCard = ({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm")}>
+            <div className={cn(typography.text.secondary, "flex items-center gap-2 text-sm")}>
               <BarChart3 size={16} className={theme.colors.accent.purple} />
               <span>{setCount} sets</span>
             </div>
-            <div className={cn(theme.textStyles.secondary, "flex items-center gap-2 text-sm")}>
+            <div className={cn(typography.text.secondary, "flex items-center gap-2 text-sm")}>
               <Dumbbell size={16} className={theme.colors.accent.purple} />
               <span>{exerciseCount} exercises</span>
             </div>

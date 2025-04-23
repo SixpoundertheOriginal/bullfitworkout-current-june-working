@@ -8,6 +8,7 @@ import { Exercise } from "@/types/exercise";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
 import { theme } from "@/lib/theme";
+import { typography } from "@/lib/typography";
 
 interface AddExerciseBarProps {
   onSelectExercise: (exercise: string | Exercise) => void;
@@ -66,7 +67,7 @@ export function AddExerciseBar({
               )}
             >
               <Plus className="w-5 h-5" />
-              {isMobile && <span className={theme.textStyles.primary}>Add Exercise</span>}
+              {isMobile && <span className={typography.text.primary}>Add Exercise</span>}
             </Button>
           )}
         </div>

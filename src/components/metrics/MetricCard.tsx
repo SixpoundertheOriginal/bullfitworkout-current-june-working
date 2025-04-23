@@ -62,7 +62,7 @@ export const MetricCard = ({
 
             {/* Label (subheading, muted) */}
             <div className={cn(
-              theme.textStyles.secondary,
+              typography.text.secondary,
               "text-center mt-1.5",
               labelClass
             )}>
@@ -92,4 +92,3 @@ export const MetricCard = ({
     </Tooltip>
   );
 };
-
