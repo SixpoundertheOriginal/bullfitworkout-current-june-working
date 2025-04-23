@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MainMenu } from "./MainMenu";
 import { UserProfile } from "../UserProfile";
+import { typography } from '@/lib/typography';
 
 // Logic for when to show back button
 const navTabPaths = ["/", "/training", "/profile", "/all-exercises"];
@@ -52,7 +53,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, className = "" })
           )}
           <MainMenu />
         </div>
-        <h1 className="text-xl font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+        <h1 className={typography.special.gradient}>
           {title}
         </h1>
         <UserProfile />
@@ -60,4 +61,3 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, className = "" })
     </header>
   );
 };
-

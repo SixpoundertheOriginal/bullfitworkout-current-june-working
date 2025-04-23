@@ -40,13 +40,15 @@ export const ExerciseHeader = ({ exerciseName, lastSession, weightUnit }: Exerci
               </TooltipContent>
             </Tooltip>
           ) : (
-            <h2 className={typography.headings.h2 + " tracking-tight"}>{exerciseName}</h2>
+            <h2 className={typography.headings.h2 + " tracking-tight"}>
+              {exerciseName}
+            </h2>
           )}
         </div>
         {lastSession && (
           <p className={typography.text.small}>
             Last session:{' '}
-            <span className="font-mono">
+            <span className={typography.text.numeric}>
               {lastSession.weight} {weightUnit} × {lastSession.reps} × {lastSession.sets}
             </span>
           </p>

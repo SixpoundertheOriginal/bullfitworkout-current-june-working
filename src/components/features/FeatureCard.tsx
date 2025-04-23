@@ -23,7 +23,7 @@ export const FeatureCard = ({ icon, title, description, onClick }: FeatureCardPr
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className={typography.headings.primary + " mb-1"}>{title}</h3>
+          <h3 className={typography.headings.h3}>{title}</h3>
           <p className={typography.text.secondary}>{description}</p>
         </div>
       </div>

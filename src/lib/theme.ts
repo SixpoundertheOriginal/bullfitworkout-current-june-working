@@ -1,3 +1,4 @@
+
 import { typography } from './typography';
 
 /**
@@ -29,26 +30,18 @@ export const theme = {
     }
   },
   
-  // Updated to use typography system
-  textStyles: {
-    primary: "text-white font-normal text-base",
-    secondary: "text-white/80 text-base",
-    tertiary: "text-white/60 text-sm",
-    data: "font-mono text-white",
-    heading: "text-white font-bold text-2xl leading-tight",
-    button: "text-white hover:text-white/90 font-medium",
-    sectionHeading: "text-white font-semibold text-lg",
-    sectionSubheading: "text-lg font-medium text-purple-300"
-  }
+  // Reference typography system instead of duplicating styles
+  textStyles: typography
 };
 
 // Documentation: Use theme.colors.text.accent for all metric card icons and accent text. Use theme.textStyles.secondary for supporting muted text.
 
+// Helper to combine theme classes with custom classes
 export const withTheme = (baseClasses: string, customClasses?: string) => {
   return customClasses ? `${baseClasses} ${customClasses}` : baseClasses;
 };
 
-// Updated darkModeText object to use typography system
+// Map to typography system
 export const darkModeText = {
   heading: typography.headings.primary,
   sectionTitle: typography.sections.title,
@@ -61,5 +54,5 @@ export const darkModeText = {
 
 // Helper function specifically for section headings in dark mode
 export const getSectionHeadingClasses = (withIcon: boolean = false) => {
-  return `flex ${withIcon ? 'items-center gap-2' : ''} text-xl font-bold text-white`;
+  return `flex ${withIcon ? 'items-center gap-2' : ''} ${typography.headings.h3}`;
 };

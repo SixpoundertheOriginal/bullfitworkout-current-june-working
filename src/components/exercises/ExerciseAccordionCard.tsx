@@ -5,6 +5,7 @@ import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import type { Exercise } from "@/types/exercise";
+import { typography } from '@/lib/typography';
 
 interface ExerciseAccordionCardProps {
   exercise: Exercise;
@@ -45,8 +46,8 @@ export default function ExerciseAccordionCard({
           <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex gap-2 items-center">
               <div>
-                <div className="font-semibold text-white">{exercise.name}</div>
-                <div className="text-xs text-gray-400">{exercise.description}</div>
+                <div className={typography.headings.h4}>{exercise.name}</div>
+                <div className={typography.text.muted}>{exercise.description}</div>
               </div>
             </div>
             <div className="flex gap-2 items-center">
@@ -81,8 +82,8 @@ export default function ExerciseAccordionCard({
           <div className="bg-gray-900/80 p-4 rounded-b-lg border-t border-gray-700 text-gray-200 space-y-2">
             {exercise.instructions && (
               <div>
-                <span className="font-medium text-purple-300">Instructions: </span>
-                <span>
+                <span className={typography.special.accent + " font-medium"}>Instructions: </span>
+                <span className={typography.text.secondary}>
                   {typeof exercise.instructions === "string"
                     ? exercise.instructions
                     : JSON.stringify(exercise.instructions)}
@@ -90,39 +91,39 @@ export default function ExerciseAccordionCard({
               </div>
             )}
             <div>
-              <span className="font-medium text-purple-300">Primary Muscles:</span>
-              <span> {(exercise.primary_muscle_groups || []).join(", ") || "N/A"}</span>
+              <span className={typography.special.accent + " font-medium"}>Primary Muscles:</span>
+              <span className={typography.text.secondary}> {(exercise.primary_muscle_groups || []).join(", ") || "N/A"}</span>
             </div>
             {exercise.secondary_muscle_groups?.length > 0 && (
               <div>
-                <span className="font-medium text-purple-300">Secondary Muscles:</span>
-                <span> {(exercise.secondary_muscle_groups || []).join(", ")}</span>
+                <span className={typography.special.accent + " font-medium"}>Secondary Muscles:</span>
+                <span className={typography.text.secondary}> {(exercise.secondary_muscle_groups || []).join(", ")}</span>
               </div>
             )}
             <div>
-              <span className="font-medium text-purple-300">Equipment:</span>
-              <span> {(exercise.equipment_type || []).join(", ") || "N/A"}</span>
+              <span className={typography.special.accent + " font-medium"}>Equipment:</span>
+              <span className={typography.text.secondary}> {(exercise.equipment_type || []).join(", ") || "N/A"}</span>
             </div>
             <div>
-              <span className="font-medium text-purple-300">Difficulty:</span>
-              <span> {exercise.difficulty}</span>
+              <span className={typography.special.accent + " font-medium"}>Difficulty:</span>
+              <span className={typography.text.secondary}> {exercise.difficulty}</span>
             </div>
             {exercise.tips?.length > 0 && (
               <div>
-                <span className="font-medium text-purple-300">Tips:</span>
+                <span className={typography.special.accent + " font-medium"}>Tips:</span>
                 <ul className="list-disc ml-6 text-sm">
                   {exercise.tips.map((tip, i) => (
-                    <li key={i}>{tip}</li>
+                    <li key={i} className={typography.text.secondary}>{tip}</li>
                   ))}
                 </ul>
               </div>
             )}
             {exercise.variations?.length > 0 && (
               <div>
-                <span className="font-medium text-purple-300">Variations:</span>
+                <span className={typography.special.accent + " font-medium"}>Variations:</span>
                 <ul className="list-disc ml-6 text-sm">
                   {exercise.variations.map((variation, i) => (
-                    <li key={i}>{variation}</li>
+                    <li key={i} className={typography.text.secondary}>{variation}</li>
                   ))}
                 </ul>
               </div>
@@ -133,4 +134,3 @@ export default function ExerciseAccordionCard({
     </AccordionItem>
   );
 }
-
