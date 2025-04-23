@@ -19,6 +19,7 @@ interface WorkoutMetricsProps {
   onRestTimerComplete: () => void;
   onRestTimeUpdate?: (time: number) => void;
   onManualRestStart?: () => void;
+  restTimerResetSignal?: number;
   className?: string;
 }
 
@@ -31,10 +32,18 @@ export const WorkoutMetrics = ({
   onRestTimerComplete,
   onRestTimeUpdate,
   onManualRestStart,
+  restTimerResetSignal = 0,
   className
 }: WorkoutMetricsProps) => {
   const [resetCounter, setResetCounter] = useState(0);
   
+  // Use the external reset signal
+  useEffect(() => {
+    if (restTimerResetSignal > 0) {
+      setResetCounter(restTimerResetSignal);
+    }
+  }, [restTimerResetSignal]);
+
   useEffect(() => {
     if (showRestTimer) {
       setResetCounter(prev => prev + 1);

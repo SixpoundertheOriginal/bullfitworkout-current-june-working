@@ -16,6 +16,8 @@ export function useWorkoutState() {
   const [exercises, setExercises] = useState<ExerciseSessionState>({});
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [restTimerActive, setRestTimerActive] = useState(false);
+  const [restTimerResetSignal, setRestTimerResetSignal] = useState(0);
   const { user } = useAuth();
   
   // Load state from localStorage on component mount
@@ -29,6 +31,7 @@ export function useWorkoutState() {
         setExercises(session.exercises || {});
         setElapsedTime(session.elapsedTime || 0);
         setActiveExercise(session.activeExercise || null);
+        setRestTimerActive(session.restTimerActive || false);
         
         console.log("Restored workout session from localStorage:", session);
       }
@@ -46,6 +49,7 @@ export function useWorkoutState() {
         exercises,
         elapsedTime,
         activeExercise,
+        restTimerActive,
         lastUpdated: new Date().toISOString()
       };
       
@@ -53,7 +57,7 @@ export function useWorkoutState() {
     } catch (error) {
       console.error("Error saving workout session to localStorage:", error);
     }
-  }, [exercises, elapsedTime, activeExercise, user]);
+  }, [exercises, elapsedTime, activeExercise, restTimerActive, user]);
   
   // Wrapper for setExercises that also updates localStorage
   const updateExercises = (
@@ -75,9 +79,15 @@ export function useWorkoutState() {
     setExercises({});
     setElapsedTime(0);
     setActiveExercise(null);
+    setRestTimerActive(false);
     
     localStorage.removeItem(`workout_session_${user.id}`);
     console.log("Workout session reset");
+  };
+
+  const triggerRestTimerReset = () => {
+    setRestTimerResetSignal(prev => prev + 1);
+    setRestTimerActive(true);
   };
   
   return {
@@ -87,6 +97,10 @@ export function useWorkoutState() {
     setActiveExercise,
     elapsedTime,
     setElapsedTime: updateElapsedTime,
-    resetSession
+    resetSession,
+    restTimerActive,
+    setRestTimerActive,
+    restTimerResetSignal,
+    triggerRestTimerReset
   };
 }

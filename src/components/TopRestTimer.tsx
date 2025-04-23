@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Timer, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ interface TopRestTimerProps {
   resetSignal: number;
   onTimeUpdate?: (time: number) => void;
   onManualStart?: () => void;
+  defaultRestTime?: number;
 }
 
 export const TopRestTimer = ({ 
@@ -17,18 +18,22 @@ export const TopRestTimer = ({
   onComplete, 
   resetSignal,
   onTimeUpdate,
-  onManualStart
+  onManualStart,
+  defaultRestTime = 60
 }: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isTimerActive, setIsTimerActive] = React.useState(false);
-  const maxTime = 300; // 5 minutes max
+  const [currentRestTime, setCurrentRestTime] = useState(defaultRestTime);
+  const maxTime = currentRestTime; // Use the current rest time as max time
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
+  const lastResetSignalRef = useRef<number>(0);
 
   // This effect handles the reset signal
   useEffect(() => {
-    if (resetSignal > 0) {
-      console.log("Reset signal received in TopRestTimer:", resetSignal);
+    if (resetSignal > 0 && resetSignal !== lastResetSignalRef.current) {
+      console.log(`TopRestTimer: Reset signal received: ${resetSignal}, previous: ${lastResetSignalRef.current}`);
+      lastResetSignalRef.current = resetSignal;
       clearTimerInterval();
       setElapsedTime(0);
       setIsTimerActive(true);
@@ -52,6 +57,54 @@ export const TopRestTimer = ({
       clearTimerInterval();
     };
   }, [isActive]);
+
+  // Update the rest time from localStorage if a set was completed
+  useEffect(() => {
+    const handleSetCompletedToast = (mutations: MutationRecord[]) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length) {
+          for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLElement && node.textContent && 
+                node.textContent.includes('logged successfully')) {
+              // Extract the current exercise name from the toast message
+              const toastText = node.textContent;
+              const exerciseMatch = toastText.match(/^(.+?):/);
+              if (exerciseMatch && exerciseMatch[1]) {
+                const exerciseName = exerciseMatch[1].trim();
+                
+                // Try to find the current active exercise and set in localStorage
+                const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
+                if (user?.id) {
+                  const savedSession = localStorage.getItem(`workout_session_${user.id}`);
+                  if (savedSession) {
+                    const session = JSON.parse(savedSession);
+                    if (session.exercises && session.exercises[exerciseName]) {
+                      // Find the latest completed set (highest index)
+                      const sets = session.exercises[exerciseName];
+                      const completedSets = sets.filter((s: any) => s.completed);
+                      if (completedSets.length > 0) {
+                        const lastCompletedSet = completedSets[completedSets.length - 1];
+                        if (lastCompletedSet && lastCompletedSet.restTime) {
+                          console.log(`Found rest time from last completed set: ${lastCompletedSet.restTime}s`);
+                          setCurrentRestTime(lastCompletedSet.restTime);
+                          return;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const observer = new MutationObserver(handleSetCompletedToast);
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const clearTimerInterval = () => {
     if (intervalRef.current) {
@@ -110,6 +163,8 @@ export const TopRestTimer = ({
     if (onManualStart) onManualStart();
   };
 
+  const remainingTime = Math.max(0, maxTime - elapsedTime);
+
   if (!isActive) {
     return (
       <div className="flex flex-col items-center gap-1">
@@ -130,7 +185,7 @@ export const TopRestTimer = ({
         )} 
       />
       <span className="text-lg font-mono text-white">
-        {formatTime(elapsedTime)}
+        {formatTime(remainingTime)}
       </span>
       
       {!isTimerActive && (

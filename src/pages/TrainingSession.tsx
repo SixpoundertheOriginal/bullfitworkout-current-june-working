@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { Plus } from "lucide-react";
 import { TrainingTypeTag } from "@/components/TrainingTypeTag";
@@ -31,10 +32,13 @@ const TrainingSession: React.FC = () => {
     setActiveExercise, 
     elapsedTime, 
     setElapsedTime,
-    resetSession
+    resetSession,
+    restTimerActive,
+    setRestTimerActive,
+    restTimerResetSignal,
+    triggerRestTimerReset
   } = useWorkoutState();
   
-  const [showRestTimer, setShowRestTimer] = React.useState(false);
   const [showAddExerciseSheet, setShowAddExerciseSheet] = React.useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const location = useLocation();
@@ -151,6 +155,13 @@ const TrainingSession: React.FC = () => {
         isEditing: false 
       };
       
+      // Get the rest time from the current set to use for the timer
+      const currentRestTime = exerciseSets[setIndex].restTime;
+      console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s`);
+      
+      // Trigger the rest timer reset with proper rest time
+      triggerRestTimerReset();
+      
       return {
         ...prev,
         [exerciseName]: exerciseSets
@@ -263,7 +274,8 @@ const TrainingSession: React.FC = () => {
             weight: set.weight || 0,
             reps: set.reps || 0,
             set_number: index + 1,
-            completed: set.completed || false
+            completed: set.completed || false,
+            rest_time: set.restTime || 60
           });
         });
       }
@@ -293,7 +305,21 @@ const TrainingSession: React.FC = () => {
       state: {
         workoutId,
         workoutData: {
-          exercises: exercises as unknown as Record<string, ExerciseSet[]>,
+          exercises: Object.fromEntries(
+            Object.entries(exercises).map(([name, sets]) => [
+              name,
+              sets.map((set, index) => ({
+                id: `temp-${name}-${index}`,
+                exercise_name: name,
+                workout_id: workoutId || 'temp',
+                set_number: index + 1,
+                weight: set.weight,
+                reps: set.reps,
+                completed: set.completed,
+                rest_time: set.restTime
+              }))
+            ])
+          ) as unknown as Record<string, ExerciseSet[]>,
           duration: elapsedTime,
           startTime: new Date(now.getTime() - elapsedTime * 1000),
           endTime: now,
@@ -304,9 +330,9 @@ const TrainingSession: React.FC = () => {
     });
   };
   
-  const handleShowRestTimer = () => setShowRestTimer(true);
-  const handleResetRestTimer = () => setShowRestTimer(false);
-  const handleRestTimerComplete = () => setShowRestTimer(false);
+  const handleShowRestTimer = () => setRestTimerActive(true);
+  const handleResetRestTimer = () => triggerRestTimerReset();
+  const handleRestTimerComplete = () => setRestTimerActive(false);
   
   const totalExercises = Object.keys(exercises).length;
 
@@ -333,9 +359,10 @@ const TrainingSession: React.FC = () => {
           exerciseCount={totalExercises}
           completedSets={completedSets}
           totalSets={totalSets}
-          showRestTimer={showRestTimer}
+          showRestTimer={restTimerActive}
           onRestTimerComplete={handleRestTimerComplete}
           onManualRestStart={handleShowRestTimer}
+          restTimerResetSignal={restTimerResetSignal}
         />
       </div>
       
