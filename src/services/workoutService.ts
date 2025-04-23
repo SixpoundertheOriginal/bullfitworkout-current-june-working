@@ -33,6 +33,7 @@ export async function updateExerciseSets(workoutId: string, exerciseName: string
   reps: number;
   set_number: number;
   completed: boolean;
+  rest_time?: number;
 }[]) {
   // First get existing set IDs for this exercise in this workout
   const { data: existingSets, error: fetchError } = await supabase
@@ -52,7 +53,8 @@ export async function updateExerciseSets(workoutId: string, exerciseName: string
       weight: set.weight,
       reps: set.reps,
       set_number: set.set_number,
-      completed: set.completed
+      completed: set.completed,
+      rest_time: set.rest_time || 60
     }));
   
   // Sets to delete - those that exist in the database but not in our updated list
@@ -75,7 +77,8 @@ export async function updateExerciseSets(workoutId: string, exerciseName: string
         weight: set.weight,
         reps: set.reps,
         set_number: set.set_number,
-        completed: set.completed
+        completed: set.completed,
+        rest_time: set.rest_time || 60
       })));
     operations.push(updatePromise);
   }

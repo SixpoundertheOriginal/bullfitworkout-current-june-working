@@ -145,11 +145,19 @@ const TrainingSession: React.FC = () => {
   const handleCompleteSet = (exerciseName: string, setIndex: number) => {
     setExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
+      const currentSet = exerciseSets[setIndex];
       exerciseSets[setIndex] = { 
-        ...exerciseSets[setIndex], 
+        ...currentSet, 
         completed: true,
         isEditing: false 
       };
+      
+      if (setIndex < exerciseSets.length - 1) {
+        exerciseSets[setIndex + 1] = {
+          ...exerciseSets[setIndex + 1],
+          restTime: currentSet.restTime || 60
+        };
+      }
       
       const currentRestTime = exerciseSets[setIndex].restTime;
       console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s`);
