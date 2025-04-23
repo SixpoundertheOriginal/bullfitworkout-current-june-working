@@ -1,9 +1,10 @@
+
 import React, { useRef } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -206,15 +207,15 @@ const TrainingSession: React.FC = () => {
 
   const handleCompleteWorkout = async () => {
     if (!Object.keys(exercises).length) {
-      toast({
-        description: "No exercises added. Please add at least one exercise before completing your workout",
+      toast("No exercises added", {
+        description: "Please add at least one exercise before completing your workout",
         variant: "destructive",
       });
       return;
     }
     
     if (!user) {
-      toast({
+      toast("Authentication required", {
         description: "You need to be logged in to save workouts",
         variant: "destructive",
       });
@@ -271,7 +272,7 @@ const TrainingSession: React.FC = () => {
         recoverable: true
       });
       
-      toast({
+      toast("Error", {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
         variant: "destructive",
       });
@@ -282,8 +283,7 @@ const TrainingSession: React.FC = () => {
     if (!user || !workoutId) return;
     
     if (workoutId) {
-      toast({
-        title: "Attempting recovery",
+      toast("Attempting recovery", {
         description: "Trying to recover your workout data..."
       });
       
@@ -303,13 +303,13 @@ const TrainingSession: React.FC = () => {
     const errorMessage = error?.message || "Unknown error";
     
     if (errorMessage.includes("materialized view")) {
-      toast({
+      toast("Partial save", {
         description: "Your workout data was saved but some analytics couldn't be processed.",
         variant: "default",
       });
       navigateToComplete(null);
     } else {
-      toast({
+      toast("Error", {
         description: errorMessage,
         variant: "destructive",
       });

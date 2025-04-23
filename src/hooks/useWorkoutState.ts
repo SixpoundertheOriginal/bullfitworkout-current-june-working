@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -67,12 +67,11 @@ export const useWorkoutState = () => {
         
         // If we detect a partially saved workout, show a recovery toast
         if (parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial') {
-          toast({
-            title: "Workout recovery available",
+          toast("Workout recovery available", {
             description: "We found an unsaved workout. Continue your session or reset to start fresh.",
             action: {
               label: "Reset",
-              onClick: () => resetSession()
+              onClick: resetSession
             },
             duration: 10000,
           });
@@ -196,8 +195,7 @@ export const useWorkoutState = () => {
     });
 
     // Notify user about partial save
-    toast({
-      title: "Workout partially saved",
+    toast("Workout partially saved", {
       description: "Some data couldn't be saved. You can try again later.",
       variant: "destructive",
       duration: 5000,
@@ -219,8 +217,7 @@ export const useWorkoutState = () => {
     });
 
     // Notify user about save failure
-    toast({
-      title: "Workout save failed",
+    toast("Workout save failed", {
       description: error.message,
       variant: "destructive",
       duration: 5000,
@@ -263,8 +260,7 @@ export const useWorkoutState = () => {
         savingErrors: [] 
       });
       
-      toast({
-        title: "Workout recovered",
+      toast("Workout recovered", {
         description: "Your workout data has been successfully recovered.",
       });
       
@@ -282,8 +278,7 @@ export const useWorkoutState = () => {
         }]
       });
       
-      toast({
-        title: "Recovery failed",
+      toast("Recovery failed", {
         description: "We couldn't recover your workout data. Please try again.",
         variant: "destructive",
       });
