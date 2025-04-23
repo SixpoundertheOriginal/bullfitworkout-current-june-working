@@ -37,9 +37,8 @@ export function useAsyncOperation<T extends (...args: any[]) => Promise<any>>(
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
         if (showErrorToast) {
-          toast(errorMessage, {
-            description: error.message,
-            variant: "destructive"
+          toast.error(errorMessage, {
+            description: error.message
           });
         }
       } finally {
