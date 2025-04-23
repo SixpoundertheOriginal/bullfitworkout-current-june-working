@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import type { Exercise } from "@/types/exercise";
 
 interface ExerciseAccordionCardProps {
@@ -21,19 +21,35 @@ export default function ExerciseAccordionCard({
   onDelete,
   onSelect,
 }: ExerciseAccordionCardProps) {
+  // Only expand/collapse if NOT clicking buttons
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If user clicks Edit/Delete, do not expand/collapse
+    // e.target will be inside button if button clicked
+    if (
+      (e.target as HTMLElement).closest("button") // exclude button clicks
+    ) {
+      return;
+    }
+    onSelect(exercise);
+  };
+
   return (
     <AccordionItem value={exercise.id} className="mb-2 border-none">
       <Card 
-        className={`bg-gray-900 border-gray-700 hover:bg-gray-800 transition-colors cursor-pointer`}
-        onClick={() => onSelect(exercise)}
+        tabIndex={0}
+        className={`bg-gray-900 border-gray-700 hover:bg-gray-800 transition-colors cursor-pointer outline-none ring-0`}
+        onClick={handleCardClick}
+        aria-expanded={expanded}
       >
-        <AccordionTrigger className="w-full p-0 !no-underline focus:outline-none">
+        <AccordionTrigger className="w-full p-0 !no-underline focus:outline-none select-none">
           <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <div className="font-semibold text-white">{exercise.name}</div>
-              <div className="text-xs text-gray-400">{exercise.description}</div>
+            <div className="flex gap-2 items-center">
+              <div>
+                <div className="font-semibold text-white">{exercise.name}</div>
+                <div className="text-xs text-gray-400">{exercise.description}</div>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <Button 
                 variant="secondary" 
                 size="sm" 
@@ -52,6 +68,12 @@ export default function ExerciseAccordionCard({
                 <Trash2 className="w-4 h-4 mr-1" />
                 Delete
               </Button>
+              <span>
+                {expanded 
+                  ? <ChevronUp className="w-5 h-5 text-purple-300" />
+                  : <ChevronDown className="w-5 h-5 text-gray-400" />
+                }
+              </span>
             </div>
           </CardContent>
         </AccordionTrigger>
@@ -111,3 +133,4 @@ export default function ExerciseAccordionCard({
     </AccordionItem>
   );
 }
+

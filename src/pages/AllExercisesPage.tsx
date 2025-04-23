@@ -8,6 +8,7 @@ import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
 import { Accordion } from "@/components/ui/accordion";
 import ExerciseAccordionCard from "@/components/exercises/ExerciseAccordionCard";
+import { PageHeader } from "@/components/navigation/PageHeader";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -112,46 +113,50 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
   if (isError) return <div className="text-red-500 text-center pt-8">Error loading exercises.</div>;
 
   return (
-    <div className="max-w-2xl mx-auto py-6 px-2 space-y-6">
-      <ExerciseDialog
-        open={showDialog}
-        onOpenChange={setShowDialog}
-        onSubmit={handleDialogSubmit}
-        initialExercise={exerciseToEdit!}
-        loading={isPending}
-        mode={dialogMode}
-      />
-      <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-between sm:items-center">
-        <h2 className="text-2xl font-bold text-white">All Exercises</h2>
-        <Button onClick={handleAdd} variant="gradient" size="sm" className="flex items-center justify-center mt-2 sm:mt-0">
-          <Plus className="w-4 h-4 mr-1" />
-          Add New
-        </Button>
+    <>
+      <PageHeader title="All Exercises" />
+      {/* space added so content is not under header */}
+      <div className="max-w-2xl mx-auto py-6 px-2 space-y-6 pt-20">
+        <ExerciseDialog
+          open={showDialog}
+          onOpenChange={setShowDialog}
+          onSubmit={handleDialogSubmit}
+          initialExercise={exerciseToEdit!}
+          loading={isPending}
+          mode={dialogMode}
+        />
+        <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:justify-between sm:items-center">
+          <h2 className="text-2xl font-bold text-white">All Exercises</h2>
+          <Button onClick={handleAdd} variant="gradient" size="sm" className="flex items-center justify-center mt-2 sm:mt-0">
+            <Plus className="w-4 h-4 mr-1" />
+            Add New
+          </Button>
+        </div>
+        <div className="space-y-4">
+          {exercises.length === 0 && (
+            <div className="text-gray-400 text-center">
+              No exercises found. Click "Add New" to create one!
+            </div>
+          )}
+          <Accordion
+            type="single"
+            collapsible
+            value={activeAccordion ? activeAccordion : ""}
+            onValueChange={val => setActiveAccordion(val as string)}
+          >
+            {exercises.map((exercise) => (
+              <ExerciseAccordionCard
+                key={exercise.id}
+                exercise={exercise}
+                expanded={activeAccordion === exercise.id}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onSelect={handleSelectExercise}
+              />
+            ))}
+          </Accordion>
+        </div>
       </div>
-      <div className="space-y-4">
-        {exercises.length === 0 && (
-          <div className="text-gray-400 text-center">
-            No exercises found. Click "Add New" to create one!
-          </div>
-        )}
-        <Accordion
-          type="single"
-          collapsible
-          value={activeAccordion ? activeAccordion : ""}
-          onValueChange={val => setActiveAccordion(val as string)}
-        >
-          {exercises.map((exercise) => (
-            <ExerciseAccordionCard
-              key={exercise.id}
-              exercise={exercise}
-              expanded={activeAccordion === exercise.id}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onSelect={handleSelectExercise}
-            />
-          ))}
-        </Accordion>
-      </div>
-    </div>
+    </>
   );
 }
