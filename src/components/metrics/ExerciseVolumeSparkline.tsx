@@ -1,53 +1,66 @@
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface ExerciseVolumeSparklineProps {
   volumes: number[];
   positive?: boolean;
   negative?: boolean;
+  width?: number;
+  height?: number;
+  className?: string;
 }
 
-export const ExerciseVolumeSparkline: React.FC<ExerciseVolumeSparklineProps> = ({
+export const ExerciseVolumeSparkline = ({
   volumes,
   positive,
   negative,
-}) => {
-  // Chart sizing & values
-  const width = 80;
-  const height = 22;
-  const padY = 4; // Vertical padding
-  const barCount = Math.max(5, Math.min(volumes.length, 12));
-  const data = volumes.slice(-barCount); // last N points
-
-  const min = Math.min(...data);
-  const max = Math.max(...data, 1); // avoid divide-by-zero
-
-  // Animate new bar with an extra class
-  const animationClass = "animate-fade-in";
-
+  width = 50,
+  height = 20,
+  className
+}: ExerciseVolumeSparklineProps) => {
+  if (!volumes || volumes.length < 2) return null;
+  
+  const max = Math.max(...volumes);
+  const min = Math.min(...volumes);
+  const range = max - min || 1;
+  
+  const normalizeValue = (value: number) => {
+    return height - ((value - min) / range) * height;
+  };
+  
+  const points = volumes.map((volume, index) => {
+    const x = (index / (volumes.length - 1)) * width;
+    const y = normalizeValue(volume);
+    return `${x},${y}`;
+  }).join(' ');
+  
+  const strokeColor = positive ? 'stroke-green-500' : negative ? 'stroke-red-500' : 'stroke-blue-500';
+  
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-label="Volume sparkline" className="mx-2">
-      {data.map((v, i) => {
-        const barW = width / barCount - 2;
-        const barX = i * (width / barCount);
-        const valPct = (v - min) / (max - min || 1);
-        const barH = Math.max(2, (height - padY * 2) * valPct);
-        let color = "#8B5CF6"; // purple base
-        if (positive) color = "#22c55e"; // Tailwind green-500
-        if (negative) color = "#ea384c"; // from instructions, strong red
-
+    <svg width={width} height={height} className={cn("ml-1", className)}>
+      <polyline
+        points={points}
+        fill="none"
+        className={cn(
+          "stroke-[1.5] transition-all duration-300", 
+          strokeColor
+        )}
+      />
+      {/* Add dots at each data point */}
+      {volumes.map((volume, index) => {
+        const x = (index / (volumes.length - 1)) * width;
+        const y = normalizeValue(volume);
         return (
-          <rect
-            key={i}
-            x={barX}
-            y={height - padY - barH}
-            width={barW}
-            height={barH}
-            rx={2}
-            className={cn("transition-all", i === data.length - 1 && animationClass)}
-            fill={color}
-            opacity={i === data.length - 1 ? 0.85 : 0.5}
+          <circle
+            key={index}
+            cx={x}
+            cy={y}
+            r="1.5"
+            className={cn(
+              "transition-all duration-300",
+              index === volumes.length - 1 ? 'fill-white' : strokeColor
+            )}
           />
         );
       })}
