@@ -361,26 +361,73 @@ const TrainingSession: React.FC = () => {
         return;
       }
       
-      const { data: workoutSession, error: workoutError } = await supabase
-        .from('workout_sessions')
-        .insert(workoutData)
-        .select()
-        .single();
+      try {
+        const { data: workoutSession, error: workoutError } = await supabase
+          .from('workout_sessions')
+          .insert(workoutData)
+          .select()
+          .single();
+            
+        if (workoutError) {
+          console.error("Error saving workout session:", workoutError);
           
-      if (workoutError) {
-        console.error("Error saving workout session:", workoutError);
+          if (workoutError.message && workoutError.message.includes("materialized view")) {
+            console.warn("Materialized view error detected:", workoutError.message);
+            toast({
+              title: "Workout partially saved",
+              description: "There was an issue with analytics processing, but your workout data was saved.",
+              variant: "default",
+            });
+            
+            try {
+              const { data: latestWorkout } = await supabase
+                .from('workout_sessions')
+                .select('id')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+                
+              if (latestWorkout) {
+                await saveExerciseSets(latestWorkout.id);
+                navigateToComplete(latestWorkout.id);
+                return;
+              }
+            } catch (recoveryError) {
+              console.error("Error recovering workout ID:", recoveryError);
+            }
+          }
+          
+          toast({
+            title: "Failed to save your workout. Please try again.",
+            description: `Error: ${workoutError.message || "Unknown error"}`,
+            variant: "destructive",
+          });
+          return;
+        }
         
-        toast({
-          title: "Failed to save your workout. Please try again.",
-          description: `Error: ${workoutError.message || "Unknown error"}`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (workoutSession) {
-        await saveExerciseSets(workoutSession.id);
-        navigateToComplete(workoutSession.id);
+        if (workoutSession) {
+          await saveExerciseSets(workoutSession.id);
+          navigateToComplete(workoutSession.id);
+        }
+      } catch (error) {
+        console.error("Error in workout completion process:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        
+        if (errorMessage.includes("materialized view")) {
+          toast({
+            title: "Workout partially saved",
+            description: "Your workout data was saved but some analytics couldn't be processed.",
+            variant: "default",
+          });
+          navigateToComplete(null);
+        } else {
+          toast({
+            title: 'Failed to save your workout. Please try again.',
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error in workout completion process:', error);

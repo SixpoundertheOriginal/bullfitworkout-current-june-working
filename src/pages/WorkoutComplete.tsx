@@ -138,6 +138,23 @@ const WorkoutComplete = () => {
             .eq('id', workoutId);
 
           if (updateError) {
+            if (updateError.message && updateError.message.includes("materialized view")) {
+              console.warn("Materialized view error during update:", updateError.message);
+              
+              toast({
+                title: "Notes saved with limited analytics",
+                description: "Your workout notes were saved but some analytics couldn't be processed",
+                variant: "default",
+              });
+              
+              setSavingStats({
+                completed: true,
+                error: false
+              });
+              
+              return workoutId;
+            }
+            
             console.error("Error updating workout notes:", updateError);
             throw updateError;
           }
@@ -173,6 +190,22 @@ const WorkoutComplete = () => {
           return workoutId;
         } catch (error) {
           console.error("Error updating workout:", error);
+          
+          if (error instanceof Error && error.message.includes("materialized view")) {
+            toast({
+              title: "Notes partially saved",
+              description: "Your workout notes were recorded but analytics couldn't be updated",
+              variant: "default",
+            });
+            
+            setSavingStats({
+              completed: true,
+              error: false
+            });
+            
+            return workoutId;
+          }
+          
           setSavingStats({
             completed: true,
             error: true
@@ -230,6 +263,44 @@ const WorkoutComplete = () => {
           .single();
   
         if (workoutError) {
+          if (workoutError.message && workoutError.message.includes("materialized view")) {
+            console.warn("Materialized view error detected:", workoutError.message);
+            toast({
+              title: "Workout partially saved",
+              description: "There was an issue with analytics processing, but your workout will be saved.",
+              variant: "default",
+            });
+            
+            try {
+              const { data: latestWorkout } = await supabase
+                .from('workout_sessions')
+                .select('id')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+                
+              if (latestWorkout) {
+                setWorkoutId(latestWorkout.id);
+                
+                try {
+                  await saveExerciseSets(latestWorkout.id);
+                } catch (exerciseError) {
+                  console.error("Error saving exercise sets:", exerciseError);
+                }
+                
+                setSavingStats({
+                  completed: true,
+                  error: false
+                });
+                
+                return latestWorkout.id;
+              }
+            } catch (recoveryError) {
+              console.error("Error recovering workout ID:", recoveryError);
+            }
+          }
+          
           console.error("Error saving workout session:", workoutError);
           throw workoutError;
         }

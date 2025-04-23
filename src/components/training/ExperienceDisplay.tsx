@@ -54,7 +54,7 @@ export function ExperienceDisplay({
   trainingType = "default",
   className 
 }: ExperienceDisplayProps) {
-  const colors = typeColors[trainingType] || typeColors.default;
+  const colors = typeColors[trainingType as keyof typeof typeColors] || typeColors.default;
   
   return (
     <div className={cn(
