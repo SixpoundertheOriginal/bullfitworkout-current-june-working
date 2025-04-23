@@ -14,6 +14,7 @@ import NotesSection from "@/components/workouts/NotesSection";
 import SaveTemplateSection from "@/components/workouts/SaveTemplateSection";
 import ExercisesCompletedList from "@/components/workouts/ExercisesCompletedList";
 import { useWeightUnit } from "@/context/WeightUnitContext";
+import { recoverPartialWorkout } from "@/services/workoutService";
 
 interface ExerciseSet {
   weight: number;
@@ -268,6 +269,8 @@ export const WorkoutCompletePage = () => {
                 
                 try {
                   await saveExerciseSets(latestWorkout.id);
+                  
+                  await recoverPartialWorkout(latestWorkout.id);
                 } catch (exerciseError) {
                   console.error("Error saving exercise sets:", exerciseError);
                 }
@@ -354,6 +357,15 @@ export const WorkoutCompletePage = () => {
               
             if (latestWorkout) {
               setWorkoutId(latestWorkout.id);
+              
+              try {
+                await saveExerciseSets(latestWorkout.id);
+                
+                await recoverPartialWorkout(latestWorkout.id);
+              } catch (exerciseError) {
+                console.error("Error during recovery process:", exerciseError);
+              }
+              
               return latestWorkout.id;
             }
           } catch (recoveryError) {

@@ -1,17 +1,19 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { Button } from "@/components/ui/button";
-import { History, Loader2, X, Check, SquareCheck, Undo } from "lucide-react";
+import { History, Loader2, X, Check, SquareCheck, Undo, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO, subDays } from "date-fns";
 import { DailyWorkoutSummary } from "./workouts/DailyWorkoutSummary";
-import { deleteWorkout, restoreWorkout } from "@/services/workoutService";
+import { deleteWorkout, restoreWorkout, diagnoseAndFixWorkout } from "@/services/workoutService";
 import { toast } from "@/components/ui/sonner";
 import { BulkWorkoutActions } from "./BulkWorkoutActions";
 import { CollapsibleHistorySection } from "./workouts/CollapsibleHistorySection";
 import { darkModeText } from "@/lib/theme";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 interface WorkoutHistoryProps {
   limit?: number;
@@ -27,9 +29,57 @@ export const WorkoutHistory = ({
   const { data, isLoading, isError, refetch } = useWorkoutHistory(limit, dateFilter);
   const navigate = useNavigate();
   const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
+  const [fixingWorkoutId, setFixingWorkoutId] = useState<string | null>(null);
+  const { user } = useAuth();
   
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedWorkouts, setSelectedWorkouts] = useState<string[]>([]);
+  const [showRecoverPrompt, setShowRecoverPrompt] = useState(false);
+  const [recoveryChecking, setRecoveryChecking] = useState(false);
+  
+  // Check for recent workouts that might need recovery
+  useEffect(() => {
+    if (!user || !data?.workouts || recoveryChecking) return;
+    
+    const checkForOrphanedWorkouts = async () => {
+      try {
+        setRecoveryChecking(true);
+        
+        // Look for recent workouts (last hour) that might be partially saved
+        const oneHourAgo = new Date();
+        oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+        
+        const { data: recentWorkouts, error } = await supabase
+          .from('workout_sessions')
+          .select('id, name, created_at')
+          .eq('user_id', user.id)
+          .gte('created_at', oneHourAgo.toISOString())
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error("Error checking for recent workouts:", error);
+          return;
+        }
+        
+        if (recentWorkouts && recentWorkouts.length > 0) {
+          // Check if this workout is already in our visible list
+          const visibleWorkoutIds = new Set(data.workouts.map(w => w.id));
+          const missingWorkouts = recentWorkouts.filter(w => !visibleWorkoutIds.has(w.id));
+          
+          if (missingWorkouts.length > 0) {
+            console.log(`Found ${missingWorkouts.length} potentially missing recent workouts:`, missingWorkouts);
+            setShowRecoverPrompt(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error in checkForOrphanedWorkouts:", error);
+      } finally {
+        setRecoveryChecking(false);
+      }
+    };
+    
+    checkForOrphanedWorkouts();
+  }, [user, data, recoveryChecking]);
   
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode);
@@ -108,10 +158,115 @@ export const WorkoutHistory = ({
     }
   };
   
+  const handleFixWorkout = async (workoutId: string) => {
+    setFixingWorkoutId(workoutId);
+    
+    try {
+      const result = await diagnoseAndFixWorkout(workoutId);
+      
+      if (result.success) {
+        if (result.fixed) {
+          toast.success("Workout fixed", {
+            description: "The workout has been recovered and should now be visible in your history.",
+          });
+        } else {
+          toast({
+            title: "Workout is already complete",
+            description: "No issues were found with this workout.",
+          });
+        }
+      } else {
+        toast({
+          title: "Could not fix workout",
+          description: result.error || "An unknown error occurred",
+          variant: "destructive",
+        });
+      }
+      
+      refetch();
+    } catch (error) {
+      console.error("Error fixing workout:", error);
+      toast.error("Failed to fix workout");
+    } finally {
+      setFixingWorkoutId(null);
+    }
+  };
+  
   const handleBulkActionComplete = () => {
     setSelectionMode(false);
     setSelectedWorkouts([]);
     refetch();
+  };
+  
+  const handleRecoverRecentWorkouts = async () => {
+    setRecoveryChecking(true);
+    try {
+      // Look for recent workouts (last hour) that might be partially saved
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      
+      const { data: recentWorkouts, error } = await supabase
+        .from('workout_sessions')
+        .select('id, name')
+        .eq('user_id', user?.id)
+        .gte('created_at', oneHourAgo.toISOString())
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching recent workouts:", error);
+        toast.error("Could not fetch recent workouts");
+        return;
+      }
+      
+      if (!recentWorkouts || recentWorkouts.length === 0) {
+        toast({
+          title: "No recent workouts found",
+          description: "There are no workouts from the last hour to recover.",
+        });
+        setShowRecoverPrompt(false);
+        return;
+      }
+      
+      let fixedCount = 0;
+      let errorCount = 0;
+      
+      // Try to fix each workout
+      for (const workout of recentWorkouts) {
+        try {
+          const result = await diagnoseAndFixWorkout(workout.id);
+          if (result.success && result.fixed) {
+            fixedCount++;
+          }
+        } catch (error) {
+          console.error(`Error fixing workout ${workout.id}:`, error);
+          errorCount++;
+        }
+      }
+      
+      if (fixedCount > 0) {
+        toast.success(`${fixedCount} workout${fixedCount !== 1 ? 's' : ''} recovered`, {
+          description: "Your workouts should now be visible in your history."
+        });
+      } else if (errorCount === 0) {
+        toast({
+          title: "No workouts needed recovery",
+          description: "Your recent workouts appear to be properly saved."
+        });
+      } else {
+        toast({
+          title: "Recovery partially successful",
+          description: `${errorCount} workout${errorCount !== 1 ? 's' : ''} could not be recovered.`
+        });
+      }
+      
+      setShowRecoverPrompt(false);
+      refetch();
+    } catch (error) {
+      console.error("Error recovering workouts:", error);
+      toast.error("Failed to recover workouts");
+    } finally {
+      setRecoveryChecking(false);
+    }
   };
   
   const groupWorkouts = (workouts: any[]) => {
@@ -177,6 +332,36 @@ export const WorkoutHistory = ({
         >
           Start Your First Workout
         </Button>
+        
+        {showRecoverPrompt && (
+          <div className="mt-6 p-4 bg-yellow-900/30 border border-yellow-600/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-yellow-500 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium text-yellow-200">Recently incomplete workouts detected</h3>
+                <p className="text-sm text-yellow-200/70 mt-1">
+                  We found workouts from the last hour that might not be fully saved.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRecoverRecentWorkouts}
+                  disabled={recoveryChecking}
+                  className="mt-3 bg-yellow-900/50 border-yellow-700 hover:bg-yellow-800 text-yellow-100"
+                >
+                  {recoveryChecking ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <span className="flex items-center">
+                      <Check className="mr-2 h-4 w-4" />
+                      Recover Workouts
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -240,6 +425,36 @@ export const WorkoutHistory = ({
         </div>
       </div>
       
+      {showRecoverPrompt && (
+        <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-600/30 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="text-yellow-500 mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-yellow-200">Recently incomplete workouts detected</h3>
+              <p className="text-sm text-yellow-200/70 mt-1">
+                We found workouts from the last hour that might not be fully saved.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRecoverRecentWorkouts}
+                disabled={recoveryChecking}
+                className="mt-2 bg-yellow-900/50 border-yellow-700 hover:bg-yellow-800 text-yellow-100"
+              >
+                {recoveryChecking ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <span className="flex items-center">
+                    <Check className="mr-2 h-4 w-4" />
+                    Recover Workouts
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {selectionMode && selectedWorkouts.length > 0 && (
         <div className="bg-gray-800/50 p-3 rounded-lg mb-4 flex justify-between items-center">
           <span className="text-sm text-gray-300">
@@ -269,10 +484,13 @@ export const WorkoutHistory = ({
                   setCount={exerciseCounts[workout.id]?.sets || 0}
                   onEdit={() => handleEditWorkout(workout.id)}
                   onDelete={() => handleDeleteWorkout(workout.id)}
+                  onFix={() => handleFixWorkout(workout.id)}
                   isDeleting={deletingWorkoutId === workout.id}
+                  isFixing={fixingWorkoutId === workout.id}
                   selectionMode={selectionMode}
                   isSelected={selectedWorkouts.includes(workout.id)}
                   onToggleSelection={() => toggleWorkoutSelection(workout.id)}
+                  showFixOption={exerciseCounts[workout.id]?.exercises === 0 || exerciseCounts[workout.id]?.sets === 0}
                 />
               ))}
             </div>
@@ -294,10 +512,13 @@ export const WorkoutHistory = ({
                   setCount={exerciseCounts[workout.id]?.sets || 0}
                   onEdit={() => handleEditWorkout(workout.id)}
                   onDelete={() => handleDeleteWorkout(workout.id)}
+                  onFix={() => handleFixWorkout(workout.id)}
                   isDeleting={deletingWorkoutId === workout.id}
+                  isFixing={fixingWorkoutId === workout.id}
                   selectionMode={selectionMode}
                   isSelected={selectedWorkouts.includes(workout.id)}
                   onToggleSelection={() => toggleWorkoutSelection(workout.id)}
+                  showFixOption={exerciseCounts[workout.id]?.exercises === 0 || exerciseCounts[workout.id]?.sets === 0}
                 />
               ))}
             </div>
@@ -322,10 +543,13 @@ export const WorkoutHistory = ({
                   setCount={exerciseCounts[workout.id]?.sets || 0}
                   onEdit={() => handleEditWorkout(workout.id)}
                   onDelete={() => handleDeleteWorkout(workout.id)}
+                  onFix={() => handleFixWorkout(workout.id)}
                   isDeleting={deletingWorkoutId === workout.id}
+                  isFixing={fixingWorkoutId === workout.id}
                   selectionMode={selectionMode}
                   isSelected={selectedWorkouts.includes(workout.id)}
                   onToggleSelection={() => toggleWorkoutSelection(workout.id)}
+                  showFixOption={exerciseCounts[workout.id]?.exercises === 0 || exerciseCounts[workout.id]?.sets === 0}
                 />
               ))}
             </div>

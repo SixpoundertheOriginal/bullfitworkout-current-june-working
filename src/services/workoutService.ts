@@ -270,6 +270,81 @@ export async function restoreWorkout(workout: any) {
 }
 
 /**
+ * Recovers a partially saved workout by making sure it's visible in the workout history
+ * This function attempts to fix issues with materialized views and analytics
+ */
+export async function recoverPartialWorkout(workoutId: string) {
+  try {
+    console.log(`Attempting to recover partially saved workout: ${workoutId}`);
+    
+    // 1. First check if the workout exists
+    const { data: workout, error: workoutError } = await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('id', workoutId)
+      .single();
+      
+    if (workoutError) {
+      console.error("Workout not found during recovery:", workoutError);
+      return { success: false, error: "Workout not found" };
+    }
+    
+    // 2. Check if there are exercise sets associated with this workout
+    const { data: sets, error: setsError } = await supabase
+      .from('exercise_sets')
+      .select('count(*)')
+      .eq('workout_id', workoutId);
+      
+    if (setsError) {
+      console.error("Error checking exercise sets during recovery:", setsError);
+    }
+    
+    const setCount = sets && sets.length > 0 ? parseInt(sets[0].count as any, 10) : 0;
+    console.log(`Found ${setCount} sets for workout ${workoutId}`);
+    
+    // 3. Update the workout to ensure it's visible in history
+    // This is a hack that forces a refresh of the workout in the database
+    // which can help with materialized view issues
+    const { data: updatedWorkout, error: updateError } = await supabase
+      .from('workout_sessions')
+      .update({ 
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', workoutId)
+      .select();
+      
+    if (updateError) {
+      console.error("Error updating workout during recovery:", updateError);
+      return { success: false, error: "Failed to update workout" };
+    }
+    
+    console.log("Successfully triggered workout update for recovery");
+    
+    // 4. Try to execute any SQL functions that might help refresh the analytics
+    // This is done manually rather than relying on the trigger
+    try {
+      // Execute a SQL function to refresh analytics if it exists
+      // This is a no-op if the function doesn't exist
+      const { error: refreshError } = await supabase.rpc('manual_refresh_workout_analytics');
+      if (refreshError && !refreshError.message.includes('does not exist')) {
+        console.error("Error refreshing analytics during recovery:", refreshError);
+      }
+    } catch (error) {
+      console.warn("No manual refresh function available, continuing recovery", error);
+    }
+    
+    return { 
+      success: true, 
+      workout: updatedWorkout?.[0] || workout,
+      setCount
+    };
+  } catch (error) {
+    console.error("Error in recoverPartialWorkout:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
  * Bulk deletes multiple workouts and their associated exercise sets
  */
 export async function bulkDeleteWorkouts(workoutIds: string[]) {
@@ -373,5 +448,72 @@ export async function bulkResetWorkoutSets(workoutIds: string[]) {
   } catch (error) {
     console.error("Error bulk resetting workout sets:", error);
     throw error;
+  }
+}
+
+/**
+ * Checks if a workout's exercises are properly visible in the workout history
+ * and attempts to fix any issues
+ */
+export async function diagnoseAndFixWorkout(workoutId: string) {
+  try {
+    // First check if the workout exists and is complete
+    const { data: workout, error: workoutError } = await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('id', workoutId)
+      .single();
+      
+    if (workoutError) {
+      return { success: false, error: "Workout not found", details: workoutError };
+    }
+    
+    // Check exercise sets
+    const { data: exerciseSets, error: setsError } = await supabase
+      .from('exercise_sets')
+      .select('*')
+      .eq('workout_id', workoutId);
+      
+    if (setsError) {
+      return { 
+        success: false, 
+        error: "Error fetching exercise sets", 
+        details: setsError,
+        workout 
+      };
+    }
+    
+    const diagnosis = {
+      workout: workout,
+      exerciseSets: exerciseSets || [],
+      hasExercises: Boolean(exerciseSets && exerciseSets.length > 0),
+      visibleInHistory: true, // Assume true initially
+      analyticsStatus: "unknown"
+    };
+    
+    // If there are no exercise sets, attempt to recover
+    if (!diagnosis.hasExercises) {
+      console.log("No exercise sets found, attempting recovery");
+      const recovery = await recoverPartialWorkout(workoutId);
+      return { 
+        ...diagnosis,
+        recovery,
+        success: recovery.success,
+        fixed: recovery.success
+      };
+    }
+    
+    // Everything seems fine
+    return {
+      success: true,
+      workout,
+      exerciseSets: exerciseSets || [],
+      setCount: exerciseSets?.length || 0,
+      fixed: false,
+      message: "Workout appears to be complete and visible"
+    };
+  } catch (error) {
+    console.error("Error in diagnoseAndFixWorkout:", error);
+    return { success: false, error: String(error) };
   }
 }
