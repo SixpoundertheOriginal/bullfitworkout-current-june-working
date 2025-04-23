@@ -18,6 +18,7 @@ import { ExerciseSet } from '@/types/exercise';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useWorkoutStats } from '@/hooks/useWorkoutStats';
+import { DayContent, DayProps } from 'react-day-picker';
 
 export function WorkoutCalendarTab() {
   const { user } = useAuth();
@@ -199,6 +200,14 @@ export function WorkoutCalendarTab() {
     );
   };
   
+  const CustomDayContent = (props: DayProps) => {
+    const { date } = props;
+    const dateString = format(date, 'yyyy-MM-dd');
+    const hasWorkout = workoutDates[dateString];
+    
+    return renderDateCell(date);
+  };
+  
   return (
     <div className="pb-4">
       <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
@@ -243,7 +252,7 @@ export function WorkoutCalendarTab() {
                   day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
                 }}
                 components={{
-                  Day: renderDateCell
+                  Day: CustomDayContent
                 }}
               />
             </div>
