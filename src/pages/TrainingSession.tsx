@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
@@ -271,7 +271,7 @@ const TrainingSession: React.FC = () => {
       
       toast("Error", {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: "destructive",
+        
       });
     }
   };
