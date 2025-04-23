@@ -210,7 +210,7 @@ export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: Wo
 
   // Get historical tags specific to training type
   const getHistoricalTags = () => {
-    if (!stats.tags) return [];
+    if (!stats.tags || stats.tags.length === 0) return [];
     
     return stats.tags
       .filter(tag => {

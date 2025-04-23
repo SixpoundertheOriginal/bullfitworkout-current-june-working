@@ -100,7 +100,11 @@ const Training = () => {
                   />
                   
                   <div className="flex flex-col gap-4">
-                    <WorkoutTypeChart data={stats.workoutTypes} className="bg-gray-900/80 rounded-lg p-4" />
+                    {/* Convert workoutTypes to the format expected by WorkoutTypeChart */}
+                    <WorkoutTypeChart 
+                      data={stats.workoutTypes || []} 
+                      className="bg-gray-900/80 rounded-lg p-4" 
+                    />
                     <TopExercisesTable 
                       exercises={stats.topExercises} 
                       className="bg-gray-900/80 rounded-lg p-4" 

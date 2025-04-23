@@ -6,7 +6,7 @@ import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { cn } from "@/lib/utils";
 
 export const QuickStatsSection = () => {
-  const { stats, loading } = useWorkoutStats(7); // Fetch last 7 days of workouts
+  const { stats, loading } = useWorkoutStats();
 
   // Calculate weekly metrics
   const weeklyWorkouts = stats.totalWorkouts || 0;

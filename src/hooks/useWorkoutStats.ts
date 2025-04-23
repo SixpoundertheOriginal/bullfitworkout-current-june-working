@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -7,8 +8,11 @@ import { calculateMuscleFocus } from "@/utils/exerciseUtils";
 export interface WorkoutStats {
   totalWorkouts: number;
   totalDuration: number;
+  totalExercises: number;
+  totalSets: number;
   completedSets: number;
   averageWorkoutLength: number;
+  avgDuration: number;
   completionRate: number;
   timePatterns: {
     daysFrequency: Record<string, number>;
@@ -22,12 +26,16 @@ export interface WorkoutStats {
     volumeChangePercentage: number;
     consistencyScore: number;
     weightProgressionRate: number;
+    strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
   };
   exerciseVolumeHistory?: ExerciseVolumeHistory[];
   muscleFocus: Record<string, number>;
   recommendedType?: string;
   recommendedDuration?: number;
   recommendedTags?: string[];
+  streakDays: number;
+  lastWorkoutDate: string | null;
+  tags?: {name: string; count: number}[];
 }
 
 export interface WorkoutTypeStats {
@@ -35,6 +43,13 @@ export interface WorkoutTypeStats {
   count: number;
   totalDuration: number;
   averageDuration: number;
+  percentage?: number;
+  timeOfDay?: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
 }
 
 export interface TopExerciseStats {
@@ -53,7 +68,7 @@ export interface ExerciseVolumeHistory {
   volume_history: number[];
 }
 
-export const useWorkoutStats = () => {
+export const useWorkoutStats = (days?: number) => {
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
 
@@ -62,7 +77,7 @@ export const useWorkoutStats = () => {
     isLoading: loading,
     error
   } = useQuery({
-    queryKey: ["workout-stats", user?.id, weightUnit],
+    queryKey: ["workout-stats", user?.id, weightUnit, days],
     queryFn: async (): Promise<WorkoutStats> => {
       if (!user) {
         throw new Error("User is not authenticated");
@@ -179,10 +194,20 @@ export const useWorkoutStats = () => {
       let weightProgressionRate = 0;
       if (progressionData && progressionData.length > 1) {
         let totalWeightIncrease = 0;
+        let validProgressions = 0;
+        
         for (let i = 1; i < progressionData.length; i++) {
-          totalWeightIncrease += (progressionData[i].weight || 0) - (progressionData[i - 1].weight || 0);
+          // Check if metadata contains weight information
+          const prevWeight = progressionData[i-1]?.metadata?.weight || 0;
+          const currWeight = progressionData[i]?.metadata?.weight || 0;
+          
+          if (prevWeight > 0 && currWeight > 0) {
+            totalWeightIncrease += (currWeight - prevWeight);
+            validProgressions++;
+          }
         }
-        weightProgressionRate = totalWeightIncrease / (progressionData.length - 1);
+        
+        weightProgressionRate = validProgressions > 0 ? totalWeightIncrease / validProgressions : 0;
       }
 
       // Calculate exercise volume history
@@ -222,6 +247,14 @@ export const useWorkoutStats = () => {
           });
         }
       });
+      
+      // Define strength trend based on overall volume changes
+      let strengthTrend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating' = 'stable';
+      if (volumeChangePercentage > 5) strengthTrend = 'increasing';
+      else if (volumeChangePercentage < -5) strengthTrend = 'decreasing';
+      else if (volumeHistoryData.filter(d => d.trend === 'fluctuating').length > volumeHistoryData.length / 3) {
+        strengthTrend = 'fluctuating';
+      }
 
       // Calculate top exercises
       const exerciseStats: Record<string, { sets: number, volume: number, weightSum: number }> = {};
@@ -251,13 +284,69 @@ export const useWorkoutStats = () => {
             percentChange: volumeHistoryEntry?.percentChange
           };
         });
+        
+      // Calculate workout types stats
+      const workoutTypesMap: Record<string, {count: number, totalDuration: number}> = {};
+      workouts?.forEach(workout => {
+        if (!workoutTypesMap[workout.training_type]) {
+          workoutTypesMap[workout.training_type] = { count: 0, totalDuration: 0 };
+        }
+        workoutTypesMap[workout.training_type].count++;
+        workoutTypesMap[workout.training_type].totalDuration += workout.duration;
+      });
+      
+      const workoutTypesData: WorkoutTypeStats[] = Object.entries(workoutTypesMap).map(([type, data]) => {
+        return {
+          type,
+          count: data.count,
+          totalDuration: data.totalDuration,
+          averageDuration: data.count > 0 ? data.totalDuration / data.count : 0,
+          percentage: workouts?.length ? (data.count / workouts.length) * 100 : 0
+        };
+      });
+      
+      // Calculate streak
+      let streakDays = 0;
+      if (workouts && workouts.length > 0) {
+        const workoutDates = [...new Set(workouts.map(w => 
+          new Date(w.start_time).toISOString().split('T')[0]
+        ))].sort().reverse();
+        
+        const today = new Date().toISOString().split('T')[0];
+        if (workoutDates[0] === today) {
+          streakDays = 1;
+          for (let i = 1; i < workoutDates.length; i++) {
+            const currentDate = new Date(workoutDates[i-1]);
+            currentDate.setDate(currentDate.getDate() - 1);
+            const expectedPrevious = currentDate.toISOString().split('T')[0];
+            
+            if (workoutDates[i] === expectedPrevious) {
+              streakDays++;
+            } else {
+              break;
+            }
+          }
+        }
+      }
+      
+      // Mock tags data for now - this would come from a real query in production
+      const mockTags = [
+        { name: "Upper Body", count: 12 },
+        { name: "Lower Body", count: 8 },
+        { name: "Cardio", count: 6 },
+        { name: "Morning", count: 15 },
+        { name: "Evening", count: 9 }
+      ];
       
       // Return the processed stats
       return {
         totalWorkouts: workouts?.length || 0,
         totalDuration: totalDuration,
+        totalExercises: topExercisesData.length,
+        totalSets: completedSets,
         completedSets: completedSets,
         averageWorkoutLength: avgWorkoutLength,
+        avgDuration: avgWorkoutLength,
         completionRate: completionRate,
         timePatterns: {
           daysFrequency: daysFrequency,
@@ -265,26 +354,67 @@ export const useWorkoutStats = () => {
           preferredTime: preferredTime,
           durationByTimeOfDay: durationByTimeOfDay
         },
-        workoutTypes: workoutTypeStats,
+        workoutTypes: workoutTypesData,
         topExercises: topExercisesData,
         progressMetrics: {
           volumeChangePercentage: volumeChangePercentage,
           consistencyScore: consistencyScore,
-          weightProgressionRate: weightProgressionRate
+          weightProgressionRate: weightProgressionRate,
+          strengthTrend: strengthTrend
         },
         exerciseVolumeHistory: volumeHistoryData,
         muscleFocus: muscleFocus,
         recommendedType: determineRecommendedWorkout(muscleFocus),
         recommendedDuration: avgWorkoutLength,
-        recommendedTags: determineRecommendedTags(muscleFocus)
+        recommendedTags: determineRecommendedTags(muscleFocus),
+        streakDays: streakDays,
+        lastWorkoutDate: workouts?.[0]?.start_time || null,
+        tags: mockTags
       };
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  return { stats, loading, error };
+  return { stats: stats || defaultStats(), loading, error };
 };
+
+// Provide default stats for when data is loading or unavailable
+function defaultStats(): WorkoutStats {
+  return {
+    totalWorkouts: 0,
+    totalDuration: 0,
+    totalExercises: 0,
+    totalSets: 0,
+    completedSets: 0,
+    averageWorkoutLength: 0,
+    avgDuration: 0,
+    completionRate: 0,
+    timePatterns: {
+      daysFrequency: {},
+      preferredDay: "",
+      preferredTime: "",
+      durationByTimeOfDay: {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0
+      }
+    },
+    workoutTypes: [],
+    topExercises: [],
+    progressMetrics: {
+      volumeChangePercentage: 0,
+      consistencyScore: 0,
+      weightProgressionRate: 0,
+      strengthTrend: 'stable'
+    },
+    muscleFocus: {},
+    recommendedTags: [],
+    streakDays: 0,
+    lastWorkoutDate: null
+  };
+}
 
 // Helper function to determine recommended workout based on muscle focus
 function determineRecommendedWorkout(muscleFocus: Record<string, number>): string {

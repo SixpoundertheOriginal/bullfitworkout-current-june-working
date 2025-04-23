@@ -17,7 +17,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { stats } = useWorkoutStats(7);
+  const { stats } = useWorkoutStats();
   
   const { ref: sectionRef, isVisible: isSectionVisible } = useElementVisibility({
     threshold: 0.5,
