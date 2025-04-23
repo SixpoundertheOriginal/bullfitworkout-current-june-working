@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -300,7 +299,7 @@ export async function recoverPartialWorkout(workoutId: string) {
       console.error("Error checking exercise sets during recovery:", setsError);
     }
     
-    const setCount = sets && sets.length > 0 ? parseInt(sets[0].count, 10) : 0;
+    const setCount = sets && sets.length > 0 ? parseInt(String(sets[0].count), 10) : 0;
     console.log(`Found ${setCount} sets for workout ${workoutId}`);
     
     // 3. Update the workout to ensure it's visible in history

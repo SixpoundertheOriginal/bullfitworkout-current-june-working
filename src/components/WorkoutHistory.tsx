@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { WorkoutCard } from "@/components/WorkoutCard";
@@ -37,7 +36,6 @@ export const WorkoutHistory = ({
   const [showRecoverPrompt, setShowRecoverPrompt] = useState(false);
   const [recoveryChecking, setRecoveryChecking] = useState(false);
   
-  // Check for recent workouts that might need recovery
   useEffect(() => {
     if (!user || !data?.workouts || recoveryChecking) return;
     
@@ -45,7 +43,6 @@ export const WorkoutHistory = ({
       try {
         setRecoveryChecking(true);
         
-        // Look for recent workouts (last hour) that might be partially saved
         const oneHourAgo = new Date();
         oneHourAgo.setHours(oneHourAgo.getHours() - 1);
         
@@ -62,7 +59,6 @@ export const WorkoutHistory = ({
         }
         
         if (recentWorkouts && recentWorkouts.length > 0) {
-          // Check if this workout is already in our visible list
           const visibleWorkoutIds = new Set(data.workouts.map(w => w.id));
           const missingWorkouts = recentWorkouts.filter(w => !visibleWorkoutIds.has(w.id));
           
@@ -170,14 +166,11 @@ export const WorkoutHistory = ({
             description: "The workout has been recovered and should now be visible in your history.",
           });
         } else {
-          toast({
-            description: "No issues were found with this workout.",
-          });
+          toast("No issues were found with this workout.");
         }
       } else {
-        toast({
+        toast.error("Could not fix workout", {
           description: result.error || "An unknown error occurred",
-          variant: "destructive",
         });
       }
       
@@ -199,7 +192,6 @@ export const WorkoutHistory = ({
   const handleRecoverRecentWorkouts = async () => {
     setRecoveryChecking(true);
     try {
-      // Look for recent workouts (last hour) that might be partially saved
       const oneHourAgo = new Date();
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
       
@@ -217,9 +209,7 @@ export const WorkoutHistory = ({
       }
       
       if (!recentWorkouts || recentWorkouts.length === 0) {
-        toast({
-          description: "There are no workouts from the last hour to recover.",
-        });
+        toast("There are no workouts from the last hour to recover.");
         setShowRecoverPrompt(false);
         return;
       }
@@ -227,7 +217,6 @@ export const WorkoutHistory = ({
       let fixedCount = 0;
       let errorCount = 0;
       
-      // Try to fix each workout
       for (const workout of recentWorkouts) {
         try {
           const result = await diagnoseAndFixWorkout(workout.id);
@@ -245,13 +234,9 @@ export const WorkoutHistory = ({
           description: "Your workouts should now be visible in your history."
         });
       } else if (errorCount === 0) {
-        toast({
-          description: "Your recent workouts appear to be properly saved."
-        });
+        toast("Your recent workouts appear to be properly saved.");
       } else {
-        toast({
-          description: `${errorCount} workout${errorCount !== 1 ? 's' : ''} could not be recovered.`
-        });
+        toast.error(`${errorCount} workout${errorCount !== 1 ? 's' : ''} could not be recovered.`);
       }
       
       setShowRecoverPrompt(false);
