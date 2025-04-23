@@ -1,30 +1,36 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WeightUnit } from "@/utils/unitConversion";
 import { toast } from "@/components/ui/sonner";
+import { createContext } from "@/utils/createContext";
+import { useLoadingState } from "@/hooks/useLoadingState";
+import { useAuth } from "./AuthContext";
 
 interface WeightUnitContextType {
   weightUnit: WeightUnit;
   setWeightUnit: (unit: WeightUnit) => void;
   saveWeightUnitPreference: () => Promise<void>;
   isDefaultUnit: boolean;
+  isLoading: boolean;
 }
 
-const WeightUnitContext = createContext<WeightUnitContextType | undefined>(undefined);
+const [WeightUnitProvider, useWeightUnit] = createContext<WeightUnitContextType>();
 
-export const WeightUnitProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export { useWeightUnit };
+
+export const WeightUnitContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
+  children 
+}) => {
   const { user } = useAuth();
   const [weightUnit, setWeightUnit] = useState<WeightUnit>("kg");
   const [defaultWeightUnit, setDefaultWeightUnit] = useState<WeightUnit>("kg");
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoading, withLoading } = useLoadingState(true);
 
   // Fetch user's preferred weight unit from profile
   useEffect(() => {
     const fetchWeightUnitPreference = async () => {
       if (!user) {
-        setIsLoading(false);
         return;
       }
 
@@ -42,15 +48,12 @@ export const WeightUnitProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setDefaultWeightUnit(userWeightUnit);
       } catch (error) {
         console.error("Error fetching weight unit preference:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    fetchWeightUnitPreference();
-  }, [user]);
+    withLoading(fetchWeightUnitPreference());
+  }, [user, withLoading]);
 
-  // Save weight unit preference to user profile
   const saveWeightUnitPreference = async () => {
     if (!user) return;
 
@@ -73,23 +76,16 @@ export const WeightUnitProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   return (
-    <WeightUnitContext.Provider 
+    <WeightUnitProvider 
       value={{ 
         weightUnit, 
         setWeightUnit, 
         saveWeightUnitPreference,
-        isDefaultUnit: weightUnit === defaultWeightUnit
+        isDefaultUnit: weightUnit === defaultWeightUnit,
+        isLoading
       }}
     >
       {!isLoading && children}
-    </WeightUnitContext.Provider>
+    </WeightUnitProvider>
   );
-};
-
-export const useWeightUnit = () => {
-  const context = useContext(WeightUnitContext);
-  if (context === undefined) {
-    throw new Error("useWeightUnit must be used within a WeightUnitProvider");
-  }
-  return context;
 };
