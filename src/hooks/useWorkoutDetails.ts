@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import { ExerciseSet } from "@/types/exercise";
 
 export function useWorkoutDetails(workoutId: string | undefined) {
   const [workoutDetails, setWorkoutDetails] = useState<any>(null);
-  const [exerciseSets, setExerciseSets] = useState<Record<string, any[]>>({});
+  const [exerciseSets, setExerciseSets] = useState<Record<string, ExerciseSet[]>>({});
   const [loading, setLoading] = useState(workoutId ? true : false);
 
   useEffect(() => {
@@ -42,11 +43,11 @@ export function useWorkoutDetails(workoutId: string | undefined) {
           return;
         }
         
-        const groupedSets = sets?.reduce((acc, set) => {
+        const groupedSets = sets?.reduce<Record<string, ExerciseSet[]>>((acc, set) => {
           if (!acc[set.exercise_name]) {
             acc[set.exercise_name] = [];
           }
-          acc[set.exercise_name].push(set);
+          acc[set.exercise_name].push(set as ExerciseSet);
           return acc;
         }, {}) || {};
         

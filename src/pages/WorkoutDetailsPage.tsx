@@ -109,9 +109,8 @@ const WorkoutDetailsPage = () => {
         onOpenChange={setShowAddDialog}
         onSubmit={async (exercise) => {
           if (exercise.name) {
-            return handleAddExercise(exercise.name);
+            await handleAddExercise(exercise.name);
           }
-          return Promise.resolve();
         }}
         mode="add"
       />
