@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -161,75 +160,58 @@ export async function recoverPartialWorkout(workoutId: string) {
  * Checks if a workout's exercises are properly visible in the workout history
  * and attempts to fix any issues
  */
-export async function diagnoseAndFixWorkout(workoutId: string) {
+export const diagnoseAndFixWorkout = async (workoutId: string): Promise<{
+  success: boolean;
+  message: string;
+  details?: any;
+  workoutFixed?: boolean;
+}> => {
   try {
-    // First check if the workout exists and is complete
-    const { data: workout, error: workoutError } = await supabase
-      .from('workout_sessions')
-      .select('*')
-      .eq('id', workoutId)
-      .single();
-      
-    if (workoutError) {
-      return { success: false, error: "Workout not found", details: workoutError };
-    }
-    
-    // Check exercise sets
-    const { data: exerciseSets, error: setsError } = await supabase
-      .from('exercise_sets')
-      .select('*')
-      .eq('workout_id', workoutId);
-      
-    if (setsError) {
-      return { 
-        success: false, 
-        error: "Error fetching exercise sets", 
-        details: setsError,
-        workout 
-      };
-    }
-    
-    const diagnosis = {
-      workout: workout,
-      exerciseSets: exerciseSets || [],
-      hasExercises: Boolean(exerciseSets && exerciseSets.length > 0),
-      visibleInHistory: true, // Assume true initially
-      analyticsStatus: "unknown"
-    };
-    
-    // If there are no exercise sets or workout has issues, attempt to recover
-    if (!diagnosis.hasExercises || !workout.logged_at) {
-      console.log("Issues detected, attempting recovery");
-      const recovery = await recoverPartialWorkout(workoutId);
-      return { 
-        ...diagnosis,
-        recovery,
-        success: recovery.success,
-        fixed: recovery.success
-      };
-    }
-    
-    // Attempt recovery through edge function to refresh analytics even if it seems fine
-    try {
-      await supabase.functions.invoke('recover-workout', {
+    // First try using the edge function
+    const { data: recoveryData, error: recoveryError } = await supabase.functions
+      .invoke('recover-workout', {
         body: { workoutId }
       });
-      console.log("Preventative analytics refresh complete");
-    } catch (error) {
-      console.warn("Preventative analytics refresh failed:", error);
+      
+    if (recoveryError) {
+      console.error('Edge function error:', recoveryError);
+      throw new Error(`Failed to diagnose workout: ${recoveryError.message}`);
     }
     
-    // Everything seems fine
+    // If edge function was successful but no workout found
+    if (!recoveryData.success) {
+      console.warn('Recovery unsuccessful:', recoveryData);
+      return {
+        success: false,
+        message: recoveryData.error || 'Could not find or fix the workout',
+        details: recoveryData
+      };
+    }
+    
+    // Try to manually trigger analytics refresh
+    try {
+      // Use the stored procedure via RPC call
+      await supabase.rpc('refresh_workout_analytics');
+      console.log('Successfully refreshed workout analytics');
+    } catch (refreshError) {
+      console.warn('Failed to refresh analytics:', refreshError);
+      // Continue despite analytics refresh failure
+    }
+    
     return {
       success: true,
-      workout,
-      exerciseSets: exerciseSets || [],
-      setCount: exerciseSets?.length || 0,
-      fixed: false,
-      message: "Workout appears to be complete and visible"
+      message: 'Successfully recovered workout data',
+      details: recoveryData,
+      workoutFixed: true
     };
   } catch (error) {
-    console.error("Error in diagnoseAndFixWorkout:", error);
-    return { success: false, error: String(error) };
+    console.error('Error in diagnoseAndFixWorkout:', error);
+    
+    // Fallback method if edge function fails
+    return {
+      success: false,
+      message: `Error diagnosing workout: ${error.message}`,
+      workoutFixed: false
+    };
   }
-}
+};

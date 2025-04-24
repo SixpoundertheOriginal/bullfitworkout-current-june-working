@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -12,6 +13,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useExerciseManagement } from "@/hooks/useExerciseManagement";
 import { ExerciseSet } from "@/types/exercise";
+import { WorkoutDetailsEnhanced } from "@/components/workouts/WorkoutDetailsEnhanced";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useExercisePerformance } from "@/hooks/useExercisePerformance";
+import { ExercisePerformanceDetails } from "@/components/workouts/ExercisePerformanceDetails";
 
 const WorkoutDetailsPage = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
@@ -19,6 +24,7 @@ const WorkoutDetailsPage = () => {
   const dateFilter = searchParams.get('date');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   
   const { 
     workoutDetails, 
@@ -48,6 +54,16 @@ const WorkoutDetailsPage = () => {
     confirmDeleteExercise
   } = useExerciseManagement(workoutId, setExerciseSets);
 
+  const { data: exercisePerformance, isLoading: performanceLoading } = 
+    useExercisePerformance(selectedExercise || undefined);
+
+  // Set the first exercise as selected by default
+  useEffect(() => {
+    if (!selectedExercise && !loading && Object.keys(exerciseSets).length > 0) {
+      setSelectedExercise(Object.keys(exerciseSets)[0]);
+    }
+  }, [exerciseSets, loading, selectedExercise]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -62,24 +78,51 @@ const WorkoutDetailsPage = () => {
       <main className="flex-1 overflow-auto px-4 py-6 pb-24 mt-16">
         {workoutId && workoutDetails && (
           <div className="mb-6">
-            <WorkoutDetailsHeader
-              workoutDetails={workoutDetails}
-              onEditClick={() => setEditModalOpen(true)}
-            />
+            <Tabs defaultValue="summary" className="mt-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="summary">Summary</TabsTrigger>
+                <TabsTrigger value="analysis">Detailed Analysis</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="summary" className="pt-4">
+                <WorkoutDetailsHeader
+                  workoutDetails={workoutDetails}
+                  onEditClick={() => setEditModalOpen(true)}
+                />
 
-            <WorkoutExercisesSection
-              exerciseSets={exerciseSets}
-              onAddExercise={() => setShowAddDialog(true)}
-              onEditExercise={(name) => handleEditExercise(name, exerciseSets)}
-              onDeleteExercise={confirmDeleteExercise}
-            />
+                <WorkoutExercisesSection
+                  exerciseSets={exerciseSets}
+                  onAddExercise={() => setShowAddDialog(true)}
+                  onEditExercise={(name) => handleEditExercise(name, exerciseSets)}
+                  onDeleteExercise={confirmDeleteExercise}
+                  onSelectExercise={setSelectedExercise}
+                  selectedExercise={selectedExercise}
+                />
 
-            {workoutDetails.notes && (
-              <div className="mt-4 bg-gray-800/50 p-3 rounded">
-                <h3 className="text-sm font-medium mb-1">Notes</h3>
-                <p className="text-sm text-gray-300">{workoutDetails.notes}</p>
-              </div>
-            )}
+                {workoutDetails.notes && (
+                  <div className="mt-4 bg-gray-800/50 p-3 rounded">
+                    <h3 className="text-sm font-medium mb-1">Notes</h3>
+                    <p className="text-sm text-gray-300">{workoutDetails.notes}</p>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="analysis" className="pt-4">
+                <WorkoutDetailsEnhanced 
+                  workout={workoutDetails}
+                  exercises={exerciseSets}
+                />
+
+                {selectedExercise && (
+                  <ExercisePerformanceDetails 
+                    exerciseName={selectedExercise}
+                    performance={exercisePerformance}
+                    isLoading={performanceLoading}
+                    currentSets={exerciseSets[selectedExercise] || []}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </main>

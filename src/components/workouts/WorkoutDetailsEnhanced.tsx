@@ -1,17 +1,26 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ExerciseSet } from '@/types/exercise';
-import { EnhancedMetricsDisplay } from '../metrics/EnhancedMetricsDisplay';
+import { 
+  calculateMuscleFocus, 
+  analyzeWorkoutComposition 
+} from '@/utils/exerciseUtils';
+import { MuscleFocusChart } from '../metrics/MuscleFocusChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-  Clock, 
-  Calendar, 
   Dumbbell, 
-  Tag,
-  BarChart3
+  BarChart3, 
+  Percent, 
+  Activity,
+  Clock,
+  Calendar,
+  Tag
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatRelative } from 'date-fns';
+import { WorkoutDensityChart } from '../metrics/WorkoutDensityChart';
+import { WeightUnit } from '@/utils/unitConversion';
+import { useWeightUnit } from '@/context/WeightUnitContext';
 
 interface WorkoutDetailsEnhancedProps {
   workout: {
@@ -33,6 +42,9 @@ export const WorkoutDetailsEnhanced = ({
   tags = [],
   className = ''
 }: WorkoutDetailsEnhancedProps) => {
+  const { weightUnit } = useWeightUnit();
+  
+  // Calculate efficiency metrics
   const exerciseCount = Object.keys(exercises).length;
   const setCount = Object.values(exercises).reduce(
     (total, sets) => total + sets.length, 0
@@ -44,23 +56,42 @@ export const WorkoutDetailsEnhanced = ({
   // Calculate efficiency (completed sets / total sets)
   const efficiency = setCount > 0 ? (completedSets / setCount) * 100 : 0;
   
-  // Calculate average weight across all sets
-  let totalWeight = 0;
+  // Calculate workout volume and intensity metrics
+  let totalVolume = 0;
   let weightedSetCount = 0;
   let maxWeight = 0;
+  let totalRestTime = 0;
   
   Object.values(exercises).flat().forEach(set => {
     if (set.completed && set.weight > 0) {
-      totalWeight += set.weight;
+      totalVolume += set.weight * set.reps;
       weightedSetCount++;
       if (set.weight > maxWeight) maxWeight = set.weight;
     }
+    
+    // Add rest time calculation
+    if (set.rest_time) {
+      totalRestTime += set.rest_time;
+    } else {
+      totalRestTime += 60; // Default rest time
+    }
   });
   
-  const avgWeight = weightedSetCount > 0 ? totalWeight / weightedSetCount : 0;
+  const avgWeight = weightedSetCount > 0 ? totalVolume / weightedSetCount : 0;
   
   // Calculate intensity (average weight / max weight)
   const intensity = maxWeight > 0 ? (avgWeight / maxWeight) * 100 : 0;
+  
+  // Calculate workout density (volume per minute)
+  const activeWorkoutTime = workout.duration - (totalRestTime / 60);
+  const workoutDensity = workout.duration > 0 ? totalVolume / workout.duration : 0;
+  const activeWorkoutDensity = activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0;
+  
+  // Calculate muscle focus
+  const muscleFocus = useMemo(() => calculateMuscleFocus(exercises), [exercises]);
+  
+  // Analyze workout composition
+  const composition = useMemo(() => analyzeWorkoutComposition(exercises), [exercises]);
   
   // Format the workout date
   const workoutDate = new Date(workout.start_time);
@@ -114,6 +145,9 @@ export const WorkoutDetailsEnhanced = ({
                 <span className="text-sm text-gray-400">Duration</span>
               </div>
               <div className="text-lg font-semibold">{formatTime(workout.duration)}</div>
+              <div className="text-xs text-gray-500">
+                Active: {formatTime(activeWorkoutTime)}
+              </div>
             </CardContent>
           </Card>
           
@@ -140,26 +174,78 @@ export const WorkoutDetailsEnhanced = ({
           </Card>
         </div>
         
-        {/* Show workout tags if available */}
-        {tags.length > 0 && (
-          <div>
-            <div className="flex items-center mb-2">
-              <Tag className="h-4 w-4 text-purple-400 mr-2" />
-              <span className="text-sm text-gray-400">Tags</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tags.map(tag => (
-                <Badge 
-                  key={tag}
-                  variant="outline" 
-                  className="bg-gray-800/50 border-gray-700 text-gray-300"
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Workout density metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="bg-gray-900/80 border-gray-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center">
+                <Activity className="h-4 w-4 mr-2 text-purple-400" />
+                Workout Density
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Volume per minute:</span>
+                  <span className="font-mono font-medium">
+                    {workoutDensity.toFixed(1)} {weightUnit}/min
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Active time density:</span>
+                  <span className="font-mono font-medium">
+                    {activeWorkoutDensity.toFixed(1)} {weightUnit}/min
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Total volume:</span>
+                  <span className="font-mono font-medium">
+                    {totalVolume} {weightUnit}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Workout density chart */}
+              <div className="mt-4 h-32">
+                <WorkoutDensityChart 
+                  totalTime={workout.duration}
+                  activeTime={activeWorkoutTime}
+                  restTime={totalRestTime / 60}
+                  totalVolume={totalVolume}
+                  weightUnit={weightUnit}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Show tags if available */}
+          <Card className="bg-gray-900/80 border-gray-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center">
+                <Tag className="h-4 w-4 mr-2 text-purple-400" />
+                Muscle Group Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(muscleFocus).map(([muscle, percentage]) => (
+                  <div key={muscle} className="flex flex-col">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs capitalize">{muscle}</span>
+                      <span className="text-xs font-mono">{Math.round(percentage)}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden mt-1">
+                      <div 
+                        className="h-full rounded-full bg-purple-600/50"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         
         {/* Show notes if available */}
         {workout.notes && (
@@ -174,12 +260,120 @@ export const WorkoutDetailsEnhanced = ({
         )}
       </div>
       
-      {/* Enhanced Metrics Display */}
-      <EnhancedMetricsDisplay 
-        exercises={exercises}
-        intensity={intensity}
-        efficiency={efficiency}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8">
+          <MuscleFocusChart muscleGroups={muscleFocus} />
+        </div>
+        
+        <div className="lg:col-span-4 space-y-4">
+          <Card className="bg-gray-900/90 border-gray-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center">
+                <Dumbbell className="h-4 w-4 mr-2 text-purple-400" />
+                Workout Composition
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium">Compound</span>
+                  <span className="text-gray-400">{composition.compound.count} ({Math.round(composition.compound.percentage)}%)</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500/30 to-amber-700/30"
+                    style={{ width: `${composition.compound.percentage}%` }}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-1 mt-2">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium">Isolation</span>
+                  <span className="text-gray-400">{composition.isolation.count} ({Math.round(composition.isolation.percentage)}%)</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full bg-gradient-to-r from-blue-500/30 to-blue-700/30"
+                    style={{ width: `${composition.isolation.percentage}%` }}
+                  />
+                </div>
+              </div>
+              
+              {composition.bodyweight.count > 0 && (
+                <div className="space-y-1 mt-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium">Bodyweight</span>
+                    <span className="text-gray-400">{composition.bodyweight.count} ({Math.round(composition.bodyweight.percentage)}%)</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-green-500/30 to-green-700/30"
+                      style={{ width: `${composition.bodyweight.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {composition.isometric.count > 0 && (
+                <div className="space-y-1 mt-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium">Isometric</span>
+                    <span className="text-gray-400">{composition.isometric.count} ({Math.round(composition.isometric.percentage)}%)</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-purple-500/30 to-purple-700/30"
+                      style={{ width: `${composition.isometric.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gray-900/90 border-gray-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center">
+                <BarChart3 className="h-4 w-4 mr-2 text-purple-400" />
+                Workout Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gray-800/50 rounded-lg p-3">
+                  <div className="flex items-center mb-1">
+                    <Activity className="h-3 w-3 text-purple-400 mr-1" />
+                    <span className="text-xs text-gray-400">Intensity</span>
+                  </div>
+                  <div className="text-xl font-semibold">{Math.round(intensity)}%</div>
+                </div>
+                
+                <div className="bg-gray-800/50 rounded-lg p-3">
+                  <div className="flex items-center mb-1">
+                    <Percent className="h-3 w-3 text-purple-400 mr-1" />
+                    <span className="text-xs text-gray-400">Efficiency</span>
+                  </div>
+                  <div className="text-xl font-semibold">{Math.round(efficiency)}%</div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-800/50 rounded-lg p-3 mt-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs text-gray-400">Exercises</span>
+                    <div className="text-lg font-semibold">{exerciseCount}</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-400">Sets</span>
+                    <div className="text-lg font-semibold">{setCount}</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
       
       {/* Exercise Details Section */}
       <div>
@@ -198,6 +392,7 @@ export const WorkoutDetailsEnhanced = ({
                         <th className="text-left pb-2 text-gray-400">Set</th>
                         <th className="text-left pb-2 text-gray-400">Weight</th>
                         <th className="text-left pb-2 text-gray-400">Reps</th>
+                        <th className="text-left pb-2 text-gray-400">Rest</th>
                         <th className="text-right pb-2 text-gray-400">Status</th>
                       </tr>
                     </thead>
@@ -207,6 +402,7 @@ export const WorkoutDetailsEnhanced = ({
                           <td className="py-2">Set {set.set_number}</td>
                           <td className="py-2">{set.weight}</td>
                           <td className="py-2">{set.reps}</td>
+                          <td className="py-2">{set.rest_time || '60'}s</td>
                           <td className="py-2 text-right">
                             {set.completed ? (
                               <Badge className="bg-green-500/20 text-green-300 hover:bg-green-500/30">

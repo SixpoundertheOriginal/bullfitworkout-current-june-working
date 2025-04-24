@@ -11,6 +11,8 @@ interface WorkoutExercisesSectionProps {
   onAddExercise: () => void;
   onEditExercise: (exerciseName: string) => void;
   onDeleteExercise: (exerciseName: string) => void;
+  onSelectExercise?: (exerciseName: string) => void;
+  selectedExercise?: string | null;
 }
 
 export const WorkoutExercisesSection: React.FC<WorkoutExercisesSectionProps> = ({
@@ -18,6 +20,8 @@ export const WorkoutExercisesSection: React.FC<WorkoutExercisesSectionProps> = (
   onAddExercise,
   onEditExercise,
   onDeleteExercise,
+  onSelectExercise,
+  selectedExercise
 }) => {
   const allSets = Object.values(exerciseSets).flat();
   
@@ -47,6 +51,8 @@ export const WorkoutExercisesSection: React.FC<WorkoutExercisesSectionProps> = (
                 sets={sets}
                 onEdit={onEditExercise}
                 onDelete={onDeleteExercise}
+                onSelect={onSelectExercise ? () => onSelectExercise(exerciseName) : undefined}
+                isSelected={selectedExercise === exerciseName}
               />
             ))}
           </div>
