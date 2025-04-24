@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Dumbbell } from 'lucide-react';
+import { Play } from 'lucide-react';
+import { CircularGradientButton } from '@/components/CircularGradientButton';
 import { cn } from '@/lib/utils';
 
 interface StartTrainingButtonProps {
@@ -19,8 +19,6 @@ interface StartTrainingButtonProps {
 
 export const StartTrainingButton = ({
   trainingType = 'strength',
-  variant = 'default',
-  size = 'default',
   className = '',
   label = 'Start Training',
   forceReset = true,
@@ -40,17 +38,13 @@ export const StartTrainingButton = ({
   };
   
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={cn(
-        "gap-2 transition-all duration-300 ease-in-out",
-        className
-      )}
+    <CircularGradientButton
       onClick={handleStartClick}
+      className={cn("hover:scale-105", className)}
+      icon={<Play size={32} className="text-white ml-1" />}
+      size={88}
     >
-      <Dumbbell className="h-4 w-4" />
       {label}
-    </Button>
+    </CircularGradientButton>
   );
 };

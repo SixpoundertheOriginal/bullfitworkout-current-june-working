@@ -134,22 +134,13 @@ const Index = () => {
           <motion.h2 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className={cn(typography.headings.primary, "text-2xl mb-2")}
-          >
-            Begin Your Quest
-          </motion.h2>
-          
-          <motion.p 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
             className={cn(typography.text.secondary, "mb-6")}
           >
             Embark on a new fitness adventure
-          </motion.p>
+          </motion.h2>
           
-          <div style={{ height: "10rem" }} className="relative">
+          <div style={{ height: "12rem" }} className="relative">
             <ExerciseFAB 
               onClick={() => setDialogOpen(true)}
               visible={stableFabVisibility}
@@ -158,12 +149,12 @@ const Index = () => {
 
             <div className={cn(
               "absolute left-1/2 transform -translate-x-1/2 transition-all duration-300",
-              isSectionVisible ? "opacity-100 translate-y-0" : "opacity-80 translate-y-2"
+              isSectionVisible ? "scale-100 opacity-100" : "scale-95 opacity-90"
             )}>
               <StartTrainingButton
                 onClick={() => setDialogOpen(true)}
                 trainingType={recommendedWorkoutType}
-                label={`Start ${recommendedWorkoutType} Training (${recommendedDuration}min)`}
+                label="Start"
               />
             </div>
           </div>
