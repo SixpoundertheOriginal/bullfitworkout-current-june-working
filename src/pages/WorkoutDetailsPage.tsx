@@ -7,8 +7,8 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { EditWorkoutModal } from "@/components/EditWorkoutModal";
 import { EditExerciseSetModal } from "@/components/EditExerciseSetModal";
-import { WorkoutMetricsSummary } from "@/components/workouts/WorkoutMetricsSummary";
-import { WorkoutExercisesSection } from "@/components/workouts/WorkoutExercisesSection";
+import { WorkoutDetailsEnhanced } from "@/components/workouts/WorkoutDetailsEnhanced";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useExerciseManagement } from "@/hooks/useExerciseManagement";
@@ -62,19 +62,19 @@ const WorkoutDetailsPage = () => {
       <main className="flex-1 overflow-auto px-4 py-6 pb-24 mt-16">
         {workoutId && workoutDetails && (
           <div className="mb-6">
-            <WorkoutExercisesSection
-              exerciseSets={exerciseSets}
-              onAddExercise={() => setShowAddDialog(true)}
-              onEditExercise={(name) => handleEditExercise(name, exerciseSets)}
-              onDeleteExercise={confirmDeleteExercise}
-            />
-            
-            {workoutDetails.notes && (
-              <div className="mt-4 bg-gray-800/50 p-3 rounded">
-                <h3 className="text-sm font-medium mb-1">Notes</h3>
-                <p className="text-sm text-gray-300">{workoutDetails.notes}</p>
-              </div>
-            )}
+            <Tabs defaultValue="analysis" className="w-full">
+              <TabsList className="grid grid-cols-1 w-full mb-4">
+                <TabsTrigger value="analysis">Detailed Analysis</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="analysis">
+                <WorkoutDetailsEnhanced
+                  workout={workoutDetails}
+                  exercises={exerciseSets}
+                  onEditClick={() => setEditModalOpen(true)}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </main>
