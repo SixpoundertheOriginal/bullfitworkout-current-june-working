@@ -22,7 +22,7 @@ import { formatRelative } from 'date-fns';
 import { WorkoutDensityChart } from '../metrics/WorkoutDensityChart';
 import { WeightUnit } from '@/utils/unitConversion';
 import { useWeightUnit } from '@/context/WeightUnitContext';
-import { cn } from '@/utils/cn';
+import { cn } from '@/lib/utils';
 
 interface WorkoutDetailsEnhancedProps {
   workout: {
