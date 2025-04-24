@@ -35,6 +35,7 @@ interface WorkoutDetailsEnhancedProps {
   };
   exercises: Record<string, ExerciseSet[]>;
   onEditClick: () => void;
+  onEditExercise?: (exerciseName: string, sets: Record<string, ExerciseSet[]>) => void;
   tags?: string[];
   className?: string;
 }
@@ -43,6 +44,7 @@ export const WorkoutDetailsEnhanced = ({
   workout,
   exercises,
   onEditClick,
+  onEditExercise,
   tags = [],
   className = ''
 }: WorkoutDetailsEnhancedProps) => {
@@ -106,6 +108,12 @@ export const WorkoutDetailsEnhanced = ({
       return `${hours}h ${mins}m`;
     }
     return `${mins} min`;
+  };
+
+  const handleEditExercise = (exerciseName: string) => {
+    if (onEditExercise) {
+      onEditExercise(exerciseName, exercises);
+    }
   };
   
   return (
@@ -428,7 +436,7 @@ export const WorkoutDetailsEnhanced = ({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={onEditClick}
+                      onClick={() => handleEditExercise(exerciseName)}
                       className="bg-gray-800 text-white hover:bg-gray-700"
                     >
                       Edit Sets

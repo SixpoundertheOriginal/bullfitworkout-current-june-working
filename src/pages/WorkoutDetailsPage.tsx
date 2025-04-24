@@ -72,6 +72,7 @@ const WorkoutDetailsPage = () => {
                   workout={workoutDetails}
                   exercises={exerciseSets}
                   onEditClick={() => setEditModalOpen(true)}
+                  onEditExercise={handleEditExercise}
                 />
               </TabsContent>
             </Tabs>
