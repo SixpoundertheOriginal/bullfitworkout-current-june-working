@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { toast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
@@ -527,14 +528,20 @@ export const WorkoutCompletePage = () => {
     try {
       const savedWorkoutId = await saveWorkout();
       if (savedWorkoutId) {
-        toast.success("Workout saved successfully");
+        toast({
+          title: "Workout saved successfully",
+          variant: "default",
+        });
         navigate(`/workout-details/${savedWorkoutId}`, {
           state: { from: 'workout-complete' }
         });
       }
     } catch (error) {
       console.error("Error saving workout:", error);
-      toast.error("Failed to save workout");
+      toast({
+        title: "Failed to save workout",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
