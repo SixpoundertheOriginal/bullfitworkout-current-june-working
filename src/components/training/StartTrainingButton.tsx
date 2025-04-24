@@ -41,8 +41,8 @@ export const StartTrainingButton = ({
     <CircularGradientButton
       onClick={handleStartClick}
       className={cn("hover:scale-105", className)}
-      icon={<Play size={32} className="text-white ml-1" />}
-      size={88}
+      icon={<Play size={48} className="text-white ml-1" />} // Increased icon size by 50%
+      size={132} // Increased from 88 to 132 (50% larger)
     >
       {label}
     </CircularGradientButton>
