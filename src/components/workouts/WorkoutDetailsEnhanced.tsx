@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { 
@@ -70,8 +69,8 @@ export const WorkoutDetailsEnhanced = ({
     }
     
     // Add rest time calculation
-    if (set.rest_time) {
-      totalRestTime += set.rest_time;
+    if (set.restTime) {
+      totalRestTime += set.restTime;
     } else {
       totalRestTime += 60; // Default rest time
     }
@@ -402,7 +401,7 @@ export const WorkoutDetailsEnhanced = ({
                           <td className="py-2">Set {set.set_number}</td>
                           <td className="py-2">{set.weight}</td>
                           <td className="py-2">{set.reps}</td>
-                          <td className="py-2">{set.rest_time || '60'}s</td>
+                          <td className="py-2">{set.restTime || '60'}s</td>
                           <td className="py-2 text-right">
                             {set.completed ? (
                               <Badge className="bg-green-500/20 text-green-300 hover:bg-green-500/30">

@@ -29,7 +29,7 @@ export const ExercisePerformanceDetails: React.FC<ExercisePerformanceDetailsProp
   const totalReps = completedSets.reduce((sum, set) => sum + set.reps, 0);
   
   // Calculate average rest time
-  const restTimes = currentSets.map(set => set.rest_time || 60);
+  const restTimes = currentSets.map(set => set.restTime || 60);
   const avgRestTime = restTimes.length ? 
     restTimes.reduce((sum, time) => sum + time, 0) / restTimes.length : 0;
   

@@ -26,7 +26,7 @@ export const ExerciseSetsDisplay: React.FC<ExerciseSetsDisplayProps> = ({
 }) => {
   // Calculate average rest time
   const completedSets = sets.filter(set => set.completed);
-  const restTimes = sets.map(set => set.rest_time || 60);
+  const restTimes = sets.map(set => set.restTime || 60);
   const avgRestTime = restTimes.length ? 
     restTimes.reduce((sum, time) => sum + time, 0) / restTimes.length : 0;
 
@@ -105,8 +105,8 @@ export const ExerciseSetsDisplay: React.FC<ExerciseSetsDisplayProps> = ({
           <div>{set.set_number}</div>
           <div className="text-right font-mono">{set.weight}</div>
           <div className="text-right font-mono">{set.reps}</div>
-          <div className={`text-right font-mono ${getRestTimeClass(set.rest_time)}`}>
-            {formatRestTime(set.rest_time)}
+          <div className={`text-right font-mono ${getRestTimeClass(set.restTime)}`}>
+            {formatRestTime(set.restTime)}
           </div>
           <div className="text-right font-mono">{set.weight * set.reps}</div>
         </div>

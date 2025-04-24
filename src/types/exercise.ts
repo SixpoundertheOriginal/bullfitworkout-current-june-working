@@ -1,9 +1,10 @@
+
 export interface ExerciseSet {
   id: string;
   weight: number;
   reps: number;
   duration?: number;
-  restTime?: number;
+  restTime?: number; // Properly defined restTime property
   completed: boolean;
   isEditing?: boolean;
   set_number: number;

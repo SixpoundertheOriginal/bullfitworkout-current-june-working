@@ -167,7 +167,7 @@ export const WorkoutHistory = ({
       const result = await diagnoseAndFixWorkout(workoutId);
       
       if (result.success) {
-        if (result.fixed) {
+        if (result.workoutFixed) {
           toast.success("Workout fixed", {
             description: "The workout has been recovered and should now be visible in your history.",
           });
@@ -176,7 +176,7 @@ export const WorkoutHistory = ({
         }
       } else {
         toast.error("Could not fix workout", {
-          description: result.error || "An unknown error occurred",
+          description: result.message || "An unknown error occurred",
         });
       }
       
@@ -226,7 +226,7 @@ export const WorkoutHistory = ({
       for (const workout of recentWorkouts) {
         try {
           const result = await diagnoseAndFixWorkout(workout.id);
-          if (result.success && result.fixed) {
+          if (result.success && result.workoutFixed) {
             fixedCount++;
           }
         } catch (error) {

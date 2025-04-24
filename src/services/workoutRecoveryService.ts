@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -132,16 +133,11 @@ export async function recoverPartialWorkout(workoutId: string) {
       console.log("Successfully refreshed analytics via edge function");
     } catch (error) {
       console.warn("Error invoking recover-workout function:", error);
-      // Try a direct approach as fallback
+      // Try a direct approach as fallback - Remove the direct RPC call since it's not supported
       try {
-        const { error: directRefreshError } = await supabase.rpc('refresh_workout_analytics');
-        if (directRefreshError) {
-          console.warn("Direct analytics refresh failed:", directRefreshError);
-        } else {
-          console.log("Successfully refreshed analytics via direct RPC call");
-        }
+        console.warn("Direct analytics refresh not available - Edge function failed");
       } catch (directError) {
-        console.warn("Direct RPC call failed:", directError);
+        console.warn("Direct refresh failed:", directError);
       }
     }
     
@@ -188,11 +184,9 @@ export const diagnoseAndFixWorkout = async (workoutId: string): Promise<{
       };
     }
     
-    // Try to manually trigger analytics refresh
+    // Try to manually trigger analytics refresh - Remove direct RPC call
     try {
-      // Use the stored procedure via RPC call
-      await supabase.rpc('refresh_workout_analytics');
-      console.log('Successfully refreshed workout analytics');
+      console.log('Analytics refresh handled by edge function');
     } catch (refreshError) {
       console.warn('Failed to refresh analytics:', refreshError);
       // Continue despite analytics refresh failure
