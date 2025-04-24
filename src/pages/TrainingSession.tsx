@@ -1,23 +1,21 @@
-import React, { useRef } from "react";
+
+import React, { useRef, useEffect } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { WorkoutCompletion } from "@/components/training/WorkoutCompletion";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { useWorkoutState, LocalExerciseSet } from "@/hooks/useWorkoutState";
 import { trainingTypes } from "@/constants/trainingTypes";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { WorkoutHeader } from "@/components/training/WorkoutHeader";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 import { ExerciseSet } from "@/types/exercise";
-import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
+import { saveWorkout, processRetryQueue } from "@/services/workoutSaveService";
 import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
-import { SaveProgress } from "@/types/workout";
 
 interface LocationState {
   trainingType?: string;
@@ -79,6 +77,19 @@ const TrainingSession: React.FC = () => {
   const intensity = 75;
   const volume = 1250;
   const efficiency = 85;
+  
+  // Effect to retry saving when component mounts if we're in recovery mode
+  useEffect(() => {
+    if (isRecoveryMode && workoutId) {
+      console.log("Recovery mode detected, attempting recovery");
+      // Slight delay to let the UI render first
+      const recoveryTimeout = setTimeout(() => {
+        attemptRecovery();
+      }, 2000);
+      
+      return () => clearTimeout(recoveryTimeout);
+    }
+  }, [isRecoveryMode, workoutId, attemptRecovery]);
   
   useBeforeUnload(event => {
     if (Object.keys(exercises).length > 0) {
@@ -234,6 +245,7 @@ const TrainingSession: React.FC = () => {
         notes: null
       };
       
+      console.log("Starting workout save...");
       const saveResult = await saveWorkout({
         userData: user,
         workoutData,
@@ -245,14 +257,17 @@ const TrainingSession: React.FC = () => {
       
       if (saveResult.success) {
         if (saveResult.partialSave) {
+          console.log("Workout partially saved", saveResult);
           markAsPartialSave(saveResult.error ? [saveResult.error] : []);
           navigateToComplete(saveResult.workoutId || null);
         } else {
+          console.log("Workout save complete", saveResult);
           markAsSaved(saveResult.workoutId || '');
           resetSession();
           navigateToComplete(saveResult.workoutId || null);
         }
       } else {
+        console.error("Workout save failed", saveResult);
         markAsFailed(saveResult.error || {
           type: 'unknown',
           message: 'Unknown error during save',
@@ -269,9 +284,8 @@ const TrainingSession: React.FC = () => {
         recoverable: true
       });
       
-      toast("Error", {
+      toast.error("Error", {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
-        
       });
     }
   };
@@ -284,67 +298,14 @@ const TrainingSession: React.FC = () => {
         description: "Trying to recover your workout data..."
       });
       
-      await attemptRecovery();
+      const recoverySuccess = await attemptRecovery();
       
-      if (user.id) {
+      if (recoverySuccess && user.id) {
         await processRetryQueue(user.id);
+        navigateToComplete(workoutId);
       }
-      
     } else {
       handleCompleteWorkout();
-    }
-  };
-
-  const handleWorkoutError = async (error: any) => {
-    console.error("Error in workout process:", error);
-    const errorMessage = error?.message || "Unknown error";
-    
-    if (errorMessage.includes("materialized view")) {
-      toast.success("Partial save", {
-        description: "Your workout data was saved but some analytics couldn't be processed.",
-      });
-      navigateToComplete(null);
-    } else {
-      toast.error("Error", {
-        description: errorMessage,
-      });
-    }
-  };
-  
-  const saveExerciseSets = async (workoutId: string) => {
-    try {
-      const exerciseSets = [];
-      
-      for (const [exerciseName, sets] of Object.entries(exercises)) {
-        sets.forEach((set, index) => {
-          exerciseSets.push({
-            workout_id: workoutId,
-            exercise_name: exerciseName,
-            weight: set.weight || 0,
-            reps: set.reps || 0,
-            set_number: index + 1,
-            completed: set.completed || false,
-            rest_time: set.restTime || 60
-          });
-        });
-      }
-      
-      const batchSize = 25;
-      for (let i = 0; i < exerciseSets.length; i += batchSize) {
-        const batch = exerciseSets.slice(i, i + batchSize);
-        const { error: batchError } = await supabase
-          .from('exercise_sets')
-          .insert(batch);
-          
-        if (batchError) {
-          console.error("Error saving exercise set batch:", batchError);
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Exception saving exercise sets:", error);
-      throw error;
     }
   };
   

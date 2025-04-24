@@ -73,3 +73,6 @@ port = 54321
 
 [functions.recover-workout]
 verify_jwt = true
+
+[functions.save-complete-workout]
+verify_jwt = true

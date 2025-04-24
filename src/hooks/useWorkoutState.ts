@@ -1,7 +1,9 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
 import { supabase } from "@/integrations/supabase/client";
+import { recoverPartiallyCompletedWorkout, processRetryQueue } from '@/services/workoutSaveService';
 
 const STORAGE_VERSION = '1.0.0';
 
@@ -38,60 +40,69 @@ export const useWorkoutState = () => {
   const currentRestTime = state.currentRestTime;
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
-    if (!user?.id) return;
-    
-    const savedWorkout = localStorage.getItem(`workout_session_${user.id}`);
-    if (savedWorkout) {
-      try {
-        const parsed = JSON.parse(savedWorkout);
-        
-        const version = parsed.version || '0.0.0';
-        
-        setState(prevState => ({
-          ...prevState,
-          exercises: parsed.exercises || {},
-          activeExercise: parsed.activeExercise || null,
-          elapsedTime: parsed.elapsedTime || 0,
-          restTimerActive: parsed.restTimerActive !== undefined ? parsed.restTimerActive : false,
-          currentRestTime: parsed.currentRestTime || 60,
-          workoutId: parsed.workoutId || null,
-          lastSyncTimestamp: parsed.lastUpdated || new Date().toISOString(),
-          workoutStatus: parsed.workoutStatus === 'saving' ? 'partial' : (parsed.workoutStatus || 'idle'),
-          isRecoveryMode: parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial'
-        }));
-        
-        if (parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial') {
-          toast("Workout recovery available", {
-            description: "We found an unsaved workout. Continue your session or reset to start fresh.",
-            action: {
-              label: "Reset",
-              onClick: resetSession
-            },
-            duration: 10000,
-          });
+    // Get current user
+    const loadPreviousSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) return;
+      
+      const savedWorkout = localStorage.getItem(`workout_session_${user.id}`);
+      if (savedWorkout) {
+        try {
+          const parsed = JSON.parse(savedWorkout);
+          
+          const version = parsed.version || '0.0.0';
+          
+          setState(prevState => ({
+            ...prevState,
+            exercises: parsed.exercises || {},
+            activeExercise: parsed.activeExercise || null,
+            elapsedTime: parsed.elapsedTime || 0,
+            restTimerActive: parsed.restTimerActive !== undefined ? parsed.restTimerActive : false,
+            currentRestTime: parsed.currentRestTime || 60,
+            workoutId: parsed.workoutId || null,
+            lastSyncTimestamp: parsed.lastUpdated || new Date().toISOString(),
+            workoutStatus: parsed.workoutStatus === 'saving' ? 'partial' : (parsed.workoutStatus || 'idle'),
+            isRecoveryMode: parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial'
+          }));
+          
+          if (parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial') {
+            toast("Workout recovery available", {
+              description: "We found an unsaved workout. Continue your session or reset to start fresh.",
+              action: {
+                label: "Reset",
+                onClick: resetSession
+              },
+              duration: 10000,
+            });
+          }
+        } catch (error) {
+          console.error("Error loading saved workout:", error);
         }
-      } catch (error) {
-        console.error("Error loading saved workout:", error);
       }
-    }
+    };
+    
+    loadPreviousSession();
   }, []);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
-    if (!user?.id) return;
+    const saveCurrentSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) return;
+      
+      localStorage.setItem(`workout_session_${user.id}`, JSON.stringify({
+        version: STORAGE_VERSION,
+        exercises: state.exercises,
+        activeExercise: state.activeExercise,
+        elapsedTime: state.elapsedTime,
+        restTimerActive: state.restTimerActive,
+        currentRestTime: state.currentRestTime,
+        lastUpdated: new Date().toISOString(),
+        workoutStatus: state.workoutStatus,
+        workoutId: state.workoutId
+      }));
+    };
     
-    localStorage.setItem(`workout_session_${user.id}`, JSON.stringify({
-      version: STORAGE_VERSION,
-      exercises: state.exercises,
-      activeExercise: state.activeExercise,
-      elapsedTime: state.elapsedTime,
-      restTimerActive: state.restTimerActive,
-      currentRestTime: state.currentRestTime,
-      lastUpdated: new Date().toISOString(),
-      workoutStatus: state.workoutStatus,
-      workoutId: state.workoutId
-    }));
+    saveCurrentSession();
   }, [state]);
 
   const updateState = useCallback((updates: Partial<WorkoutState>) => {
@@ -135,7 +146,7 @@ export const useWorkoutState = () => {
     updateState({ currentRestTime: time });
   }, [updateState]);
 
-  const resetSession = useCallback(() => {
+  const resetSession = useCallback(async () => {
     updateState({
       exercises: {},
       activeExercise: null,
@@ -149,7 +160,8 @@ export const useWorkoutState = () => {
       isRecoveryMode: false
     });
     
-    const user = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}')?.currentSession?.user;
+    // Clear local storage
+    const { data: { user } } = await supabase.auth.getUser();
     if (user?.id) {
       localStorage.removeItem(`workout_session_${user.id}`);
     }
@@ -231,18 +243,15 @@ export const useWorkoutState = () => {
     try {
       updateState({ workoutStatus: 'recovering' });
       
-      const { error } = await supabase.functions.invoke('recover-workout', {
-        body: { workoutId: state.workoutId }
-      });
+      const { success, error } = await recoverPartiallyCompletedWorkout(state.workoutId);
       
-      if (error) {
+      if (!success) {
         console.error("Recovery failed:", error);
         updateState({
           workoutStatus: 'partial',
-          savingErrors: [...state.savingErrors, {
+          savingErrors: [...state.savingErrors, error || {
             type: 'database',
             message: 'Failed to recover workout data',
-            details: error,
             timestamp: new Date().toISOString(),
             recoverable: false
           }]
@@ -253,6 +262,12 @@ export const useWorkoutState = () => {
         });
         
         return false;
+      }
+      
+      // Also process any pending retries
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        await processRetryQueue(user.id);
       }
       
       updateState({ 

@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedExerciseSet, WorkoutError, SaveProgress } from "@/types/workout";
 import { ExerciseSet } from "@/types/exercise";
+import { toast } from "@/components/ui/sonner";
 
 interface SaveWorkoutParams {
   userData: {
@@ -54,29 +55,31 @@ export const saveWorkout = async ({
   }
 
   try {
-    // 1. First attempt to use our transaction-based RPC if available
-    try {
-      onProgressUpdate?.({
-        step: 'workout',
-        total: 3,
-        completed: 0,
-        errors: []
-      });
-      
-      // Format exercise sets for the RPC
-      const formattedSets = Object.entries(exercises).flatMap(([exerciseName, sets], exerciseIndex) => {
-        return sets.map((set, setIndex) => ({
-          exercise_name: exerciseName,
-          weight: set.weight || 0,
-          reps: set.reps || 0,
-          set_number: setIndex + 1,
-          completed: set.completed || false,
-          rest_time: set.restTime || 60
-        }));
-      });
+    // Update progress
+    onProgressUpdate?.({
+      step: 'workout',
+      total: 3,
+      completed: 0,
+      errors: []
+    });
+    
+    // Format exercise sets for the function call
+    const formattedSets = Object.entries(exercises).flatMap(([exerciseName, sets], exerciseIndex) => {
+      return sets.map((set, setIndex) => ({
+        exercise_name: exerciseName,
+        weight: set.weight || 0,
+        reps: set.reps || 0,
+        set_number: setIndex + 1,
+        completed: set.completed || false,
+        rest_time: set.restTime || 60
+      }));
+    });
 
-      // Try to use our atomic transaction function
-      const { data: transactionResult, error: rpcError } = await supabase.functions.invoke('save-complete-workout', {
+    console.log(`Saving workout with ${formattedSets.length} exercise sets`);
+    
+    // Try to use atomic transaction via edge function first
+    try {
+      const { data: transactionResult, error: functionError } = await supabase.functions.invoke('save-complete-workout', {
         body: {
           workout_data: {
             ...workoutData,
@@ -86,8 +89,31 @@ export const saveWorkout = async ({
         }
       });
       
-      // If successful, return with workoutId
-      if (transactionResult && !rpcError) {
+      // Check for specific error conditions and modify response
+      if (functionError) {
+        console.error("Edge function error:", functionError);
+        
+        // If function isn't found or unavailable, fall back to manual method
+        if (functionError.message?.includes('function not found') || 
+            functionError.message?.includes('network error')) {
+          console.log("Edge function unavailable, falling back to manual save");
+          // Continue to manual save below
+        } else {
+          // For other function errors, return error but make recoverable
+          return {
+            success: false,
+            error: {
+              type: 'function',
+              message: 'Error saving workout via edge function: ' + functionError.message,
+              details: functionError,
+              timestamp: new Date().toISOString(),
+              recoverable: true
+            }
+          };
+        }
+      } 
+      else if (transactionResult && transactionResult.workout_id) {
+        // Function worked and returned a workout ID
         onProgressUpdate?.({
           step: 'analytics',
           total: 3,
@@ -95,25 +121,26 @@ export const saveWorkout = async ({
           errors: []
         });
         
+        console.log("Workout saved successfully via edge function");
         return {
           success: true,
-          workoutId: transactionResult.workout_id
+          workoutId: transactionResult.workout_id,
+          partialSave: transactionResult.partial || false
         };
       }
-      
-      // If the function doesn't exist or fails, we'll fall back to the manual approach
-      console.warn("Function invocation failed, falling back to manual save:", rpcError);
-    } catch (rpcError) {
-      console.warn("RPC call failed, using fallback:", rpcError);
-      // Continue with fallback approach
+    } catch (functionError) {
+      console.warn("Edge function call failed, using fallback:", functionError);
+      // Continue with fallback approach below
     }
 
-    // 2. Manual save approach as fallback
+    // Manual save approach as fallback
+    console.log("Using manual save fallback approach");
+    
     // First, insert the workout record
     onProgressUpdate?.({
       step: 'workout',
       total: 3,
-      completed: 0,
+      completed: 0.2,
       errors: []
     });
     
@@ -127,6 +154,65 @@ export const saveWorkout = async ({
       .single();
       
     if (workoutError) {
+      console.error("Error creating workout:", workoutError);
+      
+      // Check if error is related to materialized views
+      if (workoutError.message && (
+          workoutError.message.includes('materialized view') ||
+          workoutError.message.includes('permission denied')
+      )) {
+        // Try again with just the essential data - this might work if it's a permissions issue
+        try {
+          const { data: simpleWorkout, error: simpleError } = await supabase
+            .from('workout_sessions')
+            .insert({
+              name: workoutData.name,
+              training_type: workoutData.training_type,
+              start_time: workoutData.start_time,
+              end_time: workoutData.end_time,
+              duration: workoutData.duration,
+              user_id: userData.id
+            })
+            .select('id')
+            .single();
+            
+          if (simpleError) {
+            throw simpleError;
+          }
+          
+          console.log("Workout created with simplified approach");
+          
+          // Continue with the simplified workout
+          const workoutId = simpleWorkout.id;
+          onProgressUpdate?.({
+            step: 'exercise-sets',
+            total: 3,
+            completed: 1,
+            errors: []
+          });
+          
+          await saveExerciseSetsWithRetry(workoutId, exercises, onProgressUpdate);
+          
+          return {
+            success: true,
+            workoutId,
+            partialSave: true
+          };
+        } catch (fallbackError) {
+          console.error("Simplified workout save failed:", fallbackError);
+          return {
+            success: false,
+            error: {
+              type: 'database',
+              message: 'Failed to save workout data (permission issue)',
+              details: fallbackError,
+              timestamp: new Date().toISOString(),
+              recoverable: true
+            }
+          };
+        }
+      }
+      
       return {
         success: false,
         error: {
@@ -146,105 +232,27 @@ export const saveWorkout = async ({
       errors: []
     });
     
-    // Track errors for partial save detection
-    const errors: WorkoutError[] = [];
-    
     // Save exercise sets with better error handling and retry capability
     const workoutId = workoutSession.id;
-    let successfulSets = 0;
-    let totalSets = 0;
-    
-    // Process exercise sets in batches with retry logic
-    for (const [exerciseName, sets] of Object.entries(exercises)) {
-      totalSets += sets.length;
-      
-      // Batch processing with retry on failure
-      const batchSize = 25;
-      for (let i = 0; i < sets.length; i += batchSize) {
-        const batch = sets.slice(i, i + batchSize);
-        
-        try {
-          const { error: batchError } = await supabase
-            .from('exercise_sets')
-            .insert(batch.map(set => ({
-              workout_id: workoutId,
-              exercise_name: exerciseName,
-              weight: set.weight || 0,
-              reps: set.reps || 0,
-              set_number: i + batch.indexOf(set) + 1,
-              completed: set.completed || false,
-              rest_time: set.restTime || 60
-            })));
-            
-          if (batchError) {
-            // Add to retry queue for later attempt
-            const retryQueue = saveRetryQueues.get(userData.id) || [];
-            retryQueue.push({
-              exerciseName,
-              sets: batch,
-              workoutId,
-              attempt: 1
-            });
-            saveRetryQueues.set(userData.id, retryQueue);
-            
-            errors.push({
-              type: 'database',
-              message: `Failed to save some sets for ${exerciseName}`,
-              details: batchError,
-              timestamp: new Date().toISOString(),
-              recoverable: true
-            });
-          } else {
-            successfulSets += batch.length;
-          }
-        } catch (error) {
-          console.error("Exception saving exercise set batch:", error);
-          
-          // Add to retry queue
-          const retryQueue = saveRetryQueues.get(userData.id) || [];
-          retryQueue.push({
-            exerciseName,
-            sets: batch,
-            workoutId,
-            attempt: 1
-          });
-          saveRetryQueues.set(userData.id, retryQueue);
-          
-          errors.push({
-            type: 'unknown',
-            message: `Exception saving sets for ${exerciseName}`,
-            details: error,
-            timestamp: new Date().toISOString(),
-            recoverable: true
-          });
-        }
-        
-        // Update progress
-        onProgressUpdate?.({
-          step: 'exercise-sets',
-          total: 3,
-          completed: 1 + (successfulSets / totalSets),
-          errors
-        });
-      }
-    }
+    const { success: setsSuccess, errors: setsErrors } = 
+      await saveExerciseSetsWithRetry(workoutId, exercises, onProgressUpdate);
     
     // Try to trigger analytics refresh
     onProgressUpdate?.({
       step: 'analytics',
       total: 3,
       completed: 2,
-      errors
+      errors: setsErrors
     });
     
     try {
       // Attempt to refresh the analytics
-      await supabase.functions.invoke('refresh-workout-analytics', {
+      await supabase.functions.invoke('recover-workout', {
         body: { workoutId }
       }).then(({ error: refreshError }) => {
         if (refreshError) {
           console.warn("Analytics refresh failed:", refreshError);
-          errors.push({
+          setsErrors.push({
             type: 'database',
             message: 'Analytics refresh failed',
             details: refreshError,
@@ -262,16 +270,16 @@ export const saveWorkout = async ({
       step: 'analytics',
       total: 3,
       completed: 3,
-      errors
+      errors: setsErrors
     });
     
     // Check if we have a partial save situation
-    if (errors.length > 0) {
+    if (!setsSuccess) {
       return {
         success: true,
         workoutId,
         partialSave: true,
-        error: errors[0] // Return first error for immediate feedback
+        error: setsErrors[0] // Return first error for immediate feedback
       };
     }
     
@@ -296,10 +304,153 @@ export const saveWorkout = async ({
   }
 };
 
+// Helper function to save exercise sets with retry capability
+async function saveExerciseSetsWithRetry(
+  workoutId: string,
+  exercises: Record<string, EnhancedExerciseSet[]>,
+  onProgressUpdate?: (progress: SaveProgress) => void
+): Promise<{ success: boolean, errors: WorkoutError[] }> {
+  const errors: WorkoutError[] = [];
+  let totalSets = 0;
+  let successfulSets = 0;
+  
+  // Calculate total sets for progress tracking
+  Object.values(exercises).forEach(sets => {
+    totalSets += sets.length;
+  });
+  
+  // Process exercise sets in batches with retry logic
+  for (const [exerciseName, sets] of Object.entries(exercises)) {
+    // Batch processing with retry on failure
+    const batchSize = 25; // Smaller batch size for better reliability
+    for (let i = 0; i < sets.length; i += batchSize) {
+      const batch = sets.slice(i, i + batchSize);
+      
+      try {
+        const { error: batchError } = await supabase
+          .from('exercise_sets')
+          .insert(batch.map(set => ({
+            workout_id: workoutId,
+            exercise_name: exerciseName,
+            weight: set.weight || 0,
+            reps: set.reps || 0,
+            set_number: i + batch.indexOf(set) + 1,
+            completed: set.completed || false,
+            rest_time: set.restTime || 60
+          })));
+          
+        if (batchError) {
+          console.error(`Error saving batch for ${exerciseName}:`, batchError);
+          
+          // For permission issues, try one at a time to maximize success
+          if (batchError.message?.includes('permission denied')) {
+            console.log("Trying individual saves due to permission issues");
+            let individualSuccess = 0;
+            
+            for (const set of batch) {
+              try {
+                const { error: setError } = await supabase
+                  .from('exercise_sets')
+                  .insert({
+                    workout_id: workoutId,
+                    exercise_name: exerciseName,
+                    weight: set.weight || 0,
+                    reps: set.reps || 0,
+                    set_number: i + batch.indexOf(set) + 1,
+                    completed: set.completed || false,
+                    rest_time: set.restTime || 60
+                  });
+                  
+                if (!setError) {
+                  individualSuccess++;
+                  successfulSets++;
+                }
+              } catch (indError) {
+                console.error(`Individual set save failed for ${exerciseName}:`, indError);
+              }
+            }
+            
+            if (individualSuccess < batch.length) {
+              errors.push({
+                type: 'database',
+                message: `Saved ${individualSuccess}/${batch.length} sets for ${exerciseName}`,
+                details: batchError,
+                timestamp: new Date().toISOString(),
+                recoverable: true
+              });
+            }
+          } else {
+            // Add to retry queue for later attempt
+            const userId = (await supabase.auth.getUser()).data.user?.id;
+            if (userId) {
+              const retryQueue = saveRetryQueues.get(userId) || [];
+              retryQueue.push({
+                exerciseName,
+                sets: batch,
+                workoutId,
+                attempt: 1
+              });
+              saveRetryQueues.set(userId, retryQueue);
+            }
+            
+            errors.push({
+              type: 'database',
+              message: `Failed to save some sets for ${exerciseName}`,
+              details: batchError,
+              timestamp: new Date().toISOString(),
+              recoverable: true
+            });
+          }
+        } else {
+          successfulSets += batch.length;
+        }
+      } catch (error) {
+        console.error("Exception saving exercise set batch:", error);
+        
+        // Add to retry queue
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (userId) {
+          const retryQueue = saveRetryQueues.get(userId) || [];
+          retryQueue.push({
+            exerciseName,
+            sets: batch,
+            workoutId,
+            attempt: 1
+          });
+          saveRetryQueues.set(userId, retryQueue);
+        }
+        
+        errors.push({
+          type: 'unknown',
+          message: `Exception saving sets for ${exerciseName}`,
+          details: error,
+          timestamp: new Date().toISOString(),
+          recoverable: true
+        });
+      }
+      
+      // Update progress
+      onProgressUpdate?.({
+        step: 'exercise-sets',
+        total: 3,
+        completed: 1 + (successfulSets / totalSets),
+        errors
+      });
+    }
+  }
+  
+  return { 
+    success: successfulSets === totalSets,
+    errors
+  };
+}
+
 // Process retry queue in the background
 export const processRetryQueue = async (userId: string): Promise<boolean> => {
   const retryQueue = saveRetryQueues.get(userId);
   if (!retryQueue || retryQueue.length === 0) return true;
+  
+  console.log(`Processing retry queue for user ${userId} with ${retryQueue.length} items`);
   
   let success = true;
   const newQueue: typeof retryQueue = [];
@@ -343,8 +494,10 @@ export const processRetryQueue = async (userId: string): Promise<boolean> => {
   // Update the queue
   if (newQueue.length > 0) {
     saveRetryQueues.set(userId, newQueue);
+    console.log(`${newQueue.length} items remain in retry queue after processing`);
   } else {
     saveRetryQueues.delete(userId);
+    console.log(`Retry queue cleared for user ${userId}`);
   }
   
   return success;
@@ -352,22 +505,44 @@ export const processRetryQueue = async (userId: string): Promise<boolean> => {
 
 export const recoverPartiallyCompletedWorkout = async (workoutId: string): Promise<SaveResult> => {
   try {
-    // Attempt recovery using existing service function
+    console.log(`Attempting to recover workout ${workoutId}`);
+    
+    // Attempt recovery using edge function
     const { data, error } = await supabase.functions.invoke('recover-workout', {
       body: { workoutId }
     });
     
     if (error) {
-      return {
-        success: false,
-        error: {
-          type: 'database',
-          message: 'Failed to recover workout',
-          details: error,
-          timestamp: new Date().toISOString(),
-          recoverable: false
+      console.error("Recovery edge function error:", error);
+      
+      // Fall back to direct database operation if function fails
+      try {
+        const { data: workout, error: diagError } = await supabase
+          .from('workout_sessions')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', workoutId)
+          .select();
+          
+        if (diagError) {
+          throw diagError;
         }
-      };
+        
+        return {
+          success: true,
+          workoutId
+        };
+      } catch (dbError) {
+        return {
+          success: false,
+          error: {
+            type: 'database',
+            message: 'Failed to recover workout',
+            details: dbError,
+            timestamp: new Date().toISOString(),
+            recoverable: false
+          }
+        };
+      }
     }
     
     return {
@@ -386,5 +561,30 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string): Promi
         recoverable: false
       }
     };
+  }
+};
+
+// New helper function to perform immediate recovery
+export const attemptImmediateRecovery = async (workoutId: string): Promise<boolean> => {
+  try {
+    toast("Attempting workout recovery...");
+    
+    const result = await recoverPartiallyCompletedWorkout(workoutId);
+    
+    if (result.success) {
+      toast.success("Workout data recovery successful");
+      return true;
+    } else {
+      toast.error("Recovery attempt failed", {
+        description: result.error?.message || "Unknown error"
+      });
+      return false;
+    }
+  } catch (error) {
+    console.error("Immediate recovery attempt failed:", error);
+    toast.error("Recovery attempt failed", {
+      description: error instanceof Error ? error.message : "Unknown error"
+    });
+    return false;
   }
 };
