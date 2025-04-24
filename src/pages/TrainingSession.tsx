@@ -77,7 +77,6 @@ const TrainingSession: React.FC = () => {
   const volume = 1250;
   const efficiency = 85;
   
-  // Effect to check if there's a reset parameter in URL to force a reset
   useEffect(() => {
     const shouldReset = searchParams.get('reset') === 'true';
     if (shouldReset) {
@@ -86,11 +85,9 @@ const TrainingSession: React.FC = () => {
     }
   }, [searchParams, resetSession]);
   
-  // Effect to retry saving when component mounts if we're in recovery mode
   useEffect(() => {
     if (isRecoveryMode && workoutId) {
       console.log("Recovery mode detected, attempting recovery");
-      // Slight delay to let the UI render first
       const recoveryTimeout = setTimeout(() => {
         attemptRecovery();
       }, 2000);
@@ -464,6 +461,8 @@ const TrainingSession: React.FC = () => {
         open={showAddExerciseSheet}
         onOpenChange={setShowAddExerciseSheet}
         onSelectExercise={handleAddExercise}
+        trainingType={trainingType}
+        currentExercises={Object.keys(exercises)}
       />
 
       <WorkoutHeader trainingType={trainingTypeObj} />
@@ -532,6 +531,7 @@ const TrainingSession: React.FC = () => {
               onRestTimeIncrement={handleRestTimeIncrement}
               onShowRestTimer={handleShowRestTimer}
               onResetRestTimer={handleResetRestTimer}
+              onOpenAddExercise={handleOpenAddExercise}
             />
             
             <WorkoutCompletion

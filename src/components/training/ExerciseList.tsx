@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ExerciseCard } from './ExerciseCard';
 import { LocalExerciseSet } from '@/hooks/useWorkoutState';
@@ -21,6 +20,7 @@ interface ExerciseListProps {
   onRestTimeIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
   onShowRestTimer: () => void;
   onResetRestTimer: () => void;
+  onOpenAddExercise: () => void;
 }
 
 export const ExerciseList: React.FC<ExerciseListProps> = ({
@@ -39,6 +39,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   onRestTimeIncrement,
   onShowRestTimer,
   onResetRestTimer,
+  onOpenAddExercise,
 }) => {
   return (
     <div className="mb-4">
@@ -72,7 +73,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
       {/* Add Exercise Button */}
       <div className="flex justify-center mt-8">
         <CircularGradientButton
-          onClick={() => window.document.querySelector<HTMLButtonElement>('[aria-label="Add Exercise"]')?.click()}
+          onClick={onOpenAddExercise}
           icon={<PlusCircle size={32} className="text-white" />}
           size={96}
         >
