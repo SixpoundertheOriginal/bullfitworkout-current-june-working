@@ -29,12 +29,12 @@ export const WorkoutHistory = ({
   const navigate = useNavigate();
   const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
   const [fixingWorkoutId, setFixingWorkoutId] = useState<string | null>(null);
+  const [showRecoverPrompt, setShowRecoverPrompt] = useState(false);
+  const [recoveryChecking, setRecoveryChecking] = useState(false);
   const { user } = useAuth();
   
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedWorkouts, setSelectedWorkouts] = useState<string[]>([]);
-  const [showRecoverPrompt, setShowRecoverPrompt] = useState(false);
-  const [recoveryChecking, setRecoveryChecking] = useState(false);
   
   useEffect(() => {
     if (!user || !data?.workouts || recoveryChecking) return;
@@ -43,14 +43,14 @@ export const WorkoutHistory = ({
       try {
         setRecoveryChecking(true);
         
-        const oneHourAgo = new Date();
-        oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+        const thirtyMinutesAgo = new Date();
+        thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
         
         const { data: recentWorkouts, error } = await supabase
           .from('workout_sessions')
-          .select('id, name, created_at')
+          .select('id, name, created_at, exercise_sets(count)')
           .eq('user_id', user.id)
-          .gte('created_at', oneHourAgo.toISOString())
+          .gte('created_at', thirtyMinutesAgo.toISOString())
           .order('created_at', { ascending: false });
           
         if (error) {
@@ -60,11 +60,17 @@ export const WorkoutHistory = ({
         
         if (recentWorkouts && recentWorkouts.length > 0) {
           const visibleWorkoutIds = new Set(data.workouts.map(w => w.id));
-          const missingWorkouts = recentWorkouts.filter(w => !visibleWorkoutIds.has(w.id));
+          const missingWorkouts = recentWorkouts.filter(w => {
+            const isMissing = !visibleWorkoutIds.has(w.id);
+            const hasNoSets = w.exercise_sets && w.exercise_sets.length === 0;
+            return isMissing || hasNoSets;
+          });
           
           if (missingWorkouts.length > 0) {
             console.log(`Found ${missingWorkouts.length} potentially missing recent workouts:`, missingWorkouts);
             setShowRecoverPrompt(true);
+          } else {
+            setShowRecoverPrompt(false);
           }
         }
       } catch (error) {
@@ -192,14 +198,14 @@ export const WorkoutHistory = ({
   const handleRecoverRecentWorkouts = async () => {
     setRecoveryChecking(true);
     try {
-      const oneHourAgo = new Date();
-      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+      const thirtyMinutesAgo = new Date();
+      thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
       
       const { data: recentWorkouts, error } = await supabase
         .from('workout_sessions')
         .select('id, name')
         .eq('user_id', user?.id)
-        .gte('created_at', oneHourAgo.toISOString())
+        .gte('created_at', thirtyMinutesAgo.toISOString())
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -209,7 +215,7 @@ export const WorkoutHistory = ({
       }
       
       if (!recentWorkouts || recentWorkouts.length === 0) {
-        toast("There are no workouts from the last hour to recover.");
+        toast("There are no workouts from the last 30 minutes to recover.");
         setShowRecoverPrompt(false);
         return;
       }
@@ -320,7 +326,7 @@ export const WorkoutHistory = ({
               <div>
                 <h3 className="font-medium text-yellow-200">Recently incomplete workouts detected</h3>
                 <p className="text-sm text-yellow-200/70 mt-1">
-                  We found workouts from the last hour that might not be fully saved.
+                  We found workouts from the last 30 minutes that might not be fully saved.
                 </p>
                 <Button
                   variant="outline"
@@ -412,7 +418,7 @@ export const WorkoutHistory = ({
             <div>
               <h3 className="font-medium text-yellow-200">Recently incomplete workouts detected</h3>
               <p className="text-sm text-yellow-200/70 mt-1">
-                We found workouts from the last hour that might not be fully saved.
+                We found workouts from the last 30 minutes that might not be fully saved.
               </p>
               <Button
                 variant="outline"

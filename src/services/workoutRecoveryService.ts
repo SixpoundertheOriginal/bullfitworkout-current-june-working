@@ -100,7 +100,8 @@ export async function recoverPartialWorkout(workoutId: string) {
     const { data: updatedWorkout, error: updateError } = await supabase
       .from('workout_sessions')
       .update({ 
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        logged_at: new Date().toISOString() // Ensure logged_at is updated
       })
       .eq('id', workoutId)
       .select();
@@ -112,20 +113,37 @@ export async function recoverPartialWorkout(workoutId: string) {
     
     console.log("Successfully triggered workout update for recovery");
     
-    // 4. Try to execute any SQL functions that might help refresh the analytics
-    // This is done manually rather than relying on the trigger
+    // 4. Try to execute edge function to refresh analytics
     try {
-      // Execute a SQL function to refresh analytics if it exists
-      // Using fetch to call custom RPC functions
-      const { error: refreshError } = await supabase.functions.invoke('manual-refresh-analytics', {
+      const { error: refreshError } = await supabase.functions.invoke('recover-workout', {
         body: { workoutId }
       });
       
       if (refreshError) {
         console.error("Error refreshing analytics during recovery:", refreshError);
+        return {
+          success: true,
+          partial: true,
+          workout: updatedWorkout?.[0] || workout,
+          setCount,
+          analyticsError: refreshError.message
+        };
       }
+      
+      console.log("Successfully refreshed analytics via edge function");
     } catch (error) {
-      console.warn("No manual refresh function available, continuing recovery", error);
+      console.warn("Error invoking recover-workout function:", error);
+      // Try a direct approach as fallback
+      try {
+        const { error: directRefreshError } = await supabase.rpc('refresh_workout_analytics');
+        if (directRefreshError) {
+          console.warn("Direct analytics refresh failed:", directRefreshError);
+        } else {
+          console.log("Successfully refreshed analytics via direct RPC call");
+        }
+      } catch (directError) {
+        console.warn("Direct RPC call failed:", directError);
+      }
     }
     
     return { 
@@ -179,9 +197,9 @@ export async function diagnoseAndFixWorkout(workoutId: string) {
       analyticsStatus: "unknown"
     };
     
-    // If there are no exercise sets, attempt to recover
-    if (!diagnosis.hasExercises) {
-      console.log("No exercise sets found, attempting recovery");
+    // If there are no exercise sets or workout has issues, attempt to recover
+    if (!diagnosis.hasExercises || !workout.logged_at) {
+      console.log("Issues detected, attempting recovery");
       const recovery = await recoverPartialWorkout(workoutId);
       return { 
         ...diagnosis,
@@ -189,6 +207,16 @@ export async function diagnoseAndFixWorkout(workoutId: string) {
         success: recovery.success,
         fixed: recovery.success
       };
+    }
+    
+    // Attempt recovery through edge function to refresh analytics even if it seems fine
+    try {
+      await supabase.functions.invoke('recover-workout', {
+        body: { workoutId }
+      });
+      console.log("Preventative analytics refresh complete");
+    } catch (error) {
+      console.warn("Preventative analytics refresh failed:", error);
     }
     
     // Everything seems fine

@@ -43,23 +43,57 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Attempt to trigger the analytics refresh
-    try {
-      // Call the refresh_workout_analytics function
-      const { error } = await supabase.rpc('refresh_workout_analytics');
-      
-      if (error) {
-        console.error("Failed to refresh analytics:", error);
+    // First, check if the workout exists with exercise sets
+    const { data: workout, error: workoutError } = await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('id', workoutId)
+      .single();
+
+    if (workoutError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Workout not found",
+          details: workoutError.message
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if exercise sets exist
+    const { data: setsCount, error: setsCountError } = await supabase
+      .from('exercise_sets')
+      .select('id', { count: 'exact', head: true })
+      .eq('workout_id', workoutId);
+    
+    const setCount = setsCount ? setsCount.length : 0;
+    
+    // Attempt to trigger the analytics refresh - try multiple times
+    let analyticsRefreshed = false;
+    
+    for (let i = 0; i < 3; i++) {
+      try {
+        await supabase.rpc('refresh_workout_analytics');
+        analyticsRefreshed = true;
+        break;
+      } catch (refreshError) {
+        console.warn(`Analytics refresh attempt ${i+1} failed:`, refreshError);
+        if (i < 2) {
+          // Wait 500ms before retrying
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
-    } catch (refreshError) {
-      console.error("Error refreshing analytics:", refreshError);
     }
 
     // Update the workout to ensure it's visible in history
     // This is a hack that forces a refresh of the workout in the database
     const { data: updatedWorkout, error: updateError } = await supabase
       .from('workout_sessions')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ 
+        updated_at: new Date().toISOString(),
+        logged_at: new Date().toISOString()  // Ensure it's logged
+      })
       .eq('id', workoutId)
       .select();
 
@@ -75,10 +109,25 @@ serve(async (req) => {
       );
     }
 
+    // If there are no exercise sets but the workout exists, try to verify that this makes sense
+    if (setCount === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          warning: "Workout exists but has no exercise sets",
+          workout: updatedWorkout?.[0] || null,
+          analyticsRefreshed
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        workout: updatedWorkout?.[0] || null
+        workout: updatedWorkout?.[0] || null,
+        setCount,
+        analyticsRefreshed
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

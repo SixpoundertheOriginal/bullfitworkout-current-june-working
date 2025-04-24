@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Use our newly created save_workout_transaction function to safely save the workout
+    // Use transaction function for atomic operations
     const { data: result, error: transactionError } = await supabase.rpc('save_workout_transaction', {
       p_workout_data: workout_data,
       p_exercise_sets: exercise_sets
@@ -93,7 +93,26 @@ serve(async (req) => {
 
         // 3. Try to refresh analytics
         try {
-          await supabase.rpc('refresh_workout_analytics');
+          // Make multiple attempts to refresh analytics
+          for (let i = 0; i < 3; i++) {
+            try {
+              await supabase.rpc('refresh_workout_analytics');
+              console.log("Analytics refreshed successfully");
+              break;
+            } catch (refreshError) {
+              console.warn(`Analytics refresh attempt ${i+1} failed:`, refreshError);
+              if (i < 2) {
+                // Wait 500ms before retrying
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            }
+          }
+          
+          // Mark the workout as complete by updating the updated_at timestamp
+          await supabase
+            .from('workout_sessions')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', workout.id);
         } catch (analyticsError) {
           console.warn("Analytics refresh failed but workout was saved:", analyticsError);
         }
@@ -106,6 +125,14 @@ serve(async (req) => {
         console.error("Fallback approach failed:", fallbackError);
         throw fallbackError;
       }
+    }
+
+    // Try to ensure analytics are up to date
+    try {
+      await supabase.rpc('refresh_workout_analytics');
+    } catch (refreshError) {
+      // Non-blocking error; workout saved successfully
+      console.warn("Analytics refresh failed after transaction:", refreshError);
     }
 
     return new Response(
