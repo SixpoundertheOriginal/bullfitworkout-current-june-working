@@ -1,0 +1,229 @@
+
+import { useState, useCallback } from 'react';
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/components/ui/sonner";
+import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
+import { WorkoutError } from "@/types/workout";
+import { LocalExerciseSet } from '@/hooks/useWorkoutState';
+import { ExerciseSet } from "@/types/exercise";
+
+export const useWorkoutSave = (exercises: Record<string, LocalExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
+  const [saveStatus, setSaveStatus] = useState<{
+    status: 'idle' | 'saving' | 'partial' | 'saved' | 'failed' | 'recovering';
+    errors: WorkoutError[];
+    workoutId?: string | null;
+    saveProgress?: {
+      step: 'workout' | 'exercise-sets' | 'analytics';
+      total: number;
+      completed: number;
+      errors: WorkoutError[];
+    };
+  }>({
+    status: 'idle',
+    errors: []
+  });
+
+  const { user } = useAuth();
+
+  const markAsSaving = useCallback(() => {
+    setSaveStatus(prev => ({
+      ...prev,
+      status: 'saving',
+      saveProgress: {
+        step: 'workout',
+        total: 3,
+        completed: 0,
+        errors: []
+      }
+    }));
+  }, []);
+
+  const markAsPartialSave = useCallback((errors: WorkoutError[]) => {
+    setSaveStatus(prev => ({
+      ...prev,
+      status: 'partial',
+      errors: [...prev.errors, ...errors]
+    }));
+
+    toast("Workout partially saved", {
+      description: "Some data couldn't be saved. You can try again later.",
+      duration: 5000,
+    });
+  }, []);
+
+  const markAsSaved = useCallback((workoutId: string) => {
+    setSaveStatus({
+      status: 'saved',
+      errors: [],
+      workoutId
+    });
+  }, []);
+
+  const markAsFailed = useCallback((error: WorkoutError) => {
+    setSaveStatus(prev => ({
+      ...prev,
+      status: 'failed',
+      errors: [...prev.errors, error]
+    }));
+
+    toast.error("Workout save failed", {
+      description: error.message,
+      duration: 5000,
+    });
+  }, []);
+
+  const updateSaveProgress = useCallback((step: 'workout' | 'exercise-sets' | 'analytics', completed: number) => {
+    setSaveStatus(prev => {
+      if (!prev.saveProgress) return prev;
+      return {
+        ...prev,
+        saveProgress: {
+          ...prev.saveProgress,
+          step,
+          completed
+        }
+      };
+    });
+  }, []);
+
+  const handleCompleteWorkout = async () => {
+    if (!Object.keys(exercises).length) {
+      toast("No exercises added", {
+        description: "Please add at least one exercise before completing your workout",
+      });
+      return;
+    }
+    
+    if (!user) {
+      toast.error("Authentication required", {
+        description: "You need to be logged in to save workouts",
+      });
+      return;
+    }
+    
+    try {
+      markAsSaving();
+      
+      const now = new Date();
+      const startTime = new Date(now.getTime() - elapsedTime * 1000);
+      
+      const workoutData = {
+        name: `Workout ${now.toLocaleDateString()}`,
+        training_type: 'strength',
+        start_time: startTime.toISOString(),
+        end_time: now.toISOString(),
+        duration: elapsedTime || 0,
+        notes: null
+      };
+      
+      const saveResult = await saveWorkout({
+        userData: user,
+        workoutData,
+        exercises,
+        onProgressUpdate: (progress) => {
+          updateSaveProgress(progress.step, progress.completed);
+        }
+      });
+      
+      if (saveResult.success) {
+        if (saveResult.partialSave) {
+          markAsPartialSave(saveResult.error ? [saveResult.error] : []);
+          return saveResult.workoutId;
+        } else {
+          markAsSaved(saveResult.workoutId || '');
+          resetSession();
+          return saveResult.workoutId;
+        }
+      } else {
+        markAsFailed(saveResult.error || {
+          type: 'unknown',
+          message: 'Unknown error during save',
+          timestamp: new Date().toISOString(),
+          recoverable: false
+        });
+        return null;
+      }
+    } catch (error) {
+      markAsFailed({
+        type: 'unknown',
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        timestamp: new Date().toISOString(),
+        recoverable: true
+      });
+      
+      toast.error("Error", {
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+      return null;
+    }
+  };
+
+  const attemptRecovery = useCallback(async (workoutId: string) => {
+    try {
+      setSaveStatus(prev => ({ ...prev, status: 'recovering' }));
+      
+      const { success, error } = await recoverPartiallyCompletedWorkout(workoutId);
+      
+      if (!success) {
+        setSaveStatus(prev => ({
+          status: 'partial',
+          errors: [...prev.errors, error || {
+            type: 'database',
+            message: 'Failed to recover workout data',
+            timestamp: new Date().toISOString(),
+            recoverable: false
+          }]
+        }));
+        
+        toast.error("Recovery failed", {
+          description: "We couldn't recover your workout data. Please try again.",
+        });
+        
+        return false;
+      }
+      
+      if (user?.id) {
+        await processRetryQueue(user.id);
+      }
+      
+      setSaveStatus({
+        status: 'saved',
+        errors: [],
+        workoutId
+      });
+      
+      toast("Workout recovered", {
+        description: "Your workout data has been successfully recovered.",
+      });
+      
+      return true;
+    } catch (error) {
+      setSaveStatus(prev => ({
+        status: 'partial',
+        errors: [...prev.errors, {
+          type: 'database',
+          message: 'Failed to recover workout data',
+          details: error,
+          timestamp: new Date().toISOString(),
+          recoverable: false
+        }]
+      }));
+      
+      toast.error("Recovery failed", {
+        description: "We couldn't recover your workout data. Please try again.",
+      });
+      
+      return false;
+    }
+  }, [user]);
+
+  return {
+    saveStatus: saveStatus.status,
+    saveProgress: saveStatus.saveProgress,
+    savingErrors: saveStatus.errors,
+    workoutId: saveStatus.workoutId,
+    handleCompleteWorkout,
+    attemptRecovery,
+    updateSaveProgress
+  };
+};

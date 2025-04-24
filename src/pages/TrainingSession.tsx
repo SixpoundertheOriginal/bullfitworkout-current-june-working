@@ -1,20 +1,19 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { WorkoutCompletion } from "@/components/training/WorkoutCompletion";
-import { useWorkoutState, LocalExerciseSet } from "@/hooks/useWorkoutState";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { trainingTypes } from "@/constants/trainingTypes";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { WorkoutHeader } from "@/components/training/WorkoutHeader";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
+import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader";
+import { useWorkoutSave } from "@/hooks/useWorkoutSave";
 import { ExerciseSet } from "@/types/exercise";
-import { saveWorkout, processRetryQueue } from "@/services/workoutSaveService";
-import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
+import { Button } from "@/components/ui/button";
 
 interface LocationState {
   trainingType?: string;
@@ -35,18 +34,19 @@ const TrainingSession: React.FC = () => {
     restTimerResetSignal,
     triggerRestTimerReset,
     currentRestTime,
-    
-    workoutStatus,
     isRecoveryMode,
-    saveProgress,
-    workoutId,
-    markAsSaving,
-    markAsPartialSave,
-    markAsSaved,
-    markAsFailed,
-    updateSaveProgress,
-    attemptRecovery
+    handleCompleteSet
   } = useWorkoutState();
+
+  const {
+    saveStatus: workoutStatus,
+    saveProgress,
+    savingErrors,
+    workoutId,
+    handleCompleteWorkout,
+    attemptRecovery,
+    updateSaveProgress
+  } = useWorkoutSave(exercises, elapsedTime, resetSession);
   
   const [showAddExerciseSheet, setShowAddExerciseSheet] = React.useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -88,13 +88,8 @@ const TrainingSession: React.FC = () => {
   useEffect(() => {
     if (isRecoveryMode && workoutId) {
       console.log("Recovery mode detected, attempting recovery");
-      const recoveryTimeout = setTimeout(() => {
-        attemptRecovery();
-      }, 2000);
-      
-      return () => clearTimeout(recoveryTimeout);
     }
-  }, [isRecoveryMode, workoutId, attemptRecovery]);
+  }, [isRecoveryMode, workoutId]);
   
   useBeforeUnload(event => {
     if (Object.keys(exercises).length > 0) {
@@ -144,9 +139,6 @@ const TrainingSession: React.FC = () => {
     }, 100);
   };
 
-  const handleOpenAddExercise = () => setShowAddExerciseSheet(true);
-  const handleCloseAddExercise = () => setShowAddExerciseSheet(false);
-
   const handleAddSet = (exerciseName: string) => {
     setExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
@@ -173,35 +165,6 @@ const TrainingSession: React.FC = () => {
     });
   };
   
-  const handleCompleteSet = (exerciseName: string, setIndex: number) => {
-    setExercises(prev => {
-      const exerciseSets = [...(prev[exerciseName] || [])];
-      const currentSet = exerciseSets[setIndex];
-      exerciseSets[setIndex] = { 
-        ...currentSet, 
-        completed: true,
-        isEditing: false 
-      };
-      
-      if (setIndex < exerciseSets.length - 1) {
-        exerciseSets[setIndex + 1] = {
-          ...exerciseSets[setIndex + 1],
-          restTime: currentSet.restTime || 60
-        };
-      }
-      
-      const currentRestTime = currentSet.restTime;
-      console.log(`Set ${setIndex + 1} completed with rest time: ${currentRestTime}s`);
-      
-      triggerRestTimerReset(currentRestTime);
-      
-      return {
-        ...prev,
-        [exerciseName]: exerciseSets
-      };
-    });
-  };
-  
   const handleRemoveSet = (exerciseName: string, setIndex: number) => {
     setExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
@@ -220,100 +183,6 @@ const TrainingSession: React.FC = () => {
     });
   };
 
-  const handleCompleteWorkout = async () => {
-    if (!Object.keys(exercises).length) {
-      toast("No exercises added", {
-        description: "Please add at least one exercise before completing your workout",
-      });
-      return;
-    }
-    
-    if (!user) {
-      toast.error("Authentication required", {
-        description: "You need to be logged in to save workouts",
-      });
-      return;
-    }
-    
-    try {
-      markAsSaving();
-      
-      const now = new Date();
-      const startTime = new Date(now.getTime() - elapsedTime * 1000);
-      
-      const workoutData = {
-        name: `Workout ${now.toLocaleDateString()}`,
-        training_type: trainingType || 'strength',
-        start_time: startTime.toISOString(),
-        end_time: now.toISOString(),
-        duration: elapsedTime || 0,
-        notes: null
-      };
-      
-      console.log("Starting workout save...");
-      const saveResult = await saveWorkout({
-        userData: user,
-        workoutData,
-        exercises,
-        onProgressUpdate: (progress) => {
-          updateSaveProgress(progress.step, progress.completed);
-        }
-      });
-      
-      if (saveResult.success) {
-        if (saveResult.partialSave) {
-          console.log("Workout partially saved", saveResult);
-          markAsPartialSave(saveResult.error ? [saveResult.error] : []);
-          navigateToComplete(saveResult.workoutId || null);
-        } else {
-          console.log("Workout save complete", saveResult);
-          markAsSaved(saveResult.workoutId || '');
-          resetSession();
-          navigateToComplete(saveResult.workoutId || null);
-        }
-      } else {
-        console.error("Workout save failed", saveResult);
-        markAsFailed(saveResult.error || {
-          type: 'unknown',
-          message: 'Unknown error during save',
-          timestamp: new Date().toISOString(),
-          recoverable: false
-        });
-      }
-    } catch (error) {
-      console.error('Error in workout completion process:', error);
-      markAsFailed({
-        type: 'unknown',
-        message: error instanceof Error ? error.message : 'Unknown error occurred',
-        timestamp: new Date().toISOString(),
-        recoverable: true
-      });
-      
-      toast.error("Error", {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-    }
-  };
-
-  const handleRetrySave = async () => {
-    if (!user || !workoutId) return;
-    
-    if (workoutId) {
-      toast("Attempting recovery", {
-        description: "Trying to recover your workout data..."
-      });
-      
-      const recoverySuccess = await attemptRecovery();
-      
-      if (recoverySuccess && user.id) {
-        await processRetryQueue(user.id);
-        navigateToComplete(workoutId);
-      }
-    } else {
-      handleCompleteWorkout();
-    }
-  };
-  
   const navigateToComplete = (workoutId: string | null) => {
     const now = new Date();
     navigate('/workout-complete', {
@@ -344,11 +213,47 @@ const TrainingSession: React.FC = () => {
       }
     });
   };
-  
+
+  const handleResetWorkoutSession = () => {
+    resetSession();
+    toast.success("Workout reset", {
+      description: "Starting a fresh workout session"
+    });
+  };
+
+  const handleRetrySave = async () => {
+    if (!user || !workoutId) return;
+    
+    if (workoutId) {
+      toast("Attempting recovery", {
+        description: "Trying to recover your workout data..."
+      });
+      
+      const recoverySuccess = await attemptRecovery(workoutId);
+      
+      if (recoverySuccess && user.id) {
+        processRetryQueue(user.id);
+        navigateToComplete(workoutId);
+      }
+    } else {
+      const newWorkoutId = await handleCompleteWorkout();
+      if (newWorkoutId) {
+        navigateToComplete(newWorkoutId);
+      }
+    }
+  };
+
+  const onCompleteWorkout = async () => {
+    const workoutId = await handleCompleteWorkout();
+    if (workoutId) {
+      navigateToComplete(workoutId);
+    }
+  };
+
   const handleRestTimerComplete = () => setRestTimerActive(false);
   const handleShowRestTimer = () => setRestTimerActive(true);
   const handleResetRestTimer = () => triggerRestTimerReset();
-  
+
   const handleEditSet = (exercise: string, index: number) => setExercises(prev => {
     const exerciseSets = [...(prev[exercise] || [])];
     exerciseSets[index] = { 
@@ -447,13 +352,6 @@ const TrainingSession: React.FC = () => {
       [exercise]: exerciseSets
     };
   });
-  
-  const handleResetWorkoutSession = () => {
-    resetSession();
-    toast.success("Workout reset", {
-      description: "Starting a fresh workout session"
-    });
-  };
 
   return (
     <div className="pb-20">
@@ -467,50 +365,25 @@ const TrainingSession: React.FC = () => {
 
       <WorkoutHeader trainingType={trainingTypeObj} />
       
-      <div className="sticky top-16 z-10 bg-gray-900/80 backdrop-blur-lg" ref={metricsRef}>
-        <WorkoutMetrics
-          time={elapsedTime}
+      <div ref={metricsRef}>
+        <WorkoutSessionHeader
+          elapsedTime={elapsedTime}
           exerciseCount={Object.keys(exercises).length}
           completedSets={completedSets}
           totalSets={totalSets}
-          showRestTimer={restTimerActive}
+          workoutStatus={workoutStatus}
+          isRecoveryMode={isRecoveryMode}
+          saveProgress={saveProgress}
+          onRetrySave={handleRetrySave}
+          onResetWorkout={handleResetWorkoutSession}
+          restTimerActive={restTimerActive}
           onRestTimerComplete={handleRestTimerComplete}
-          onManualRestStart={handleShowRestTimer}
+          onShowRestTimer={handleShowRestTimer}
           onRestTimerReset={handleResetRestTimer}
           restTimerResetSignal={restTimerResetSignal}
-          currentRestTime={activeExercise && exercises[activeExercise]?.length > 0 ? 
-            exercises[activeExercise].find(set => !set.completed)?.restTime || 60 : 60}
+          currentRestTime={currentRestTime}
         />
       </div>
-      
-      {workoutStatus !== 'idle' && workoutStatus !== 'active' && (
-        <div className="px-4 mt-2">
-          <WorkoutSaveStatus 
-            status={workoutStatus}
-            saveProgress={saveProgress}
-            onRetry={handleRetrySave}
-          />
-        </div>
-      )}
-      
-      {isRecoveryMode && (
-        <div className="px-4 mt-2">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-            <h3 className="text-sm font-medium mb-1">Workout recovery available</h3>
-            <p className="text-gray-400 text-xs mb-2">
-              We found an unsaved workout. Continue your session or reset to start fresh.
-            </p>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleResetWorkoutSession}
-              className="w-full"
-            >
-              Reset & Start Fresh
-            </Button>
-          </div>
-        </div>
-      )}
       
       <div className="px-4 py-2">
         {Object.keys(exercises).length > 0 ? (
@@ -531,14 +404,14 @@ const TrainingSession: React.FC = () => {
               onRestTimeIncrement={handleRestTimeIncrement}
               onShowRestTimer={handleShowRestTimer}
               onResetRestTimer={handleResetRestTimer}
-              onOpenAddExercise={handleOpenAddExercise}
+              onOpenAddExercise={() => setShowAddExerciseSheet(true)}
             />
             
             <WorkoutCompletion
               exercises={exercises}
               intensity={intensity}
               efficiency={efficiency}
-              onComplete={handleCompleteWorkout}
+              onComplete={onCompleteWorkout}
             />
           </>
         ) : (
