@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -97,23 +96,20 @@ export const TopRestTimer = ({
         <CircularProgress 
           value={(elapsedTime / targetTime) * 100}
           size={48}
-          className="text-orange-500/20"
+          className="text-purple-500/20"
         >
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className={cn(
-              "text-sm font-mono",
-              elapsedTime >= targetTime ? "text-orange-400" : "text-gray-200"
+              "text-sm font-mono text-white",
+              elapsedTime >= targetTime ? "text-purple-400" : "text-gray-200"
             )}>
               {formatTime(elapsedTime)}
             </span>
+            <span className="text-[10px] text-gray-400 -mt-0.5">
+              / {formatTime(targetTime)}
+            </span>
           </div>
         </CircularProgress>
-        
-        {targetTime > 0 && (
-          <div className="mt-1 text-xs text-gray-400 text-center">
-            Target: {formatTime(targetTime)}
-          </div>
-        )}
       </div>
 
       {!isTimerActive && onManualStart && (
@@ -121,7 +117,7 @@ export const TopRestTimer = ({
           variant="outline"
           size="sm"
           onClick={onManualStart}
-          className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300"
+          className="mt-2 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-300"
         >
           <Play size={12} className="mr-1" /> Start Timer
         </Button>
