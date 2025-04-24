@@ -12,6 +12,7 @@ interface CircularProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   valuePrefix?: string;
   valueSuffix?: string;
   animated?: boolean;
+  children?: React.ReactNode;
 }
 
 export const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgressProps>(
@@ -24,6 +25,7 @@ export const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgres
     valuePrefix = "",
     valueSuffix = "%",
     animated = false,
+    children,
     className, 
     ...props 
   }, ref) => {
@@ -81,12 +83,16 @@ export const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgres
           )}
         </svg>
         
-        {showValue && (
+        {showValue && !children && (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className={cn("text-sm font-medium", valueClassName)}>
               {valuePrefix}{Math.round(value)}{valueSuffix}
             </span>
           </div>
+        )}
+        
+        {children && (
+          <div className="absolute inset-0">{children}</div>
         )}
       </div>
     );
@@ -94,3 +100,4 @@ export const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgres
 );
 
 CircularProgress.displayName = "CircularProgress";
+

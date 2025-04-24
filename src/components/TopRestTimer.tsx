@@ -1,5 +1,6 @@
+
 import React, { useEffect, useRef, useState } from 'react';
-import { Timer, Play } from 'lucide-react';
+import { Timer, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { CircularProgress } from '@/components/ui/circular-progress';
@@ -50,6 +51,12 @@ export const TopRestTimer = ({
         const elapsed = Math.floor((now - startTimeRef.current) / 1000);
         setElapsedTime(elapsed);
         
+        if (elapsed >= targetTime && onComplete) {
+          onComplete();
+          clearTimerInterval();
+          setIsTimerActive(false);
+        }
+        
         if (onTimeUpdate) {
           onTimeUpdate(elapsed);
         }
@@ -66,7 +73,7 @@ export const TopRestTimer = ({
       setIsTimerActive(true);
       startTimerInterval();
     }
-  }, [resetSignal]);
+  }, [resetSignal, targetTime]);
 
   useEffect(() => {
     if (isActive) {
@@ -82,7 +89,7 @@ export const TopRestTimer = ({
     return () => {
       clearTimerInterval();
     };
-  }, [isActive]);
+  }, [isActive, targetTime]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -90,13 +97,18 @@ export const TopRestTimer = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const progress = Math.min((elapsedTime / targetTime) * 100, 100);
+
   return (
     <div className="flex flex-col items-center">
       <div className="relative">
         <CircularProgress 
-          value={(elapsedTime / targetTime) * 100}
+          value={progress}
           size={48}
-          className="text-purple-500/20"
+          className={cn(
+            "text-purple-500/20",
+            isTimerActive && "animate-pulse"
+          )}
         >
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className={cn(
@@ -125,3 +137,4 @@ export const TopRestTimer = ({
     </div>
   );
 };
+
