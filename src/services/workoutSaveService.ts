@@ -103,7 +103,7 @@ export const saveWorkout = async ({
           return {
             success: false,
             error: {
-              type: 'function',
+              type: 'database', // Changed from 'function' to 'database'
               message: 'Error saving workout via edge function: ' + functionError.message,
               details: functionError,
               timestamp: new Date().toISOString(),
