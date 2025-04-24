@@ -2,6 +2,8 @@
 import React from 'react';
 import { ExerciseCard } from './ExerciseCard';
 import { LocalExerciseSet } from '@/hooks/useWorkoutState';
+import { CircularGradientButton } from '@/components/CircularGradientButton';
+import { PlusCircle } from 'lucide-react';
 
 interface ExerciseListProps {
   exercises: Record<string, LocalExerciseSet[]>;
@@ -66,6 +68,17 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           />
         </div>
       ))}
+      
+      {/* Add Exercise Button */}
+      <div className="flex justify-center mt-8">
+        <CircularGradientButton
+          onClick={() => window.document.querySelector<HTMLButtonElement>('[aria-label="Add Exercise"]')?.click()}
+          icon={<PlusCircle size={32} className="text-white" />}
+          size={96}
+        >
+          Add Exercise
+        </CircularGradientButton>
+      </div>
     </div>
   );
 };
