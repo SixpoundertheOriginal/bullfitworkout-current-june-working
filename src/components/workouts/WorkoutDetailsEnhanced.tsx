@@ -6,6 +6,7 @@ import {
 } from '@/utils/exerciseUtils';
 import { MuscleFocusChart } from '../metrics/MuscleFocusChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   Dumbbell, 
   BarChart3, 
@@ -13,7 +14,8 @@ import {
   Activity,
   Clock,
   Calendar,
-  Tag
+  Tag,
+  Edit,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatRelative } from 'date-fns';
@@ -31,6 +33,7 @@ interface WorkoutDetailsEnhancedProps {
     notes?: string | null;
   };
   exercises: Record<string, ExerciseSet[]>;
+  onEditClick: () => void;
   tags?: string[];
   className?: string;
 }
@@ -38,6 +41,7 @@ interface WorkoutDetailsEnhancedProps {
 export const WorkoutDetailsEnhanced = ({
   workout,
   exercises,
+  onEditClick,
   tags = [],
   className = ''
 }: WorkoutDetailsEnhancedProps) => {
@@ -117,7 +121,17 @@ export const WorkoutDetailsEnhanced = ({
     <div className={`space-y-6 ${className}`}>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <h1 className="text-2xl font-bold">{workout.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{workout.name}</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onEditClick}
+              className="text-gray-400 hover:text-white hover:bg-gray-800"
+            >
+              <Edit size={18} />
+            </Button>
+          </div>
           <div className="flex items-center mt-2 sm:mt-0">
             <Badge variant="outline" className="bg-purple-500/10 border-purple-500/20 text-purple-300">
               {workout.training_type}

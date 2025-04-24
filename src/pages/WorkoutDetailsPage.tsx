@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -57,7 +56,6 @@ const WorkoutDetailsPage = () => {
   const { data: exercisePerformance, isLoading: performanceLoading } = 
     useExercisePerformance(selectedExercise || undefined);
 
-  // Set the first exercise as selected by default
   useEffect(() => {
     if (!selectedExercise && !loading && Object.keys(exerciseSets).length > 0) {
       setSelectedExercise(Object.keys(exerciseSets)[0]);
@@ -85,11 +83,6 @@ const WorkoutDetailsPage = () => {
               </TabsList>
               
               <TabsContent value="summary" className="pt-4">
-                <WorkoutDetailsHeader
-                  workoutDetails={workoutDetails}
-                  onEditClick={() => setEditModalOpen(true)}
-                />
-
                 <WorkoutExercisesSection
                   exerciseSets={exerciseSets}
                   onAddExercise={() => setShowAddDialog(true)}
@@ -98,7 +91,7 @@ const WorkoutDetailsPage = () => {
                   onSelectExercise={setSelectedExercise}
                   selectedExercise={selectedExercise}
                 />
-
+                
                 {workoutDetails.notes && (
                   <div className="mt-4 bg-gray-800/50 p-3 rounded">
                     <h3 className="text-sm font-medium mb-1">Notes</h3>
@@ -111,6 +104,7 @@ const WorkoutDetailsPage = () => {
                 <WorkoutDetailsEnhanced 
                   workout={workoutDetails}
                   exercises={exerciseSets}
+                  onEditClick={() => setEditModalOpen(true)}
                 />
 
                 {selectedExercise && (
