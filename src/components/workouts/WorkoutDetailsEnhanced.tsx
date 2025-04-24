@@ -22,6 +22,7 @@ import { formatRelative } from 'date-fns';
 import { WorkoutDensityChart } from '../metrics/WorkoutDensityChart';
 import { WeightUnit } from '@/utils/unitConversion';
 import { useWeightUnit } from '@/context/WeightUnitContext';
+import { cn } from '@/utils/cn';
 
 interface WorkoutDetailsEnhancedProps {
   workout: {
@@ -47,7 +48,6 @@ export const WorkoutDetailsEnhanced = ({
 }: WorkoutDetailsEnhancedProps) => {
   const { weightUnit } = useWeightUnit();
   
-  // Calculate efficiency metrics
   const exerciseCount = Object.keys(exercises).length;
   const setCount = Object.values(exercises).reduce(
     (total, sets) => total + sets.length, 0
@@ -56,10 +56,8 @@ export const WorkoutDetailsEnhanced = ({
     (total, sets) => total + sets.filter(set => set.completed).length, 0
   );
   
-  // Calculate efficiency (completed sets / total sets)
   const efficiency = setCount > 0 ? (completedSets / setCount) * 100 : 0;
   
-  // Calculate workout volume and intensity metrics
   let totalVolume = 0;
   let weightedSetCount = 0;
   let maxWeight = 0;
@@ -72,31 +70,25 @@ export const WorkoutDetailsEnhanced = ({
       if (set.weight > maxWeight) maxWeight = set.weight;
     }
     
-    // Add rest time calculation
     if (set.restTime) {
       totalRestTime += set.restTime;
     } else {
-      totalRestTime += 60; // Default rest time
+      totalRestTime += 60;
     }
   });
   
   const avgWeight = weightedSetCount > 0 ? totalVolume / weightedSetCount : 0;
   
-  // Calculate intensity (average weight / max weight)
   const intensity = maxWeight > 0 ? (avgWeight / maxWeight) * 100 : 0;
   
-  // Calculate workout density (volume per minute)
   const activeWorkoutTime = workout.duration - (totalRestTime / 60);
   const workoutDensity = workout.duration > 0 ? totalVolume / workout.duration : 0;
   const activeWorkoutDensity = activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0;
   
-  // Calculate muscle focus
   const muscleFocus = useMemo(() => calculateMuscleFocus(exercises), [exercises]);
   
-  // Analyze workout composition
   const composition = useMemo(() => analyzeWorkoutComposition(exercises), [exercises]);
   
-  // Format the workout date
   const workoutDate = new Date(workout.start_time);
   const relativeDate = formatRelative(workoutDate, new Date());
   const formattedDate = workoutDate.toLocaleDateString('en-US', {
@@ -106,7 +98,6 @@ export const WorkoutDetailsEnhanced = ({
     day: 'numeric',
   });
   
-  // Format time
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -187,7 +178,6 @@ export const WorkoutDetailsEnhanced = ({
           </Card>
         </div>
         
-        {/* Workout density metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="bg-gray-900/80 border-gray-800">
             <CardHeader className="pb-2">
@@ -218,7 +208,6 @@ export const WorkoutDetailsEnhanced = ({
                 </div>
               </div>
               
-              {/* Workout density chart */}
               <div className="mt-4 h-32">
                 <WorkoutDensityChart 
                   totalTime={workout.duration}
@@ -231,7 +220,6 @@ export const WorkoutDetailsEnhanced = ({
             </CardContent>
           </Card>
           
-          {/* Show tags if available */}
           <Card className="bg-gray-900/80 border-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center">
@@ -260,7 +248,6 @@ export const WorkoutDetailsEnhanced = ({
           </Card>
         </div>
         
-        {/* Show notes if available */}
         {workout.notes && (
           <Card className="bg-gray-900/80 border-gray-800">
             <CardHeader className="pb-2">
@@ -388,49 +375,65 @@ export const WorkoutDetailsEnhanced = ({
         </div>
       </div>
       
-      {/* Exercise Details Section */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Exercise Details</h2>
+        <h2 className="text-2xl font-bold mb-4">Exercise Details</h2>
         <div className="space-y-4">
           {Object.entries(exercises).map(([exerciseName, sets]) => (
             <Card key={exerciseName} className="bg-gray-900/80 border-gray-800">
               <CardHeader className="pb-2">
-                <CardTitle>{exerciseName}</CardTitle>
+                <CardTitle className="text-xl">{exerciseName}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-800">
-                        <th className="text-left pb-2 text-gray-400">Set</th>
-                        <th className="text-left pb-2 text-gray-400">Weight</th>
-                        <th className="text-left pb-2 text-gray-400">Reps</th>
-                        <th className="text-left pb-2 text-gray-400">Rest</th>
-                        <th className="text-right pb-2 text-gray-400">Status</th>
+                        <th className="text-left py-2 px-4 text-gray-400 font-medium">Set</th>
+                        <th className="text-left py-2 px-4 text-gray-400 font-medium">Weight ({weightUnit})</th>
+                        <th className="text-left py-2 px-4 text-gray-400 font-medium">Reps</th>
+                        <th className="text-left py-2 px-4 text-gray-400 font-medium">Rest</th>
+                        <th className="text-right py-2 px-4 text-gray-400 font-medium">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {sets.map((set, index) => (
-                        <tr key={index} className={`border-b border-gray-800/50 ${!set.completed ? 'text-gray-500' : ''}`}>
-                          <td className="py-2">Set {set.set_number}</td>
-                          <td className="py-2">{set.weight}</td>
-                          <td className="py-2">{set.reps}</td>
-                          <td className="py-2">{set.restTime || '60'}s</td>
-                          <td className="py-2 text-right">
-                            {set.completed ? (
-                              <Badge className="bg-green-500/20 text-green-300 hover:bg-green-500/30">
-                                Completed
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-gray-800/50 text-gray-400">
-                                Skipped
-                              </Badge>
-                            )}
+                      {sets.map((set) => (
+                        <tr 
+                          key={set.id}
+                          className={cn(
+                            "border-b border-gray-800/50",
+                            !set.completed && "opacity-50"
+                          )}
+                        >
+                          <td className="py-3 px-4">Set {set.set_number}</td>
+                          <td className="py-3 px-4 font-mono">{set.weight}</td>
+                          <td className="py-3 px-4 font-mono">{set.reps}</td>
+                          <td className="py-3 px-4 font-mono">{set.restTime || 60}s</td>
+                          <td className="py-3 px-4 text-right">
+                            <Badge 
+                              className={cn(
+                                set.completed 
+                                  ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
+                                  : "bg-gray-800/50 text-gray-400"
+                              )}
+                            >
+                              {set.completed ? "Completed" : "Skipped"}
+                            </Badge>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onEditClick}
+                      className="bg-gray-800 text-white hover:bg-gray-700"
+                    >
+                      Edit Sets
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
