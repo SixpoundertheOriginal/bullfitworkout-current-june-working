@@ -2,7 +2,7 @@
 import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ExerciseSelector } from "@/components/ExerciseSelector";
+import { ExerciseSelector } from "@/components/exercises/ExerciseSelector";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
 import { Exercise } from "@/types/exercise";
 
