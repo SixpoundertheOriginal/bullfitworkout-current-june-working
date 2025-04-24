@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
@@ -16,6 +17,7 @@ export interface LocalExerciseSet {
   id?: string;
   saveStatus?: 'pending' | 'saving' | 'saved' | 'failed';
   retryCount?: number;
+  lastCompleted?: number; // Added this property to fix the TypeScript error
 }
 
 export const useWorkoutState = () => {
@@ -325,8 +327,11 @@ export const useWorkoutState = () => {
       
       if (index > 0) {
         const previousSet = exerciseSets[index - 1];
-        const actualRestTime = Math.floor((now - (previousSet.lastCompleted || now)) / 1000);
-        previousSet.restTime = actualRestTime;
+        // Calculate the actual rest time if the previous set has a completion timestamp
+        if (previousSet.lastCompleted) {
+          const actualRestTime = Math.floor((now - previousSet.lastCompleted) / 1000);
+          previousSet.restTime = actualRestTime;
+        }
       }
       
       exerciseSets[index] = { 
