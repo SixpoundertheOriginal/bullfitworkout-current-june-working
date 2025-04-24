@@ -13,7 +13,6 @@ interface StartTrainingButtonProps {
   label?: string;
   forceReset?: boolean;
   onClick?: () => void;
-  isVisible?: boolean;
   workoutType?: string;
   duration?: number;
 }
@@ -25,8 +24,7 @@ export const StartTrainingButton = ({
   className = '',
   label = 'Start Training',
   forceReset = true,
-  onClick,
-  isVisible = true
+  onClick
 }: StartTrainingButtonProps) => {
   const navigate = useNavigate();
   
@@ -41,15 +39,14 @@ export const StartTrainingButton = ({
     });
   };
   
-  if (!isVisible) {
-    return null;
-  }
-  
   return (
     <Button
       variant={variant}
       size={size}
-      className={cn("gap-2", className)}
+      className={cn(
+        "gap-2 transition-all duration-300 ease-in-out",
+        className
+      )}
       onClick={handleStartClick}
     >
       <Dumbbell className="h-4 w-4" />

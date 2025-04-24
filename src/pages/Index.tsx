@@ -156,10 +156,12 @@ const Index = () => {
               className="!bottom-20"
             />
 
-            <div className="absolute left-1/2 top-0 transform -translate-x-1/2">
+            <div className={cn(
+              "absolute left-1/2 transform -translate-x-1/2 transition-all duration-300",
+              isSectionVisible ? "opacity-100 translate-y-0" : "opacity-80 translate-y-2"
+            )}>
               <StartTrainingButton
                 onClick={() => setDialogOpen(true)}
-                isVisible={isSectionVisible}
                 trainingType={recommendedWorkoutType}
                 label={`Start ${recommendedWorkoutType} Training (${recommendedDuration}min)`}
               />
