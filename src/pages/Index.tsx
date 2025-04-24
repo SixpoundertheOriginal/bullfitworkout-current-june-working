@@ -160,8 +160,8 @@ const Index = () => {
               <StartTrainingButton
                 onClick={() => setDialogOpen(true)}
                 isVisible={isSectionVisible}
-                workoutType={recommendedWorkoutType}
-                duration={recommendedDuration}
+                trainingType={recommendedWorkoutType}
+                label={`Start ${recommendedWorkoutType} Training (${recommendedDuration}min)`}
               />
             </div>
           </div>

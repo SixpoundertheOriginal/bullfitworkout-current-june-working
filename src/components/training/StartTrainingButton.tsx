@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dumbbell } from 'lucide-react';
@@ -7,11 +7,15 @@ import { cn } from '@/lib/utils';
 
 interface StartTrainingButtonProps {
   trainingType?: string;
-  variant?: 'default' | 'outline' | 'primary' | 'secondary';
+  variant?: 'default' | 'outline' | 'secondary' | 'destructive' | 'ghost' | 'link' | 'gradient' | 'icon-circle' | 'nav-action';
   size?: 'default' | 'sm' | 'lg';
   className?: string;
   label?: string;
   forceReset?: boolean;
+  onClick?: () => void;
+  isVisible?: boolean;
+  workoutType?: string;
+  duration?: number;
 }
 
 export const StartTrainingButton = ({
@@ -20,15 +24,26 @@ export const StartTrainingButton = ({
   size = 'default',
   className = '',
   label = 'Start Training',
-  forceReset = true
+  forceReset = true,
+  onClick,
+  isVisible = true
 }: StartTrainingButtonProps) => {
   const navigate = useNavigate();
   
   const handleStartClick = () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    
     navigate(`/training-session?type=${trainingType}${forceReset ? '&reset=true' : ''}`, {
       state: { trainingType }
     });
   };
+  
+  if (!isVisible) {
+    return null;
+  }
   
   return (
     <Button
