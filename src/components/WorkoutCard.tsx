@@ -3,6 +3,7 @@ import React from 'react';
 import { Dumbbell, Clock, Trash2, Edit, Check, Loader2, Wrench } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +52,7 @@ export const WorkoutCard = ({
   onToggleSelection,
   showFixOption = false
 }: WorkoutCardProps) => {
+  const navigate = useNavigate();
   const trainingType = trainingTypes.find(t => t.id === type) || trainingTypes[0];
   const formattedDate = format(parseISO(date), 'MMM d, yyyy');
   const formattedTime = format(parseISO(date), 'h:mm a');
@@ -59,16 +61,26 @@ export const WorkoutCard = ({
   // Identify potentially incomplete workouts (no exercises or sets)
   const isPotentiallyIncomplete = exerciseCount === 0 || setCount === 0;
   
+  const handleCardClick = () => {
+    if (!selectionMode) {
+      navigate(`/workout-details/${id}`);
+    } else if (onToggleSelection) {
+      onToggleSelection();
+    }
+  };
+  
   return (
-    <div className={cn(
-      "relative bg-gray-900 rounded-lg p-4 border border-gray-800 hover:border-gray-700 transition-colors",
-      isPotentiallyIncomplete && !selectionMode && "border-yellow-700/50",
-      selectionMode && isSelected && "border-purple-500"
-    )}>
+    <div 
+      onClick={handleCardClick}
+      className={cn(
+        "relative bg-gray-900 rounded-lg p-4 border border-gray-800 hover:border-gray-700 transition-colors cursor-pointer",
+        isPotentiallyIncomplete && !selectionMode && "border-yellow-700/50",
+        selectionMode && isSelected && "border-purple-500"
+      )}
+    >
       {selectionMode && (
         <div 
-          className="absolute top-0 left-0 w-full h-full bg-black/20 rounded-lg flex items-center justify-center cursor-pointer"
-          onClick={onToggleSelection}
+          className="absolute top-0 left-0 w-full h-full bg-black/20 rounded-lg flex items-center justify-center"
         >
           <div className={cn(
             "w-6 h-6 rounded-full border-2 flex items-center justify-center",
@@ -97,7 +109,14 @@ export const WorkoutCard = ({
         {!selectionMode && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent navigation when clicking dropdown
+                }}
+              >
                 <span className="sr-only">Open menu</span>
                 <svg
                   width="15"
@@ -116,7 +135,7 @@ export const WorkoutCard = ({
                 </svg>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               {onEdit && (
                 <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
                   <Edit className="mr-2 h-4 w-4" />
@@ -178,3 +197,4 @@ export const WorkoutCard = ({
     </div>
   );
 };
+
