@@ -522,6 +522,24 @@ export const WorkoutCompletePage = () => {
     }
   };
 
+  const handleSaveAndExit = async () => {
+    setSaving(true);
+    try {
+      const savedWorkoutId = await saveWorkout();
+      if (savedWorkoutId) {
+        toast.success("Workout saved successfully");
+        navigate(`/workout-details/${savedWorkoutId}`, {
+          state: { from: 'workout-complete' }
+        });
+      }
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      toast.error("Failed to save workout");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!workoutData) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -566,12 +584,19 @@ export const WorkoutCompletePage = () => {
           setTemplateName={setTemplateName}
           workoutData={workoutData}
         />
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <button
             className="btn btn-outline border-gray-700 text-white"
             onClick={() => navigate('/')}
           >
             Discard
+          </button>
+          <button
+            className="bg-purple-600 hover:bg-purple-700 font-medium rounded-md px-4 py-3 transition disabled:opacity-70"
+            onClick={handleSaveAndExit}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save & Exit"}
           </button>
           <button
             className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-medium rounded-md px-4 py-3 transition disabled:opacity-70"
