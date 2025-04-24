@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedExerciseSet, WorkoutError, SaveProgress } from "@/types/workout";
 import { ExerciseSet } from "@/types/exercise";
