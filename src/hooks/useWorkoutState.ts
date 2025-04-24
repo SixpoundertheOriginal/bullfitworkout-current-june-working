@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
@@ -6,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { recoverPartiallyCompletedWorkout, processRetryQueue } from '@/services/workoutSaveService';
 
 const STORAGE_VERSION = '1.0.0';
+const STORAGE_KEY_PREFIX = 'workout_session_';
 
 // Define and export the LocalExerciseSet interface
 export interface LocalExerciseSet {
@@ -45,12 +45,24 @@ export const useWorkoutState = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
       
-      const savedWorkout = localStorage.getItem(`workout_session_${user.id}`);
+      const storageKey = `${STORAGE_KEY_PREFIX}${user.id}`;
+      const savedWorkout = localStorage.getItem(storageKey);
+      
       if (savedWorkout) {
         try {
           const parsed = JSON.parse(savedWorkout);
           
           const version = parsed.version || '0.0.0';
+          
+          // Check if the workout is from an old version or if it's stale (older than 24 hours)
+          const lastUpdated = parsed.lastUpdated ? new Date(parsed.lastUpdated) : null;
+          const isStale = lastUpdated && (new Date().getTime() - lastUpdated.getTime() > 24 * 60 * 60 * 1000);
+          
+          if (isStale) {
+            console.log("Found stale workout session, clearing it");
+            localStorage.removeItem(storageKey);
+            return;
+          }
           
           setState(prevState => ({
             ...prevState,
@@ -89,7 +101,14 @@ export const useWorkoutState = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
       
-      localStorage.setItem(`workout_session_${user.id}`, JSON.stringify({
+      const storageKey = `${STORAGE_KEY_PREFIX}${user.id}`;
+      
+      // Skip saving if we're in idle state with no exercises
+      if (state.workoutStatus === 'idle' && Object.keys(state.exercises).length === 0) {
+        return;
+      }
+      
+      localStorage.setItem(storageKey, JSON.stringify({
         version: STORAGE_VERSION,
         exercises: state.exercises,
         activeExercise: state.activeExercise,
@@ -147,6 +166,15 @@ export const useWorkoutState = () => {
   }, [updateState]);
 
   const resetSession = useCallback(async () => {
+    console.log("Resetting workout session completely");
+    
+    // Clear local storage first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      localStorage.removeItem(`${STORAGE_KEY_PREFIX}${user.id}`);
+    }
+    
+    // Reset the state
     updateState({
       exercises: {},
       activeExercise: null,
@@ -159,12 +187,6 @@ export const useWorkoutState = () => {
       workoutId: null,
       isRecoveryMode: false
     });
-    
-    // Clear local storage
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id) {
-      localStorage.removeItem(`workout_session_${user.id}`);
-    }
   }, [updateState]);
 
   const triggerRestTimerReset = useCallback((restTime?: number) => {

@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
@@ -77,6 +76,15 @@ const TrainingSession: React.FC = () => {
   const intensity = 75;
   const volume = 1250;
   const efficiency = 85;
+  
+  // Effect to check if there's a reset parameter in URL to force a reset
+  useEffect(() => {
+    const shouldReset = searchParams.get('reset') === 'true';
+    if (shouldReset) {
+      console.log("Force resetting workout session from URL parameter");
+      resetSession();
+    }
+  }, [searchParams, resetSession]);
   
   // Effect to retry saving when component mounts if we're in recovery mode
   useEffect(() => {
@@ -442,6 +450,13 @@ const TrainingSession: React.FC = () => {
       [exercise]: exerciseSets
     };
   });
+  
+  const handleResetWorkoutSession = () => {
+    resetSession();
+    toast.success("Workout reset", {
+      description: "Starting a fresh workout session"
+    });
+  };
 
   return (
     <div className="pb-20">
@@ -476,6 +491,25 @@ const TrainingSession: React.FC = () => {
             saveProgress={saveProgress}
             onRetry={handleRetrySave}
           />
+        </div>
+      )}
+      
+      {isRecoveryMode && (
+        <div className="px-4 mt-2">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
+            <h3 className="text-sm font-medium mb-1">Workout recovery available</h3>
+            <p className="text-gray-400 text-xs mb-2">
+              We found an unsaved workout. Continue your session or reset to start fresh.
+            </p>
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleResetWorkoutSession}
+              className="w-full"
+            >
+              Reset & Start Fresh
+            </Button>
+          </div>
         </div>
       )}
       
