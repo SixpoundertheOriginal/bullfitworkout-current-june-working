@@ -28,14 +28,12 @@ serve(async (req) => {
     
     if (!workoutId) {
       return new Response(
-        JSON.stringify({ error: "Missing workout ID" }),
+        JSON.stringify({ error: "Missing workoutId" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Attempting to recover workout: ${workoutId}`);
-
-    // Create Supabase client with service role - needed to bypass RLS for recovery
+    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
@@ -45,57 +43,42 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. First, check if the workout exists
-    const { data: workout, error: workoutError } = await supabase
-      .from('workout_sessions')
-      .select('*')
-      .eq('id', workoutId)
-      .single();
+    // Attempt to trigger the analytics refresh
+    try {
+      // Call the refresh_workout_analytics function
+      const { error } = await supabase.rpc('refresh_workout_analytics');
       
-    if (workoutError) {
-      throw new Error("Workout not found: " + workoutError.message);
+      if (error) {
+        console.error("Failed to refresh analytics:", error);
+      }
+    } catch (refreshError) {
+      console.error("Error refreshing analytics:", refreshError);
     }
 
-    // 2. Check for exercise sets
-    const { data: sets, error: setsError } = await supabase
-      .from('exercise_sets')
-      .select('count')
-      .eq('workout_id', workoutId);
-      
-    if (setsError) {
-      console.error("Error checking exercise sets:", setsError);
-    }
-    
-    const setCount = sets && sets.length > 0 ? parseInt(String(sets[0].count), 10) : 0;
-    console.log(`Found ${setCount} sets for workout ${workoutId}`);
-    
-    // 3. Trigger a workout update to ensure it's visible in history
-    // This can force a refresh of materialized views and analytics
+    // Update the workout to ensure it's visible in history
+    // This is a hack that forces a refresh of the workout in the database
     const { data: updatedWorkout, error: updateError } = await supabase
       .from('workout_sessions')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', workoutId)
       .select();
-      
+
     if (updateError) {
       console.error("Error updating workout during recovery:", updateError);
-      throw new Error("Failed to update workout: " + updateError.message);
-    }
-
-    // 4. Manually try to refresh analytics for this workout
-    try {
-      await supabase.rpc('refresh_workout_analytics');
-      console.log("Analytics refreshed successfully");
-    } catch (refreshError) {
-      console.warn("Analytics refresh error (non-critical):", refreshError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to update workout",
+          details: updateError.message
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        workout: updatedWorkout?.[0] || workout,
-        setCount,
-        message: "Workout recovery completed successfully"
+      JSON.stringify({
+        success: true,
+        workout: updatedWorkout?.[0] || null
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -103,7 +86,7 @@ serve(async (req) => {
     console.error("Error in recover-workout function:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message, success: false }),
+      JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

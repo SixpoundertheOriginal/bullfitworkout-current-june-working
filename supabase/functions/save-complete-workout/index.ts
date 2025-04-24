@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Start a transaction
+    // Use our newly created save_workout_transaction function to safely save the workout
     const { data: result, error: transactionError } = await supabase.rpc('save_workout_transaction', {
       p_workout_data: workout_data,
       p_exercise_sets: exercise_sets
@@ -91,7 +91,7 @@ serve(async (req) => {
           );
         }
 
-        // 3. If we got here, all sets were inserted successfully, try to refresh analytics
+        // 3. Try to refresh analytics
         try {
           await supabase.rpc('refresh_workout_analytics');
         } catch (analyticsError) {
