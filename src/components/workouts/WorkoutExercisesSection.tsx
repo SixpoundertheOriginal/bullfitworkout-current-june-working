@@ -11,8 +11,6 @@ interface WorkoutExercisesSectionProps {
   onAddExercise: () => void;
   onEditExercise: (exerciseName: string) => void;
   onDeleteExercise: (exerciseName: string) => void;
-  onSelectExercise?: (exerciseName: string) => void;
-  selectedExercise?: string | null;
 }
 
 export const WorkoutExercisesSection: React.FC<WorkoutExercisesSectionProps> = ({
@@ -20,13 +18,13 @@ export const WorkoutExercisesSection: React.FC<WorkoutExercisesSectionProps> = (
   onAddExercise,
   onEditExercise,
   onDeleteExercise,
-  onSelectExercise,
-  selectedExercise
 }) => {
   const allSets = Object.values(exerciseSets).flat();
   
   return (
     <div className="mt-6">
+      <WorkoutMetricsSummary exerciseSets={allSets} className="mb-6" />
+      
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-md font-medium">Exercises</h3>
         <Button 
@@ -41,22 +39,17 @@ export const WorkoutExercisesSection: React.FC<WorkoutExercisesSectionProps> = (
       </div>
       
       {Object.keys(exerciseSets).length > 0 ? (
-        <>
-          <WorkoutMetricsSummary exerciseSets={allSets} className="mb-4" />
-          <div className="space-y-4">
-            {Object.entries(exerciseSets).map(([exerciseName, sets]) => (
-              <ExerciseSetsDisplay
-                key={exerciseName}
-                exerciseName={exerciseName}
-                sets={sets}
-                onEdit={onEditExercise}
-                onDelete={onDeleteExercise}
-                onSelect={onSelectExercise ? () => onSelectExercise(exerciseName) : undefined}
-                isSelected={selectedExercise === exerciseName}
-              />
-            ))}
-          </div>
-        </>
+        <div className="space-y-4">
+          {Object.entries(exerciseSets).map(([exerciseName, sets]) => (
+            <ExerciseSetsDisplay
+              key={exerciseName}
+              exerciseName={exerciseName}
+              sets={sets}
+              onEdit={onEditExercise}
+              onDelete={onDeleteExercise}
+            />
+          ))}
+        </div>
       ) : (
         <div className="text-center py-6 text-gray-500">
           <Dumbbell size={24} className="mx-auto mb-2 opacity-50" />
