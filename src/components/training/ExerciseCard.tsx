@@ -109,6 +109,15 @@ export const ExerciseCard = ({
     }
   };
   
+  const handleRestTimeUpdate = (time: number) => {
+    if (sets.length > 0) {
+      const currentSetIndex = sets.findIndex(set => !set.completed);
+      if (currentSetIndex > 0) {
+        onRestTimeChange(exercise, currentSetIndex - 1, time.toString());
+      }
+    }
+  };
+
   const sessionVolumes = [
     ...((exerciseHistoryData[exercise] || []).slice(0, 3).reverse().map(s => {
       return convertWeight(s.weight, "lb", weightUnit) * s.reps * s.sets;

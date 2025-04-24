@@ -7,7 +7,6 @@ import { recoverPartiallyCompletedWorkout, processRetryQueue } from '@/services/
 const STORAGE_VERSION = '1.0.0';
 const STORAGE_KEY_PREFIX = 'workout_session_';
 
-// Define and export the LocalExerciseSet interface
 export interface LocalExerciseSet {
   weight: number;
   reps: number;
@@ -40,7 +39,6 @@ export const useWorkoutState = () => {
   const currentRestTime = state.currentRestTime;
 
   useEffect(() => {
-    // Get current user
     const loadPreviousSession = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
@@ -54,7 +52,6 @@ export const useWorkoutState = () => {
           
           const version = parsed.version || '0.0.0';
           
-          // Check if the workout is from an old version or if it's stale (older than 24 hours)
           const lastUpdated = parsed.lastUpdated ? new Date(parsed.lastUpdated) : null;
           const isStale = lastUpdated && (new Date().getTime() - lastUpdated.getTime() > 24 * 60 * 60 * 1000);
           
@@ -103,7 +100,6 @@ export const useWorkoutState = () => {
       
       const storageKey = `${STORAGE_KEY_PREFIX}${user.id}`;
       
-      // Skip saving if we're in idle state with no exercises
       if (state.workoutStatus === 'idle' && Object.keys(state.exercises).length === 0) {
         return;
       }
@@ -168,13 +164,11 @@ export const useWorkoutState = () => {
   const resetSession = useCallback(async () => {
     console.log("Resetting workout session completely");
     
-    // Clear local storage first
     const { data: { user } } = await supabase.auth.getUser();
     if (user?.id) {
       localStorage.removeItem(`${STORAGE_KEY_PREFIX}${user.id}`);
     }
     
-    // Reset the state
     updateState({
       exercises: {},
       activeExercise: null,
@@ -286,7 +280,6 @@ export const useWorkoutState = () => {
         return false;
       }
       
-      // Also process any pending retries
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.id) {
         await processRetryQueue(user.id);
@@ -324,6 +317,41 @@ export const useWorkoutState = () => {
     }
   }, [state.workoutId, updateState, state.savingErrors]);
 
+  const handleCompleteSet = useCallback((exercise: string, index: number) => {
+    setExercises(prev => {
+      const exerciseSets = [...(prev[exercise] || [])];
+      const currentSet = exerciseSets[index];
+      const now = Date.now();
+      
+      if (index > 0) {
+        const previousSet = exerciseSets[index - 1];
+        const actualRestTime = Math.floor((now - (previousSet.lastCompleted || now)) / 1000);
+        previousSet.restTime = actualRestTime;
+      }
+      
+      exerciseSets[index] = { 
+        ...currentSet, 
+        completed: true,
+        isEditing: false,
+        lastCompleted: now
+      };
+      
+      if (index < exerciseSets.length - 1) {
+        exerciseSets[index + 1] = {
+          ...exerciseSets[index + 1],
+          restTime: currentSet.restTime || 60
+        };
+      }
+      
+      triggerRestTimerReset(currentSet.restTime);
+      
+      return {
+        ...prev,
+        [exercise]: exerciseSets
+      };
+    });
+  }, [triggerRestTimerReset]);
+
   return {
     exercises,
     setExercises,
@@ -348,6 +376,7 @@ export const useWorkoutState = () => {
     markAsSaved,
     markAsFailed,
     updateSaveProgress,
-    attemptRecovery
+    attemptRecovery,
+    handleCompleteSet
   };
 };
