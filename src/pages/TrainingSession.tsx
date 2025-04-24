@@ -14,6 +14,7 @@ import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader
 import { useWorkoutSave } from "@/hooks/useWorkoutSave";
 import { ExerciseSet } from "@/types/exercise";
 import { Button } from "@/components/ui/button";
+import { processRetryQueue } from "@/services/workoutSaveService";
 
 interface LocationState {
   trainingType?: string;

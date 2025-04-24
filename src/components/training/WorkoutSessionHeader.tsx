@@ -4,13 +4,14 @@ import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
+import { WorkoutStatus } from "@/types/workout";
 
 interface WorkoutSessionHeaderProps {
   elapsedTime: number;
   exerciseCount: number;
   completedSets: number;
   totalSets: number;
-  workoutStatus: string;
+  workoutStatus: WorkoutStatus;
   isRecoveryMode: boolean;
   saveProgress: any;
   onRetrySave: () => void;
