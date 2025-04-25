@@ -20,6 +20,8 @@ import { TrainingAchievementCard } from "./training/TrainingAchievementCard";
 import { processExerciseRanking } from "@/utils/processExerciseRanking";
 import { useExercises } from "@/hooks/useExercises";
 import { Exercise, MuscleGroup } from "@/types/exercise";
+import { useTrainingSetupPersistence } from "@/hooks/useTrainingSetupPersistence";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -83,6 +85,8 @@ export function ConfigureTrainingDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const [rankedResults, setRankedResults] = useState<{ recommended: Exercise[]; other: Exercise[]; matchData: Record<string, { score: number, reasons: string[] }> }>({ recommended: [], other: [], matchData: {} });
   const { exercises } = useExercises();
+  const { storedConfig, saveConfig, clearConfig } = useTrainingSetupPersistence();
+  const { setTrainingConfig } = useWorkoutState();
 
   const [stepCompleteSound, setStepCompleteSound] = useState<HTMLAudioElement | null>(null);
   const [selectSound, setSelectSound] = useState<HTMLAudioElement | null>(null);
@@ -110,16 +114,17 @@ export function ConfigureTrainingDialog({
   }, [recommendation]);
 
   useEffect(() => {
-    setBgGradient(getGradientByType(trainingType));
-  }, [trainingType]);
-
-  useEffect(() => {
-    if (open) {
-      setCurrentStep(ConfigurationStep.TrainingType);
-      setXpEarned(0);
-      setIsProcessing(false);
+    if (open && storedConfig && !trainingType) {
+      setTrainingType(storedConfig.trainingType);
+      setSelectedTags(storedConfig.tags);
+      setDuration(storedConfig.duration);
+      
+      toast("Configuration restored", {
+        description: "We've restored your previous training setup",
+        duration: 3000,
+      });
     }
-  }, [open]);
+  }, [open, storedConfig, trainingType]);
 
   useEffect(() => {
     if (exercises && exercises.length && trainingType) {
@@ -132,6 +137,31 @@ export function ConfigureTrainingDialog({
       setRankedResults(processExerciseRanking(exercises, criteria));
     }
   }, [exercises, trainingType, selectedTags]);
+
+  useEffect(() => {
+    setBgGradient(getGradientByType(trainingType));
+  }, [trainingType]);
+
+  useEffect(() => {
+    if (open) {
+      setCurrentStep(ConfigurationStep.TrainingType);
+      setXpEarned(0);
+      setIsProcessing(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (trainingType) {
+      const currentConfig = {
+        trainingType,
+        tags: selectedTags,
+        duration,
+        ...(rankedResults.recommended.length > 0 && { rankedExercises: rankedResults })
+      };
+      
+      saveConfig(currentConfig);
+    }
+  }, [trainingType, selectedTags, duration, rankedResults]);
 
   const handleTagToggle = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -156,6 +186,16 @@ export function ConfigureTrainingDialog({
     setAchievementType(trainingType);
     setShowAchievement(true);
     stepCompleteSound?.play().catch(() => {});
+    
+    const trainingConfig = {
+      trainingType,
+      tags: selectedTags,
+      duration
+    };
+    
+    setTrainingConfig(trainingConfig);
+    
+    clearConfig();
     
     setTimeout(() => {
       onStartTraining({

@@ -1,33 +1,37 @@
-import React, { useRef, useEffect, useCallback } from "react";
-import { useElementVisibility } from "@/hooks/useElementVisibility";
-import { EmptyWorkoutState } from "@/components/EmptyWorkoutState";
-import { toast } from "@/components/ui/sonner";
-import { useNavigate, useLocation, useSearchParams, useBeforeUnload } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { WorkoutCompletion } from "@/components/training/WorkoutCompletion";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
-import { trainingTypes } from "@/constants/trainingTypes";
-import { ExerciseList } from "@/components/training/ExerciseList";
-import { WorkoutHeader } from "@/components/training/WorkoutHeader";
-import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
-import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader";
-import { useWorkoutSave } from "@/hooks/useWorkoutSave";
-import { ExerciseSet } from "@/types/exercise";
+import { useExercises } from "@/hooks/useExercises";
+import { Exercise } from "@/types/exercise";
+import { Timer } from "@/components/Timer";
+import { ExerciseCard } from "@/components/workouts/ExerciseCard";
+import { SetInput } from "@/components/workouts/SetInput";
 import { Button } from "@/components/ui/button";
-import { processRetryQueue } from "@/services/workoutSaveService";
+import { ArrowLeft, CheckCircle2, Loader2, SkipForward, Check } from "lucide-react";
+import { WeightUnitToggle } from "@/components/WeightUnitToggle";
+import { VolumeByExerciseChart } from "@/components/workouts/VolumeByExerciseChart";
+import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
+import { useWeightUnit } from "@/context/WeightUnitContext";
+import { useStopwatch } from "@/hooks/useStopwatch";
+import { useSound } from "@/hooks/useSound";
+import { cn } from "@/lib/utils";
+import { typography } from "@/lib/typography";
 
-interface LocationState {
-  trainingType?: string;
-  [key: string]: any;
-}
+const ANIMATION_DURATION = 250;
 
-const TrainingSession: React.FC = () => {
-  const { 
-    exercises, 
-    setExercises, 
-    activeExercise, 
-    setActiveExercise, 
-    elapsedTime, 
+export const TrainingSession = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { exercises: allExercises, isLoading: loadingExercises } = useExercises();
+  const workoutState = useWorkoutState();
+  const {
+    exercises,
+    setExercises,
+    activeExercise,
+    setActiveExercise,
+    elapsedTime,
     setElapsedTime,
     resetSession,
     restTimerActive,
@@ -35,404 +39,381 @@ const TrainingSession: React.FC = () => {
     restTimerResetSignal,
     triggerRestTimerReset,
     currentRestTime,
-    isRecoveryMode,
+    workoutStatus,
     handleCompleteSet
-  } = useWorkoutState();
+  } = workoutState;
+  const { weightUnit } = useWeightUnit();
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [isWorkoutComplete, setIsWorkoutComplete] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [exerciseOrder, setExerciseOrder] = useState<string[]>([]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward' | null>(null);
+  const [isResting, setIsResting] = useState(false);
+  const [showChart, setShowChart] = useState(false);
+  const [completedSets, setCompletedSets] = useState(0);
+  const [totalSets, setTotalSets] = useState(0);
+  const [totalVolume, setTotalVolume] = useState(0);
+  const [workoutDuration, setWorkoutDuration] = useState(0);
+  const [workoutStartTime, setWorkoutStartTime] = useState(new Date());
+  const [workoutEndTime, setWorkoutEndTime] = useState<Date | null>(null);
+  const [isFirstSet, setIsFirstSet] = useState(true);
+  const [isLastSet, setIsLastSet] = useState(false);
+  const [isFirstExercise, setIsFirstExercise] = useState(true);
+  const [isLastExercise, setIsLastExercise] = useState(false);
+  const [isExerciseComplete, setIsExerciseComplete] = useState(false);
+  const [isWorkoutStarted, setIsWorkoutStarted] = useState(false);
+  const [isWorkoutPaused, setIsWorkoutPaused] = useState(false);
+  const [isWorkoutFinished, setIsWorkoutFinished] = useState(false);
+  const [isWorkoutCancelled, setIsWorkoutCancelled] = useState(false);
+  const [isWorkoutResumed, setIsWorkoutResumed] = useState(false);
+  const [isWorkoutSaved, setIsWorkoutSaved] = useState(false);
 
-  const {
-    saveStatus: workoutStatus,
-    saveProgress,
-    savingErrors,
-    workoutId,
-    handleCompleteWorkout,
-    attemptRecovery,
-    updateSaveProgress
-  } = useWorkoutSave(exercises, elapsedTime, resetSession);
-  
-  const [showAddExerciseSheet, setShowAddExerciseSheet] = React.useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  
-  const locationState = location.state as LocationState;
-  const trainingType = locationState?.trainingType || searchParams.get('type') || 'strength';
-  const trainingTypeObj = trainingTypes.find(t => t.id === trainingType);
-  
-  const { ref: metricsRef, isVisible: metricsVisible } = useElementVisibility({
-    threshold: 0.2
-  });
-  
-  const completedSets = Object.values(exercises).reduce(
-    (total, sets) => total + sets.filter(set => set.completed).length, 
-    0
-  );
-  
-  const totalSets = Object.values(exercises).reduce(
-    (total, sets) => total + sets.length, 
-    0
-  );
+  const { start, pause, reset, isRunning } = useStopwatch();
+  const { play: playBell } = useSound('/sounds/bell.mp3');
+  const { play: playTick } = useSound('/sounds/tick.mp3');
 
-  const intensity = 75;
-  const volume = 1250;
-  const efficiency = 85;
-  
+  const timerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const shouldReset = searchParams.get('reset') === 'true';
-    if (shouldReset) {
-      console.log("Force resetting workout session from URL parameter");
-      resetSession();
+    if (allExercises && !activeExercise) {
+      const exerciseNames = Object.keys(exercises);
+      if (exerciseNames.length > 0) {
+        setActiveExercise(exerciseNames[0]);
+        setExerciseOrder(exerciseNames);
+      }
     }
-  }, [searchParams, resetSession]);
-  
+  }, [allExercises, exercises, activeExercise, setActiveExercise]);
+
   useEffect(() => {
-    if (isRecoveryMode && workoutId) {
-      console.log("Recovery mode detected, attempting recovery");
+    if (activeExercise) {
+      const sets = exercises[activeExercise] || [];
+      setIsFirstSet(currentSetIndex === 0);
+      setIsLastSet(currentSetIndex === sets.length - 1);
+      setIsExerciseComplete(sets.every(set => set.completed));
     }
-  }, [isRecoveryMode, workoutId]);
-  
-  useBeforeUnload(event => {
-    if (Object.keys(exercises).length > 0) {
-      event.preventDefault();
-      return "You have an unsaved workout in progress. Are you sure you want to leave?";
+  }, [activeExercise, currentSetIndex, exercises]);
+
+  useEffect(() => {
+    if (exerciseOrder.length > 0) {
+      setIsFirstExercise(activeExercise === exerciseOrder[0]);
+      setIsLastExercise(activeExercise === exerciseOrder[exerciseOrder.length - 1]);
     }
-  });
-  
-  React.useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
-    }, 1000);
-    
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [setElapsedTime]);
-  
-  const handleAddExercise = (exerciseNameOrObj: string | any) => {
-    const exerciseName = typeof exerciseNameOrObj === 'object' && exerciseNameOrObj !== null && 'name' in exerciseNameOrObj 
-      ? exerciseNameOrObj.name 
-      : String(exerciseNameOrObj);
-    
-    setExercises(prev => {
-      if (prev[exerciseName]) {
-        return prev;
-      }
-      
-      return {
-        ...prev,
-        [exerciseName]: [
-          { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: true }
-        ]
-      };
+  }, [activeExercise, exerciseOrder]);
+
+  useEffect(() => {
+    if (isResting && !restTimerActive) {
+      setIsResting(false);
+    }
+  }, [isResting, restTimerActive]);
+
+  useEffect(() => {
+    if (isRunning) {
+      setElapsedTime(prevTime => prevTime + 1);
+    }
+  }, [isRunning, setElapsedTime]);
+
+  useEffect(() => {
+    let completed = 0;
+    let total = 0;
+    let volume = 0;
+
+    Object.keys(exercises).forEach(exercise => {
+      const sets = exercises[exercise];
+      total += sets.length;
+      completed += sets.filter(set => set.completed).length;
+      sets.forEach(set => {
+        if (set.completed) {
+          const convertedWeight = convertWeight(set.weight, "lb", weightUnit);
+          volume += convertedWeight * set.reps;
+        }
+      });
     });
-    
-    setActiveExercise(exerciseName);
-    setShowAddExerciseSheet(false);
+
+    setCompletedSets(completed);
+    setTotalSets(total);
+    setTotalVolume(volume);
+  }, [exercises, weightUnit]);
+
+  useEffect(() => {
+    if (workoutStatus === 'idle' && !isWorkoutStarted) {
+      setWorkoutStartTime(new Date());
+      setIsWorkoutStarted(true);
+      start();
+    }
+  }, [workoutStatus, isWorkoutStarted, start]);
+
+  const handleCompleteWorkout = () => {
+    pause();
+    setWorkoutEndTime(new Date());
+    setIsWorkoutComplete(true);
+
+    const workoutData = {
+      exercises: exercises,
+      duration: elapsedTime,
+      startTime: workoutStartTime,
+      endTime: new Date(),
+      trainingType: "Strength", // Replace with actual training type
+      name: "Workout"
+    };
+
+    navigate('/workout-complete', { state: { workoutData } });
+  };
+
+  const handleSetComplete = (exercise: string, index: number) => {
+    handleCompleteSet(exercise, index);
+  };
+
+  const handleNextSet = () => {
+    if (isLastSet) {
+      handleNextExercise();
+    } else {
+      setCurrentSetIndex(prevIndex => prevIndex + 1);
+    }
+  };
+
+  const handlePreviousSet = () => {
+    if (isFirstSet) {
+      handlePreviousExercise();
+    } else {
+      setCurrentSetIndex(prevIndex => prevIndex - 1);
+    }
+  };
+
+  const handleNextExercise = () => {
+    setIsTransitioning(true);
+    setTransitionDirection('forward');
 
     setTimeout(() => {
-      const element = document.getElementById(`exercise-${exerciseName}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
+      const currentIndex = exerciseOrder.indexOf(activeExercise || '');
+      const nextIndex = (currentIndex + 1) % exerciseOrder.length;
+      setActiveExercise(exerciseOrder[nextIndex]);
+      setCurrentSetIndex(0);
+      setIsTransitioning(false);
+      setTransitionDirection(null);
+    }, ANIMATION_DURATION);
   };
 
-  const handleAddSet = (exerciseName: string) => {
-    setExercises(prev => {
-      const exerciseSets = [...(prev[exerciseName] || [])];
-      const lastSet = exerciseSets[exerciseSets.length - 1];
-      
-      const newSet = lastSet ? {
-        weight: lastSet.weight,
-        reps: lastSet.reps,
-        restTime: lastSet.restTime,
-        completed: false,
-        isEditing: false
-      } : {
-        weight: 0,
-        reps: 0,
-        restTime: 60,
-        completed: false,
-        isEditing: true
-      };
-      
-      return {
-        ...prev,
-        [exerciseName]: [...exerciseSets, newSet]
-      };
-    });
-  };
-  
-  const handleRemoveSet = (exerciseName: string, setIndex: number) => {
-    setExercises(prev => {
-      const exerciseSets = [...(prev[exerciseName] || [])];
-      exerciseSets.splice(setIndex, 1);
-      
-      if (exerciseSets.length === 0) {
-        const newExercises = { ...prev };
-        delete newExercises[exerciseName];
-        return newExercises;
-      }
-      
-      return {
-        ...prev,
-        [exerciseName]: exerciseSets
-      };
-    });
+  const handlePreviousExercise = () => {
+    setIsTransitioning(true);
+    setTransitionDirection('backward');
+
+    setTimeout(() => {
+      const currentIndex = exerciseOrder.indexOf(activeExercise || '');
+      const previousIndex = (currentIndex - 1 + exerciseOrder.length) % exerciseOrder.length;
+      setActiveExercise(exerciseOrder[previousIndex]);
+      setCurrentSetIndex(0);
+      setIsTransitioning(false);
+      setTransitionDirection(null);
+    }, ANIMATION_DURATION);
   };
 
-  const navigateToComplete = (workoutId: string | null) => {
-    const now = new Date();
-    navigate('/workout-complete', {
-      state: {
-        workoutId,
-        workoutData: {
-          exercises: Object.fromEntries(
-            Object.entries(exercises).map(([name, sets]) => [
-              name,
-              sets.map((set, index) => ({
-                id: `temp-${name}-${index}`,
-                exercise_name: name,
-                workout_id: workoutId || 'temp',
-                set_number: index + 1,
-                weight: set.weight,
-                reps: set.reps,
-                completed: set.completed,
-                rest_time: set.restTime
-              }))
-            ])
-          ) as unknown as Record<string, ExerciseSet[]>,
-          duration: elapsedTime,
-          startTime: new Date(now.getTime() - elapsedTime * 1000),
-          endTime: now,
-          trainingType: trainingType || 'strength',
-          name: `Workout ${now.toLocaleDateString()}`
-        }
-      }
-    });
+  const handleStartRest = () => {
+    setIsResting(true);
+    setRestTimerActive(true);
+    playBell();
   };
 
-  const handleResetWorkoutSession = () => {
+  const handleSkipRest = () => {
+    setRestTimerActive(false);
+    setIsResting(false);
+  };
+
+  const handlePauseWorkout = () => {
+    pause();
+    setIsWorkoutPaused(true);
+  };
+
+  const handleResumeWorkout = () => {
+    start();
+    setIsWorkoutPaused(false);
+  };
+
+  const handleCancelWorkout = () => {
+    pause();
+    setIsWorkoutCancelled(true);
+  };
+
+  const handleConfirmCancel = () => {
     resetSession();
-    toast.success("Workout reset", {
-      description: "Starting a fresh workout session"
-    });
+    navigate('/');
   };
 
-  const handleRetrySave = async () => {
-    if (!user || !workoutId) return;
-    
-    if (workoutId) {
-      toast("Attempting recovery", {
-        description: "Trying to recover your workout data..."
-      });
-      
-      const recoverySuccess = await attemptRecovery(workoutId);
-      
-      if (recoverySuccess && user.id) {
-        processRetryQueue(user.id);
-        navigateToComplete(workoutId);
-      }
-    } else {
-      const newWorkoutId = await handleCompleteWorkout();
-      if (newWorkoutId) {
-        navigateToComplete(newWorkoutId);
-      }
-    }
+  const handleToggleChart = () => {
+    setShowChart(!showChart);
   };
 
-  const onCompleteWorkout = async () => {
-    const workoutId = await handleCompleteWorkout();
-    if (workoutId) {
-      navigateToComplete(workoutId);
-    }
-  };
+  if (loadingExercises || !activeExercise) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-white">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Loading exercises...
+      </div>
+    );
+  }
 
-  const handleRestTimerComplete = () => setRestTimerActive(false);
-  const handleShowRestTimer = () => setRestTimerActive(true);
-  const handleResetRestTimer = () => triggerRestTimerReset();
+  const currentExercise = allExercises.find(ex => ex.name === activeExercise);
+  const sets = exercises[activeExercise] || [];
+  const currentSet = sets[currentSetIndex];
 
-  const handleEditSet = (exercise: string, index: number) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      isEditing: true 
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleSaveSet = (exercise: string, index: number) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      isEditing: false 
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleWeightChange = (exercise: string, index: number, value: string) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      weight: parseFloat(value) || 0
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleRepsChange = (exercise: string, index: number, value: string) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      reps: parseInt(value) || 0
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleRestTimeChange = (exercise: string, index: number, value: string) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      restTime: parseInt(value) || 0
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleWeightIncrement = (exercise: string, index: number, increment: number) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    const currentWeight = exerciseSets[index].weight || 0;
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      weight: Math.max(0, currentWeight + increment)
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleRepsIncrement = (exercise: string, index: number, increment: number) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    const currentReps = exerciseSets[index].reps || 0;
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      reps: Math.max(0, currentReps + increment)
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
-
-  const handleRestTimeIncrement = (exercise: string, index: number, increment: number) => setExercises(prev => {
-    const exerciseSets = [...(prev[exercise] || [])];
-    const currentRestTime = exerciseSets[index].restTime || 0;
-    exerciseSets[index] = { 
-      ...exerciseSets[index], 
-      restTime: Math.max(0, currentRestTime + increment)
-    };
-    return {
-      ...prev,
-      [exercise]: exerciseSets
-    };
-  });
+  if (!currentExercise || !currentSet) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-white">
+        <p>Error: Could not find exercise or set data.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="pb-20">
-      <AddExerciseSheet
-        open={showAddExerciseSheet}
-        onOpenChange={setShowAddExerciseSheet}
-        onSelectExercise={handleAddExercise}
-        trainingType={trainingType}
-        currentExercises={Object.keys(exercises)}
-      />
+    <div className="flex flex-col min-h-screen bg-black text-white">
+      <header className="flex justify-between items-center p-4 border-b border-gray-800">
+        <button
+          onClick={() => navigate('/')}
+          className="p-2 rounded-full hover:bg-gray-900"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="title-large">Training Session</h1>
+        <WeightUnitToggle variant="badge" />
+      </header>
 
-      <WorkoutHeader trainingType={trainingTypeObj} />
-      
-      <div ref={metricsRef}>
-        <WorkoutSessionHeader
-          elapsedTime={elapsedTime}
-          exerciseCount={Object.keys(exercises).length}
-          completedSets={completedSets}
-          totalSets={totalSets}
-          workoutStatus={workoutStatus}
-          isRecoveryMode={isRecoveryMode}
-          saveProgress={saveProgress}
-          onRetrySave={handleRetrySave}
-          onResetWorkout={handleResetWorkoutSession}
-          restTimerActive={restTimerActive}
-          onRestTimerComplete={handleRestTimerComplete}
-          onShowRestTimer={handleShowRestTimer}
-          onRestTimerReset={handleResetRestTimer}
-          restTimerResetSignal={restTimerResetSignal}
-          currentRestTime={currentRestTime}
-        />
-      </div>
-      
-      <div className="px-4 py-2">
-        {Object.keys(exercises).length > 0 ? (
-          <>
-            <ExerciseList
-              exercises={exercises}
-              activeExercise={activeExercise}
-              onAddSet={handleAddSet}
-              onCompleteSet={handleCompleteSet}
-              onRemoveSet={handleRemoveSet}
-              onEditSet={handleEditSet}
-              onSaveSet={handleSaveSet}
-              onWeightChange={handleWeightChange}
-              onRepsChange={handleRepsChange}
-              onRestTimeChange={handleRestTimeChange}
-              onWeightIncrement={handleWeightIncrement}
-              onRepsIncrement={handleRepsIncrement}
-              onRestTimeIncrement={handleRestTimeIncrement}
-              onShowRestTimer={handleShowRestTimer}
-              onResetRestTimer={handleResetRestTimer}
-              onOpenAddExercise={() => setShowAddExerciseSheet(true)}
-            />
-            
-            <WorkoutCompletion
-              exercises={exercises}
-              intensity={intensity}
-              efficiency={efficiency}
-              onComplete={onCompleteWorkout}
-            />
-          </>
-        ) : (
-          <EmptyWorkoutState onTemplateSelect={handleAddExercise} />
-        )}
-      </div>
-      
-      {workoutStatus === 'partial' && (
-        <div className="fixed bottom-20 left-0 right-0 flex justify-center px-4">
-          <Button
-            variant="default"
-            onClick={handleRetrySave}
-            className="bg-amber-600 hover:bg-amber-700 text-white"
-          >
-            Retry Saving Workout Data
-          </Button>
+      <main className="flex-1 overflow-auto px-4 py-6">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="title-medium">{currentExercise.name}</h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handlePreviousExercise}
+                disabled={isFirstExercise || isTransitioning}
+                className={cn(
+                  "btn btn-icon btn-outline border-gray-700 text-white",
+                  (isFirstExercise || isTransitioning) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <button
+                onClick={handleNextExercise}
+                disabled={isLastExercise || isTransitioning}
+                className={cn(
+                  "btn btn-icon btn-outline border-gray-700 text-white",
+                  (isLastExercise || isTransitioning) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <SkipForward size={20} />
+              </button>
+            </div>
+          </div>
+          <ExerciseCard exercise={currentExercise} />
         </div>
-      )}
+
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="title-small">Set {currentSetIndex + 1} / {sets.length}</h3>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handlePreviousSet}
+                disabled={isFirstSet || isTransitioning}
+                className={cn(
+                  "btn btn-icon btn-outline border-gray-700 text-white",
+                  (isFirstSet || isTransitioning) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <button
+                onClick={handleNextSet}
+                disabled={isLastSet || isTransitioning}
+                className={cn(
+                  "btn btn-icon btn-outline border-gray-700 text-white",
+                  (isLastSet || isTransitioning) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <SkipForward size={20} />
+              </button>
+            </div>
+          </div>
+          <SetInput
+            set={currentSet}
+            exerciseName={currentExercise.name}
+            index={currentSetIndex}
+            onComplete={() => handleSetComplete(currentExercise.name, currentSetIndex)}
+          />
+        </div>
+
+        <div className="mb-6">
+          {isResting ? (
+            <div className="flex flex-col items-center">
+              <h4 className="title-small mb-2">Resting</h4>
+              <div ref={timerRef}>
+                <Timer
+                  duration={currentRestTime}
+                  key={restTimerResetSignal}
+                  onComplete={handleSkipRest}
+                  isRunning={restTimerActive}
+                  onTick={playTick}
+                />
+              </div>
+              <Button
+                onClick={handleSkipRest}
+                variant="secondary"
+                className="mt-4"
+              >
+                Skip Rest
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={handleStartRest}
+              variant="secondary"
+              disabled={currentSet.completed}
+              className={cn(
+                "w-full",
+                currentSet.completed ? "opacity-50 cursor-not-allowed" : ""
+              )}
+            >
+              Start Rest
+            </Button>
+          )}
+        </div>
+
+        <div className="mb-6">
+          <h4 className="title-small mb-2">Workout Progress</h4>
+          <div className="flex justify-between items-center">
+            <p>Time: {elapsedTime} seconds</p>
+            <p>Sets: {completedSets} / {totalSets}</p>
+            <p>Volume: {formatWeightWithUnit(totalVolume, weightUnit)}</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <Button onClick={handleToggleChart} variant="secondary">
+            {showChart ? "Hide Chart" : "Show Chart"}
+          </Button>
+          {showChart && (
+            <VolumeByExerciseChart
+              workoutData={{ exercises: exercises }}
+              weightUnit={weightUnit}
+            />
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            className="btn btn-outline border-gray-700 text-white"
+            onClick={handleCancelWorkout}
+          >
+            Cancel Workout
+          </button>
+          <button
+            className="bg-green-600 hover:bg-green-700 font-medium rounded-md px-4 py-3 transition disabled:opacity-70"
+            onClick={handleCompleteWorkout}
+            disabled={!isExerciseComplete}
+          >
+            {isExerciseComplete ? "Complete Workout" : "Finish Exercise"}
+          </button>
+        </div>
+      </main>
     </div>
   );
 };
-
-export default TrainingSession;

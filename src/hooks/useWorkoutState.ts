@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
@@ -17,7 +16,15 @@ export interface LocalExerciseSet {
   id?: string;
   saveStatus?: 'pending' | 'saving' | 'saved' | 'failed';
   retryCount?: number;
-  lastCompleted?: number; // Added this property to fix the TypeScript error
+  lastCompleted?: number;
+}
+
+export interface TrainingConfigState {
+  trainingType: string;
+  tags: string[];
+  duration: number;
+  timeOfDay?: string;
+  intensity?: number;
 }
 
 export const useWorkoutState = () => {
@@ -30,7 +37,8 @@ export const useWorkoutState = () => {
     currentRestTime: 60,
     workoutStatus: 'idle',
     savingErrors: [],
-    isRecoveryMode: false
+    isRecoveryMode: false,
+    trainingConfig: null
   });
 
   const exercises = state.exercises;
@@ -73,7 +81,8 @@ export const useWorkoutState = () => {
             workoutId: parsed.workoutId || null,
             lastSyncTimestamp: parsed.lastUpdated || new Date().toISOString(),
             workoutStatus: parsed.workoutStatus === 'saving' ? 'partial' : (parsed.workoutStatus || 'idle'),
-            isRecoveryMode: parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial'
+            isRecoveryMode: parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial',
+            trainingConfig: parsed.trainingConfig || null
           }));
           
           if (parsed.workoutStatus === 'saving' || parsed.workoutStatus === 'partial') {
@@ -115,7 +124,8 @@ export const useWorkoutState = () => {
         currentRestTime: state.currentRestTime,
         lastUpdated: new Date().toISOString(),
         workoutStatus: state.workoutStatus,
-        workoutId: state.workoutId
+        workoutId: state.workoutId,
+        trainingConfig: state.trainingConfig
       }));
     };
     
@@ -181,7 +191,8 @@ export const useWorkoutState = () => {
       savingErrors: [],
       saveProgress: undefined,
       workoutId: null,
-      isRecoveryMode: false
+      isRecoveryMode: false,
+      trainingConfig: null
     });
   }, [updateState]);
 
@@ -327,7 +338,6 @@ export const useWorkoutState = () => {
       
       if (index > 0) {
         const previousSet = exerciseSets[index - 1];
-        // Calculate the actual rest time if the previous set has a completion timestamp
         if (previousSet.lastCompleted) {
           const actualRestTime = Math.floor((now - previousSet.lastCompleted) / 1000);
           previousSet.restTime = actualRestTime;
@@ -357,6 +367,13 @@ export const useWorkoutState = () => {
     });
   }, [triggerRestTimerReset]);
 
+  const setTrainingConfig = useCallback((config: TrainingConfigState) => {
+    setState(prevState => ({
+      ...prevState,
+      trainingConfig: config
+    }));
+  }, []);
+
   return {
     exercises,
     setExercises,
@@ -382,6 +399,8 @@ export const useWorkoutState = () => {
     markAsFailed,
     updateSaveProgress,
     attemptRecovery,
-    handleCompleteSet
+    handleCompleteSet,
+    trainingConfig: state.trainingConfig,
+    setTrainingConfig
   };
 };

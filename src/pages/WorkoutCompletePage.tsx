@@ -1,4 +1,3 @@
-// This is a direct refactor of src/pages/WorkoutComplete.tsx split out for maintainability
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -34,6 +33,12 @@ interface WorkoutData {
   endTime: Date;
   trainingType: string;
   name: string;
+  trainingConfig?: {
+    tags?: string[];
+    duration?: number;
+    timeOfDay?: string;
+    intensity?: number;
+  };
 }
 
 export const WorkoutCompletePage = () => {
@@ -118,7 +123,11 @@ export const WorkoutCompletePage = () => {
           const { error: updateError } = await supabase
             .from('workout_sessions')
             .update({
-              notes: notes || null
+              notes: notes || null,
+              metadata: workoutData.trainingConfig ? 
+                JSON.stringify({
+                  trainingConfig: workoutData.trainingConfig
+                }) : null
             })
             .eq('id', workoutId);
 
@@ -229,7 +238,11 @@ export const WorkoutCompletePage = () => {
         start_time: workoutData.startTime.toISOString(),
         end_time: workoutData.endTime.toISOString(),
         duration: workoutData.duration || 0,
-        notes: notes || null
+        notes: notes || null,
+        metadata: workoutData.trainingConfig ? 
+          JSON.stringify({
+            trainingConfig: workoutData.trainingConfig
+          }) : null
       });
       
       try {
@@ -242,7 +255,11 @@ export const WorkoutCompletePage = () => {
             start_time: workoutData.startTime.toISOString(),
             end_time: workoutData.endTime.toISOString(),
             duration: workoutData.duration || 0,
-            notes: notes || null
+            notes: notes || null,
+            metadata: workoutData.trainingConfig ? 
+              JSON.stringify({
+                trainingConfig: workoutData.trainingConfig
+              }) : null
           })
           .select('id')
           .single();
@@ -599,7 +616,7 @@ export const WorkoutCompletePage = () => {
             Discard
           </button>
           <button
-            className="bg-purple-600 hover:bg-purple-700 font-medium rounded-md px-4 py-3 transition disabled:opacity-70"
+            className="bg-purple-600 hover:bg-purple-700 font-medium rounded-md px-4 py-3 transition disabled:opacity-700"
             onClick={handleSaveAndExit}
             disabled={saving}
           >
