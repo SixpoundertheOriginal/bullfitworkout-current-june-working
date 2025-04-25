@@ -7,7 +7,7 @@ import { SetRow } from "@/components/SetRow";
 import { ExerciseSet } from "@/types/exercise";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { ExerciseVolumeSparkline } from '@/components/metrics/ExerciseVolumeSparkline';
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { calculateSetVolume } from '@/utils/exerciseUtils';
 import { exerciseHistoryData, getPreviousSessionData } from "@/constants/exerciseData";
 import { convertWeight } from "@/utils/unitConversion";
@@ -82,6 +82,14 @@ export const ExerciseCard = ({
   
   const completedSetsCount = sets.filter(set => set.completed).length;
   const completionPercentage = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
+
+  // Calculate total completed reps
+  const completedReps = sets.reduce((total, set) => {
+    return total + (set.completed ? set.reps : 0);
+  }, 0);
+
+  // Calculate total target reps
+  const totalTargetReps = sets.reduce((total, set) => total + set.reps, 0);
   
   const handleCompleteSet = (index: number) => {
     onCompleteSet(exercise, index);
@@ -141,13 +149,24 @@ export const ExerciseCard = ({
               </span>
             </div>
           </div>
-          <Badge 
-            variant="outline"
-            className={`flex items-center gap-1 ${isImproved ? "text-green-300 border-green-500/30" : "text-red-300 border-red-500/30"}`}
-          >
-            {isImproved ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-            <span className="mono-text">{Math.abs(parseFloat(percentChange))}%</span>
-          </Badge>
+          <div className="flex justify-between items-center gap-4 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">
+                Sets: {completedSetsCount}/{sets.length}
+              </span>
+              <span className="text-sm text-gray-400">•</span>
+              <span className="text-sm text-gray-400">
+                Reps: {completedReps}/{totalTargetReps}
+              </span>
+            </div>
+            <Badge 
+              variant="outline"
+              className={`flex items-center gap-1 ${isImproved ? "text-green-300 border-green-500/30" : "text-red-300 border-red-500/30"}`}
+            >
+              {isImproved ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              <span className="mono-text">{Math.abs(parseFloat(percentChange))}%</span>
+            </Badge>
+          </div>
         </div>
         
         <div className="mb-3">
