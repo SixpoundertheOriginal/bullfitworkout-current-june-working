@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -85,7 +86,7 @@ const TrainingPage = () => {
         open={isConfiguring}
         onOpenChange={setIsConfiguring}
         onStartTraining={handleStartTraining}
-        initialConfig={storedConfig}
+        initialData={storedConfig}
       />
     </div>
   );

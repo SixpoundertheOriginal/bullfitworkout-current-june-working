@@ -19,7 +19,9 @@ import { cn } from "@/lib/utils";
 
 const ANIMATION_DURATION = 250;
 
-export const TrainingSession = () => {
+interface TrainingSessionPageProps {}
+
+const TrainingSessionPage: React.FC<TrainingSessionPageProps> = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { exercises: allExercises, isLoading: loadingExercises } = useExercises();
@@ -416,9 +418,4 @@ export const TrainingSession = () => {
   );
 };
 
-const TrainingSessionPage = () => {
-  return <TrainingSession />;
-};
-
 export default TrainingSessionPage;
-export { TrainingSession };

@@ -10,7 +10,7 @@ interface TimerProps {
   onTick?: () => void;
 }
 
-export const Timer = ({ duration, isRunning, onComplete, onTick }: TimerProps) => {
+export const Timer: React.FC<TimerProps> = ({ duration, isRunning, onComplete, onTick }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [progress, setProgress] = useState(100);
 

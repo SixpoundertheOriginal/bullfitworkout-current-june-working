@@ -1,9 +1,14 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
 import { supabase } from "@/integrations/supabase/client";
 import { recoverPartiallyCompletedWorkout, processRetryQueue } from '@/services/workoutSaveService';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
+
+// Define storage constants
+const STORAGE_KEY_PREFIX = 'workout_session_';
+const STORAGE_VERSION = '1.0.0';
 
 export interface LocalExerciseSet {
   weight: number;

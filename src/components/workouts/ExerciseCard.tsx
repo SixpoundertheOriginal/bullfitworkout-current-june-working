@@ -15,16 +15,16 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise }) => {
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <h3 className="font-medium text-lg">{exercise.name}</h3>
-            {exercise.category && (
+            {exercise.type && (
               <Badge variant="outline" className="bg-gray-800">
-                {exercise.category}
+                {exercise.type}
               </Badge>
             )}
           </div>
           
-          {exercise.muscle_groups && exercise.muscle_groups.length > 0 && (
+          {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
-              {exercise.muscle_groups.map((muscle) => (
+              {exercise.muscleGroups.map((muscle) => (
                 <Badge key={muscle} variant="secondary" className="text-xs">
                   {muscle}
                 </Badge>
@@ -32,9 +32,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise }) => {
             </div>
           )}
           
-          {exercise.equipment && (
+          {exercise.equipmentRequired && (
             <div className="text-sm text-gray-400">
-              Equipment: {exercise.equipment}
+              Equipment: {exercise.equipmentRequired}
             </div>
           )}
         </div>
