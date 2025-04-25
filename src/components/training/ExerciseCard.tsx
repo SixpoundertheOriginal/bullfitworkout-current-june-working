@@ -106,9 +106,7 @@ export const ExerciseCard = ({
       navigator.vibrate(50);
     }
     
-    toast({
-      description: `${exercise}: Set ${index + 1} logged successfully`
-    });
+    toast(`${exercise}: Set ${index + 1} logged successfully`);
   };
 
   const handleAutoAdvanceNext = (index: number) => {
