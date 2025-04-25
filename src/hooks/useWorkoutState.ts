@@ -30,6 +30,7 @@ export interface TrainingConfigState {
   intensity?: number;
 }
 
+// Extend the WorkoutState interface to include trainingConfig
 interface ExtendedWorkoutState extends WorkoutState {
   trainingConfig: TrainingConfig | null;
 }

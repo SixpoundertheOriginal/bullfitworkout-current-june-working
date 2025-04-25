@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -9,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
 import { isValidTrainingType } from "@/components/TrainingTypeTag";
 import WorkoutSummaryCard from "@/components/workouts/WorkoutSummaryCard";
-import VolumeByExerciseChart from "@/components/workouts/VolumeByExerciseChart";
+import { VolumeByExerciseChart } from "@/components/workouts/VolumeByExerciseChart";
 import NotesSection from "@/components/workouts/NotesSection";
 import SaveTemplateSection from "@/components/workouts/SaveTemplateSection";
 import ExercisesCompletedList from "@/components/workouts/ExercisesCompletedList";
