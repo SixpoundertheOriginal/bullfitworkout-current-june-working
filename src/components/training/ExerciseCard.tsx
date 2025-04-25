@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,12 +83,10 @@ export const ExerciseCard = ({
   const completedSetsCount = sets.filter(set => set.completed).length;
   const completionPercentage = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
 
-  // Calculate total completed reps
   const completedReps = sets.reduce((total, set) => {
     return total + (set.completed ? set.reps : 0);
   }, 0);
 
-  // Calculate total target reps
   const totalTargetReps = sets.reduce((total, set) => total + set.reps, 0);
   
   const handleCompleteSet = (index: number) => {
@@ -107,9 +104,7 @@ export const ExerciseCard = ({
       navigator.vibrate(50);
     }
     
-    toast({
-      description: `${exercise}: Set ${index + 1} logged successfully`
-    });
+    toast(`${exercise}: Set ${index + 1} logged successfully`);
   };
 
   const handleAutoAdvanceNext = (index: number) => {
