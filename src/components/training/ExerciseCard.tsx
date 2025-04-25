@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -106,7 +107,9 @@ export const ExerciseCard = ({
       navigator.vibrate(50);
     }
     
-    toast(`${exercise}: Set ${index + 1} logged successfully`);
+    toast({
+      description: `${exercise}: Set ${index + 1} logged successfully`
+    });
   };
 
   const handleAutoAdvanceNext = (index: number) => {
