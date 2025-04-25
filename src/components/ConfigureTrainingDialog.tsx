@@ -27,6 +27,7 @@ interface ConfigureTrainingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStartTraining: (config: TrainingConfig) => void;
+  initialConfig?: TrainingConfig | null;
 }
 
 interface TrainingAchievementCardProps {
@@ -70,7 +71,8 @@ const pageVariants = {
 export function ConfigureTrainingDialog({ 
   open, 
   onOpenChange, 
-  onStartTraining 
+  onStartTraining,
+  initialConfig
 }: ConfigureTrainingDialogProps) {
   const [trainingType, setTrainingType] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -114,17 +116,17 @@ export function ConfigureTrainingDialog({
   }, [recommendation]);
 
   useEffect(() => {
-    if (open && storedConfig && !trainingType) {
-      setTrainingType(storedConfig.trainingType);
-      setSelectedTags(storedConfig.tags);
-      setDuration(storedConfig.duration);
+    if (open && initialConfig && !trainingType) {
+      setTrainingType(initialConfig.trainingType);
+      setSelectedTags(initialConfig.tags);
+      setDuration(initialConfig.duration);
       
       toast("Configuration restored", {
         description: "We've restored your previous training setup",
         duration: 3000,
       });
     }
-  }, [open, storedConfig, trainingType]);
+  }, [open, initialConfig, trainingType]);
 
   useEffect(() => {
     if (exercises && exercises.length && trainingType) {

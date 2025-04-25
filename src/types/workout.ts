@@ -1,5 +1,3 @@
-
-
 export type WorkoutStatus = 
   | 'idle'        // Initial state
   | 'active'      // Workout in progress
@@ -49,4 +47,5 @@ export interface WorkoutState {
   lastSyncTimestamp?: string;
   workoutId?: string | null;
   isRecoveryMode: boolean;
+  trainingConfig: any | null; // Add trainingConfig to the interface
 }
