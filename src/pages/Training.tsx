@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -7,13 +8,13 @@ import { TrainingSession } from "@/components/training/TrainingSession";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Flame, Dumbbell } from "lucide-react";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
-import { useTrainingSetupPersistence } from "@/hooks/useTrainingSetupPersistence";
+import { useTrainingSetupPersistence, TrainingConfig } from "@/hooks/useTrainingSetupPersistence";
 
 const TrainingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isConfiguring, setIsConfiguring] = useState(false);
-  const [trainingConfig, setTrainingConfig] = useState(null);
+  const [trainingConfig, setTrainingConfig] = useState<TrainingConfig | null>(null);
   const [workoutActive, setWorkoutActive] = useState(false);
   const { resetSession } = useWorkoutState();
   const { storedConfig, isLoading, saveConfig } = useTrainingSetupPersistence();
@@ -27,7 +28,7 @@ const TrainingPage = () => {
     }
   }, [storedConfig, trainingConfig, workoutActive]);
 
-  const handleStartTraining = (config) => {
+  const handleStartTraining = (config: TrainingConfig) => {
     saveConfig(config);
     setTrainingConfig(config);
     setWorkoutActive(true);
