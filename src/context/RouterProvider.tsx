@@ -1,15 +1,14 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
-import TrainingSession from "@/pages/TrainingSession";
+import TrainingSessionPage from "@/pages/TrainingSession";
 import WorkoutComplete from "@/pages/WorkoutComplete";
 import WorkoutDetailsPage from "@/pages/WorkoutDetailsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import Auth from "@/pages/Auth";
-import Training from "@/pages/Training";
+import { TrainingPage } from "@/pages/Training";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { PageHeader } from "@/components/navigation/PageHeader";
 
@@ -63,8 +62,8 @@ export const RouterProvider = () => {
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
-          <Route path="/training-session" element={<ProtectedRoute><TrainingSession /></ProtectedRoute>} />
+          <Route path="/training" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
+          <Route path="/training-session" element={<ProtectedRoute><TrainingSessionPage /></ProtectedRoute>} />
           <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
           <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
           <Route path="/workout-details/:workoutId" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />

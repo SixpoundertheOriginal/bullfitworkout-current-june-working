@@ -3,9 +3,7 @@ import { toast } from "@/components/ui/sonner";
 import { WorkoutState, WorkoutStatus, WorkoutError, EnhancedExerciseSet } from '@/types/workout';
 import { supabase } from "@/integrations/supabase/client";
 import { recoverPartiallyCompletedWorkout, processRetryQueue } from '@/services/workoutSaveService';
-
-const STORAGE_VERSION = '1.0.0';
-const STORAGE_KEY_PREFIX = 'workout_session_';
+import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 
 export interface LocalExerciseSet {
   weight: number;
@@ -27,8 +25,12 @@ export interface TrainingConfigState {
   intensity?: number;
 }
 
+interface ExtendedWorkoutState extends WorkoutState {
+  trainingConfig: TrainingConfig | null;
+}
+
 export const useWorkoutState = () => {
-  const [state, setState] = useState<WorkoutState>({
+  const [state, setState] = useState<ExtendedWorkoutState>({
     exercises: {},
     activeExercise: null,
     elapsedTime: 0,
@@ -367,7 +369,7 @@ export const useWorkoutState = () => {
     });
   }, [triggerRestTimerReset]);
 
-  const setTrainingConfig = useCallback((config: TrainingConfigState) => {
+  const setTrainingConfig = useCallback((config: TrainingConfig) => {
     setState(prevState => ({
       ...prevState,
       trainingConfig: config

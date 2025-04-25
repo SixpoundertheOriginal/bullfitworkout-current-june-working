@@ -9,15 +9,26 @@ import { ArrowRight, Flame, Dumbbell } from "lucide-react";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { useTrainingSetupPersistence } from "@/hooks/useTrainingSetupPersistence";
 
-export const TrainingPage = () => {
+const TrainingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [trainingConfig, setTrainingConfig] = useState(null);
   const [workoutActive, setWorkoutActive] = useState(false);
   const { resetSession } = useWorkoutState();
+  const { storedConfig, isLoading, saveConfig } = useTrainingSetupPersistence();
+
+  useEffect(() => {
+    if (storedConfig && !trainingConfig && !workoutActive) {
+      toast({
+        title: "Saved configuration found",
+        description: "We've restored your previous training setup",
+      });
+    }
+  }, [storedConfig, trainingConfig, workoutActive]);
 
   const handleStartTraining = (config) => {
+    saveConfig(config);
     setTrainingConfig(config);
     setWorkoutActive(true);
   };
@@ -74,7 +85,11 @@ export const TrainingPage = () => {
         open={isConfiguring}
         onOpenChange={setIsConfiguring}
         onStartTraining={handleStartTraining}
+        initialConfig={storedConfig}
       />
     </div>
   );
 };
+
+export default TrainingPage;
+export { TrainingPage };

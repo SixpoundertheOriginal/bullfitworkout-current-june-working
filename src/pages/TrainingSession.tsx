@@ -4,7 +4,6 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { useExercises } from "@/hooks/useExercises";
-import { Exercise } from "@/types/exercise";
 import { Timer } from "@/components/Timer";
 import { ExerciseCard } from "@/components/workouts/ExerciseCard";
 import { SetInput } from "@/components/workouts/SetInput";
@@ -17,7 +16,6 @@ import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useStopwatch } from "@/hooks/useStopwatch";
 import { useSound } from "@/hooks/useSound";
 import { cn } from "@/lib/utils";
-import { typography } from "@/lib/typography";
 
 const ANIMATION_DURATION = 250;
 
@@ -417,3 +415,10 @@ export const TrainingSession = () => {
     </div>
   );
 };
+
+const TrainingSessionPage = () => {
+  return <TrainingSession />;
+};
+
+export default TrainingSessionPage;
+export { TrainingSession };
