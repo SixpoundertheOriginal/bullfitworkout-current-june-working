@@ -21,9 +21,8 @@ export const TrainingPage = () => {
 
   useEffect(() => {
     if (storedConfig && !trainingConfig && !workoutActive) {
-      toast({
-        title: "Saved configuration found",
-        description: "We've restored your previous training setup",
+      toast("Saved configuration found", {
+        description: "We've restored your previous training setup"
       });
     }
   }, [storedConfig, trainingConfig, workoutActive]);
@@ -50,9 +49,8 @@ export const TrainingPage = () => {
   const handleCancelWorkout = () => {
     setWorkoutActive(false);
     resetSession();
-    toast({
-      title: "Workout cancelled",
-      description: "Your workout session has been cancelled.",
+    toast("Workout cancelled", {
+      description: "Your workout session has been cancelled."
     });
   };
 
