@@ -12,10 +12,13 @@ export const BottomNav = () => {
   const isTrainingConfig = location.pathname.includes('/training') && 
     (location.pathname !== '/training' && location.pathname !== '/training-session');
   
+  // Hide bottom nav on training session page
+  const isTrainingSession = location.pathname === '/training-session';
+  
   // Check if any dialog is open by looking for elements with role="dialog"
   const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
   
-  if (isTrainingConfig || isDialogOpen) {
+  if (isTrainingConfig || isDialogOpen || isTrainingSession) {
     return null;
   }
   

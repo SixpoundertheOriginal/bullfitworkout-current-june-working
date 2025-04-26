@@ -1,21 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { useExercises } from "@/hooks/useExercises";
 import { Timer } from "@/components/Timer";
-import { ExerciseCard } from "@/components/workouts/ExerciseCard";
+import { ExerciseCard } from "@/components/training/ExerciseCard";
 import { SetInput } from "@/components/workouts/SetInput";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Loader2, SkipForward, Check } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
-import { VolumeByExerciseChart } from "@/components/workouts/VolumeByExerciseChart";
+import { VolumeByExerciseChart } from '@/components/workouts/VolumeByExerciseChart';
 import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useStopwatch } from "@/hooks/useStopwatch";
 import { useSound } from "@/hooks/useSound";
 import { cn } from "@/lib/utils";
+import { ExerciseList } from "@/components/training/ExerciseList";
+import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 
 const ANIMATION_DURATION = 250;
 

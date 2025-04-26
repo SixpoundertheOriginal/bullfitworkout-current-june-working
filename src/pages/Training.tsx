@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
 import { TrainingSession } from "@/components/training/TrainingSession";
@@ -10,7 +10,7 @@ import { ArrowRight, Flame, Dumbbell } from "lucide-react";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { useTrainingSetupPersistence, TrainingConfig } from "@/hooks/useTrainingSetupPersistence";
 
-const TrainingPage = () => {
+export const TrainingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isConfiguring, setIsConfiguring] = useState(false);
@@ -93,4 +93,3 @@ const TrainingPage = () => {
 };
 
 export default TrainingPage;
-export { TrainingPage };
