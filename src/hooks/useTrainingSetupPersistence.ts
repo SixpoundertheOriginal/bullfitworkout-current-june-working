@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Exercise } from '@/types/exercise';
 
 export interface TrainingConfig {
   trainingType: string;
@@ -10,11 +9,7 @@ export interface TrainingConfig {
   duration: number;
   timeOfDay?: string;
   intensity?: number;
-  rankedExercises?: {
-    recommended: Exercise[];
-    other: Exercise[];
-    matchData: Record<string, { score: number, reasons: string[] }>;
-  };
+  rankedExercises?: any;
   lastUpdated?: string;
 }
 

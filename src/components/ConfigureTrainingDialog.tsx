@@ -40,14 +40,7 @@ interface TrainingConfig {
   trainingType: string;
   tags: string[];
   duration: number;
-  rankedExercises?: {
-    recommended: Exercise[];
-    other: Exercise[];
-    matchData: Record<string, { score: number, reasons: string[] }>;
-  };
-  timeOfDay?: string;
-  intensity?: number;
-  lastUpdated?: string;
+  rankedExercises: { recommended: Exercise[]; other: Exercise[]; matchData: Record<string, { score: number, reasons: string[] }> };
 }
 
 enum ConfigurationStep {
@@ -199,8 +192,7 @@ export function ConfigureTrainingDialog({
     const trainingConfig = {
       trainingType,
       tags: selectedTags,
-      duration,
-      rankedExercises: rankedResults
+      duration
     };
     
     setTrainingConfig(trainingConfig);
