@@ -97,27 +97,32 @@ export const WorkoutMetrics = ({
 
   return (
     <div className={cn("relative w-full", className)}>
-      <div className="grid grid-cols-4 gap-3 px-2 py-3 sm:p-4 rounded-3xl bg-gray-900/40 backdrop-blur-md border border-white/5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5">
+        {/* Time Card */}
         <MetricCard
           icon={Clock}
           value={formatTime(time)}
           label="Time"
           tooltip={`Tracked since ${formattedStartTime}`}
           gradientClass="from-sky-600/10 via-black/5 to-sky-900/10 hover:from-sky-600/20 hover:to-sky-900/20"
-          valueClass="text-sky-300 font-semibold bg-gradient-to-br from-sky-200 to-sky-400 bg-clip-text text-transparent"
+          valueClass="text-sky-300 font-semibold bg-gradient-to-br from-sky-200 to-sky-400 bg-clip-text text-transparent text-lg sm:text-xl"
           labelClass={typography.sections.label}
+          className="p-2 sm:p-3"
         />
 
+        {/* Exercise Count Card */}
         <MetricCard
           icon={Dumbbell}
           value={exerciseCount}
           label="Exercises"
           tooltip="Active exercises in your workout"
           gradientClass="from-emerald-600/10 via-black/5 to-emerald-900/10 hover:from-emerald-600/20 hover:to-emerald-900/20"
-          valueClass="text-emerald-300 font-semibold bg-gradient-to-br from-emerald-200 to-emerald-400 bg-clip-text text-transparent"
+          valueClass="text-emerald-300 font-semibold bg-gradient-to-br from-emerald-200 to-emerald-400 bg-clip-text text-transparent text-lg sm:text-xl"
           labelClass={typography.sections.label}
+          className="p-2 sm:p-3"
         />
 
+        {/* Sets Card */}
         <MetricCard
           icon={Timer}
           value={`${completedSets}/${totalSets}`}
@@ -125,26 +130,28 @@ export const WorkoutMetrics = ({
           tooltip={`${Math.round(completionPercentage)}% sets completed`}
           progressValue={completionPercentage}
           gradientClass="from-violet-600/10 via-black/5 to-violet-900/10 hover:from-violet-600/20 hover:to-violet-900/20"
-          valueClass="text-violet-300 font-semibold bg-gradient-to-br from-violet-200 to-violet-400 bg-clip-text text-transparent"
+          valueClass="text-violet-300 font-semibold bg-gradient-to-br from-violet-200 to-violet-400 bg-clip-text text-transparent text-lg sm:text-xl"
           labelClass={typography.sections.label}
+          className="p-2 sm:p-3"
         />
 
+        {/* Rest Timer Card */}
         <div className={cn(
-          "relative flex flex-col items-center justify-center p-4 rounded-2xl border border-white/10 backdrop-blur-xl transition-all duration-300",
+          "relative flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border border-white/10 backdrop-blur-xl transition-all duration-300",
           "bg-gradient-to-br from-gray-900/80 via-gray-800/40 to-gray-900/90 hover:from-orange-600/20 hover:to-orange-900/20",
           "hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/10",
-          "min-w-[100px] w-full",
+          "min-w-[80px] w-full",
           "relative overflow-hidden"
         )}>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="relative mb-2 rounded-full bg-white/8 shadow-inner flex h-12 w-12 items-center justify-center">
+            <div className="relative mb-1 sm:mb-2 rounded-full bg-white/8 shadow-inner flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center">
               <CircularProgress
                 value={showRestTimer ? 100 : 0}
-                size={48}
+                size={32}
                 className="text-orange-500/20"
               >
                 <Timer
-                  size={22}
+                  size={16}
                   className={cn(
                     "text-orange-300 absolute inset-0 m-auto",
                     showRestTimer && "animate-pulse"
@@ -159,6 +166,7 @@ export const WorkoutMetrics = ({
               onTimeUpdate={onRestTimeUpdate}
               onManualStart={onManualRestStart}
               currentRestTime={currentRestTime}
+              className="scale-90 sm:scale-100"
             />
 
             {!showRestTimer && (
@@ -166,7 +174,7 @@ export const WorkoutMetrics = ({
                 variant="outline"
                 size="sm"
                 onClick={onManualRestStart}
-                className="mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300 transition-all duration-300 text-xs font-medium"
+                className="mt-1 sm:mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300 transition-all duration-300 text-xs font-medium scale-90 sm:scale-100"
               >
                 <Play size={12} className="mr-1" /> Start Timer
               </Button>
