@@ -35,6 +35,7 @@ export interface WorkoutStats {
   streakDays: number;
   lastWorkoutDate: string | null;
   tags?: {name: string; count: number}[];
+  workouts: any[];
 }
 
 export interface WorkoutTypeStats {
@@ -74,7 +75,8 @@ export const useWorkoutStats = (days?: number) => {
   const {
     data: stats,
     isLoading: loading,
-    error
+    error,
+    refetch
   } = useQuery({
     queryKey: ["workout-stats", user?.id, weightUnit, days],
     queryFn: async (): Promise<WorkoutStats> => {
@@ -87,11 +89,11 @@ export const useWorkoutStats = (days?: number) => {
         .select("*")
         .eq("user_id", user.id)
         .order("start_time", { ascending: false });
-
+        
       if (workoutsError) {
         throw workoutsError;
       }
-
+      
       const { data: exerciseSets, error: setsError } = await supabase
         .from("exercise_sets")
         .select("*, workout_sessions!inner(*)")
@@ -355,14 +357,15 @@ export const useWorkoutStats = (days?: number) => {
         recommendedTags: determineRecommendedTags(muscleFocus),
         streakDays: streakDays,
         lastWorkoutDate: workouts?.[0]?.start_time || null,
-        tags: mockTags
+        tags: mockTags,
+        workouts: workouts || []
       };
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  return { stats: stats || defaultStats(), loading, error };
+  return { stats: stats || defaultStats(), loading, error, refetch };
 };
 
 function defaultStats(): WorkoutStats {
@@ -397,7 +400,8 @@ function defaultStats(): WorkoutStats {
     muscleFocus: {},
     recommendedTags: [],
     streakDays: 0,
-    lastWorkoutDate: null
+    lastWorkoutDate: null,
+    workouts: []
   };
 }
 

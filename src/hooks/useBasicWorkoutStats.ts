@@ -2,7 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { startOfWeek, endOfWeek, startOfDay, format } from "date-fns";
+import { 
+  startOfWeek, 
+  endOfWeek, 
+  subWeeks, 
+  subDays, 
+  startOfDay, 
+  format 
+} from "date-fns";
 
 export interface BasicWorkoutStats {
   totalWorkouts: number;
@@ -15,23 +22,42 @@ export interface BasicWorkoutStats {
   dailyWorkouts: Record<string, number>;
 }
 
-export function useBasicWorkoutStats() {
+export function useBasicWorkoutStats(timeRange: string = 'this-week') {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['basic-workout-stats', user?.id],
+    queryKey: ['basic-workout-stats', user?.id, timeRange],
     queryFn: async (): Promise<BasicWorkoutStats> => {
       if (!user) throw new Error("User not authenticated");
       
-      // Get current week range
       const now = new Date();
-      const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
-      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-      const today = startOfDay(now);
+      let periodStart: Date;
+      let periodEnd: Date = now;
       
-      console.log("Fetching workouts for week:", format(weekStart, "yyyy-MM-dd"), "to", format(weekEnd, "yyyy-MM-dd"));
+      // Determine time range
+      switch (timeRange) {
+        case 'previous-week':
+          periodEnd = subDays(startOfWeek(now, { weekStartsOn: 1 }), 1); // End on Sunday before current week
+          periodStart = subDays(periodEnd, 6); // Start on Monday of previous week
+          break;
+        case 'last-30-days':
+          periodStart = subDays(now, 29); // 30 days including today
+          break;
+        case 'all-time':
+          periodStart = new Date(0); // Beginning of time
+          break;
+        case 'this-week':
+        default:
+          periodStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+          break;
+      }
       
-      // Fetch all workouts for aggregate stats
+      console.log("Fetching workouts for period:", 
+        format(periodStart, "yyyy-MM-dd"), "to", 
+        format(periodEnd, "yyyy-MM-dd"), 
+        `(${timeRange})`);
+      
+      // Fetch all workouts for basic stats
       const { data: allWorkouts, error: allWorkoutsError } = await supabase
         .from('workout_sessions')
         .select('*')
@@ -40,23 +66,23 @@ export function useBasicWorkoutStats() {
         
       if (allWorkoutsError) throw allWorkoutsError;
       
-      // Fetch workouts for current week
-      const { data: weeklyWorkouts, error: weeklyError } = await supabase
+      // Fetch workouts for the specified period
+      const { data: periodWorkouts, error: periodError } = await supabase
         .from('workout_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .gte('start_time', weekStart.toISOString())
-        .lte('start_time', weekEnd.toISOString());
+        .gte('start_time', periodStart.toISOString())
+        .lte('start_time', periodEnd.toISOString());
         
-      if (weeklyError) throw weeklyError;
+      if (periodError) throw periodError;
       
       // Fetch workout sets for volume calculation
       const { data: exerciseSets, error: setsError } = await supabase
         .from('exercise_sets')
         .select('*, workout_sessions!inner(*)')
         .eq('workout_sessions.user_id', user.id)
-        .gte('workout_sessions.start_time', weekStart.toISOString())
-        .lte('workout_sessions.start_time', weekEnd.toISOString());
+        .gte('workout_sessions.start_time', periodStart.toISOString())
+        .lte('workout_sessions.start_time', periodEnd.toISOString());
         
       if (setsError) throw setsError;
       
@@ -73,7 +99,7 @@ export function useBasicWorkoutStats() {
       
       // Calculate daily workout counts
       const dailyWorkouts: Record<string, number> = {};
-      weeklyWorkouts?.forEach(workout => {
+      periodWorkouts?.forEach(workout => {
         const day = new Date(workout.start_time).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
         dailyWorkouts[day] = (dailyWorkouts[day] || 0) + 1;
       });
@@ -104,7 +130,7 @@ export function useBasicWorkoutStats() {
       
       console.log("Workout stats calculated:", {
         totalWorkouts,
-        weeklyWorkouts: weeklyWorkouts?.length || 0,
+        periodWorkouts: periodWorkouts?.length || 0,
         dailyWorkouts,
         weeklyVolume
       });
@@ -115,7 +141,7 @@ export function useBasicWorkoutStats() {
         avgDuration,
         lastWorkoutDate,
         streakDays,
-        weeklyWorkouts: weeklyWorkouts?.length || 0,
+        weeklyWorkouts: periodWorkouts?.length || 0,
         weeklyVolume,
         dailyWorkouts
       };

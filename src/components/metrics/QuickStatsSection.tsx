@@ -1,19 +1,39 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Calendar, BarChart3, Target } from 'lucide-react';
 import { MetricCard } from "@/components/metrics/MetricCard";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfWeek, endOfWeek, subWeeks } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type TimeRange = 'this-week' | 'previous-week' | 'last-30-days' | 'all-time';
 
 export const QuickStatsSection = () => {
-  const { data: stats, isLoading } = useBasicWorkoutStats();
+  const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
+  const { data: stats, isLoading } = useBasicWorkoutStats(timeRange);
 
-  // Calculate the current week range for display
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-  const dateRangeText = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+  // Calculate date range text based on selected time range
+  const getDateRangeText = () => {
+    const now = new Date();
+    
+    switch (timeRange) {
+      case 'this-week': {
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+      }
+      case 'previous-week': {
+        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
+        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
+        return `${format(previousWeekStart, "MMM d")} - ${format(previousWeekEnd, "MMM d, yyyy")}`;
+      }
+      case 'last-30-days':
+        return "Last 30 days";
+      case 'all-time':
+        return "All time";
+    }
+  };
 
   // Get the most active day of the week
   const getMostActiveDay = () => {
@@ -33,12 +53,31 @@ export const QuickStatsSection = () => {
   };
 
   const mostActiveDay = getMostActiveDay();
+  const dateRangeText = getDateRangeText();
 
   return (
     <div className="relative">
       {/* Background glow effects */}
       <div className="absolute -top-10 -left-20 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl" />
       <div className="absolute -top-10 -right-20 w-60 h-60 bg-pink-600/10 rounded-full blur-3xl" />
+      
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Quick Stats</h3>
+        <Select
+          value={timeRange}
+          onValueChange={(value) => setTimeRange(value as TimeRange)}
+        >
+          <SelectTrigger className="w-[140px] bg-gray-900 border-gray-800">
+            <SelectValue placeholder="Time period" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-900 border-gray-800">
+            <SelectItem value="this-week">This Week</SelectItem>
+            <SelectItem value="previous-week">Previous Week</SelectItem>
+            <SelectItem value="last-30-days">Last 30 Days</SelectItem>
+            <SelectItem value="all-time">All Time</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       
       {/* Use glass/card-gradient for light/dark */}
       <div className={cn(
@@ -49,9 +88,9 @@ export const QuickStatsSection = () => {
         <MetricCard
           icon={Calendar}
           value={isLoading ? "..." : stats?.weeklyWorkouts?.toString() || "0"}
-          label={`Workouts This Week`}
+          label={timeRange === 'all-time' ? 'Total Workouts' : 'Workouts'}
           description={dateRangeText}
-          tooltip="Total workouts completed in the current week"
+          tooltip={`Workouts completed in the selected time period`}
           gradientClass="from-violet-600/20 via-black/5 to-violet-900/20 hover:from-violet-600/30 hover:to-violet-900/30"
           valueClass="text-violet-300 font-semibold bg-gradient-to-br from-violet-200 to-violet-400 bg-clip-text text-transparent"
         />
@@ -60,7 +99,7 @@ export const QuickStatsSection = () => {
           icon={BarChart3}
           value={isLoading ? "..." : mostActiveDay || "None"}
           label="Most Active Day"
-          tooltip="Day with the most workouts this week"
+          tooltip="Day with the most workouts in this period"
           gradientClass="from-blue-600/20 via-black/5 to-blue-900/20 hover:from-blue-600/30 hover:to-blue-900/30"
           valueClass="text-blue-300 font-semibold bg-gradient-to-br from-blue-200 to-blue-400 bg-clip-text text-transparent"
         />
@@ -68,8 +107,8 @@ export const QuickStatsSection = () => {
         <MetricCard
           icon={Target}
           value={isLoading ? "..." : `${Math.round(stats?.weeklyVolume || 0).toLocaleString()}`}
-          label="Weekly Volume"
-          tooltip="Total weight lifted (reps × weight) this week"
+          label={timeRange === 'all-time' ? 'Total Volume' : 'Period Volume'}
+          tooltip="Total weight lifted (reps × weight) in this period"
           progressValue={stats?.weeklyVolume ? Math.min(100, stats.weeklyVolume / 1000) : 0}
           gradientClass="from-emerald-600/20 via-black/5 to-emerald-900/20 hover:from-emerald-600/30 hover:to-emerald-900/30"
           valueClass="text-emerald-300 font-semibold bg-gradient-to-br from-emerald-200 to-emerald-400 bg-clip-text text-transparent"
