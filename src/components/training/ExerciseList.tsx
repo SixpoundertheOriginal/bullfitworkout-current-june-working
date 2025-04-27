@@ -7,6 +7,8 @@ import { PlusCircle } from 'lucide-react';
 import { calculateSetVolume } from '@/utils/exerciseUtils';
 import { Progress } from '@/components/ui/progress';
 import { Exercise } from '@/types/exercise';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface ExerciseListProps {
   exercises: Record<string, LocalExerciseSet[]>;
@@ -65,56 +67,58 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
         const progressPercent = (completedSets / sets.length) * 100;
 
         return (
-          <div 
+          <Card 
             key={exerciseName} 
             id={`exercise-${exerciseName}`}
-            className="mb-8 bg-gray-900/50 rounded-lg p-4 border border-gray-800"
+            className="mb-8 bg-gray-900/50 rounded-lg border border-gray-800"
           >
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold text-white">{exerciseName}</h3>
-                <span className="text-sm text-purple-400">
-                  Total Volume: {Math.round(totalVolume)}kg
-                </span>
+            <CardContent className="p-4">
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-semibold text-white">{exerciseName}</h3>
+                  <span className="text-sm text-purple-400">
+                    Total Volume: {Math.round(totalVolume)}kg
+                  </span>
+                </div>
+                <Progress value={progressPercent} className="h-1 bg-gray-800" />
               </div>
-              <Progress value={progressPercent} className="h-1 bg-gray-800" />
-            </div>
 
-            <div className="space-y-2">
-              {sets.map((set, index) => (
-                <SetRow
-                  key={`${exerciseName}-${index}`}
-                  setNumber={index + 1}
-                  weight={set.weight}
-                  reps={set.reps}
-                  restTime={set.restTime}
-                  completed={set.completed}
-                  isEditing={set.isEditing}
-                  exerciseName={exerciseName}
-                  onComplete={() => onCompleteSet(exerciseName, index)}
-                  onEdit={() => onEditSet(exerciseName, index)}
-                  onSave={() => onSaveSet(exerciseName, index)}
-                  onRemove={() => onRemoveSet(exerciseName, index)}
-                  onWeightChange={(e) => onWeightChange(exerciseName, index, e.target.value)}
-                  onRepsChange={(e) => onRepsChange(exerciseName, index, e.target.value)}
-                  onRestTimeChange={
-                    (e) => onRestTimeChange(exerciseName, index, e.target.value)
-                  }
-                  onWeightIncrement={(value) => onWeightIncrement(exerciseName, index, value)}
-                  onRepsIncrement={(value) => onRepsIncrement(exerciseName, index, value)}
-                  onRestTimeIncrement={(value) => onRestTimeIncrement(exerciseName, index, value)}
-                  weightUnit="kg"
-                />
-              ))}
+              <div className="space-y-2">
+                {sets.map((set, index) => (
+                  <SetRow
+                    key={`${exerciseName}-${index}`}
+                    setNumber={index + 1}
+                    weight={set.weight}
+                    reps={set.reps}
+                    restTime={set.restTime}
+                    completed={set.completed}
+                    isEditing={set.isEditing}
+                    exerciseName={exerciseName}
+                    onComplete={() => onCompleteSet(exerciseName, index)}
+                    onEdit={() => onEditSet(exerciseName, index)}
+                    onSave={() => onSaveSet(exerciseName, index)}
+                    onRemove={() => onRemoveSet(exerciseName, index)}
+                    onWeightChange={(e) => onWeightChange(exerciseName, index, e.target.value)}
+                    onRepsChange={(e) => onRepsChange(exerciseName, index, e.target.value)}
+                    onRestTimeChange={
+                      (e) => onRestTimeChange(exerciseName, index, e.target.value)
+                    }
+                    onWeightIncrement={(value) => onWeightIncrement(exerciseName, index, value)}
+                    onRepsIncrement={(value) => onRepsIncrement(exerciseName, index, value)}
+                    onRestTimeIncrement={(value) => onRestTimeIncrement(exerciseName, index, value)}
+                    weightUnit="kg"
+                  />
+                ))}
 
-              <button
-                onClick={() => onAddSet(exerciseName)}
-                className="w-full p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded-md text-gray-300 transition-colors mt-2"
-              >
-                + Add Set
-              </button>
-            </div>
-          </div>
+                <button
+                  onClick={() => onAddSet(exerciseName)}
+                  className="w-full p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded-md text-gray-300 transition-colors mt-2"
+                >
+                  + Add Set
+                </button>
+              </div>
+            </CardContent>
+          </Card>
         );
       })}
       
