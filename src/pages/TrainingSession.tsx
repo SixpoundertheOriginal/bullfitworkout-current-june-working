@@ -40,7 +40,8 @@ const TrainingSessionPage = () => {
     markAsSaving,
     markAsSaved,
     markAsFailed,
-    workoutId
+    workoutId,
+    deleteExercise
   } = workoutState;
 
   const { play: playBell } = useSound('/sounds/bell.mp3');
@@ -207,10 +208,8 @@ const TrainingSessionPage = () => {
                 ]
               }));
             }}
-            onCompleteSet={(exerciseName, setIndex) => {
-              handleCompleteSet(exerciseName, setIndex);
-              handleShowRestTimer();
-            }}
+            onCompleteSet={handleCompleteSet}
+            onDeleteExercise={deleteExercise}
             onRemoveSet={(exerciseName, setIndex) => {
               setExercises(prev => ({
                 ...prev,

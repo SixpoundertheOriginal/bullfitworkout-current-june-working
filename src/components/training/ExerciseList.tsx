@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import ExerciseCard from "@/components/exercises/ExerciseCard";
 
 interface ExerciseListProps {
@@ -30,6 +30,7 @@ interface ExerciseListProps {
   onOpenAddExercise: () => void;
   onShowRestTimer: () => void;
   onResetRestTimer: () => void;
+  onDeleteExercise: (exerciseName: string) => void;
 }
 
 export const ExerciseList: React.FC<ExerciseListProps> = ({
@@ -48,7 +49,8 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   onRestTimeIncrement,
   onOpenAddExercise,
   onShowRestTimer,
-  onResetRestTimer
+  onResetRestTimer,
+  onDeleteExercise
 }) => {
   const handleCompleteSet = (exerciseName: string, setIndex: number) => {
     onCompleteSet(exerciseName, setIndex);
@@ -77,7 +79,15 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     <div className="space-y-6">
       <ScrollArea className="h-full">
         {Object.keys(exercises).map(exerciseName => (
-          <div key={exerciseName} className="mb-6">
+          <div key={exerciseName} className="mb-6 relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 hover:bg-red-500/10 hover:text-red-500"
+              onClick={() => onDeleteExercise(exerciseName)}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
             <ExerciseCard 
               exercise={exerciseName}
               sets={exercises[exerciseName]}

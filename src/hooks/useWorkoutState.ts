@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { Storage } from '@/utils/storage';
@@ -142,6 +141,15 @@ export function useWorkoutState() {
     triggerRestTimerReset();
   };
 
+  const deleteExercise = (exerciseName: string) => {
+    setExercises(prev => {
+      const newExercises = { ...prev };
+      delete newExercises[exerciseName];
+      return newExercises;
+    });
+    toast.success(`Removed ${exerciseName} from workout`);
+  };
+
   return {
     exercises,
     setExercises,
@@ -170,6 +178,7 @@ export function useWorkoutState() {
     triggerRestTimerReset,
     currentRestTime,
     setCurrentRestTime,
-    handleCompleteSet
+    handleCompleteSet,
+    deleteExercise
   };
 }
