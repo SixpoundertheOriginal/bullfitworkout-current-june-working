@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { Storage } from '@/utils/storage';
@@ -40,7 +41,19 @@ export function useWorkoutState() {
     if (savedState) {
       try {
         const parsedState = JSON.parse(savedState);
-        if (parsedState.exercises) setExercises(parsedState.exercises);
+        
+        // Ensure all sets have the isEditing property
+        if (parsedState.exercises) {
+          const normalizedExercises = {};
+          Object.entries(parsedState.exercises).forEach(([name, sets]) => {
+            normalizedExercises[name] = sets.map(set => ({
+              ...set,
+              isEditing: set.isEditing === undefined ? false : set.isEditing
+            }));
+          });
+          setExercises(normalizedExercises);
+        }
+        
         if (parsedState.activeExercise) setActiveExercise(parsedState.activeExercise);
         if (parsedState.elapsedTime) setElapsedTime(parsedState.elapsedTime);
         if (parsedState.workoutId) setWorkoutId(parsedState.workoutId);

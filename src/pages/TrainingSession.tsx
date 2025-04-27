@@ -53,8 +53,8 @@ const TrainingSessionPage = () => {
   const [showRestTimerModal, setShowRestTimerModal] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
-  const [completedSets, totalSets] = Object.values(exercises).reduce(
-    ([completed, total], sets) => [
+  const [completedSets, totalSets] = Object.entries(exercises).reduce(
+    ([completed, total], [exerciseName, sets]) => [
       completed + sets.filter(set => set.completed).length,
       total + sets.length
     ],
@@ -76,7 +76,7 @@ const TrainingSessionPage = () => {
     if (shouldReset) {
       resetSession();
     }
-  }, []);
+  }, [location.search, resetSession]);
 
   const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
@@ -149,10 +149,19 @@ const TrainingSessionPage = () => {
         }
       };
 
+      // Ensure all exercise sets have the isEditing property defined
+      const normalizedExercises = {};
+      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+        normalizedExercises[exerciseName] = sets.map(set => ({
+          ...set,
+          isEditing: set.isEditing || false // Ensure isEditing has a value
+        }));
+      });
+
       navigate("/workout-complete", {
         state: {
           workoutData: {
-            exercises,
+            exercises: normalizedExercises,
             duration: elapsedTime,
             startTime: startTime,
             endTime: now,
