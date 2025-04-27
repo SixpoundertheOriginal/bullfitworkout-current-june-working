@@ -49,7 +49,11 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     <div className="mb-4">
       {Object.entries(exercises).map(([exerciseName, sets]) => {
         const completedSets = sets.filter(set => set.completed).length;
-        const totalVolume = sets.reduce((acc, set) => acc + calculateSetVolume(set), 0);
+        const totalVolume = sets.reduce((acc, set) => {
+          // Create a compatible object for calculateSetVolume that only needs the weight and reps properties
+          const volumeCalcSet = { weight: set.weight, reps: set.reps };
+          return acc + calculateSetVolume(volumeCalcSet);
+        }, 0);
         const progressPercent = (completedSets / sets.length) * 100;
 
         return (
