@@ -2,16 +2,37 @@
 import React from 'react';
 import { Calendar, BarChart3, Target } from 'lucide-react';
 import { MetricCard } from "@/components/metrics/MetricCard";
-import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 import { cn } from "@/lib/utils";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 
 export const QuickStatsSection = () => {
-  const { stats, loading } = useWorkoutStats();
+  const { data: stats, isLoading } = useBasicWorkoutStats();
 
-  // Calculate weekly metrics
-  const weeklyWorkouts = stats.totalWorkouts || 0;
-  const weeklyVolume = stats.progressMetrics?.volumeChangePercentage || 0;
-  const consistencyScore = stats.progressMetrics?.consistencyScore || 0;
+  // Calculate the current week range for display
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const dateRangeText = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+
+  // Get the most active day of the week
+  const getMostActiveDay = () => {
+    if (!stats?.dailyWorkouts) return null;
+    
+    let maxCount = 0;
+    let mostActiveDay = '';
+    
+    Object.entries(stats.dailyWorkouts).forEach(([day, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        mostActiveDay = day;
+      }
+    });
+    
+    return mostActiveDay ? `${mostActiveDay.charAt(0).toUpperCase() + mostActiveDay.slice(1)} (${maxCount})` : null;
+  };
+
+  const mostActiveDay = getMostActiveDay();
 
   return (
     <div className="relative">
@@ -27,28 +48,29 @@ export const QuickStatsSection = () => {
       )}>
         <MetricCard
           icon={Calendar}
-          value={weeklyWorkouts}
-          label="Workouts This Week"
-          tooltip="Total workouts completed in the last 7 days"
+          value={isLoading ? "..." : stats?.weeklyWorkouts?.toString() || "0"}
+          label={`Workouts This Week`}
+          description={dateRangeText}
+          tooltip="Total workouts completed in the current week"
           gradientClass="from-violet-600/20 via-black/5 to-violet-900/20 hover:from-violet-600/30 hover:to-violet-900/30"
           valueClass="text-violet-300 font-semibold bg-gradient-to-br from-violet-200 to-violet-400 bg-clip-text text-transparent"
         />
         
         <MetricCard
           icon={BarChart3}
-          value={`${Math.abs(weeklyVolume).toFixed(0)}%`}
-          label={weeklyVolume >= 0 ? "Volume Increase" : "Volume Decrease"}
-          tooltip="Change in total volume compared to last week"
+          value={isLoading ? "..." : mostActiveDay || "None"}
+          label="Most Active Day"
+          tooltip="Day with the most workouts this week"
           gradientClass="from-blue-600/20 via-black/5 to-blue-900/20 hover:from-blue-600/30 hover:to-blue-900/30"
           valueClass="text-blue-300 font-semibold bg-gradient-to-br from-blue-200 to-blue-400 bg-clip-text text-transparent"
         />
         
         <MetricCard
           icon={Target}
-          value={`${Math.round(consistencyScore)}%`}
-          label="Goal Progress"
-          tooltip="Overall progress towards your fitness goals"
-          progressValue={consistencyScore}
+          value={isLoading ? "..." : `${Math.round(stats?.weeklyVolume || 0).toLocaleString()}`}
+          label="Weekly Volume"
+          tooltip="Total weight lifted (reps × weight) this week"
+          progressValue={stats?.weeklyVolume ? Math.min(100, stats.weeklyVolume / 1000) : 0}
           gradientClass="from-emerald-600/20 via-black/5 to-emerald-900/20 hover:from-emerald-600/30 hover:to-emerald-900/30"
           valueClass="text-emerald-300 font-semibold bg-gradient-to-br from-emerald-200 to-emerald-400 bg-clip-text text-transparent"
         />

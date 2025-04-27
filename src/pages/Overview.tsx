@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
@@ -14,7 +14,15 @@ import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 export const OverviewPage = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
   const { stats, loading } = useWorkoutStats();
+  
+  useEffect(() => {
+    // When switching to history tab, make sure workouts are shown
+    if (activeTab === "history") {
+      setShowWorkouts(true);
+    }
+  }, [activeTab]);
   
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -30,7 +38,12 @@ export const OverviewPage = () => {
       </header>
 
       <main className="flex-1 overflow-auto p-4">
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs 
+          defaultValue="overview" 
+          className="w-full"
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
           <TabsList className="grid w-full grid-cols-3 bg-gray-900">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />

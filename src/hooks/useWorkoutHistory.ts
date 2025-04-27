@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -31,41 +30,67 @@ interface WorkoutSessionWithExercises extends WorkoutSession {
   exerciseSets?: ExerciseSet[];
 }
 
-export function useWorkoutHistory(limit: number = 10, dateFilter: string | null = null) {
+export interface WorkoutHistoryFilters {
+  startDate?: string | null;
+  endDate?: string | null;
+  trainingTypes?: string[];
+  limit?: number;
+  offset?: number;
+}
+
+export function useWorkoutHistory(
+  filters: WorkoutHistoryFilters = {}
+) {
   const { user } = useAuth();
   const { exercises: allExercises } = useExercises();
+  const { 
+    limit = 10, 
+    offset = 0, 
+    startDate = null, 
+    endDate = null, 
+    trainingTypes = [] 
+  } = filters;
   
   const fetchWorkoutHistory = async (): Promise<{ 
     workouts: WorkoutSessionWithExercises[], 
-    exerciseCounts: Record<string, { exercises: number, sets: number }> 
+    exerciseCounts: Record<string, { exercises: number, sets: number }>,
+    totalCount: number
   }> => {
     if (!user) {
-      return { workouts: [], exerciseCounts: {} };
+      return { workouts: [], exerciseCounts: {}, totalCount: 0 };
     }
     
     try {
-      console.log("Fetching workout history with params:", { limit, dateFilter });
+      console.log("Fetching workout history with params:", filters);
       
-      // Build query for workouts
+      // Build query for workouts with filters
       let query = supabase
         .from('workout_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('start_time', { ascending: false });
+        .select('*', { count: 'exact' })
+        .eq('user_id', user.id);
       
-      // Apply date filter if provided
-      if (dateFilter) {
-        const dateStr = dateFilter.split('T')[0]; // Ensure we just have the date part
-        console.log("Filtering by date:", dateStr);
-        
-        // Find workouts on this specific date
-        query = query
-          .gte('start_time', `${dateStr}T00:00:00`)
-          .lt('start_time', `${dateStr}T23:59:59`);
-      } else {
-        // Apply limit only when not filtering by date
-        query = query.limit(limit);
+      // Apply date filters if provided
+      if (startDate) {
+        query = query.gte('start_time', `${startDate}T00:00:00`);
       }
+      
+      if (endDate) {
+        query = query.lte('start_time', `${endDate}T23:59:59`);
+      }
+      
+      // Apply training type filter if provided
+      if (trainingTypes && trainingTypes.length > 0) {
+        query = query.in('training_type', trainingTypes);
+      }
+      
+      // First get the total count for pagination
+      const { count } = await query;
+      const totalCount = count || 0;
+      
+      // Then get the paginated data
+      query = query
+        .order('start_time', { ascending: false })
+        .range(offset, offset + limit - 1);
         
       const { data: workouts, error: workoutsError } = await query;
       
@@ -77,7 +102,7 @@ export function useWorkoutHistory(limit: number = 10, dateFilter: string | null 
       console.log(`Fetched ${workouts?.length || 0} workouts`, workouts);
       
       if (!workouts || workouts.length === 0) {
-        return { workouts: [], exerciseCounts: {} };
+        return { workouts: [], exerciseCounts: {}, totalCount };
       }
       
       // Get the workout IDs
@@ -120,16 +145,17 @@ export function useWorkoutHistory(limit: number = 10, dateFilter: string | null 
       
       return { 
         workouts: workoutsWithExercises,
-        exerciseCounts
+        exerciseCounts,
+        totalCount
       };
     } catch (error) {
       console.error('Error fetching workout history:', error);
-      return { workouts: [], exerciseCounts: {} };
+      return { workouts: [], exerciseCounts: {}, totalCount: 0 };
     }
   };
   
   const query = useQuery({
-    queryKey: ['workout-history', user?.id, limit, dateFilter],
+    queryKey: ['workout-history', user?.id, limit, offset, startDate, endDate, trainingTypes],
     queryFn: fetchWorkoutHistory,
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
