@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +8,8 @@ import { WorkoutLogSection } from "@/components/workouts/WorkoutLogSection";
 import { Button } from "@/components/ui/button";
 import { Zap, BarChart3, CalendarDays, History } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { WeeklyTrainingPatterns } from "@/components/workouts/WeeklyTrainingPatterns";
+import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 
 export const OverviewPage = () => {
   const navigate = useNavigate();
@@ -43,7 +46,9 @@ export const OverviewPage = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="mt-4">
+          <TabsContent value="overview" className="mt-4 space-y-6">
+            <QuickStatsSection />
+            <WeeklyTrainingPatterns />
             <InsightsDashboard stats={stats} className="mb-8" />
           </TabsContent>
           
