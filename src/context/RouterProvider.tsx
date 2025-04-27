@@ -11,6 +11,7 @@ import Auth from "@/pages/Auth";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { OverviewPage } from "@/pages/Overview";
+import { WorkoutManagementPage } from "@/pages/WorkoutManagementPage";
 
 const getPageTitle = (pathname: string): string => {
   switch (pathname) {

@@ -10,6 +10,11 @@ import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
 
 export const WorkoutManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showWorkouts, setShowWorkouts] = useState(true);
+  
+  const handleToggleWorkouts = () => {
+    setShowWorkouts(prev => !prev);
+  };
   
   return (
     <div className="min-h-screen bg-black text-white pb-16">
@@ -51,7 +56,10 @@ export const WorkoutManagementPage = () => {
           </TabsList>
 
           <TabsContent value="list" className="mt-4">
-            <WorkoutLogSection showWorkouts={true} />
+            <WorkoutLogSection 
+              showWorkouts={showWorkouts} 
+              onToggle={handleToggleWorkouts}
+            />
           </TabsContent>
 
           <TabsContent value="calendar" className="mt-4">
