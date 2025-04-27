@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -135,7 +136,7 @@ const TrainingSessionPage = () => {
         progression: {
           timeOfDay: startTime.getHours() < 12 ? 'morning' : 
                      startTime.getHours() < 17 ? 'afternoon' : 'evening',
-          totalVolume: Object.entries(exercises).reduce((acc, [sets]) => {
+          totalVolume: Object.entries(exercises).reduce((acc, [exerciseName, sets]) => {
             return acc + sets.reduce((setAcc, set) => {
               return setAcc + (set.completed ? (set.weight * set.reps) : 0);
             }, 0);
