@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
@@ -10,6 +9,7 @@ import { Zap, BarChart3, CalendarDays, History } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { WeeklyTrainingPatterns } from "@/components/workouts/WeeklyTrainingPatterns";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
+import { TonnageChart } from "@/components/metrics/TonnageChart";
 
 export const OverviewPage = () => {
   const navigate = useNavigate();
@@ -23,6 +23,22 @@ export const OverviewPage = () => {
     }
   }, [activeTab]);
   
+  // Calculate tonnage data from stats
+  const tonnageData = React.useMemo(() => {
+    if (!stats?.workouts) return [];
+    
+    return stats.workouts.map(workout => {
+      const totalTonnage = workout.exercises?.reduce((sum, exercise) => {
+        return sum + (exercise.weight * exercise.reps);
+      }, 0) || 0;
+      
+      return {
+        date: workout.start_time,
+        tonnage: totalTonnage
+      };
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [stats?.workouts]);
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
@@ -60,6 +76,7 @@ export const OverviewPage = () => {
           
           <TabsContent value="overview" className="mt-4 space-y-6">
             <QuickStatsSection showDateRange={true} />
+            <TonnageChart data={tonnageData} />
             <WeeklyTrainingPatterns />
             <InsightsDashboard stats={stats} className="mb-8" />
           </TabsContent>
