@@ -6,6 +6,7 @@ import { CircularGradientButton } from '@/components/CircularGradientButton';
 import { PlusCircle } from 'lucide-react';
 import { calculateSetVolume } from '@/utils/exerciseUtils';
 import { Progress } from '@/components/ui/progress';
+import { Exercise } from '@/types/exercise';
 
 interface ExerciseListProps {
   exercises: Record<string, LocalExerciseSet[]>;
