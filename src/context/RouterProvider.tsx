@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -53,15 +52,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export const RouterProvider = () => {
   const location = useLocation();
   const title = getPageTitle(location.pathname);
-  // Hide header on training-session page
-  const hideHeader = location.pathname === "/training-session";
 
   return (
     <div className="bg-gray-900 min-h-screen">
-      {/* Unified navigation header - hidden on training session */}
-      {!hideHeader && <PageHeader title={title} />}
+      {/* Unified navigation header */}
+      <PageHeader title={title} />
 
-      <div className={hideHeader ? "" : "pt-16 pb-16"}>
+      <div className="pt-16 pb-16">
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />

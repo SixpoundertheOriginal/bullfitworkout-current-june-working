@@ -1,9 +1,9 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
-import { toast } from "@/components/ui/sonner";
+import { toast } from '@/hooks/use-toast';
 
 interface TrainingSessionProps {
   trainingConfig: TrainingConfig | null;
@@ -22,7 +22,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   const navigate = useNavigate();
   const { setTrainingConfig } = useWorkoutState();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (trainingConfig) {
       // Set the training config in the workout state
       setTrainingConfig(trainingConfig);

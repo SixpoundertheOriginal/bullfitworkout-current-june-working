@@ -1292,7 +1292,6 @@ export type Database = {
           id: string
           is_historical: boolean | null
           logged_at: string | null
-          metadata: Json | null
           name: string
           notes: string | null
           start_time: string
@@ -1307,7 +1306,6 @@ export type Database = {
           id?: string
           is_historical?: boolean | null
           logged_at?: string | null
-          metadata?: Json | null
           name: string
           notes?: string | null
           start_time: string
@@ -1322,7 +1320,6 @@ export type Database = {
           id?: string
           is_historical?: boolean | null
           logged_at?: string | null
-          metadata?: Json | null
           name?: string
           notes?: string | null
           start_time?: string
