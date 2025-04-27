@@ -1,16 +1,60 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Calendar, BarChart3, Target } from 'lucide-react';
 import { MetricCard } from "@/components/metrics/MetricCard";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, endOfWeek, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, subWeeks, subDays, addDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRange } from 'react-day-picker';
+import { useDateRange } from '@/context/DateRangeContext';
 
 type TimeRange = 'this-week' | 'previous-week' | 'last-30-days' | 'all-time';
 
-export const QuickStatsSection = () => {
+interface QuickStatsSectionProps {
+  showDateRange?: boolean;
+}
+
+export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
-  const { data: stats, isLoading } = useBasicWorkoutStats(timeRange);
+  const { dateRange, setDateRange } = useDateRange();
+  const [calculatedDateRange, setCalculatedDateRange] = useState<DateRange | undefined>(dateRange);
+  
+  // Update date range when time range changes
+  useEffect(() => {
+    const now = new Date();
+    let newDateRange: DateRange | undefined;
+    
+    switch (timeRange) {
+      case 'this-week': {
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        newDateRange = { from: weekStart, to: weekEnd };
+        break;
+      }
+      case 'previous-week': {
+        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
+        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
+        newDateRange = { from: previousWeekStart, to: previousWeekEnd };
+        break;
+      }
+      case 'last-30-days': {
+        newDateRange = { from: subDays(now, 30), to: now };
+        break;
+      }
+      case 'all-time': {
+        newDateRange = undefined; // No date range filter for all-time
+        break;
+      }
+    }
+    
+    setCalculatedDateRange(newDateRange);
+    if (setDateRange && showDateRange) {
+      setDateRange(newDateRange);
+    }
+  }, [timeRange, setDateRange, showDateRange]);
+
+  const { data: stats, isLoading } = useBasicWorkoutStats(calculatedDateRange);
 
   // Calculate date range text based on selected time range
   const getDateRangeText = () => {
