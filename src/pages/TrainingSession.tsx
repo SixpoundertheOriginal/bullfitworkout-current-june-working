@@ -297,6 +297,7 @@ const TrainingSessionPage = () => {
             onShowRestTimer={handleShowRestTimer}
             onResetRestTimer={triggerRestTimerReset}
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
+            setExercises={setExercises}
           />
 
           <div className="fixed bottom-6 right-6 z-40">
