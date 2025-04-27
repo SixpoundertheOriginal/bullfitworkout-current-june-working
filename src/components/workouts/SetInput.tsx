@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Check, ChevronUp, ChevronDown } from 'lucide-react';
-import { LocalExerciseSet } from '@/hooks/useWorkoutState';
+import { ExerciseSet } from '@/hooks/useWorkoutState';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 
 interface SetInputProps {
-  set: LocalExerciseSet;
+  set: ExerciseSet;
   exerciseName: string;
   index: number;
   onComplete: () => void;

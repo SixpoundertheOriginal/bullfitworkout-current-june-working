@@ -118,7 +118,8 @@ export function useWorkoutState() {
     
     // For now, just marking as recovered after a delay
     setTimeout(() => {
-      setWorkoutStatus('recovered');
+      // Instead of using an invalid status, use the 'saved' status
+      setWorkoutStatus('saved');
       setSaveProgress(100);
     }, 2000);
   };

@@ -4,9 +4,9 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
 import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
 import { WorkoutError } from "@/types/workout";
-import { LocalExerciseSet } from '@/hooks/useWorkoutState';
+import { ExerciseSet } from '@/hooks/useWorkoutState';
 
-export const useWorkoutSave = (exercises: Record<string, LocalExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
+export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
   const [saveStatus, setSaveStatus] = useState<{
     status: 'idle' | 'saving' | 'partial' | 'saved' | 'failed' | 'recovering';
     errors: WorkoutError[];
