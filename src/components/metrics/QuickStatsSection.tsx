@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, BarChart3, Target } from 'lucide-react';
 import { MetricCard } from "@/components/metrics/MetricCard";

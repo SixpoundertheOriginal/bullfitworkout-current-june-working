@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -10,6 +9,7 @@ import {
   startOfDay, 
   format 
 } from "date-fns";
+import { DateRange } from 'react-day-picker';
 
 export interface BasicWorkoutStats {
   totalWorkouts: number;
@@ -22,11 +22,11 @@ export interface BasicWorkoutStats {
   dailyWorkouts: Record<string, number>;
 }
 
-export function useBasicWorkoutStats(timeRange: string = 'this-week') {
+export const useBasicWorkoutStats = (dateRange?: DateRange) => {
   const { user } = useAuth();
-  
+
   return useQuery({
-    queryKey: ['basic-workout-stats', user?.id, timeRange],
+    queryKey: ["basic-workout-stats", user?.id, dateRange],
     queryFn: async (): Promise<BasicWorkoutStats> => {
       if (!user) throw new Error("User not authenticated");
       
@@ -35,27 +35,16 @@ export function useBasicWorkoutStats(timeRange: string = 'this-week') {
       let periodEnd: Date = now;
       
       // Determine time range
-      switch (timeRange) {
-        case 'previous-week':
-          periodEnd = subDays(startOfWeek(now, { weekStartsOn: 1 }), 1); // End on Sunday before current week
-          periodStart = subDays(periodEnd, 6); // Start on Monday of previous week
-          break;
-        case 'last-30-days':
-          periodStart = subDays(now, 29); // 30 days including today
-          break;
-        case 'all-time':
-          periodStart = new Date(0); // Beginning of time
-          break;
-        case 'this-week':
-        default:
-          periodStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
-          break;
+      if (dateRange?.from && dateRange?.to) {
+        periodStart = dateRange.from;
+        periodEnd = dateRange.to;
+      } else {
+        periodStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
       }
       
       console.log("Fetching workouts for period:", 
         format(periodStart, "yyyy-MM-dd"), "to", 
-        format(periodEnd, "yyyy-MM-dd"), 
-        `(${timeRange})`);
+        format(periodEnd, "yyyy-MM-dd"));
       
       // Fetch all workouts for basic stats
       const { data: allWorkouts, error: allWorkoutsError } = await supabase
@@ -67,12 +56,20 @@ export function useBasicWorkoutStats(timeRange: string = 'this-week') {
       if (allWorkoutsError) throw allWorkoutsError;
       
       // Fetch workouts for the specified period
-      const { data: periodWorkouts, error: periodError } = await supabase
+      let query = supabase
         .from('workout_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .gte('start_time', periodStart.toISOString())
-        .lte('start_time', periodEnd.toISOString());
+      
+      // Apply date range filter if provided
+      if (dateRange?.from) {
+        query = query.gte('start_time', dateRange.from.toISOString())
+      }
+      if (dateRange?.to) {
+        query = query.lte('start_time', dateRange.to.toISOString())
+      }
+      
+      const { data: periodWorkouts, error: periodError } = await query
         
       if (periodError) throw periodError;
       
@@ -149,4 +146,4 @@ export function useBasicWorkoutStats(timeRange: string = 'this-week') {
     enabled: !!user,
     staleTime: 2 * 60 * 1000 // 2 minutes
   });
-}
+};
