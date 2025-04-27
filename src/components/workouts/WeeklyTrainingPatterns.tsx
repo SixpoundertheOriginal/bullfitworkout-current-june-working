@@ -1,28 +1,95 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { CalendarDays, TrendingUp, Calendar } from "lucide-react";
 import { 
-  format,
+  format, 
+  subDays, 
+  subWeeks,
+  subMonths, 
+  startOfWeek,
+  endOfWeek,
   eachDayOfInterval,
   isSameDay,
-  isWithinInterval
+  isWithinInterval,
+  addDays,
+  parseISO
 } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useDateRange, TimeRange } from "@/context/DateRangeContext";
+import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 interface WeeklyTrainingPatternsProps {
   className?: string;
 }
 
+type TimeframeOption = 'current-week' | 'previous-week' | 'last-30-days' | 'last-90-days' | 'custom';
+
 export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProps) => {
-  const { timeRange, setTimeRange, customDateRange, setCustomDateRange, dateRange, getFormattedDateRangeText } = useDateRange();
+  const [timeframe, setTimeframe] = useState<TimeframeOption>('current-week');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const { stats, loading, refetch } = useWorkoutStats();
+  
+  // Calculate date range based on selected timeframe
+  const getDateRange = (): { start: Date, end: Date } => {
+    const today = new Date();
+    let start: Date;
+    let end: Date = today;
+    
+    switch(timeframe) {
+      case 'previous-week':
+        // Previous full week (Monday to Sunday)
+        end = subDays(startOfWeek(today, { weekStartsOn: 1 }), 1); // Sunday before this week
+        start = subDays(end, 6); // Monday of previous week
+        break;
+      case 'last-30-days':
+        start = subDays(today, 29); // 30 days including today
+        break;
+      case 'last-90-days':
+        start = subDays(today, 89); // 90 days including today
+        break;
+      case 'custom':
+        if (customDateRange?.from && customDateRange?.to) {
+          return {
+            start: customDateRange.from,
+            end: customDateRange.to
+          };
+        }
+        // Fallback to current week if no custom range is set
+        start = startOfWeek(today, { weekStartsOn: 1 });
+        break;
+      case 'current-week':
+      default:
+        // Current week (Monday to today)
+        start = startOfWeek(today, { weekStartsOn: 1 });
+        break;
+    }
+    
+    return { start, end };
+  };
+  
+  const dateRange = getDateRange();
+  
+  // Format date range for display
+  const formatDateRangeDisplay = () => {
+    const { start, end } = dateRange;
+    
+    if (timeframe === 'current-week') {
+      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (This Week)`;
+    } else if (timeframe === 'previous-week') {
+      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Previous Week)`;
+    } else if (timeframe === 'last-30-days') {
+      return `Last 30 Days`;
+    } else if (timeframe === 'last-90-days') {
+      return `Last 90 Days`;
+    } else {
+      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Custom)`;
+    }
+  };
   
   // Filter workouts based on date range
   const filterWorkoutsByDateRange = (workouts: any[] = []) => {
@@ -35,6 +102,12 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   // Prepare data for Weekly Frequency chart using date range
   const prepareWeeklyFrequencyData = () => {
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+    // Create array of days in the date range
+    const daysInRange = eachDayOfInterval({
+      start: dateRange.start,
+      end: dateRange.end
+    });
     
     // Initialize counts for each day of week
     const dayCounts = daysOfWeek.map(day => ({
@@ -60,12 +133,14 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   
   // Prepare data for trend chart based on selected timeframe
   const prepareTrendData = () => {
+    const { start, end } = dateRange;
+    
     // Get raw workout data
     const rawWorkouts = stats?.workouts || [];
     const filteredWorkouts = filterWorkoutsByDateRange(rawWorkouts);
     
     // For daily view, show a data point for each day in the range
-    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+    const days = eachDayOfInterval({ start, end });
     
     return days.map(day => {
       // Count workouts for this specific day
@@ -85,8 +160,10 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   const trendData = prepareTrendData();
   
   const calculateConsistencyScore = () => {
+    const { start, end } = dateRange;
+    
     // Get the total number of days in the range
-    const daysInRange = eachDayOfInterval({ start: dateRange.start, end: dateRange.end }).length;
+    const daysInRange = eachDayOfInterval({ start, end }).length;
     
     // Get unique workout days in the range
     const rawWorkouts = stats?.workouts || [];
@@ -108,10 +185,18 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   
   // Handle timeframe change
   const handleTimeframeChange = (value: string) => {
-    setTimeRange(value as TimeRange);
+    setTimeframe(value as TimeframeOption);
     // If switching from custom to another timeframe, refresh stats
-    if (timeRange === 'custom' && value !== 'custom') {
+    if (timeframe === 'custom' && value !== 'custom') {
       refetch();
+    }
+  };
+  
+  // Handle custom date range change
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (range?.from && range?.to) {
+      setCustomDateRange(range);
+      setTimeframe('custom');
     }
   };
 
@@ -124,14 +209,14 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
         </h3>
         <div className="flex items-center space-x-2">
           <Select
-            value={timeRange}
+            value={timeframe}
             onValueChange={handleTimeframeChange}
           >
             <SelectTrigger className="w-[160px] bg-gray-900 border-gray-800">
               <SelectValue placeholder="Time period" />
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-800">
-              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="current-week">This Week</SelectItem>
               <SelectItem value="previous-week">Previous Week</SelectItem>
               <SelectItem value="last-30-days">Last 30 Days</SelectItem>
               <SelectItem value="last-90-days">Last 90 Days</SelectItem>
@@ -139,7 +224,7 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
             </SelectContent>
           </Select>
           
-          {timeRange === 'custom' && (
+          {timeframe === 'custom' && (
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="bg-gray-900 border-gray-800">
@@ -150,7 +235,7 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
               <PopoverContent className="w-auto p-0" align="end">
                 <DateRangePicker
                   value={customDateRange}
-                  onChange={setCustomDateRange}
+                  onChange={handleDateRangeChange}
                 />
               </PopoverContent>
             </Popover>
@@ -159,7 +244,7 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
       </div>
       
       <div className="text-sm text-gray-400">
-        {getFormattedDateRangeText()}
+        {formatDateRangeDisplay()}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

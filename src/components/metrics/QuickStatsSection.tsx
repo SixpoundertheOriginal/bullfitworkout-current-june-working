@@ -1,19 +1,39 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Calendar, BarChart3, Target } from 'lucide-react';
 import { MetricCard } from "@/components/metrics/MetricCard";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 import { cn } from "@/lib/utils";
+import { format, startOfWeek, endOfWeek, subWeeks } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useDateRange, TimeRange } from '@/context/DateRangeContext';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+
+type TimeRange = 'this-week' | 'previous-week' | 'last-30-days' | 'all-time';
 
 export const QuickStatsSection = () => {
-  const { timeRange, setTimeRange, customDateRange, setCustomDateRange, getFormattedDateRangeText } = useDateRange();
-  const { data: stats, isLoading } = useBasicWorkoutStats();
+  const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
+  const { data: stats, isLoading } = useBasicWorkoutStats(timeRange);
+
+  // Calculate date range text based on selected time range
+  const getDateRangeText = () => {
+    const now = new Date();
+    
+    switch (timeRange) {
+      case 'this-week': {
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+      }
+      case 'previous-week': {
+        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
+        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
+        return `${format(previousWeekStart, "MMM d")} - ${format(previousWeekEnd, "MMM d, yyyy")}`;
+      }
+      case 'last-30-days':
+        return "Last 30 days";
+      case 'all-time':
+        return "All time";
+    }
+  };
 
   // Get the most active day of the week
   const getMostActiveDay = () => {
@@ -33,7 +53,7 @@ export const QuickStatsSection = () => {
   };
 
   const mostActiveDay = getMostActiveDay();
-  const dateRangeText = getFormattedDateRangeText();
+  const dateRangeText = getDateRangeText();
 
   return (
     <div className="relative">
@@ -43,44 +63,20 @@ export const QuickStatsSection = () => {
       
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Quick Stats</h3>
-        <div className="flex items-center space-x-2">
-          <Select
-            value={timeRange}
-            onValueChange={(value) => setTimeRange(value as TimeRange)}
-          >
-            <SelectTrigger className="w-[140px] bg-gray-900 border-gray-800">
-              <SelectValue placeholder="Time period" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800">
-              <SelectItem value="this-week">This Week</SelectItem>
-              <SelectItem value="previous-week">Previous Week</SelectItem>
-              <SelectItem value="last-30-days">Last 30 Days</SelectItem>
-              <SelectItem value="last-90-days">Last 90 Days</SelectItem>
-              <SelectItem value="custom">Custom Range</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {timeRange === 'custom' && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="bg-gray-900 border-gray-800">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Select Dates
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <DateRangePicker
-                  value={customDateRange}
-                  onChange={setCustomDateRange}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-      </div>
-      
-      <div className="text-sm text-gray-400 mb-3">
-        {dateRangeText}
+        <Select
+          value={timeRange}
+          onValueChange={(value) => setTimeRange(value as TimeRange)}
+        >
+          <SelectTrigger className="w-[140px] bg-gray-900 border-gray-800">
+            <SelectValue placeholder="Time period" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-900 border-gray-800">
+            <SelectItem value="this-week">This Week</SelectItem>
+            <SelectItem value="previous-week">Previous Week</SelectItem>
+            <SelectItem value="last-30-days">Last 30 Days</SelectItem>
+            <SelectItem value="all-time">All Time</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       {/* Use glass/card-gradient for light/dark */}

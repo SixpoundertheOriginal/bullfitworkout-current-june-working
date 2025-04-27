@@ -10,7 +10,6 @@ import { Zap, BarChart3, CalendarDays, History } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { WeeklyTrainingPatterns } from "@/components/workouts/WeeklyTrainingPatterns";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
-import { DateRangeProvider } from "@/context/DateRangeContext";
 
 export const OverviewPage = () => {
   const navigate = useNavigate();
@@ -61,11 +60,9 @@ export const OverviewPage = () => {
           </TabsList>
           
           <TabsContent value="overview" className="mt-4 space-y-6">
-            <DateRangeProvider>
-              <QuickStatsSection />
-              <WeeklyTrainingPatterns />
-              <InsightsDashboard stats={stats} className="mb-8" />
-            </DateRangeProvider>
+            <QuickStatsSection />
+            <WeeklyTrainingPatterns />
+            <InsightsDashboard stats={stats} className="mb-8" />
           </TabsContent>
           
           <TabsContent value="calendar" className="mt-4">
