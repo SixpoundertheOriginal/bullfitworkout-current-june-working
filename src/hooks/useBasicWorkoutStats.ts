@@ -111,7 +111,7 @@ export function useBasicWorkoutStats(timeRange: string = 'this-week') {
           new Date(w.start_time).toISOString().split('T')[0]
         ))].sort().reverse();
         
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0]; // Define today here
         if (workoutDates[0] === todayStr) {
           streakDays = 1;
           for (let i = 1; i < workoutDates.length; i++) {
