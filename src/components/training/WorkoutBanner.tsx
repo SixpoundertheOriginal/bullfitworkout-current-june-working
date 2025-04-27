@@ -8,9 +8,10 @@ import { cn } from '@/lib/utils';
 
 export function WorkoutBanner() {
   const navigate = useNavigate();
-  const { exercises, elapsedTime, trainingConfig } = useWorkoutState();
+  const { exercises, elapsedTime, trainingConfig, workoutStatus } = useWorkoutState();
   
-  const isWorkoutActive = Object.keys(exercises).length > 0 && elapsedTime > 0;
+  // Only show banner if workout is truly active (has exercises, time elapsed > 0, and not marked as saved)
+  const isWorkoutActive = Object.keys(exercises).length > 0 && elapsedTime > 0 && workoutStatus !== 'saved';
   
   if (!isWorkoutActive) return null;
 

@@ -14,7 +14,7 @@ import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
-import { BottomNav } from "@/components/navigation/BottomNav"; // Import BottomNav
+import { BottomNav } from "@/components/navigation/BottomNav";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -78,6 +78,14 @@ const TrainingSessionPage = () => {
       resetSession();
     }
   }, [location.search, resetSession]);
+
+  // Effect to handle workout completion status
+  useEffect(() => {
+    if (workoutStatus === 'saved') {
+      // Clear any workout in progress state after a successful save
+      console.log('Workout saved successfully, cleaning up state');
+    }
+  }, [workoutStatus]);
 
   const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
@@ -157,21 +165,28 @@ const TrainingSessionPage = () => {
         }));
       });
 
+      // Important: Reset session state before navigating to ensure WorkoutBanner is updated
+      const workoutData = {
+        exercises: normalizedExercises,
+        duration: elapsedTime,
+        startTime: startTime,
+        endTime: now,
+        trainingType: workoutState.trainingConfig?.trainingType || "Strength",
+        name: workoutState.trainingConfig?.trainingType || "Workout",
+        trainingConfig: workoutState.trainingConfig || null,
+        notes: "",
+        metadata: workoutMetadata
+      };
+
+      // Navigate to workout complete with workout data
       navigate("/workout-complete", {
         state: {
-          workoutData: {
-            exercises: normalizedExercises,
-            duration: elapsedTime,
-            startTime: startTime,
-            endTime: now,
-            trainingType: workoutState.trainingConfig?.trainingType || "Strength",
-            name: workoutState.trainingConfig?.trainingType || "Workout",
-            trainingConfig: workoutState.trainingConfig || null,
-            notes: "",
-            metadata: workoutMetadata
-          }
+          workoutData
         }
       });
+      
+      // Reset the workout session after navigating
+      resetSession();
     } catch (error) {
       console.error("Error preparing workout data:", error);
       markAsFailed({
@@ -354,10 +369,9 @@ const TrainingSessionPage = () => {
         onSelectExercise={handleAddExercise}
       />
       
-      <BottomNav /> {/* Add BottomNav component */}
+      <BottomNav />
     </div>
   );
 };
 
 export default TrainingSessionPage;
-

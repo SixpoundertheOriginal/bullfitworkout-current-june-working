@@ -57,7 +57,10 @@ export function useWorkoutState() {
         if (parsedState.activeExercise) setActiveExercise(parsedState.activeExercise);
         if (parsedState.elapsedTime) setElapsedTime(parsedState.elapsedTime);
         if (parsedState.workoutId) setWorkoutId(parsedState.workoutId);
-        if (parsedState.workoutStatus) setWorkoutStatus(parsedState.workoutStatus);
+        if (parsedState.workoutStatus && parsedState.workoutStatus !== 'saved') {
+          // Only restore non-saved workout states
+          setWorkoutStatus(parsedState.workoutStatus);
+        }
         if (parsedState.trainingConfig) setTrainingConfig(parsedState.trainingConfig);
       } catch (error) {
         console.error('Error parsing saved workout state:', error);
@@ -67,6 +70,12 @@ export function useWorkoutState() {
 
   // Save workout state to local storage when it changes
   useEffect(() => {
+    if (workoutStatus === 'saved') {
+      // If workout is saved, remove it from storage
+      Storage.remove(STORAGE_KEY);
+      return;
+    }
+    
     if (Object.keys(exercises).length > 0 || activeExercise || elapsedTime > 0 || workoutId) {
       const stateToSave = {
         exercises,
@@ -77,6 +86,9 @@ export function useWorkoutState() {
         trainingConfig
       };
       Storage.set(STORAGE_KEY, JSON.stringify(stateToSave));
+    } else {
+      // If no workout data, remove from storage
+      Storage.remove(STORAGE_KEY);
     }
   }, [exercises, activeExercise, elapsedTime, workoutId, workoutStatus, trainingConfig]);
 
@@ -93,7 +105,7 @@ export function useWorkoutState() {
     setCurrentRestTime(60);
     setTrainingConfig(null);
     Storage.remove(STORAGE_KEY);
-    toast.info("Started a fresh workout session");
+    console.log("Workout session reset");
   };
 
   const markAsSaving = () => {
@@ -115,6 +127,17 @@ export function useWorkoutState() {
   const markAsSaved = () => {
     setWorkoutStatus('saved');
     setSaveProgress(100);
+    
+    // Important: When marking as saved, clear the storage immediately
+    Storage.remove(STORAGE_KEY);
+    
+    // Show a toast notification
+    toast.success("Workout saved successfully!");
+    
+    // Reset the session state after a short delay to ensure UI updates properly
+    setTimeout(() => {
+      resetSession();
+    }, 500);
   };
 
   const attemptRecovery = async () => {
@@ -135,6 +158,9 @@ export function useWorkoutState() {
       // Instead of using an invalid status, use the 'saved' status
       setWorkoutStatus('saved');
       setSaveProgress(100);
+      
+      // Reset session after recovery
+      resetSession();
     }, 2000);
   };
 

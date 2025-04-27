@@ -16,6 +16,7 @@ import { useWeightUnit } from "@/context/WeightUnitContext";
 import { recoverPartialWorkout } from "@/services/workoutService";
 import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 import { WorkoutStatus } from "@/types/workout";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 
 interface ExerciseSet {
   weight: number;
@@ -50,6 +51,7 @@ export const WorkoutCompletePage = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
+  const { resetSession } = useWorkoutState();
 
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -68,6 +70,8 @@ export const WorkoutCompletePage = () => {
   }>({ pending: false, exerciseName: null });
 
   useEffect(() => {
+    resetSession();
+    
     if (location.state?.workoutId) setWorkoutId(location.state.workoutId);
     if (location.state?.workoutData) {
       setWorkoutData(location.state.workoutData);
@@ -75,7 +79,6 @@ export const WorkoutCompletePage = () => {
       else if (location.state.workoutData.trainingType)
         setTemplateName(`${location.state.workoutData.trainingType} Template`);
       
-      // If notes came in from the previous page
       if (location.state.workoutData.notes) {
         setNotes(location.state.workoutData.notes);
       }
@@ -83,7 +86,7 @@ export const WorkoutCompletePage = () => {
       toast("No workout data found - Please complete a workout session first");
       navigate("/");
     }
-  }, [location.state, navigate]);
+  }, [location.state, navigate, resetSession]);
 
   useEffect(() => {
     if (navigatePending.pending && workoutId && navigatePending.exerciseName) {
@@ -507,6 +510,7 @@ export const WorkoutCompletePage = () => {
       const savedWorkoutId = await saveWorkout();
       if (savedWorkoutId) {
         toast("Workout saved successfully");
+        resetSession();
         navigate(`/workout-details/${savedWorkoutId}`, {
           state: { from: 'workout-complete' }
         });
@@ -532,7 +536,10 @@ export const WorkoutCompletePage = () => {
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
         <button 
-          onClick={() => navigate('/')}
+          onClick={() => {
+            resetSession();
+            navigate('/');
+          }}
           className="p-2 rounded-full hover:bg-gray-900"
         >
           <ArrowLeft size={24} />
