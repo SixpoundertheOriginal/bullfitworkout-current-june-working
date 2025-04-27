@@ -92,7 +92,7 @@ export const QuickStatsSection = () => {
         <MetricCard
           icon={Calendar}
           value={isLoading ? "..." : stats?.weeklyWorkouts?.toString() || "0"}
-          label="Workouts"
+          label={timeRange === 'all-time' ? 'Total Workouts' : 'Workouts'}
           description={dateRangeText}
           tooltip={`Workouts completed in the selected time period`}
           gradientClass="from-violet-600/20 via-black/5 to-violet-900/20 hover:from-violet-600/30 hover:to-violet-900/30"
@@ -111,7 +111,7 @@ export const QuickStatsSection = () => {
         <MetricCard
           icon={Target}
           value={isLoading ? "..." : `${Math.round(stats?.weeklyVolume || 0).toLocaleString()}`}
-          label="Period Volume"
+          label={timeRange === 'all-time' ? 'Total Volume' : 'Period Volume'}
           tooltip="Total weight lifted (reps × weight) in this period"
           progressValue={stats?.weeklyVolume ? Math.min(100, stats.weeklyVolume / 1000) : 0}
           gradientClass="from-emerald-600/20 via-black/5 to-emerald-900/20 hover:from-emerald-600/30 hover:to-emerald-900/30"
