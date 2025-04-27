@@ -34,9 +34,7 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   
   // Prepare data for Weekly Frequency chart using date range
   const prepareWeeklyFrequencyData = () => {
-    // Use Monday as first day of week to align with the date range context
-    // Order days from Monday to Sunday
-    const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     
     // Initialize counts for each day of week
     const dayCounts = daysOfWeek.map(day => ({
@@ -51,11 +49,7 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
     // Count workouts for each day of the week in the range
     filteredWorkouts.forEach(workout => {
       const workoutDate = new Date(workout.start_time);
-      let dayIndex = workoutDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      
-      // Convert to Monday-based index (0 = Monday, 6 = Sunday)
-      dayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
-      
+      const dayIndex = workoutDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
       if (dayIndex >= 0 && dayIndex < 7) {
         dayCounts[dayIndex].count += 1;
       }
