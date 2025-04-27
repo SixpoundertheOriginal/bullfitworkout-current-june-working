@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { typography } from "@/lib/typography";
 import { cn } from "@/lib/utils";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { DateRangeProvider } from "@/context/DateRangeContext";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -149,7 +150,9 @@ const Index = () => {
           </div>
         </motion.div>
 
-        <QuickStatsSection />
+        <DateRangeProvider>
+          <QuickStatsSection />
+        </DateRangeProvider>
 
         <section ref={sectionRef} className="mb-10 text-center">
           <motion.h2 

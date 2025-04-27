@@ -17,8 +17,10 @@ interface QuickStatsSectionProps {
 
 export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
-  const { dateRange, setDateRange } = useDateRange();
-  const [calculatedDateRange, setCalculatedDateRange] = useState<DateRange | undefined>(dateRange);
+  const [calculatedDateRange, setCalculatedDateRange] = useState<DateRange | undefined>();
+  
+  // Only use the DateRange context when showDateRange is true
+  const dateRangeContext = showDateRange ? useDateRange() : null;
   
   // Update date range when time range changes
   useEffect(() => {
@@ -49,10 +51,10 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
     }
     
     setCalculatedDateRange(newDateRange);
-    if (setDateRange && showDateRange) {
-      setDateRange(newDateRange);
+    if (dateRangeContext?.setDateRange && showDateRange) {
+      dateRangeContext.setDateRange(newDateRange);
     }
-  }, [timeRange, setDateRange, showDateRange]);
+  }, [timeRange, dateRangeContext, showDateRange]);
 
   const { data: stats, isLoading } = useBasicWorkoutStats(calculatedDateRange);
 

@@ -27,7 +27,7 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["basic-workout-stats", user?.id, dateRange],
+    queryKey: ["basic-workout-stats", user?.id, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async (): Promise<BasicWorkoutStats> => {
       if (!user) throw new Error("User not authenticated");
       
@@ -76,12 +76,19 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
       if (periodError) throw periodError;
       
       // Fetch workout sets for volume calculation
-      const { data: exerciseSets, error: setsError } = await supabase
+      let setsQuery = supabase
         .from('exercise_sets')
         .select('*, workout_sessions!inner(*)')
         .eq('workout_sessions.user_id', user.id)
-        .gte('workout_sessions.start_time', periodStart.toISOString())
-        .lte('workout_sessions.start_time', periodEnd.toISOString());
+        
+      if (dateRange?.from) {
+        setsQuery = setsQuery.gte('workout_sessions.start_time', periodStart.toISOString())
+      }
+      if (dateRange?.to) {
+        setsQuery = setsQuery.lte('workout_sessions.start_time', periodEnd.toISOString())
+      }
+      
+      const { data: exerciseSets, error: setsError } = await setsQuery;
         
       if (setsError) throw setsError;
       

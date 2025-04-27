@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { WeightUnitContextProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
+import { DateRangeProvider } from "@/context/DateRangeContext";
 
 // Create the query client outside of the component
 const queryClient = new QueryClient();
@@ -19,11 +20,13 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <WeightUnitContextProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <RouterProvider />
-              </TooltipProvider>
+              <DateRangeProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <RouterProvider />
+                </TooltipProvider>
+              </DateRangeProvider>
             </WeightUnitContextProvider>
           </AuthProvider>
         </BrowserRouter>
