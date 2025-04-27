@@ -51,32 +51,48 @@ export const OverviewPage = () => {
       });
     }
     
-    // Group exercises by date to calculate daily totals
-    const workoutsByDate: Record<string, TonnageData> = filteredWorkouts.reduce((result, workout) => {
+    // Create a map to hold daily workout tonnage
+    const workoutsByDate = new Map<string, TonnageData>();
+    
+    // Process each workout and its exercises
+    filteredWorkouts.forEach(workout => {
       // Format date as YYYY-MM-DD to use as key
       const dateKey = new Date(workout.start_time).toISOString().split('T')[0];
       
-      if (!result[dateKey]) {
-        result[dateKey] = {
+      if (!workoutsByDate.has(dateKey)) {
+        workoutsByDate.set(dateKey, {
           date: workout.start_time,
           tonnage: 0
-        };
+        });
       }
       
-      // Calculate total tonnage for this workout
-      const workoutTonnage = workout.exercises?.reduce((sum, exercise) => {
-        return sum + (exercise.weight * exercise.reps * (exercise.sets || 1));
-      }, 0) || 0;
+      // Get exercise sets for this workout
+      const workoutSets = workout.exercises || [];
       
-      result[dateKey].tonnage += workoutTonnage;
+      // Calculate tonnage for this workout
+      let workoutTonnage = 0;
+      workoutSets.forEach(exercise => {
+        if (exercise.weight && exercise.reps) {
+          workoutTonnage += exercise.weight * exercise.reps;
+        }
+      });
       
-      return result;
-    }, {} as Record<string, TonnageData>);
+      // Add to the daily total
+      const currentData = workoutsByDate.get(dateKey);
+      if (currentData) {
+        workoutsByDate.set(dateKey, {
+          ...currentData,
+          tonnage: currentData.tonnage + workoutTonnage
+        });
+      }
+    });
     
-    // Convert to array and sort by date
-    return Object.values(workoutsByDate)
+    // Convert map to array and sort by date
+    return Array.from(workoutsByDate.values())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [stats?.workouts, dateRange]);
+
+  console.log("Tonnage data calculated:", tonnageData);
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">

@@ -27,10 +27,12 @@ export const TonnageChart: React.FC<TonnageChartProps> = ({
   const { dateRange } = useDateRange();
   
   // Ensure we have data to display
-  const hasData = data && data.length > 0;
+  const hasData = data && data.length > 0 && data.some(item => item.tonnage > 0);
+  
+  console.log("TonnageChart receiving data:", data);
   
   const formattedData = React.useMemo(() => {
-    if (!hasData) return [];
+    if (!data || data.length === 0) return [];
     
     return data.map(item => ({
       date: format(new Date(item.date), 'MMM d'),
@@ -38,7 +40,7 @@ export const TonnageChart: React.FC<TonnageChartProps> = ({
       originalDate: item.date,
       formattedValue: `${convertWeight(item.tonnage, 'kg', weightUnit).toLocaleString()} ${weightUnit}`
     }));
-  }, [data, weightUnit, hasData]);
+  }, [data, weightUnit]);
 
   return (
     <Card className={`bg-gray-900 border-gray-800 hover:border-purple-500/50 transition-all ${className}`}>
