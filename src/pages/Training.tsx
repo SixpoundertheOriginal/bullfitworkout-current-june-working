@@ -1,95 +1,67 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/context/AuthContext";
-import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
-import { TrainingSession } from "@/components/training/TrainingSession";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
+import { InsightsDashboard } from "@/components/workouts/InsightsDashboard";
+import { WorkoutLogSection } from "@/components/workouts/WorkoutLogSection";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Flame, Dumbbell } from "lucide-react";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
-import { useTrainingSetupPersistence } from "@/hooks/useTrainingSetupPersistence";
+import { Zap, BarChart3, CalendarDays, History } from "lucide-react";
+import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 
-const TrainingPage = () => {
+export const TrainingPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [isConfiguring, setIsConfiguring] = useState(false);
-  const [trainingConfig, setTrainingConfig] = useState(null);
-  const [workoutActive, setWorkoutActive] = useState(false);
-  const { resetSession } = useWorkoutState();
-  const { storedConfig, isLoading, saveConfig } = useTrainingSetupPersistence();
-
-  useEffect(() => {
-    if (storedConfig && !trainingConfig && !workoutActive) {
-      toast({
-        title: "Saved configuration found",
-        description: "We've restored your previous training setup",
-      });
-    }
-  }, [storedConfig, trainingConfig, workoutActive]);
-
-  const handleStartTraining = (config) => {
-    saveConfig(config);
-    setTrainingConfig(config);
-    setWorkoutActive(true);
-  };
-
-  const handleCompleteWorkout = () => {
-    setWorkoutActive(false);
-    navigate("/workout-complete", {
-      state: {
-        workoutData: {
-          trainingType: trainingConfig?.trainingType || "Strength",
-          tags: trainingConfig?.tags || [],
-          duration: trainingConfig?.duration || 30,
-        },
-      },
-    });
-  };
-
-  const handleCancelWorkout = () => {
-    setWorkoutActive(false);
-    resetSession();
-    toast({
-      title: "Workout cancelled",
-      description: "Your workout session has been cancelled.",
-    });
-  };
-
+  const [showWorkouts, setShowWorkouts] = useState(true);
+  const { stats, loading } = useWorkoutStats();
+  
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
-        <h1 className="title-large">Training Session</h1>
+        <h1 className="text-xl font-semibold">Training</h1>
+        <Button 
+          onClick={() => navigate('/training-session')}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        >
+          <Zap className="w-4 h-4 mr-2" />
+          Start Workout
+        </Button>
       </header>
 
       <main className="flex-1 overflow-auto p-4">
-        {!workoutActive ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <Button
-              variant="gradient"
-              className="w-full max-w-md"
-              onClick={() => setIsConfiguring(true)}
-            >
-              Start New Workout
-            </Button>
-          </div>
-        ) : (
-          <TrainingSession
-            trainingConfig={trainingConfig}
-            onComplete={handleCompleteWorkout}
-            onCancel={handleCancelWorkout}
-          />
-        )}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-900">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              History
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="mt-4">
+            <InsightsDashboard stats={stats} className="mb-8" />
+          </TabsContent>
+          
+          <TabsContent value="calendar" className="mt-4">
+            <WorkoutCalendarTab />
+          </TabsContent>
+          
+          <TabsContent value="history" className="mt-4">
+            <WorkoutLogSection 
+              showWorkouts={showWorkouts} 
+              onToggle={() => setShowWorkouts(!showWorkouts)} 
+            />
+          </TabsContent>
+        </Tabs>
       </main>
-
-      <ConfigureTrainingDialog
-        open={isConfiguring}
-        onOpenChange={setIsConfiguring}
-        onStartTraining={handleStartTraining}
-        initialConfig={storedConfig}
-      />
     </div>
   );
 };
 
 export default TrainingPage;
-export { TrainingPage };

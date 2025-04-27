@@ -27,6 +27,7 @@ export const TopRestTimer = ({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [targetTime] = useState(currentRestTime || defaultRestTime);
+  const [targetReached, setTargetReached] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const lastResetSignalRef = useRef<number>(0);
@@ -51,10 +52,11 @@ export const TopRestTimer = ({
         const elapsed = Math.floor((now - startTimeRef.current) / 1000);
         setElapsedTime(elapsed);
         
-        if (elapsed >= targetTime && onComplete) {
-          onComplete();
-          clearTimerInterval();
-          setIsTimerActive(false);
+        if (elapsed >= targetTime && !targetReached) {
+          setTargetReached(true);
+          if (onComplete) {
+            onComplete();
+          }
         }
         
         if (onTimeUpdate) {
@@ -64,32 +66,41 @@ export const TopRestTimer = ({
     }, 1000);
   };
 
+  // This effect handles external reset signals
   useEffect(() => {
     if (resetSignal > 0 && resetSignal !== lastResetSignalRef.current) {
       console.log('TopRestTimer: New reset signal received:', resetSignal);
       lastResetSignalRef.current = resetSignal;
       setElapsedTime(0);
+      setTargetReached(false);
       startTimeRef.current = Date.now();
       setIsTimerActive(true);
       startTimerInterval();
     }
   }, [resetSignal, targetTime]);
 
+  // This effect handles the isActive prop changes
   useEffect(() => {
-    if (isActive) {
+    if (isActive && !isTimerActive) {
+      console.log('TopRestTimer: Activating timer from isActive prop');
       setIsTimerActive(true);
+      setTargetReached(false);
+      setElapsedTime(0);
+      startTimeRef.current = Date.now();
       startTimerInterval();
-    } else {
+    } else if (!isActive && isTimerActive) {
+      console.log('TopRestTimer: Deactivating timer from isActive prop');
       setIsTimerActive(false);
       clearTimerInterval();
       setElapsedTime(0);
+      setTargetReached(false);
       startTimeRef.current = null;
     }
 
     return () => {
       clearTimerInterval();
     };
-  }, [isActive, targetTime]);
+  }, [isActive]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -112,8 +123,8 @@ export const TopRestTimer = ({
         >
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className={cn(
-              "text-sm font-mono text-white",
-              elapsedTime >= targetTime ? "text-purple-400" : "text-gray-200"
+              "text-sm font-mono",
+              targetReached ? "text-orange-400" : "text-gray-200"
             )}>
               {formatTime(elapsedTime)}
             </span>
@@ -137,4 +148,3 @@ export const TopRestTimer = ({
     </div>
   );
 };
-

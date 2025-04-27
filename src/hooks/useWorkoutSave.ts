@@ -3,11 +3,10 @@ import { useState, useCallback } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
 import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
-import { WorkoutError } from "@/types/workout";
-import { LocalExerciseSet } from '@/hooks/useWorkoutState';
-import { ExerciseSet } from "@/types/exercise";
+import { WorkoutError, EnhancedExerciseSet } from "@/types/workout";
+import { ExerciseSet } from '@/hooks/useWorkoutState';
 
-export const useWorkoutSave = (exercises: Record<string, LocalExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
+export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
   const [saveStatus, setSaveStatus] = useState<{
     status: 'idle' | 'saving' | 'partial' | 'saved' | 'failed' | 'recovering';
     errors: WorkoutError[];
@@ -86,19 +85,17 @@ export const useWorkoutSave = (exercises: Record<string, LocalExerciseSet[]>, el
     });
   }, []);
 
-  const handleCompleteWorkout = async () => {
+  const handleCompleteWorkout = async (trainingConfig?: any) => {
     if (!Object.keys(exercises).length) {
-      toast("No exercises added", {
-        description: "Please add at least one exercise before completing your workout",
-      });
-      return;
+      toast.error("No exercises added - Please add at least one exercise before completing your workout");
+      return null;
     }
     
     if (!user) {
       toast.error("Authentication required", {
         description: "You need to be logged in to save workouts",
       });
-      return;
+      return null;
     }
     
     try {
@@ -107,19 +104,32 @@ export const useWorkoutSave = (exercises: Record<string, LocalExerciseSet[]>, el
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
       
+      // Format data for the workout save service
       const workoutData = {
-        name: `Workout ${now.toLocaleDateString()}`,
-        training_type: 'strength',
+        name: trainingConfig?.trainingType ? `${trainingConfig.trainingType} Workout` : `Workout ${now.toLocaleDateString()}`,
+        training_type: trainingConfig?.trainingType || 'strength',
         start_time: startTime.toISOString(),
         end_time: now.toISOString(),
         duration: elapsedTime || 0,
-        notes: null
+        notes: null,
+        metadata: trainingConfig ? JSON.stringify({ trainingConfig }) : null
       };
+      
+      console.log("Saving workout with data:", workoutData);
+      
+      // Convert ExerciseSet to EnhancedExerciseSet by ensuring isEditing is always defined
+      const enhancedExercises: Record<string, EnhancedExerciseSet[]> = {};
+      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+        enhancedExercises[exerciseName] = sets.map(set => ({
+          ...set,
+          isEditing: set.isEditing === undefined ? false : set.isEditing
+        }));
+      });
       
       const saveResult = await saveWorkout({
         userData: user,
         workoutData,
-        exercises,
+        exercises: enhancedExercises,
         onProgressUpdate: (progress) => {
           updateSaveProgress(progress.step, progress.completed);
         }

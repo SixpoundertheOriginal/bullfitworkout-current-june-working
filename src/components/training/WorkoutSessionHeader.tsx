@@ -3,7 +3,6 @@ import React from 'react';
 import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
 import { WorkoutStatus } from "@/types/workout";
 
 interface WorkoutSessionHeaderProps {
