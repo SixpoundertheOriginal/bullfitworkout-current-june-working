@@ -44,9 +44,9 @@ export function useWorkoutState() {
         
         // Ensure all sets have the isEditing property
         if (parsedState.exercises) {
-          const normalizedExercises = {};
+          const normalizedExercises: WorkoutExercises = {};
           Object.entries(parsedState.exercises).forEach(([name, sets]) => {
-            normalizedExercises[name] = sets.map(set => ({
+            normalizedExercises[name] = (sets as any[]).map(set => ({
               ...set,
               isEditing: set.isEditing === undefined ? false : set.isEditing
             }));
