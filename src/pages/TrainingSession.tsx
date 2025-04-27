@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
@@ -17,6 +16,7 @@ import { RestTimer } from "@/components/RestTimer";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { exercises: allExercises, isLoading: loadingExercises } = useExercises();
   const workoutState = useWorkoutState();
@@ -67,6 +67,15 @@ const TrainingSessionPage = () => {
 
     return () => clearInterval(timer);
   }, [setElapsedTime]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const shouldReset = searchParams.get('reset') === 'true';
+    
+    if (shouldReset) {
+      resetSession();
+    }
+  }, []);
 
   const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
@@ -126,7 +135,7 @@ const TrainingSessionPage = () => {
         progression: {
           timeOfDay: startTime.getHours() < 12 ? 'morning' : 
                      startTime.getHours() < 17 ? 'afternoon' : 'evening',
-          totalVolume: Object.entries(exercises).reduce((acc, [_, sets]) => {
+          totalVolume: Object.entries(exercises).reduce((acc, [sets]) => {
             return acc + sets.reduce((setAcc, set) => {
               return setAcc + (set.completed ? (set.weight * set.reps) : 0);
             }, 0);

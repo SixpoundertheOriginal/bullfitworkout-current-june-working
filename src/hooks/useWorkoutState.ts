@@ -78,7 +78,9 @@ export function useWorkoutState() {
     setRecoveryAttempted(false);
     setRestTimerActive(false);
     setCurrentRestTime(60);
+    setTrainingConfig(null);
     Storage.remove(STORAGE_KEY);
+    toast.info("Started a fresh workout session");
   };
 
   const markAsSaving = () => {
