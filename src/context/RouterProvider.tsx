@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -54,13 +55,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export const RouterProvider = () => {
   const location = useLocation();
   const title = getPageTitle(location.pathname);
-  const hideHeader = location.pathname === "/training-session";
+  const isTrainingSession = location.pathname === "/training-session";
+  const isAuthPage = location.pathname === "/auth";
 
   return (
     <div className="bg-gray-900 min-h-screen">
-      {!hideHeader && <PageHeader title={title} />}
+      {!isTrainingSession && !isAuthPage && <PageHeader title={title} />}
 
-      <div className={hideHeader ? "" : "pt-16 pb-16"}>
+      <div className={!isTrainingSession && !isAuthPage ? "pt-16 pb-16" : ""}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
@@ -74,7 +76,7 @@ export const RouterProvider = () => {
           <Route path="/all-exercises" element={<ProtectedRoute><AllExercisesPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <BottomNav />
+        {!isTrainingSession && !isAuthPage && <BottomNav />}
       </div>
     </div>
   );
