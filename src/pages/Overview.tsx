@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
@@ -10,12 +11,16 @@ import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { WeeklyTrainingPatterns } from "@/components/workouts/WeeklyTrainingPatterns";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { TonnageChart } from "@/components/metrics/TonnageChart";
+import { useDateRange } from "@/context/DateRangeContext";
+import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 
 export const OverviewPage = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-  const { stats, loading } = useWorkoutStats();
+  const { dateRange } = useDateRange();
+  const { stats, loading: statsLoading } = useWorkoutStats();
+  const { data: basicStats, isLoading: basicStatsLoading } = useBasicWorkoutStats(dateRange);
   
   useEffect(() => {
     if (activeTab === "history") {
@@ -23,21 +28,50 @@ export const OverviewPage = () => {
     }
   }, [activeTab]);
   
-  // Calculate tonnage data from stats
+  // Calculate tonnage data from exercise sets filtered by date range
   const tonnageData = React.useMemo(() => {
     if (!stats?.workouts) return [];
     
-    return stats.workouts.map(workout => {
-      const totalTonnage = workout.exercises?.reduce((sum, exercise) => {
-        return sum + (exercise.weight * exercise.reps);
+    // Filter workouts by date range if provided
+    let filteredWorkouts = [...stats.workouts];
+    
+    if (dateRange?.from && dateRange?.to) {
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+      toDate.setHours(23, 59, 59, 999); // End of day
+      
+      filteredWorkouts = filteredWorkouts.filter(workout => {
+        const workoutDate = new Date(workout.start_time);
+        return workoutDate >= fromDate && workoutDate <= toDate;
+      });
+    }
+    
+    // Group exercises by date to calculate daily totals
+    const workoutsByDate = filteredWorkouts.reduce((result, workout) => {
+      // Format date as YYYY-MM-DD to use as key
+      const dateKey = new Date(workout.start_time).toISOString().split('T')[0];
+      
+      if (!result[dateKey]) {
+        result[dateKey] = {
+          date: workout.start_time,
+          tonnage: 0
+        };
+      }
+      
+      // Calculate total tonnage for this workout
+      const workoutTonnage = workout.exercises?.reduce((sum, exercise) => {
+        return sum + (exercise.weight * exercise.reps * (exercise.sets || 1));
       }, 0) || 0;
       
-      return {
-        date: workout.start_time,
-        tonnage: totalTonnage
-      };
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [stats?.workouts]);
+      result[dateKey].tonnage += workoutTonnage;
+      
+      return result;
+    }, {});
+    
+    // Convert to array and sort by date
+    return Object.values(workoutsByDate)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [stats?.workouts, dateRange]);
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -76,7 +110,10 @@ export const OverviewPage = () => {
           
           <TabsContent value="overview" className="mt-4 space-y-6">
             <QuickStatsSection showDateRange={true} />
-            <TonnageChart data={tonnageData} />
+            <TonnageChart 
+              data={tonnageData} 
+              className="mt-4"
+            />
             <WeeklyTrainingPatterns />
             <InsightsDashboard stats={stats} className="mb-8" />
           </TabsContent>
