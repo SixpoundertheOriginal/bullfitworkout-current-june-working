@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -8,7 +9,6 @@ import WorkoutComplete from "@/pages/WorkoutComplete";
 import WorkoutDetailsPage from "@/pages/WorkoutDetailsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import Auth from "@/pages/Auth";
-import { TrainingPage } from "@/pages/Training";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { OverviewPage } from "@/pages/Training";
