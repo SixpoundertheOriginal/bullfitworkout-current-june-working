@@ -12,12 +12,12 @@ export function WorkoutBanner() {
   const { 
     isActive, 
     elapsedTime, 
-    trainingConfig, 
+    trainingConfig,
     workoutStatus,
     lastActiveRoute
   } = useWorkoutState();
   
-  // Simplified banner visibility - show as soon as workout is active and not saved
+  // Show banner when workout is active and not saved, regardless of elapsed time
   const shouldShowBanner = isActive && workoutStatus !== 'saved';
   
   if (!shouldShowBanner) return null;
@@ -42,10 +42,10 @@ export function WorkoutBanner() {
           transition={{ duration: 0.3 }}
           className={cn(
             "fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-purple-600/90 to-pink-500/90",
-            "backdrop-blur-sm border-b border-white/10"
+            "backdrop-blur-sm border-b border-white/10 shadow-lg"
           )}
         >
-          <div className="max-w-screen-xl mx-auto px-4 py-2 flex items-center justify-between">
+          <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Timer className="h-4 w-4 text-white animate-pulse" />
               <span className="text-sm font-medium text-white">

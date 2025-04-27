@@ -19,26 +19,20 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   const navigate = useNavigate();
   const { resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute } = useWorkoutState();
 
-  // Reset workout state on component mount
-  useEffect(() => {
-    resetSession();
-  }, []); // Only run once on mount
-
   useEffect(() => {
     if (trainingConfig) {
-      // Set the training config in the workout state after resetting
+      // Reset any existing session first
+      resetSession();
+      
+      // Set up the new training session
       setTrainingConfig(trainingConfig);
-      
-      // Mark workout as active
       startWorkout();
-      
-      // Set last active route
       updateLastActiveRoute('/training-session');
       
-      // Navigate to the dedicated training session page
+      // Navigate to the training session page
       navigate('/training-session');
     }
-  }, [trainingConfig, navigate, setTrainingConfig, startWorkout, updateLastActiveRoute]);
+  }, [trainingConfig, navigate, resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute]);
 
   return (
     <div className="flex items-center justify-center h-full">
