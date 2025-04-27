@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,6 +30,15 @@ interface ExerciseListProps {
   onShowRestTimer: () => void;
   onResetRestTimer: () => void;
   onDeleteExercise: (exerciseName: string) => void;
+  setExercises: React.Dispatch<React.SetStateAction<{
+    [key: string]: {
+      weight: number;
+      reps: number;
+      restTime?: number;
+      completed: boolean;
+      isEditing?: boolean;
+    }[];
+  }>>;
 }
 
 export const ExerciseList: React.FC<ExerciseListProps> = ({
@@ -50,7 +58,8 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   onOpenAddExercise,
   onShowRestTimer,
   onResetRestTimer,
-  onDeleteExercise
+  onDeleteExercise,
+  setExercises
 }) => {
   const handleCompleteSet = (exerciseName: string, setIndex: number) => {
     onCompleteSet(exerciseName, setIndex);
@@ -58,6 +67,32 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     onShowRestTimer();
     // Reset the rest timer to ensure it starts from zero
     onResetRestTimer();
+  };
+
+  const handleAddSet = (exerciseName: string) => {
+    const exerciseSets = exercises[exerciseName];
+    if (exerciseSets && exerciseSets.length > 0) {
+      // Get the values from the last set
+      const lastSet = exerciseSets[exerciseSets.length - 1];
+      onAddSet(exerciseName);
+      // After adding the set, update its values to match the last set
+      setExercises(prev => ({
+        ...prev,
+        [exerciseName]: [
+          ...prev[exerciseName].slice(0, -1),
+          { 
+            weight: lastSet.weight,
+            reps: lastSet.reps,
+            restTime: lastSet.restTime || 60,
+            completed: false,
+            isEditing: false
+          }
+        ]
+      }));
+    } else {
+      // If it's the first set, add with default values
+      onAddSet(exerciseName);
+    }
   };
   
   if (Object.keys(exercises).length === 0) {
@@ -91,7 +126,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
             <ExerciseCard 
               exercise={exerciseName}
               sets={exercises[exerciseName]}
-              onAddSet={onAddSet}
+              onAddSet={handleAddSet}
               onCompleteSet={handleCompleteSet}
               onRemoveSet={onRemoveSet}
               onEditSet={onEditSet}
