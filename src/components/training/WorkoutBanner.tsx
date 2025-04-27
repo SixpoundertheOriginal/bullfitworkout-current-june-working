@@ -10,19 +10,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 export function WorkoutBanner() {
   const navigate = useNavigate();
   const { 
-    exercises, 
+    isActive, 
     elapsedTime, 
     trainingConfig, 
     workoutStatus,
-    isActive,
     lastActiveRoute
   } = useWorkoutState();
   
-  // Only show banner if workout is truly active (has exercises, time elapsed > 0, and not marked as saved)
-  const shouldShowBanner = isActive && 
-                          Object.keys(exercises).length > 0 && 
-                          elapsedTime > 0 && 
-                          workoutStatus !== 'saved';
+  // Simplified banner visibility - show as soon as workout is active and not saved
+  const shouldShowBanner = isActive && workoutStatus !== 'saved';
   
   if (!shouldShowBanner) return null;
 
