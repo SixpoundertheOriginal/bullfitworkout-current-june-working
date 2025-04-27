@@ -14,6 +14,11 @@ import { TonnageChart } from "@/components/metrics/TonnageChart";
 import { useDateRange } from "@/context/DateRangeContext";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 
+interface TonnageData {
+  date: string;
+  tonnage: number;
+}
+
 export const OverviewPage = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
@@ -29,7 +34,7 @@ export const OverviewPage = () => {
   }, [activeTab]);
   
   // Calculate tonnage data from exercise sets filtered by date range
-  const tonnageData = React.useMemo(() => {
+  const tonnageData = React.useMemo<TonnageData[]>(() => {
     if (!stats?.workouts) return [];
     
     // Filter workouts by date range if provided
@@ -47,7 +52,7 @@ export const OverviewPage = () => {
     }
     
     // Group exercises by date to calculate daily totals
-    const workoutsByDate = filteredWorkouts.reduce((result, workout) => {
+    const workoutsByDate: Record<string, TonnageData> = filteredWorkouts.reduce((result, workout) => {
       // Format date as YYYY-MM-DD to use as key
       const dateKey = new Date(workout.start_time).toISOString().split('T')[0];
       
@@ -66,7 +71,7 @@ export const OverviewPage = () => {
       result[dateKey].tonnage += workoutTonnage;
       
       return result;
-    }, {});
+    }, {} as Record<string, TonnageData>);
     
     // Convert to array and sort by date
     return Object.values(workoutsByDate)
