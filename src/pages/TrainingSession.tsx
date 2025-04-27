@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -12,6 +13,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
+import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -31,12 +33,20 @@ const TrainingSessionPage = () => {
     restTimerResetSignal,
     triggerRestTimerReset,
     currentRestTime,
-    handleCompleteSet
+    handleCompleteSet,
+    workoutStatus,
+    saveProgress,
+    attemptRecovery,
+    markAsSaving,
+    markAsSaved,
+    markAsFailed,
+    workoutId
   } = workoutState;
 
   const { play: playBell } = useSound('/sounds/bell.mp3');
   const { play: playTick } = useSound('/sounds/tick.mp3');
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
   const [completedSets, totalSets] = Object.values(exercises).reduce(
@@ -85,19 +95,38 @@ const TrainingSessionPage = () => {
       return;
     }
 
-    navigate("/workout-complete", {
-      state: {
-        workoutData: {
-          exercises,
-          duration: elapsedTime,
-          startTime: new Date(new Date().getTime() - elapsedTime * 1000),
-          endTime: new Date(),
-          trainingType: workoutState.trainingConfig?.trainingType || "Strength",
-          name: workoutState.trainingConfig?.trainingType || "Workout",
-          trainingConfig: workoutState.trainingConfig || null
+    try {
+      setIsSaving(true);
+      markAsSaving();
+      
+      const now = new Date();
+      const startTime = new Date(now.getTime() - elapsedTime * 1000);
+
+      navigate("/workout-complete", {
+        state: {
+          workoutData: {
+            exercises,
+            duration: elapsedTime,
+            startTime: startTime,
+            endTime: now,
+            trainingType: workoutState.trainingConfig?.trainingType || "Strength",
+            name: workoutState.trainingConfig?.trainingType || "Workout",
+            trainingConfig: workoutState.trainingConfig || null,
+            notes: "" // Add empty notes field to ensure it's included
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Error preparing workout data:", error);
+      markAsFailed({
+        type: 'unknown',
+        message: error instanceof Error ? error.message : 'Failed to prepare workout data',
+        timestamp: new Date().toISOString(),
+        recoverable: true
+      });
+      toast.error("Failed to complete workout");
+      setIsSaving(false);
+    }
   };
 
   if (loadingExercises) {
@@ -139,6 +168,16 @@ const TrainingSessionPage = () => {
               currentRestTime={currentRestTime}
             />
           </div>
+
+          {workoutStatus !== 'idle' && (
+            <div className="mb-4">
+              <WorkoutSaveStatus 
+                status={workoutStatus}
+                saveProgress={saveProgress}
+                onRetry={() => workoutId ? attemptRecovery() : null}
+              />
+            </div>
+          )}
 
           <ExerciseList
             exercises={exercises}
@@ -245,9 +284,10 @@ const TrainingSessionPage = () => {
           <div className="fixed bottom-6 right-6 z-40">
             <button
               onClick={handleFinishWorkout}
-              className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+              disabled={isSaving || workoutStatus === 'saving'}
+              className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
             >
-              Finish Workout
+              {isSaving ? "Saving..." : "Finish Workout"}
             </button>
           </div>
         </div>

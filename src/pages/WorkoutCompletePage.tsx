@@ -3,8 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
-import { toast } from "@/hooks/use-toast";
-import { toast as sonnerToast } from "@/components/ui/sonner";
+import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
@@ -16,11 +15,15 @@ import SaveTemplateSection from "@/components/workouts/SaveTemplateSection";
 import ExercisesCompletedList from "@/components/workouts/ExercisesCompletedList";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { recoverPartialWorkout } from "@/services/workoutService";
+import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
+import { WorkoutStatus } from "@/types/workout";
 
 interface ExerciseSet {
   weight: number;
   reps: number;
+  restTime: number;
   completed: boolean;
+  isEditing?: boolean;
 }
 
 interface WorkoutExercises {
@@ -34,6 +37,7 @@ interface WorkoutData {
   endTime: Date;
   trainingType: string;
   name: string;
+  notes?: string;
   trainingConfig?: {
     tags?: string[];
     duration?: number;
@@ -54,6 +58,7 @@ export const WorkoutCompletePage = () => {
   const [templateName, setTemplateName] = useState("");
   const [workoutData, setWorkoutData] = useState<WorkoutData | null>(null);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<WorkoutStatus>('idle');
   const [savingStats, setSavingStats] = useState({
     completed: false,
     error: false
@@ -70,6 +75,11 @@ export const WorkoutCompletePage = () => {
       if (location.state.workoutData.name) setTemplateName(location.state.workoutData.name);
       else if (location.state.workoutData.trainingType)
         setTemplateName(`${location.state.workoutData.trainingType} Template`);
+      
+      // If notes came in from the previous page
+      if (location.state.workoutData.notes) {
+        setNotes(location.state.workoutData.notes);
+      }
     } else {
       toast({
         title: "No workout data found",
@@ -117,6 +127,7 @@ export const WorkoutCompletePage = () => {
     if (!workoutData) return null;
     
     setSaving(true);
+    setSaveStatus('saving');
     
     try {
       if (workoutId && user) {
@@ -139,7 +150,6 @@ export const WorkoutCompletePage = () => {
               toast({
                 title: "Notes saved with limited analytics",
                 description: "Your workout notes were saved but some analytics couldn't be processed",
-                variant: "default",
               });
               
               setSavingStats({
@@ -147,6 +157,7 @@ export const WorkoutCompletePage = () => {
                 error: false
               });
               
+              setSaveStatus('saved');
               return workoutId;
             }
             
@@ -160,14 +171,12 @@ export const WorkoutCompletePage = () => {
               toast({
                 title: "Template saved!",
                 description: "Your workout template has been created",
-                variant: "default",
               });
             } catch (templateError) {
               console.error("Error saving workout template:", templateError);
               toast({
                 title: "Workout saved, but template could not be created",
                 description: "There was a problem saving your workout template",
-                variant: "default",
               });
             }
           }
@@ -177,6 +186,7 @@ export const WorkoutCompletePage = () => {
             error: false
           });
           
+          setSaveStatus('saved');
           toast({
             title: "Workout updated!",
             description: "Your workout notes have been saved"
@@ -190,7 +200,6 @@ export const WorkoutCompletePage = () => {
             toast({
               title: "Notes partially saved",
               description: "Your workout notes were recorded but analytics couldn't be updated",
-              variant: "default",
             });
             
             setSavingStats({
@@ -198,6 +207,7 @@ export const WorkoutCompletePage = () => {
               error: false
             });
             
+            setSaveStatus('partial');
             return workoutId;
           }
           
@@ -206,6 +216,7 @@ export const WorkoutCompletePage = () => {
             error: true
           });
           
+          setSaveStatus('failed');
           toast({
             title: "Error updating workout",
             description: "There was a problem saving your workout notes",
@@ -225,6 +236,7 @@ export const WorkoutCompletePage = () => {
           variant: "destructive",
         });
         setSaving(false);
+        setSaveStatus('failed');
         return null;
       }
       
@@ -271,7 +283,6 @@ export const WorkoutCompletePage = () => {
             toast({
               title: "Workout partially saved",
               description: "There was an issue with analytics processing, but your workout will be saved.",
-              variant: "default",
             });
             
             try {
@@ -299,6 +310,7 @@ export const WorkoutCompletePage = () => {
                   error: false
                 });
                 
+                setSaveStatus('saved');
                 return latestWorkout.id;
               }
             } catch (recoveryError) {
@@ -320,7 +332,6 @@ export const WorkoutCompletePage = () => {
             toast({
               title: "Workout saved with limited details",
               description: "We couldn't save all exercise details, but your workout was recorded",
-              variant: "default",
             });
           }
           
@@ -330,14 +341,12 @@ export const WorkoutCompletePage = () => {
               toast({
                 title: "Template saved!",
                 description: "Your workout template has been created",
-                variant: "default",
               });
             } catch (templateError) {
               console.error("Error saving workout template:", templateError);
               toast({
                 title: "Workout saved, but template could not be created",
                 description: "There was a problem saving your workout template",
-                variant: "default",
               });
             }
           }
@@ -347,6 +356,7 @@ export const WorkoutCompletePage = () => {
             error: false
           });
           
+          setSaveStatus('saved');
           toast({
             title: "Workout saved!",
             description: "Your workout has been successfully recorded"
@@ -362,7 +372,6 @@ export const WorkoutCompletePage = () => {
           toast({
             title: "Workout may have been saved",
             description: "There was an issue with the experience points system, but your workout data was sent to the server.",
-            variant: "default",
           });
           
           try {
@@ -385,6 +394,7 @@ export const WorkoutCompletePage = () => {
                 console.error("Error during recovery process:", exerciseError);
               }
               
+              setSaveStatus('saved');
               return latestWorkout.id;
             }
           } catch (recoveryError) {
@@ -396,6 +406,7 @@ export const WorkoutCompletePage = () => {
             error: true
           });
           
+          setSaveStatus('failed');
           toast({
             title: "Error saving workout",
             description: "There was a problem saving your workout data. Please try again.",
@@ -412,6 +423,7 @@ export const WorkoutCompletePage = () => {
         error: true
       });
       
+      setSaveStatus('failed');
       toast({
         title: "Error saving workout",
         description: "An unexpected error occurred while saving your workout",
@@ -438,7 +450,8 @@ export const WorkoutCompletePage = () => {
             weight: set.weight || 0,
             reps: set.reps || 0,
             set_number: index + 1,
-            completed: set.completed || false
+            completed: set.completed || false,
+            rest_time: set.restTime || 60
           });
         });
       }
@@ -543,12 +556,12 @@ export const WorkoutCompletePage = () => {
 
   const handleSaveAndExit = async () => {
     setSaving(true);
+    setSaveStatus('saving');
     try {
       const savedWorkoutId = await saveWorkout();
       if (savedWorkoutId) {
         toast({
           title: "Workout saved successfully",
-          variant: "default",
         });
         navigate(`/workout-details/${savedWorkoutId}`, {
           state: { from: 'workout-complete' }
@@ -560,6 +573,7 @@ export const WorkoutCompletePage = () => {
         title: "Failed to save workout",
         variant: "destructive",
       });
+      setSaveStatus('failed');
     } finally {
       setSaving(false);
     }
@@ -587,6 +601,15 @@ export const WorkoutCompletePage = () => {
       </header>
 
       <main className="flex-1 overflow-auto px-4 py-6">
+        {saveStatus !== 'idle' && (
+          <div className="mb-4">
+            <WorkoutSaveStatus 
+              status={saveStatus}
+              className="mb-4"
+            />
+          </div>
+        )}
+        
         <WorkoutSummaryCard 
           workoutData={workoutData} 
           completedSets={completedSets}

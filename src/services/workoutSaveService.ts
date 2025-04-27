@@ -15,6 +15,7 @@ interface SaveWorkoutParams {
     end_time: string;
     duration: number;
     notes: string | null;
+    metadata: any;
   };
   exercises: Record<string, EnhancedExerciseSet[]>;
   onProgressUpdate?: (progress: SaveProgress) => void;
@@ -81,8 +82,14 @@ export const saveWorkout = async ({
       const { data: transactionResult, error: functionError } = await supabase.functions.invoke('save-complete-workout', {
         body: {
           workout_data: {
-            ...workoutData,
-            user_id: userData.id
+            name: workoutData.name,
+            training_type: workoutData.training_type,
+            start_time: workoutData.start_time,
+            end_time: workoutData.end_time,
+            duration: workoutData.duration || 0,
+            notes: workoutData.notes || null,
+            user_id: userData.id,
+            metadata: workoutData.metadata || null
           },
           exercise_sets: formattedSets
         }
@@ -102,7 +109,7 @@ export const saveWorkout = async ({
           return {
             success: false,
             error: {
-              type: 'database', // Changed from 'function' to 'database'
+              type: 'database',
               message: 'Error saving workout via edge function: ' + functionError.message,
               details: functionError,
               timestamp: new Date().toISOString(),
