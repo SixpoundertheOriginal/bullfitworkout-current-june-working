@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext as reactCreateContext, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import {
@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { createContext } from '@/utils/createContext';
 
 interface WorkoutNavigationContextType {
   confirmNavigation: (to: string) => void;
