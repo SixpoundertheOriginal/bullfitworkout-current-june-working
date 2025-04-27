@@ -26,11 +26,16 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       
       // Set up the new training session
       setTrainingConfig(trainingConfig);
-      startWorkout();
+      
+      // Start workout and update route - order matters here
       updateLastActiveRoute('/training-session');
+      startWorkout();
       
       // Navigate to the training session page
       navigate('/training-session');
+      
+      // Show toast to confirm workout started
+      toast.success("Workout started - You can return to it anytime from the banner");
     }
   }, [trainingConfig, navigate, resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute]);
 

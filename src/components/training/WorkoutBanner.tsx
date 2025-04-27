@@ -17,11 +17,9 @@ export function WorkoutBanner() {
     lastActiveRoute
   } = useWorkoutState();
   
-  // Show banner when workout is active and not saved, regardless of elapsed time
+  // Simplified visibility check - show when workout is active and not saved
   const shouldShowBanner = isActive && workoutStatus !== 'saved';
   
-  if (!shouldShowBanner) return null;
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
