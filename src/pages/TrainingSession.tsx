@@ -81,9 +81,7 @@ const TrainingSessionPage = () => {
 
   const handleFinishWorkout = async () => {
     if (Object.keys(exercises).length === 0) {
-      toast("No exercises added - Please add at least one exercise before finishing your workout", {
-        type: "error"
-      });
+      toast.error("No exercises added - Please add at least one exercise before finishing your workout");
       return;
     }
 
