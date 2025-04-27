@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -39,7 +38,6 @@ const TrainingSessionPage = () => {
   const { play: playTick } = useSound('/sounds/tick.mp3');
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
 
-  // Calculate metrics
   const exerciseCount = Object.keys(exercises).length;
   const [completedSets, totalSets] = Object.values(exercises).reduce(
     ([completed, total], sets) => [
@@ -81,6 +79,31 @@ const TrainingSessionPage = () => {
     playBell();
   };
 
+  const handleFinishWorkout = async () => {
+    if (Object.keys(exercises).length === 0) {
+      toast({
+        title: "No exercises added",
+        description: "Please add at least one exercise before finishing your workout",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    navigate("/workout-complete", {
+      state: {
+        workoutData: {
+          exercises,
+          duration: elapsedTime,
+          startTime: new Date(new Date().getTime() - elapsedTime * 1000),
+          endTime: new Date(),
+          trainingType: workoutState.trainingConfig?.trainingType || "Strength",
+          name: workoutState.trainingConfig?.name || "Workout",
+          trainingConfig: workoutState.trainingConfig || null
+        }
+      }
+    });
+  };
+
   if (loadingExercises) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -105,7 +128,6 @@ const TrainingSessionPage = () => {
 
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-4 py-6">
-          {/* Workout Metrics */}
           <div className="mb-6">
             <WorkoutMetrics
               time={elapsedTime}
@@ -122,7 +144,6 @@ const TrainingSessionPage = () => {
             />
           </div>
 
-          {/* Exercise List */}
           <ExerciseList
             exercises={exercises}
             activeExercise={activeExercise}
@@ -224,6 +245,15 @@ const TrainingSessionPage = () => {
             onResetRestTimer={triggerRestTimerReset}
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
           />
+
+          <div className="fixed bottom-6 right-6 z-40">
+            <button
+              onClick={handleFinishWorkout}
+              className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              Finish Workout
+            </button>
+          </div>
         </div>
       </main>
 
