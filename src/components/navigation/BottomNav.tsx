@@ -2,16 +2,22 @@
 import { Clock, Zap, User as UserIcon, Dumbbell, BarChart3 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 
 export const BottomNav = () => {
   const location = useLocation();
   const { confirmNavigation } = useWorkoutNavigation();
+  const { exercises, elapsedTime } = useWorkoutState();
   
   const isActive = (path: string) => location.pathname === path;
   
-  const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
+  const isWorkoutActive = Object.keys(exercises).length > 0 && elapsedTime > 0;
   
-  if (isDialogOpen) {
+  // Prevent showing bottom nav on dialog or auth page
+  const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
+  const isAuthPage = location.pathname === '/auth';
+  
+  if (isDialogOpen || isAuthPage) {
     return null;
   }
   
@@ -72,3 +78,4 @@ const NavButton = ({
     </button>
   );
 };
+

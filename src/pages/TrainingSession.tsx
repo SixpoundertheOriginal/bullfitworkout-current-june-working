@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -13,6 +14,7 @@ import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
+import { BottomNav } from "@/components/navigation/BottomNav"; // Import BottomNav
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -351,8 +353,11 @@ const TrainingSessionPage = () => {
         onOpenChange={setIsAddExerciseSheetOpen}
         onSelectExercise={handleAddExercise}
       />
+      
+      <BottomNav /> {/* Add BottomNav component */}
     </div>
   );
 };
 
 export default TrainingSessionPage;
+
