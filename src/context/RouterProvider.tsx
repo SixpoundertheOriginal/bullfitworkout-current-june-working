@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -12,14 +11,14 @@ import Auth from "@/pages/Auth";
 import { TrainingPage } from "@/pages/Training";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { PageHeader } from "@/components/navigation/PageHeader";
+import { OverviewPage } from "@/pages/Training";
 
-// Utility for page titles
 const getPageTitle = (pathname: string): string => {
   switch (pathname) {
     case "/":
       return "Today";
     case "/training":
-      return "Training";
+      return "Overview";
     case "/profile":
       return "Profile";
     case "/training-session":
@@ -53,19 +52,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export const RouterProvider = () => {
   const location = useLocation();
   const title = getPageTitle(location.pathname);
-  // Hide header on training-session page
   const hideHeader = location.pathname === "/training-session";
 
   return (
     <div className="bg-gray-900 min-h-screen">
-      {/* Unified navigation header - hidden on training session */}
       {!hideHeader && <PageHeader title={title} />}
 
       <div className={hideHeader ? "" : "pt-16 pb-16"}>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/training" element={<ProtectedRoute><TrainingPage /></ProtectedRoute>} />
+          <Route path="/training" element={<ProtectedRoute><OverviewPage /></ProtectedRoute>} />
           <Route path="/training-session" element={<ProtectedRoute><TrainingSessionPage /></ProtectedRoute>} />
           <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
           <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />

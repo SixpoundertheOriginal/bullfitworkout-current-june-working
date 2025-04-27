@@ -1,4 +1,3 @@
-
 import { Clock, Zap, User as UserIcon, Dumbbell } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -32,7 +31,7 @@ export const BottomNav = () => {
       />
       <NavButton 
         icon={<Zap size={20} />} 
-        label="Training" 
+        label="Overview" 
         active={isActive('/training')}
         onClick={() => navigate('/training')} 
       />

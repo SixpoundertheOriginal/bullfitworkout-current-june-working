@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Zap, BarChart3, CalendarDays, History } from "lucide-react";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 
-export const TrainingPage = () => {
+export const OverviewPage = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const { stats, loading } = useWorkoutStats();
@@ -64,4 +63,4 @@ export const TrainingPage = () => {
   );
 };
 
-export default TrainingPage;
+export default OverviewPage;
