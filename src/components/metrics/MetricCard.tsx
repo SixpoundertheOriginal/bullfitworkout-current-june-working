@@ -11,6 +11,7 @@ interface MetricCardProps {
   value: string | number;
   label: string;
   tooltip?: string;
+  description?: string;
   progressValue?: number;
   gradientClass?: string;
   valueClass?: string;
@@ -22,6 +23,7 @@ export const MetricCard = ({
   value,
   label,
   tooltip,
+  description,
   progressValue,
   gradientClass,
   valueClass,
@@ -68,6 +70,16 @@ export const MetricCard = ({
             )}>
               {label}
             </div>
+
+            {/* Description (smaller text, optional) */}
+            {description && (
+              <div className={cn(
+                typography.text.muted,
+                "text-center text-xs mt-1"
+              )}>
+                {description}
+              </div>
+            )}
 
             {/* Progress (if present) */}
             {progressValue !== undefined && (

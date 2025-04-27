@@ -15,7 +15,10 @@ interface DailyWorkoutSummaryProps {
 }
 
 export const DailyWorkoutSummary = ({ date, onClose, preview = false }: DailyWorkoutSummaryProps) => {
-  const { data, isLoading } = useWorkoutHistory(undefined, date);
+  const { data, isLoading } = useWorkoutHistory({
+    startDate: date,
+    endDate: date
+  });
   const workouts = data?.workouts || [];
   const navigate = useNavigate();
   
