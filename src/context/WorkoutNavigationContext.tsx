@@ -27,21 +27,27 @@ export function WorkoutNavigationContextProvider({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { exercises, elapsedTime } = useWorkoutState();
+  const { isActive, updateLastActiveRoute } = useWorkoutState();
   const [showDialog, setShowDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  const isWorkoutActive = Object.keys(exercises).length > 0 && elapsedTime > 0;
   const isTrainingRoute = location.pathname === '/training-session';
+  
+  // Update last active route if we're on the training session page
+  React.useEffect(() => {
+    if (isTrainingRoute) {
+      updateLastActiveRoute(location.pathname);
+    }
+  }, [isTrainingRoute, location.pathname, updateLastActiveRoute]);
 
   const confirmNavigation = useCallback((to: string) => {
-    if (isWorkoutActive && isTrainingRoute) {
+    if (isActive && isTrainingRoute) {
       setShowDialog(true);
       setPendingNavigation(to);
     } else {
       navigate(to);
     }
-  }, [isWorkoutActive, isTrainingRoute, navigate]);
+  }, [isActive, isTrainingRoute, navigate]);
 
   return (
     <Provider value={{ confirmNavigation }}>

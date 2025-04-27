@@ -34,6 +34,8 @@ export function useWorkoutState() {
   const [restTimerActive, setRestTimerActive] = useState(false);
   const [restTimerResetSignal, setRestTimerResetSignal] = useState(0);
   const [currentRestTime, setCurrentRestTime] = useState(60);
+  const [isActive, setIsActive] = useState(false);
+  const [lastActiveRoute, setLastActiveRoute] = useState<string | null>('/training-session');
 
   // Load workout state from local storage on component mount
   useEffect(() => {
@@ -62,10 +64,16 @@ export function useWorkoutState() {
           setWorkoutStatus(parsedState.workoutStatus);
         }
         if (parsedState.trainingConfig) setTrainingConfig(parsedState.trainingConfig);
+        if (parsedState.isActive !== undefined) setIsActive(parsedState.isActive);
+        if (parsedState.lastActiveRoute) setLastActiveRoute(parsedState.lastActiveRoute);
       } catch (error) {
         console.error('Error parsing saved workout state:', error);
       }
     }
+
+    // Check if there's an active workout to restore
+    const hasActiveWorkout = Object.keys(exercises).length > 0 && elapsedTime > 0 && workoutStatus !== 'saved';
+    setIsActive(hasActiveWorkout);
   }, []);
 
   // Save workout state to local storage when it changes
@@ -76,21 +84,36 @@ export function useWorkoutState() {
       return;
     }
     
-    if (Object.keys(exercises).length > 0 || activeExercise || elapsedTime > 0 || workoutId) {
+    if (isActive || Object.keys(exercises).length > 0 || activeExercise || elapsedTime > 0 || workoutId) {
       const stateToSave = {
         exercises,
         activeExercise,
         elapsedTime,
         workoutId,
         workoutStatus,
-        trainingConfig
+        trainingConfig,
+        isActive,
+        lastActiveRoute
       };
       Storage.set(STORAGE_KEY, JSON.stringify(stateToSave));
     } else {
       // If no workout data, remove from storage
       Storage.remove(STORAGE_KEY);
     }
-  }, [exercises, activeExercise, elapsedTime, workoutId, workoutStatus, trainingConfig]);
+  }, [exercises, activeExercise, elapsedTime, workoutId, workoutStatus, trainingConfig, isActive, lastActiveRoute]);
+
+  const startWorkout = () => {
+    setIsActive(true);
+    setWorkoutStatus('active');
+    setElapsedTime(0);
+    console.log("Workout started");
+  };
+
+  const endWorkout = () => {
+    setIsActive(false);
+    setWorkoutStatus('idle');
+    console.log("Workout ended");
+  };
 
   const resetSession = () => {
     setExercises({});
@@ -104,8 +127,14 @@ export function useWorkoutState() {
     setRestTimerActive(false);
     setCurrentRestTime(60);
     setTrainingConfig(null);
+    setIsActive(false);
+    setLastActiveRoute('/training-session');
     Storage.remove(STORAGE_KEY);
     console.log("Workout session reset");
+  };
+
+  const updateLastActiveRoute = (route: string) => {
+    setLastActiveRoute(route);
   };
 
   const markAsSaving = () => {
@@ -127,6 +156,7 @@ export function useWorkoutState() {
   const markAsSaved = () => {
     setWorkoutStatus('saved');
     setSaveProgress(100);
+    setIsActive(false);
     
     // Important: When marking as saved, clear the storage immediately
     Storage.remove(STORAGE_KEY);
@@ -158,6 +188,7 @@ export function useWorkoutState() {
       // Instead of using an invalid status, use the 'saved' status
       setWorkoutStatus('saved');
       setSaveProgress(100);
+      setIsActive(false);
       
       // Reset session after recovery
       resetSession();
@@ -220,6 +251,12 @@ export function useWorkoutState() {
     currentRestTime,
     setCurrentRestTime,
     handleCompleteSet,
-    deleteExercise
+    deleteExercise,
+    isActive,
+    setIsActive,
+    startWorkout,
+    endWorkout,
+    lastActiveRoute,
+    updateLastActiveRoute
   };
 }

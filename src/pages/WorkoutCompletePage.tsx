@@ -51,7 +51,7 @@ export const WorkoutCompletePage = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
-  const { resetSession } = useWorkoutState();
+  const { resetSession, endWorkout, markAsSaved } = useWorkoutState();
 
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -70,7 +70,7 @@ export const WorkoutCompletePage = () => {
   }>({ pending: false, exerciseName: null });
 
   useEffect(() => {
-    resetSession();
+    endWorkout();
     
     if (location.state?.workoutId) setWorkoutId(location.state.workoutId);
     if (location.state?.workoutData) {
@@ -86,7 +86,7 @@ export const WorkoutCompletePage = () => {
       toast("No workout data found - Please complete a workout session first");
       navigate("/");
     }
-  }, [location.state, navigate, resetSession]);
+  }, [location.state, navigate, endWorkout]);
 
   useEffect(() => {
     if (navigatePending.pending && workoutId && navigatePending.exerciseName) {
@@ -510,7 +510,9 @@ export const WorkoutCompletePage = () => {
       const savedWorkoutId = await saveWorkout();
       if (savedWorkoutId) {
         toast("Workout saved successfully");
+        
         resetSession();
+        
         navigate(`/workout-details/${savedWorkoutId}`, {
           state: { from: 'workout-complete' }
         });

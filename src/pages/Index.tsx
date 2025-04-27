@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
@@ -12,12 +13,14 @@ import { StartTrainingButton } from "@/components/training/StartTrainingButton";
 import { motion } from "framer-motion";
 import { typography } from "@/lib/typography";
 import { cn } from "@/lib/utils";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 
 const Index = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { stats } = useWorkoutStats();
+  const { isActive, lastActiveRoute } = useWorkoutState();
   
   const { ref: sectionRef, isVisible: isSectionVisible } = useElementVisibility({
     threshold: 0.5,
@@ -34,6 +37,16 @@ const Index = () => {
     
     return () => clearTimeout(timer);
   }, [isSectionVisible]);
+
+  // Check for active workout to show continue option
+  useEffect(() => {
+    if (isActive) {
+      toast({
+        title: "Workout in progress",
+        description: "You have an active workout. Click the banner to return.",
+      });
+    }
+  }, [isActive]);
 
   const handleStartTraining = ({ trainingType, tags, duration, rankedExercises }) => {
     toast({
@@ -66,12 +79,20 @@ const Index = () => {
   const navigateToTraining = ({ trainingType, tags, duration, rankedExercises }) => {
     navigate('/training-session', { 
       state: { 
-        trainingType, 
-        tags, 
-        duration,
-        rankedExercises
+        trainingConfig: {
+          trainingType, 
+          tags, 
+          duration,
+          rankedExercises
+        }
       } 
     });
+  };
+
+  const handleContinueWorkout = () => {
+    if (isActive && lastActiveRoute) {
+      navigate(lastActiveRoute);
+    }
   };
 
   const toggleWorkoutDisplay = () => {
@@ -151,11 +172,27 @@ const Index = () => {
               "absolute left-1/2 transform -translate-x-1/2 transition-all duration-300",
               isSectionVisible ? "scale-100 opacity-100" : "scale-95 opacity-90"
             )}>
-              <StartTrainingButton
-                onClick={() => setDialogOpen(true)}
-                trainingType={recommendedWorkoutType}
-                label="Start"
-              />
+              {isActive ? (
+                <div className="flex flex-col items-center space-y-4">
+                  <StartTrainingButton
+                    onClick={handleContinueWorkout}
+                    trainingType="Continue"
+                    label="Resume"
+                  />
+                  <button 
+                    onClick={() => setDialogOpen(true)}
+                    className="text-sm text-white/70 hover:text-white/90 underline"
+                  >
+                    Start a new workout
+                  </button>
+                </div>
+              ) : (
+                <StartTrainingButton
+                  onClick={() => setDialogOpen(true)}
+                  trainingType={recommendedWorkoutType}
+                  label="Start"
+                />
+              )}
             </div>
           </div>
         </section>

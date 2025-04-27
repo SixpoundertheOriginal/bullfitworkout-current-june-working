@@ -44,7 +44,9 @@ const TrainingSessionPage = () => {
     markAsSaved,
     markAsFailed,
     workoutId,
-    deleteExercise
+    deleteExercise,
+    startWorkout,
+    updateLastActiveRoute
   } = workoutState;
 
   const { play: playBell } = useSound('/sounds/bell.mp3');
@@ -62,6 +64,18 @@ const TrainingSessionPage = () => {
     [0, 0]
   );
 
+  // Update last active route whenever we load this page
+  useEffect(() => {
+    updateLastActiveRoute('/training-session');
+  }, [updateLastActiveRoute]);
+
+  // Start a workout if not already started
+  useEffect(() => {
+    if (workoutStatus === 'idle' && (Object.keys(exercises).length > 0 || location.state?.trainingConfig)) {
+      startWorkout();
+    }
+  }, [workoutStatus, exercises, location.state, startWorkout]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedTime(prev => prev + 1);
@@ -78,6 +92,21 @@ const TrainingSessionPage = () => {
       resetSession();
     }
   }, [location.search, resetSession]);
+
+  // Effect to handle training configuration from navigation state
+  useEffect(() => {
+    if (location.state?.trainingConfig) {
+      workoutState.setTrainingConfig(location.state.trainingConfig);
+    } else if (location.state?.trainingType) {
+      // Support for older navigation state format
+      workoutState.setTrainingConfig({
+        trainingType: location.state.trainingType,
+        tags: location.state.tags || [],
+        duration: location.state.duration || 45,
+        rankedExercises: location.state.rankedExercises
+      });
+    }
+  }, [location.state, workoutState.setTrainingConfig]);
 
   // Effect to handle workout completion status
   useEffect(() => {
@@ -165,7 +194,7 @@ const TrainingSessionPage = () => {
         }));
       });
 
-      // Important: Reset session state before navigating to ensure WorkoutBanner is updated
+      // Note: We don't reset session here! We'll do it after the save is confirmed
       const workoutData = {
         exercises: normalizedExercises,
         duration: elapsedTime,
@@ -185,8 +214,6 @@ const TrainingSessionPage = () => {
         }
       });
       
-      // Reset the workout session after navigating
-      resetSession();
     } catch (error) {
       console.error("Error preparing workout data:", error);
       markAsFailed({
