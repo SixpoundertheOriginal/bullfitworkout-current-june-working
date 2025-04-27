@@ -1,4 +1,5 @@
-import { Clock, User as UserIcon, Dumbbell, BarChart3 } from "lucide-react";
+
+import { Clock, User as UserIcon, Dumbbell, BarChart3, Zap } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
@@ -21,7 +22,7 @@ export const BottomNav = () => {
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-4 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10">
+    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Home" 
@@ -33,6 +34,12 @@ export const BottomNav = () => {
         label="Overview" 
         active={isActive('/overview')}
         onClick={() => confirmNavigation('/overview')} 
+      />
+      <NavButton 
+        icon={<Zap size={20} />} 
+        label="Training"
+        active={isActive('/training-session')}
+        onClick={() => confirmNavigation('/training-session')}
       />
       <NavButton 
         icon={<Dumbbell size={20} />} 
