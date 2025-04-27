@@ -20,18 +20,15 @@ export const RestTimer = ({
 }: RestTimerProps) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const [targetReached, setTargetReached] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastTickRef = useRef<number>(0);
   
-  // Progress will show 100% when target time is reached
   const progressPercentage = Math.min((elapsedTime / maxTime) * 100, 100);
 
   useEffect(() => {
     if (isVisible) {
       setElapsedTime(0);
       setIsActive(true);
-      setTargetReached(false);
       startTimerInterval();
     } else {
       clearTimerInterval();
@@ -75,9 +72,9 @@ export const RestTimer = ({
         setElapsedTime(prev => {
           const newTime = prev + deltaSeconds;
           
-          // If we've reached the target time but haven't notified yet
-          if (newTime >= maxTime && !targetReached) {
-            setTargetReached(true);
+          if (newTime >= maxTime) {
+            clearTimerInterval();
+            setIsActive(false);
             if (onComplete) onComplete();
             return maxTime;
           }
@@ -95,7 +92,6 @@ export const RestTimer = ({
   const resetTimer = () => {
     setElapsedTime(0);
     setIsActive(true);
-    setTargetReached(false);
     
     if (isActive) {
       clearTimerInterval();
@@ -132,27 +128,12 @@ export const RestTimer = ({
       
       <div className="p-4">
         <div className="text-center mb-3">
-          <span className={cn(
-            "text-3xl font-mono",
-            targetReached ? "text-orange-400" : ""
-          )}>
-            {formatTime(elapsedTime)}
-          </span>
-          {targetReached && (
-            <div className="text-xs text-orange-400 mt-1">
-              Target time reached ({formatTime(maxTime)})
-            </div>
-          )}
+          <span className="text-3xl font-mono">{formatTime(elapsedTime)}</span>
         </div>
         
         <Progress 
           value={progressPercentage} 
-          className={cn(
-            "h-2 mb-4 bg-gray-800",
-            targetReached 
-              ? "[&>div]:bg-orange-500" 
-              : "[&>div]:bg-purple-500"
-          )}
+          className="h-2 mb-4 bg-gray-800 [&>div]:bg-purple-500"
         />
         
         <div className="flex justify-between gap-2">

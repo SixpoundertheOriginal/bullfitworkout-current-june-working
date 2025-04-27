@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,7 +27,6 @@ export const TopRestTimer = ({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [targetTime] = useState(currentRestTime || defaultRestTime);
-  const [targetReached, setTargetReached] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const lastResetSignalRef = useRef<number>(0);
@@ -51,11 +51,10 @@ export const TopRestTimer = ({
         const elapsed = Math.floor((now - startTimeRef.current) / 1000);
         setElapsedTime(elapsed);
         
-        if (elapsed >= targetTime && !targetReached) {
-          setTargetReached(true);
-          if (onComplete) {
-            onComplete();
-          }
+        if (elapsed >= targetTime && onComplete) {
+          onComplete();
+          clearTimerInterval();
+          setIsTimerActive(false);
         }
         
         if (onTimeUpdate) {
@@ -70,7 +69,6 @@ export const TopRestTimer = ({
       console.log('TopRestTimer: New reset signal received:', resetSignal);
       lastResetSignalRef.current = resetSignal;
       setElapsedTime(0);
-      setTargetReached(false);
       startTimeRef.current = Date.now();
       setIsTimerActive(true);
       startTimerInterval();
@@ -80,13 +78,11 @@ export const TopRestTimer = ({
   useEffect(() => {
     if (isActive) {
       setIsTimerActive(true);
-      setTargetReached(false);
       startTimerInterval();
     } else {
       setIsTimerActive(false);
       clearTimerInterval();
       setElapsedTime(0);
-      setTargetReached(false);
       startTimeRef.current = null;
     }
 
@@ -116,8 +112,8 @@ export const TopRestTimer = ({
         >
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className={cn(
-              "text-sm font-mono",
-              targetReached ? "text-orange-400" : "text-gray-200"
+              "text-sm font-mono text-white",
+              elapsedTime >= targetTime ? "text-purple-400" : "text-gray-200"
             )}>
               {formatTime(elapsedTime)}
             </span>
@@ -141,3 +137,4 @@ export const TopRestTimer = ({
     </div>
   );
 };
+
