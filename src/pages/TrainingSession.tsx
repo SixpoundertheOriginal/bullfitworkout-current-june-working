@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -210,7 +209,6 @@ const TrainingSessionPage = () => {
             }}
             onCompleteSet={(exerciseName, setIndex) => {
               handleCompleteSet(exerciseName, setIndex);
-              // Show rest timer when a set is completed
               handleShowRestTimer();
             }}
             onRemoveSet={(exerciseName, setIndex) => {

@@ -11,7 +11,7 @@ export interface ExerciseSet {
   reps: number;
   restTime: number;
   completed: boolean;
-  isEditing?: boolean;
+  isEditing: boolean; // Changed from optional to required to match EnhancedExerciseSet
 }
 
 export interface WorkoutExercises {

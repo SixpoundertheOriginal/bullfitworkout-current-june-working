@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/components/ui/sonner";
 import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
-import { WorkoutError } from "@/types/workout";
+import { WorkoutError, EnhancedExerciseSet } from "@/types/workout";
 import { ExerciseSet } from '@/hooks/useWorkoutState';
 
 export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
@@ -117,10 +117,19 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       
       console.log("Saving workout with data:", workoutData);
       
+      // Convert ExerciseSet to EnhancedExerciseSet by ensuring isEditing is always defined
+      const enhancedExercises: Record<string, EnhancedExerciseSet[]> = {};
+      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+        enhancedExercises[exerciseName] = sets.map(set => ({
+          ...set,
+          isEditing: set.isEditing === undefined ? false : set.isEditing
+        }));
+      });
+      
       const saveResult = await saveWorkout({
         userData: user,
         workoutData,
-        exercises,
+        exercises: enhancedExercises,
         onProgressUpdate: (progress) => {
           updateSaveProgress(progress.step, progress.completed);
         }
