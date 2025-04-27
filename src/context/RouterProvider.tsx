@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -27,6 +26,8 @@ const getPageTitle = (pathname: string): string => {
       return "Workout Complete";
     case "/all-exercises":
       return "All Exercises";
+    case "/workouts":
+      return "Workouts";
     default:
       if (pathname.startsWith("/workout-details")) {
         return "Workout Details";
@@ -63,6 +64,7 @@ export const RouterProvider = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/overview" element={<ProtectedRoute><OverviewPage /></ProtectedRoute>} />
+          <Route path="/workouts" element={<ProtectedRoute><WorkoutManagementPage /></ProtectedRoute>} />
           <Route path="/training-session" element={<ProtectedRoute><TrainingSessionPage /></ProtectedRoute>} />
           <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
           <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
