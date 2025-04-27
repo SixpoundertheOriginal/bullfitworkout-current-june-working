@@ -5,7 +5,7 @@ import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { useExercises } from "@/hooks/useExercises";
-import { WorkoutMetrics } from "@/components/WorkoutMetrics";
+import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
-import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
+import { RestTimer } from "@/components/RestTimer";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -33,6 +33,7 @@ const TrainingSessionPage = () => {
     restTimerResetSignal,
     triggerRestTimerReset,
     currentRestTime,
+    setCurrentRestTime,
     handleCompleteSet,
     workoutStatus,
     saveProgress,
@@ -47,6 +48,7 @@ const TrainingSessionPage = () => {
   const { play: playTick } = useSound('/sounds/tick.mp3');
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showRestTimerModal, setShowRestTimerModal] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
   const [completedSets, totalSets] = Object.values(exercises).reduce(
@@ -86,6 +88,13 @@ const TrainingSessionPage = () => {
 
   const handleShowRestTimer = () => {
     setRestTimerActive(true);
+    setShowRestTimerModal(true);
+    playBell();
+  };
+
+  const handleRestTimerComplete = () => {
+    setRestTimerActive(false);
+    setShowRestTimerModal(false);
     playBell();
   };
 
@@ -153,31 +162,39 @@ const TrainingSessionPage = () => {
 
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-4 py-6">
-          <div className="mb-6">
-            <WorkoutMetrics
-              time={elapsedTime}
+          <div className="mb-6 relative">
+            <WorkoutSessionHeader
+              elapsedTime={elapsedTime}
               exerciseCount={exerciseCount}
               completedSets={completedSets}
               totalSets={totalSets}
-              showRestTimer={restTimerActive}
-              onRestTimerComplete={() => setRestTimerActive(false)}
-              onRestTimeUpdate={playTick}
-              onManualRestStart={handleShowRestTimer}
+              workoutStatus={workoutStatus}
+              isRecoveryMode={!!workoutId}
+              saveProgress={saveProgress}
+              onRetrySave={() => workoutId ? attemptRecovery() : null}
+              onResetWorkout={resetSession}
+              restTimerActive={restTimerActive}
+              onRestTimerComplete={handleRestTimerComplete}
+              onShowRestTimer={handleShowRestTimer}
               onRestTimerReset={triggerRestTimerReset}
               restTimerResetSignal={restTimerResetSignal}
               currentRestTime={currentRestTime}
             />
+            
+            {showRestTimerModal && (
+              <div className="absolute right-4 top-full z-50 mt-2 w-72">
+                <RestTimer 
+                  isVisible={showRestTimerModal}
+                  onClose={() => {
+                    setShowRestTimerModal(false);
+                    setRestTimerActive(false);
+                  }}
+                  onComplete={handleRestTimerComplete}
+                  maxTime={currentRestTime || 60}
+                />
+              </div>
+            )}
           </div>
-
-          {workoutStatus !== 'idle' && (
-            <div className="mb-4">
-              <WorkoutSaveStatus 
-                status={workoutStatus}
-                saveProgress={saveProgress}
-                onRetry={() => workoutId ? attemptRecovery() : null}
-              />
-            </div>
-          )}
 
           <ExerciseList
             exercises={exercises}
@@ -191,7 +208,11 @@ const TrainingSessionPage = () => {
                 ]
               }));
             }}
-            onCompleteSet={handleCompleteSet}
+            onCompleteSet={(exerciseName, setIndex) => {
+              handleCompleteSet(exerciseName, setIndex);
+              // Show rest timer when a set is completed
+              handleShowRestTimer();
+            }}
             onRemoveSet={(exerciseName, setIndex) => {
               setExercises(prev => ({
                 ...prev,

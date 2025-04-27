@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Timer, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,7 @@ export const TopRestTimer = ({
     }, 1000);
   };
 
+  // This effect handles external reset signals
   useEffect(() => {
     if (resetSignal > 0 && resetSignal !== lastResetSignalRef.current) {
       console.log('TopRestTimer: New reset signal received:', resetSignal);
@@ -77,12 +79,17 @@ export const TopRestTimer = ({
     }
   }, [resetSignal, targetTime]);
 
+  // This effect handles the isActive prop changes
   useEffect(() => {
-    if (isActive) {
+    if (isActive && !isTimerActive) {
+      console.log('TopRestTimer: Activating timer from isActive prop');
       setIsTimerActive(true);
       setTargetReached(false);
+      setElapsedTime(0);
+      startTimeRef.current = Date.now();
       startTimerInterval();
-    } else {
+    } else if (!isActive && isTimerActive) {
+      console.log('TopRestTimer: Deactivating timer from isActive prop');
       setIsTimerActive(false);
       clearTimerInterval();
       setElapsedTime(0);
@@ -93,7 +100,7 @@ export const TopRestTimer = ({
     return () => {
       clearTimerInterval();
     };
-  }, [isActive, targetTime]);
+  }, [isActive]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

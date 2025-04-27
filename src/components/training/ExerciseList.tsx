@@ -1,17 +1,20 @@
 
-import React from 'react';
-import { SetRow } from '@/components/SetRow';
-import { LocalExerciseSet } from '@/hooks/useWorkoutState';
-import { CircularGradientButton } from '@/components/CircularGradientButton';
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle } from 'lucide-react';
-import { calculateSetVolume } from '@/utils/exerciseUtils';
-import { Progress } from '@/components/ui/progress';
-import { Exercise } from '@/types/exercise';
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import ExerciseCard from "@/components/exercises/ExerciseCard";
 
 interface ExerciseListProps {
-  exercises: Record<string, LocalExerciseSet[]>;
+  exercises: {
+    [key: string]: {
+      weight: number;
+      reps: number;
+      restTime?: number;
+      completed: boolean;
+      isEditing?: boolean;
+    }[];
+  };
   activeExercise: string | null;
   onAddSet: (exerciseName: string) => void;
   onCompleteSet: (exerciseName: string, setIndex: number) => void;
@@ -20,13 +23,13 @@ interface ExerciseListProps {
   onSaveSet: (exerciseName: string, setIndex: number) => void;
   onWeightChange: (exerciseName: string, setIndex: number, value: string) => void;
   onRepsChange: (exerciseName: string, setIndex: number, value: string) => void;
-  onRestTimeChange: (exerciseName: string, setIndex: number, value: string) => void;
+  onRestTimeChange?: (exerciseName: string, setIndex: number, value: string) => void;
   onWeightIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
   onRepsIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
-  onRestTimeIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
+  onRestTimeIncrement?: (exerciseName: string, setIndex: number, increment: number) => void;
+  onOpenAddExercise: () => void;
   onShowRestTimer: () => void;
   onResetRestTimer: () => void;
-  onOpenAddExercise: () => void;
 }
 
 export const ExerciseList: React.FC<ExerciseListProps> = ({
@@ -43,95 +46,72 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   onWeightIncrement,
   onRepsIncrement,
   onRestTimeIncrement,
-  onShowRestTimer,
-  onResetRestTimer,
   onOpenAddExercise,
+  onShowRestTimer,
+  onResetRestTimer
 }) => {
-  return (
-    <div className="mb-4">
-      {Object.entries(exercises).map(([exerciseName, sets]) => {
-        const completedSets = sets.filter(set => set.completed).length;
-        const totalVolume = sets.reduce((acc, set) => {
-          // Pass the exercise name along with the weight and reps
-          return acc + calculateSetVolume({
-            weight: set.weight,
-            reps: set.reps,
-            completed: set.completed,
-            duration: 0,
-            id: '', // Providing empty string for required properties
-            set_number: 0,
-            exercise_name: exerciseName,
-            workout_id: ''
-          }, exerciseName);
-        }, 0);
-        const progressPercent = (completedSets / sets.length) * 100;
-
-        return (
-          <Card 
-            key={exerciseName} 
-            id={`exercise-${exerciseName}`}
-            className="mb-8 bg-gray-900/50 rounded-lg border border-gray-800"
-          >
-            <CardContent className="p-4">
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-semibold text-white">{exerciseName}</h3>
-                  <span className="text-sm text-purple-400">
-                    Total Volume: {Math.round(totalVolume)}kg
-                  </span>
-                </div>
-                <Progress value={progressPercent} className="h-1 bg-gray-800" />
-              </div>
-
-              <div className="space-y-2">
-                {sets.map((set, index) => (
-                  <SetRow
-                    key={`${exerciseName}-${index}`}
-                    setNumber={index + 1}
-                    weight={set.weight}
-                    reps={set.reps}
-                    restTime={set.restTime}
-                    completed={set.completed}
-                    isEditing={set.isEditing}
-                    exerciseName={exerciseName}
-                    onComplete={() => onCompleteSet(exerciseName, index)}
-                    onEdit={() => onEditSet(exerciseName, index)}
-                    onSave={() => onSaveSet(exerciseName, index)}
-                    onRemove={() => onRemoveSet(exerciseName, index)}
-                    onWeightChange={(e) => onWeightChange(exerciseName, index, e.target.value)}
-                    onRepsChange={(e) => onRepsChange(exerciseName, index, e.target.value)}
-                    onRestTimeChange={
-                      (e) => onRestTimeChange(exerciseName, index, e.target.value)
-                    }
-                    onWeightIncrement={(value) => onWeightIncrement(exerciseName, index, value)}
-                    onRepsIncrement={(value) => onRepsIncrement(exerciseName, index, value)}
-                    onRestTimeIncrement={(value) => onRestTimeIncrement(exerciseName, index, value)}
-                    weightUnit="kg"
-                  />
-                ))}
-
-                <button
-                  onClick={() => onAddSet(exerciseName)}
-                  className="w-full p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded-md text-gray-300 transition-colors mt-2"
-                >
-                  + Add Set
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
-      
-      {/* Add Exercise Button */}
-      <div className="flex justify-center mt-8">
-        <CircularGradientButton
+  const handleCompleteSet = (exerciseName: string, setIndex: number) => {
+    onCompleteSet(exerciseName, setIndex);
+    // Automatically show the rest timer when a set is completed
+    onShowRestTimer();
+    // Reset the rest timer to ensure it starts from zero
+    onResetRestTimer();
+  };
+  
+  if (Object.keys(exercises).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+        <p className="mb-4">No exercises added yet</p>
+        <Button
           onClick={onOpenAddExercise}
-          icon={<PlusCircle size={32} className="text-white" />}
-          size={96}
+          className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700"
         >
+          <PlusCircle size={18} />
           Add Exercise
-        </CircularGradientButton>
+        </Button>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <ScrollArea className="h-full">
+        {Object.keys(exercises).map(exerciseName => (
+          <div key={exerciseName} className="mb-6">
+            <ExerciseCard 
+              exercise={exerciseName}
+              sets={exercises[exerciseName]}
+              onAddSet={onAddSet}
+              onCompleteSet={handleCompleteSet}
+              onRemoveSet={onRemoveSet}
+              onEditSet={onEditSet}
+              onSaveSet={onSaveSet}
+              onWeightChange={onWeightChange}
+              onRepsChange={onRepsChange}
+              onRestTimeChange={onRestTimeChange}
+              onWeightIncrement={onWeightIncrement}
+              onRepsIncrement={onRepsIncrement}
+              onRestTimeIncrement={onRestTimeIncrement}
+              isActive={activeExercise === exerciseName}
+              onShowRestTimer={onShowRestTimer}
+              onResetRestTimer={onResetRestTimer}
+            />
+          </div>
+        ))}
+      </ScrollArea>
+      
+      <Button
+        onClick={onOpenAddExercise}
+        className="w-full py-3 flex items-center justify-center gap-2 
+          bg-gradient-to-r from-purple-700/90 to-blue-700/90 
+          hover:from-purple-700 hover:to-blue-700 
+          text-white font-medium rounded-lg 
+          transition-all duration-200 
+          shadow-lg hover:shadow-xl"
+      >
+        <PlusCircle size={20} />
+        Add Exercise
+      </Button>
     </div>
   );
 };
