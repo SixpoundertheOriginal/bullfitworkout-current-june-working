@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -81,9 +82,8 @@ const TrainingSessionPage = () => {
 
   const handleFinishWorkout = async () => {
     if (Object.keys(exercises).length === 0) {
-      toast({
-        title: "No exercises added",
-        description: "Please add at least one exercise before finishing your workout",
+      // Fix: Use toast() with a string instead of an object with title property
+      toast("No exercises added - Please add at least one exercise before finishing your workout", {
         variant: "destructive"
       });
       return;
@@ -97,7 +97,9 @@ const TrainingSessionPage = () => {
           startTime: new Date(new Date().getTime() - elapsedTime * 1000),
           endTime: new Date(),
           trainingType: workoutState.trainingConfig?.trainingType || "Strength",
-          name: workoutState.trainingConfig?.name || "Workout",
+          // Fix: Use optional name from the training config or default to "Workout"
+          // The trainingConfig may not have a 'name' property
+          name: workoutState.trainingConfig?.trainingType || "Workout",
           trainingConfig: workoutState.trainingConfig || null
         }
       }
