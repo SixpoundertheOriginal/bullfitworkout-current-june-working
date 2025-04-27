@@ -55,14 +55,13 @@ export const saveWorkout = async ({
   }
 
   try {
-    // Update progress
     onProgressUpdate?.({
       step: 'workout',
       total: 3,
       completed: 0,
       errors: []
     });
-    
+
     // Format exercise sets for the function call
     const formattedSets = Object.entries(exercises).flatMap(([exerciseName, sets], exerciseIndex) => {
       return sets.map((set, setIndex) => ({
@@ -77,7 +76,6 @@ export const saveWorkout = async ({
 
     console.log(`Saving workout with ${formattedSets.length} exercise sets`);
     
-    // Try to use atomic transaction via edge function first
     try {
       const { data: transactionResult, error: functionError } = await supabase.functions.invoke('save-complete-workout', {
         body: {
@@ -89,12 +87,12 @@ export const saveWorkout = async ({
             duration: workoutData.duration || 0,
             notes: workoutData.notes || null,
             user_id: userData.id,
-            metadata: workoutData.metadata || null
+            metadata: workoutData.metadata || {}
           },
           exercise_sets: formattedSets
         }
       });
-      
+
       // Check for specific error conditions and modify response
       if (functionError) {
         console.error("Edge function error:", functionError);

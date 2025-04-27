@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -111,6 +112,33 @@ const TrainingSessionPage = () => {
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
 
+      // Enhanced workout metadata
+      const workoutMetadata = {
+        trainingConfig: workoutState.trainingConfig || null,
+        performance: {
+          completedSets,
+          totalSets,
+          restTimers: {
+            defaultTime: currentRestTime,
+            wasUsed: restTimerActive
+          }
+        },
+        progression: {
+          timeOfDay: startTime.getHours() < 12 ? 'morning' : 
+                     startTime.getHours() < 17 ? 'afternoon' : 'evening',
+          totalVolume: Object.entries(exercises).reduce((acc, [_, sets]) => {
+            return acc + sets.reduce((setAcc, set) => {
+              return setAcc + (set.completed ? (set.weight * set.reps) : 0);
+            }, 0);
+          }, 0)
+        },
+        sessionDetails: {
+          exerciseCount: Object.keys(exercises).length,
+          averageRestTime: currentRestTime,
+          workoutDensity: completedSets / (elapsedTime / 60) // Sets per minute
+        }
+      };
+
       navigate("/workout-complete", {
         state: {
           workoutData: {
@@ -121,7 +149,8 @@ const TrainingSessionPage = () => {
             trainingType: workoutState.trainingConfig?.trainingType || "Strength",
             name: workoutState.trainingConfig?.trainingType || "Workout",
             trainingConfig: workoutState.trainingConfig || null,
-            notes: "" // Add empty notes field to ensure it's included
+            notes: "",
+            metadata: workoutMetadata
           }
         }
       });
