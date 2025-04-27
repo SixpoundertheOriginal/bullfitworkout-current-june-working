@@ -28,7 +28,7 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
     switch (timeRange) {
       case 'this-week': {
         const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday as end of week
         newDateRange = { from: weekStart, to: weekEnd };
         break;
       }
@@ -72,7 +72,7 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
         return `${format(previousWeekStart, "MMM d")} - ${format(previousWeekEnd, "MMM d, yyyy")}`;
       }
       case 'last-30-days':
-        return "Last 30 days";
+        return `${format(subDays(now, 30), "MMM d")} - ${format(now, "MMM d, yyyy")}`;
       case 'all-time':
         return "All time";
     }

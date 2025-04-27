@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -43,8 +42,8 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
     switch(timeframe) {
       case 'previous-week':
         // Previous full week (Monday to Sunday)
+        start = subWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1); // Monday of previous week
         end = subDays(startOfWeek(today, { weekStartsOn: 1 }), 1); // Sunday before this week
-        start = subDays(end, 6); // Monday of previous week
         break;
       case 'last-30-days':
         start = subDays(today, 29); // 30 days including today
@@ -101,7 +100,8 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   
   // Prepare data for Weekly Frequency chart using date range
   const prepareWeeklyFrequencyData = () => {
-    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    // Create array with proper day order (Monday first)
+    const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     
     // Create array of days in the date range
     const daysInRange = eachDayOfInterval({
@@ -109,7 +109,7 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
       end: dateRange.end
     });
     
-    // Initialize counts for each day of week
+    // Initialize counts for each day of week in our preferred order
     const dayCounts = daysOfWeek.map(day => ({
       name: day.substring(0, 3), // Abbreviate the day names
       count: 0
@@ -122,7 +122,11 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
     // Count workouts for each day of the week in the range
     filteredWorkouts.forEach(workout => {
       const workoutDate = new Date(workout.start_time);
-      const dayIndex = workoutDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      let dayIndex = workoutDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      
+      // Convert to our preferred order (0 = Monday, 1 = Tuesday, etc.)
+      dayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+      
       if (dayIndex >= 0 && dayIndex < 7) {
         dayCounts[dayIndex].count += 1;
       }

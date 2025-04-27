@@ -40,6 +40,7 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
         periodStart = dateRange.from;
         periodEnd = dateRange.to;
       } else {
+        // Default to current week (Monday to Sunday)
         periodStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
       }
       
@@ -95,7 +96,7 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
         return sum + (set.weight * set.reps);
       }, 0) || 0;
       
-      // Calculate daily workout counts
+      // Calculate daily workout counts with a consistent day format
       const dailyWorkouts: Record<string, number> = {};
       periodWorkouts?.forEach(workout => {
         const day = new Date(workout.start_time).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
@@ -109,7 +110,7 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
           new Date(w.start_time).toISOString().split('T')[0]
         ))].sort().reverse();
         
-        const todayStr = new Date().toISOString().split('T')[0]; // Define today here
+        const todayStr = new Date().toISOString().split('T')[0];
         if (workoutDates[0] === todayStr) {
           streakDays = 1;
           for (let i = 1; i < workoutDates.length; i++) {
