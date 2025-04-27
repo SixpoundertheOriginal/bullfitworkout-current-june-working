@@ -16,7 +16,7 @@ export const OverviewPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
-        <h1 className="text-xl font-semibold">Training</h1>
+        <h1 className="text-xl font-semibold">Overview</h1>
         <Button 
           onClick={() => navigate('/training-session')}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"

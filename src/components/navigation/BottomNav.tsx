@@ -1,3 +1,4 @@
+
 import { Clock, Zap, User as UserIcon, Dumbbell } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -9,7 +10,7 @@ export const BottomNav = () => {
   
   // Don't show bottom nav on training configuration screens or when dialogs are open
   const isTrainingConfig = location.pathname.includes('/training') && 
-    (location.pathname !== '/training' && location.pathname !== '/training-session');
+    (location.pathname !== '/overview' && location.pathname !== '/training-session');
   
   // Hide bottom nav on training session page
   const isTrainingSession = location.pathname === '/training-session';
@@ -32,8 +33,8 @@ export const BottomNav = () => {
       <NavButton 
         icon={<Zap size={20} />} 
         label="Overview" 
-        active={isActive('/training')}
-        onClick={() => navigate('/training')} 
+        active={isActive('/overview')}
+        onClick={() => navigate('/overview')} 
       />
       <NavButton 
         icon={<Dumbbell size={20} />} 
