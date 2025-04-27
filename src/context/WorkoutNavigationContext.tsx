@@ -1,5 +1,5 @@
 
-import React, { createContext as reactCreateContext, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import {
@@ -18,7 +18,7 @@ interface WorkoutNavigationContextType {
   confirmNavigation: (to: string) => void;
 }
 
-const [WorkoutNavigationProvider, useWorkoutNavigation] = createContext<WorkoutNavigationContextType>();
+const [Provider, useWorkoutNavigation] = createContext<WorkoutNavigationContextType>();
 
 export function WorkoutNavigationContextProvider({ 
   children 
@@ -44,7 +44,7 @@ export function WorkoutNavigationContextProvider({
   }, [isWorkoutActive, isTrainingRoute, navigate]);
 
   return (
-    <WorkoutNavigationProvider value={{ confirmNavigation }}>
+    <Provider value={{ confirmNavigation }}>
       {children}
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
@@ -71,7 +71,7 @@ export function WorkoutNavigationContextProvider({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </WorkoutNavigationProvider>
+    </Provider>
   );
 }
 
