@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -9,7 +8,7 @@ import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
@@ -122,7 +121,6 @@ const TrainingSessionPage = () => {
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
 
-      // Enhanced workout metadata
       const workoutMetadata = {
         trainingConfig: workoutState.trainingConfig || null,
         performance: {
@@ -145,16 +143,15 @@ const TrainingSessionPage = () => {
         sessionDetails: {
           exerciseCount: Object.keys(exercises).length,
           averageRestTime: currentRestTime,
-          workoutDensity: completedSets / (elapsedTime / 60) // Sets per minute
+          workoutDensity: completedSets / (elapsedTime / 60)
         }
       };
 
-      // Ensure all exercise sets have the isEditing property defined
       const normalizedExercises = {};
       Object.entries(exercises).forEach(([exerciseName, sets]) => {
         normalizedExercises[exerciseName] = sets.map(set => ({
           ...set,
-          isEditing: set.isEditing || false // Ensure isEditing has a value
+          isEditing: set.isEditing || false
         }));
       });
 
@@ -196,18 +193,7 @@ const TrainingSessionPage = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
-      <header className="flex justify-between items-center p-4 border-b border-gray-800 sticky top-0 z-30 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/60">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2 rounded-full hover:bg-gray-900"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="text-xl font-semibold">Training Session</h1>
-        <WeightUnitToggle variant="badge" />
-      </header>
-
+    <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-4 py-6">
           <div className="mb-6 relative">
@@ -348,7 +334,7 @@ const TrainingSessionPage = () => {
             setExercises={setExercises}
           />
 
-          <div className="fixed bottom-6 right-6 z-40">
+          <div className="fixed bottom-20 right-6 z-40">
             <button
               onClick={handleFinishWorkout}
               disabled={isSaving || workoutStatus === 'saving'}

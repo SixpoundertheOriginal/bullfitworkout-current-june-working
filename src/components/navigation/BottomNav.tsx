@@ -1,4 +1,3 @@
-
 import { Clock, Zap, User as UserIcon, Dumbbell, BarChart3 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -8,14 +7,10 @@ export const BottomNav = () => {
   
   const isActive = (path: string) => location.pathname === path;
   
-  // Don't show bottom nav on training configuration screens
-  const isTrainingConfig = location.pathname.includes('/training') && 
-    (location.pathname !== '/overview');
-  
-  // Check if any dialog is open by looking for elements with role="dialog"
+  // Only check for dialogs, but keep the bottom nav visible on training-session page
   const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
   
-  if (isTrainingConfig || isDialogOpen) {
+  if (isDialogOpen) {
     return null;
   }
   
@@ -36,7 +31,7 @@ export const BottomNav = () => {
       <NavButton 
         icon={<Zap size={20} />} 
         label="Workouts"
-        active={isActive('/workouts')}
+        active={isActive('/workouts') || isActive('/training-session')}
         onClick={() => navigate('/workouts')}
       />
       <NavButton 
