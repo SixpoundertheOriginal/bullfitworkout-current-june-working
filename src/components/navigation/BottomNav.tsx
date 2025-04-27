@@ -1,13 +1,14 @@
+
 import { Clock, Zap, User as UserIcon, Dumbbell, BarChart3 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
 
 export const BottomNav = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { confirmNavigation } = useWorkoutNavigation();
   
   const isActive = (path: string) => location.pathname === path;
   
-  // Only check for dialogs, but keep the bottom nav visible on training-session page
   const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
   
   if (isDialogOpen) {
@@ -20,31 +21,31 @@ export const BottomNav = () => {
         icon={<Clock size={20} />} 
         label="Home" 
         active={isActive('/')} 
-        onClick={() => navigate('/')} 
+        onClick={() => confirmNavigation('/')} 
       />
       <NavButton 
         icon={<BarChart3 size={20} />} 
         label="Overview" 
         active={isActive('/overview')}
-        onClick={() => navigate('/overview')} 
+        onClick={() => confirmNavigation('/overview')} 
       />
       <NavButton 
         icon={<Zap size={20} />} 
         label="Workouts"
         active={isActive('/workouts') || isActive('/training-session')}
-        onClick={() => navigate('/workouts')}
+        onClick={() => confirmNavigation('/workouts')}
       />
       <NavButton 
         icon={<Dumbbell size={20} />} 
         label="Exercises"
         active={isActive('/all-exercises')}
-        onClick={() => navigate('/all-exercises')}
+        onClick={() => confirmNavigation('/all-exercises')}
       />
       <NavButton 
         icon={<UserIcon size={20} />} 
         label="Profile" 
         active={isActive('/profile')}
-        onClick={() => navigate('/profile')} 
+        onClick={() => confirmNavigation('/profile')} 
       />
     </nav>
   );
