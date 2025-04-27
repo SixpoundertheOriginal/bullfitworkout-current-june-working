@@ -18,12 +18,18 @@ interface WorkoutHistoryProps {
   limit?: number;
   className?: string;
   dateFilter?: string | null;
+  selectionMode?: boolean;
+  selectedWorkouts?: string[];
+  onWorkoutSelected?: (id: string, isSelected: boolean) => void;
 }
 
 export const WorkoutHistory = ({ 
   limit = 5, 
   className = "",
-  dateFilter = null
+  dateFilter = null,
+  selectionMode = false,
+  selectedWorkouts = [],
+  onWorkoutSelected
 }: WorkoutHistoryProps) => {
   const { data, isLoading, isError, refetch } = useWorkoutHistory(limit, dateFilter);
   const navigate = useNavigate();
@@ -33,8 +39,8 @@ export const WorkoutHistory = ({
   const [recoveryChecking, setRecoveryChecking] = useState(false);
   const { user } = useAuth();
   
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedWorkouts, setSelectedWorkouts] = useState<string[]>([]);
+  const [selectionModeState, setSelectionModeState] = useState(selectionMode);
+  const [selectedWorkoutsState, setSelectedWorkoutsState] = useState(selectedWorkouts);
   
   useEffect(() => {
     if (!user || !data?.workouts || recoveryChecking) return;
@@ -84,27 +90,32 @@ export const WorkoutHistory = ({
   }, [user, data, recoveryChecking]);
   
   const toggleSelectionMode = () => {
-    setSelectionMode(!selectionMode);
-    setSelectedWorkouts([]);
+    setSelectionModeState(!selectionModeState);
+    setSelectedWorkoutsState([]);
   };
   
   const toggleWorkoutSelection = (workoutId: string) => {
-    setSelectedWorkouts(prevSelected => {
-      if (prevSelected.includes(workoutId)) {
-        return prevSelected.filter(id => id !== workoutId);
-      } else {
-        return [...prevSelected, workoutId];
-      }
-    });
+    const isSelected = selectedWorkoutsState.includes(workoutId);
+    if (onWorkoutSelected) {
+      onWorkoutSelected(workoutId, !isSelected);
+    } else {
+      setSelectedWorkoutsState(prevSelected => {
+        if (prevSelected.includes(workoutId)) {
+          return prevSelected.filter(id => id !== workoutId);
+        } else {
+          return [...prevSelected, workoutId];
+        }
+      });
+    }
   };
   
   const selectAllWorkouts = () => {
     if (!data?.workouts) return;
     
-    if (selectedWorkouts.length === data.workouts.length) {
-      setSelectedWorkouts([]);
+    if (selectedWorkoutsState.length === data.workouts.length) {
+      setSelectedWorkoutsState([]);
     } else {
-      setSelectedWorkouts(data.workouts.map(w => w.id));
+      setSelectedWorkoutsState(data.workouts.map(w => w.id));
     }
   };
   
@@ -190,8 +201,8 @@ export const WorkoutHistory = ({
   };
   
   const handleBulkActionComplete = () => {
-    setSelectionMode(false);
-    setSelectedWorkouts([]);
+    setSelectionModeState(false);
+    setSelectedWorkoutsState([]);
     refetch();
   };
   
@@ -375,7 +386,7 @@ export const WorkoutHistory = ({
         </h2>
         
         <div className="flex items-center gap-2">
-          {selectionMode ? (
+          {selectionModeState ? (
             <>
               <Button
                 variant="outline"
@@ -384,7 +395,7 @@ export const WorkoutHistory = ({
                 className="text-xs h-8"
               >
                 <SquareCheck className="h-4 w-4 mr-1" />
-                {selectedWorkouts.length === workouts.length ? "Deselect All" : "Select All"}
+                {selectedWorkoutsState.length === workouts.length ? "Deselect All" : "Select All"}
               </Button>
               
               <Button
@@ -441,14 +452,14 @@ export const WorkoutHistory = ({
         </div>
       )}
       
-      {selectionMode && selectedWorkouts.length > 0 && (
+      {selectionModeState && selectedWorkoutsState.length > 0 && onWorkoutSelected === undefined && (
         <div className="bg-gray-800/50 p-3 rounded-lg mb-4 flex justify-between items-center">
           <span className="text-sm text-gray-300">
-            {selectedWorkouts.length} workout{selectedWorkouts.length !== 1 ? 's' : ''} selected
+            {selectedWorkoutsState.length} workout{selectedWorkoutsState.length !== 1 ? 's' : ''} selected
           </span>
           
           <BulkWorkoutActions 
-            selectedWorkoutIds={selectedWorkouts}
+            selectedWorkoutIds={selectedWorkoutsState}
             onActionComplete={handleBulkActionComplete}
           />
         </div>
@@ -473,8 +484,8 @@ export const WorkoutHistory = ({
                   onFix={() => handleFixWorkout(workout.id)}
                   isDeleting={deletingWorkoutId === workout.id}
                   isFixing={fixingWorkoutId === workout.id}
-                  selectionMode={selectionMode}
-                  isSelected={selectedWorkouts.includes(workout.id)}
+                  selectionMode={selectionModeState}
+                  isSelected={selectedWorkoutsState.includes(workout.id)}
                   onToggleSelection={() => toggleWorkoutSelection(workout.id)}
                   showFixOption={exerciseCounts[workout.id]?.exercises === 0 || exerciseCounts[workout.id]?.sets === 0}
                 />
@@ -501,8 +512,8 @@ export const WorkoutHistory = ({
                   onFix={() => handleFixWorkout(workout.id)}
                   isDeleting={deletingWorkoutId === workout.id}
                   isFixing={fixingWorkoutId === workout.id}
-                  selectionMode={selectionMode}
-                  isSelected={selectedWorkouts.includes(workout.id)}
+                  selectionMode={selectionModeState}
+                  isSelected={selectedWorkoutsState.includes(workout.id)}
                   onToggleSelection={() => toggleWorkoutSelection(workout.id)}
                   showFixOption={exerciseCounts[workout.id]?.exercises === 0 || exerciseCounts[workout.id]?.sets === 0}
                 />
@@ -532,8 +543,8 @@ export const WorkoutHistory = ({
                   onFix={() => handleFixWorkout(workout.id)}
                   isDeleting={deletingWorkoutId === workout.id}
                   isFixing={fixingWorkoutId === workout.id}
-                  selectionMode={selectionMode}
-                  isSelected={selectedWorkouts.includes(workout.id)}
+                  selectionMode={selectionModeState}
+                  isSelected={selectedWorkoutsState.includes(workout.id)}
                   onToggleSelection={() => toggleWorkoutSelection(workout.id)}
                   showFixOption={exerciseCounts[workout.id]?.exercises === 0 || exerciseCounts[workout.id]?.sets === 0}
                 />

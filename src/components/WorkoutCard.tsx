@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dumbbell, Clock, Trash2, Edit, Check, Loader2, Wrench } from 'lucide-react';
+import { Dumbbell, Clock, Trash2, Edit, Check, Loader2, Wrench, Eye, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -9,11 +9,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { trainingTypes } from '@/constants/trainingTypes';
 import { formatDuration } from '@/utils/exerciseUtils';
 import { cn } from '@/lib/utils';
 import { typography } from '@/lib/typography';
+import { Progress } from '@/components/ui/progress';
+import { useState } from 'react';
 
 interface WorkoutCardProps {
   id: string;
@@ -57,6 +60,10 @@ export const WorkoutCard = ({
   const formattedDate = format(parseISO(date), 'MMM d, yyyy');
   const formattedTime = format(parseISO(date), 'h:mm a');
   const formattedDuration = formatDuration(duration);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Calculate completion percentage (placeholder - will be replaced with actual data)
+  const completionPercentage = Math.min(100, Math.max(0, (setCount / (setCount + 1)) * 100));
   
   // Identify potentially incomplete workouts (no exercises or sets)
   const isPotentiallyIncomplete = exerciseCount === 0 || setCount === 0;
@@ -69,18 +76,35 @@ export const WorkoutCard = ({
     }
   };
   
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+  
+  const handlePreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/workout-details/${id}`);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Future implementation: Share workout functionality
+    console.log("Share workout:", id);
+  };
+  
   return (
     <div 
-      onClick={handleCardClick}
       className={cn(
-        "relative bg-gray-900 rounded-lg p-4 border border-gray-800 hover:border-gray-700 transition-colors cursor-pointer",
-        isPotentiallyIncomplete && !selectionMode && "border-yellow-700/50",
-        selectionMode && isSelected && "border-purple-500"
+        "relative bg-gray-900 rounded-lg p-4 border transition-colors",
+        isPotentiallyIncomplete && !selectionMode ? "border-yellow-700/50" : "border-gray-800 hover:border-gray-700",
+        selectionMode && isSelected && "border-purple-500",
+        "hover:shadow-lg hover:shadow-purple-900/10 transition-all duration-300"
       )}
     >
-      {selectionMode && (
+      {selectionMode ? (
         <div 
-          className="absolute top-0 left-0 w-full h-full bg-black/20 rounded-lg flex items-center justify-center"
+          onClick={onToggleSelection}
+          className="absolute top-0 left-0 w-full h-full bg-black/20 rounded-lg flex items-center justify-center cursor-pointer"
         >
           <div className={cn(
             "w-6 h-6 rounded-full border-2 flex items-center justify-center",
@@ -89,33 +113,17 @@ export const WorkoutCard = ({
             {isSelected && <Check size={14} className="text-white" />}
           </div>
         </div>
-      )}
-      
-      <div className="flex justify-between">
-        <div>
-          <h3 className={typography.headings.h3}>{name}</h3>
-          <div className="flex items-center text-gray-400 text-sm mt-1">
-            <span 
-              className="w-3 h-3 rounded-full mr-2" 
-              style={{ 
-                backgroundColor: trainingType.color
-              }} 
-            />
-            <span className="mr-3">{trainingType.name}</span>
-            <span>{formattedDate} • {formattedTime}</span>
-          </div>
-        </div>
-        
-        {!selectionMode && (
+      ) : (
+        <div 
+          className="absolute top-4 right-4 z-10"
+          onClick={(e) => e.stopPropagation()} // Prevent navigation when clicking dropdown
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent navigation when clicking dropdown
-                }}
               >
                 <span className="sr-only">Open menu</span>
                 <svg
@@ -135,13 +143,26 @@ export const WorkoutCard = ({
                 </svg>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end" className="bg-gray-900 border-gray-800">
+              <DropdownMenuItem onClick={handlePreview} className="cursor-pointer">
+                <Eye className="mr-2 h-4 w-4" />
+                <span>View Details</span>
+              </DropdownMenuItem>
+              
               {onEdit && (
                 <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
                   <Edit className="mr-2 h-4 w-4" />
                   <span>Edit Workout</span>
                 </DropdownMenuItem>
               )}
+              
+              <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+                <Share2 className="mr-2 h-4 w-4" />
+                <span>Share</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator className="bg-gray-800" />
+              
               {showFixOption && onFix && (
                 <DropdownMenuItem 
                   onClick={onFix}
@@ -156,6 +177,7 @@ export const WorkoutCard = ({
                   <span>{isFixing ? 'Fixing...' : 'Fix Issues'}</span>
                 </DropdownMenuItem>
               )}
+              
               {onDelete && (
                 <DropdownMenuItem 
                   onClick={onDelete}
@@ -172,29 +194,116 @@ export const WorkoutCard = ({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
-      </div>
-      
-      <div className="flex mt-3 justify-between">
-        <div className="flex items-center text-sm">
-          <Dumbbell size={14} className="mr-1 text-gray-500" />
-          <span>{exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}, {setCount} set{setCount !== 1 ? 's' : ''}</span>
-        </div>
-        <div className="flex items-center text-sm">
-          <Clock size={14} className="mr-1 text-gray-500" />
-          <span>{formattedDuration}</span>
-        </div>
-      </div>
-      
-      {isPotentiallyIncomplete && !selectionMode && (
-        <div className="mt-2 pt-2 border-t border-yellow-800/30 flex items-center text-yellow-500 text-xs">
-          <svg className="h-3.5 w-3.5 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 9V14M12 16V16.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.268 4L3.33978 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Incomplete data
         </div>
       )}
+      
+      <div 
+        className="relative z-0 cursor-pointer" 
+        onClick={selectionMode ? onToggleSelection : handleCardClick}
+      >
+        {/* Progress indicator */}
+        <div className="absolute -top-4 -left-4 -right-4 flex justify-center">
+          <div className={cn(
+            "h-1 w-3/4 rounded-full overflow-hidden",
+            isPotentiallyIncomplete ? "bg-yellow-900/30" : "bg-gray-800"
+          )}>
+            <div 
+              className={cn(
+                "h-full", 
+                isPotentiallyIncomplete ? "bg-yellow-600" : "bg-purple-600"
+              )}
+              style={{ width: `${completionPercentage}%` }}
+            />
+          </div>
+        </div>
+        
+        <div className="flex justify-between items-start mt-1">
+          <div>
+            <div className="flex items-center">
+              <h3 className={typography.headings.h3}>{name}</h3>
+              {isPotentiallyIncomplete && (
+                <div className="ml-2 p-1 rounded-full bg-yellow-900/30">
+                  <svg className="h-3 w-3 text-yellow-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 9V14M12 16V16.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.268 4L3.33978 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center text-gray-400 text-sm mt-1">
+              <span 
+                className="w-3 h-3 rounded-full mr-2" 
+                style={{ 
+                  backgroundColor: trainingType.color
+                }} 
+              />
+              <span className="mr-3">{trainingType.name}</span>
+              <span>{formattedDate} • {formattedTime}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex mt-3 justify-between">
+          <div className="flex items-center text-sm">
+            <Dumbbell size={14} className="mr-1 text-gray-500" />
+            <span>{exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}, {setCount} set{setCount !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="flex items-center text-sm">
+            <Clock size={14} className="mr-1 text-gray-500" />
+            <span>{formattedDuration}</span>
+          </div>
+        </div>
+        
+        {isPotentiallyIncomplete && !selectionMode && (
+          <div className="mt-2 pt-2 border-t border-yellow-800/30 flex items-center text-yellow-500 text-xs">
+            <svg className="h-3.5 w-3.5 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 9V14M12 16V16.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0378 2.66667 10.268 4L3.33978 16C2.56998 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Incomplete data
+          </div>
+        )}
+
+        {/* Expandable section */}
+        <div className="mt-2 flex justify-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full h-6 text-xs text-gray-500 hover:text-white"
+            onClick={handleToggleExpand}
+          >
+            {isExpanded ? (
+              <><ChevronUp className="h-3 w-3 mr-1" /> Show less</>
+            ) : (
+              <><ChevronDown className="h-3 w-3 mr-1" /> Show more</>
+            )}
+          </Button>
+        </div>
+
+        {isExpanded && (
+          <div className="mt-2 pt-3 border-t border-gray-800">
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full bg-gray-800 hover:bg-gray-700 border-gray-700"
+                onClick={handlePreview}
+              >
+                <Eye className="mr-1 h-4 w-4" />
+                View Details
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full bg-gray-800 hover:bg-gray-700 border-gray-700"
+                onClick={handleShare}
+              >
+                <Share2 className="mr-1 h-4 w-4" />
+                Share
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
