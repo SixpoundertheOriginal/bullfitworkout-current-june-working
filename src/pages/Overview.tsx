@@ -13,6 +13,7 @@ import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { TonnageChart } from "@/components/metrics/TonnageChart";
 import { useDateRange } from "@/context/DateRangeContext";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TonnageData {
   date: string;
@@ -35,7 +36,9 @@ export const OverviewPage = () => {
   
   // Calculate tonnage data from exercise sets filtered by date range
   const tonnageData = React.useMemo<TonnageData[]>(() => {
-    if (!stats?.workouts) return [];
+    if (!stats?.workouts || stats.workouts.length === 0) return [];
+    
+    console.log("Computing tonnage data from workouts:", stats.workouts.length);
     
     // Filter workouts by date range if provided
     let filteredWorkouts = [...stats.workouts];
@@ -50,6 +53,8 @@ export const OverviewPage = () => {
         return workoutDate >= fromDate && workoutDate <= toDate;
       });
     }
+    
+    console.log("Filtered workouts count:", filteredWorkouts.length);
     
     // Create a map to hold daily workout tonnage
     const workoutsByDate = new Map<string, TonnageData>();
@@ -67,32 +72,36 @@ export const OverviewPage = () => {
       }
       
       // Get exercise sets for this workout
-      const workoutSets = workout.exercises || [];
+      const sets = workout.exercises || [];
       
       // Calculate tonnage for this workout
       let workoutTonnage = 0;
-      workoutSets.forEach(exercise => {
-        if (exercise.weight && exercise.reps) {
-          workoutTonnage += exercise.weight * exercise.reps;
+      sets.forEach(set => {
+        if (set.weight && set.reps && set.completed) {
+          workoutTonnage += set.weight * set.reps;
         }
       });
       
       // Add to the daily total
-      const currentData = workoutsByDate.get(dateKey);
-      if (currentData) {
-        workoutsByDate.set(dateKey, {
-          ...currentData,
-          tonnage: currentData.tonnage + workoutTonnage
-        });
+      if (workoutTonnage > 0) {
+        const currentData = workoutsByDate.get(dateKey);
+        if (currentData) {
+          workoutsByDate.set(dateKey, {
+            ...currentData,
+            tonnage: currentData.tonnage + workoutTonnage
+          });
+        }
       }
     });
+    
+    console.log("Tonnage data points calculated:", workoutsByDate.size);
     
     // Convert map to array and sort by date
     return Array.from(workoutsByDate.values())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [stats?.workouts, dateRange]);
 
-  console.log("Tonnage data calculated:", tonnageData);
+  console.log("Final tonnage data calculated:", tonnageData);
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">

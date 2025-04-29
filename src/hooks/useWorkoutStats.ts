@@ -84,7 +84,8 @@ export const useWorkoutStats = (days?: number) => {
         throw new Error("User is not authenticated");
       }
 
-      const { data: workouts, error: workoutsError } = await supabase
+      // Fetch all workouts with their exercise sets
+      const { data: workoutsData, error: workoutsError } = await supabase
         .from("workout_sessions")
         .select("*")
         .eq("user_id", user.id)
@@ -94,13 +95,35 @@ export const useWorkoutStats = (days?: number) => {
         throw workoutsError;
       }
       
-      const { data: exerciseSets, error: setsError } = await supabase
-        .from("exercise_sets")
-        .select("*, workout_sessions!inner(*)")
-        .eq("workout_sessions.user_id", user.id);
-
-      if (setsError) {
-        throw setsError;
+      // Expand workout data with exercise sets
+      const workouts = [...(workoutsData || [])];
+      
+      // Fetch all exercise sets for these workouts
+      if (workouts.length > 0) {
+        const workoutIds = workouts.map(w => w.id);
+        
+        const { data: exerciseSetsData, error: setsError } = await supabase
+          .from("exercise_sets")
+          .select("*")
+          .in("workout_id", workoutIds);
+          
+        if (setsError) {
+          throw setsError;
+        }
+        
+        // Group exercise sets by workout
+        const exerciseSetsByWorkout = exerciseSetsData?.reduce((acc: Record<string, any[]>, set) => {
+          if (!acc[set.workout_id]) {
+            acc[set.workout_id] = [];
+          }
+          acc[set.workout_id].push(set);
+          return acc;
+        }, {});
+        
+        // Attach exercise sets to corresponding workouts
+        workouts.forEach(workout => {
+          workout.exercises = exerciseSetsByWorkout[workout.id] || [];
+        });
       }
 
       const { data: progressionData, error: progressionError } = await supabase

@@ -56,7 +56,7 @@ export const TonnageChart: React.FC<TonnageChartProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className={`h-[${height}px] mt-4`}>
+        <div className="h-[200px] mt-4">
           {!hasData ? (
             <div className="flex items-center justify-center h-full text-gray-400">
               No workout data available for the selected period
