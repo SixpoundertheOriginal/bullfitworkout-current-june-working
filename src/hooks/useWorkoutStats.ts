@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -99,6 +100,7 @@ export const useWorkoutStats = (days?: number) => {
       const workouts = [...(workoutsData || [])];
       
       // Fetch all exercise sets for these workouts
+      let allExerciseSets: any[] = [];
       if (workouts.length > 0) {
         const workoutIds = workouts.map(w => w.id);
         
@@ -111,8 +113,11 @@ export const useWorkoutStats = (days?: number) => {
           throw setsError;
         }
         
+        // Store all exercise sets
+        allExerciseSets = exerciseSetsData || [];
+        
         // Group exercise sets by workout
-        const exerciseSetsByWorkout = exerciseSetsData?.reduce((acc: Record<string, any[]>, set) => {
+        const exerciseSetsByWorkout = allExerciseSets.reduce((acc: Record<string, any[]>, set) => {
           if (!acc[set.workout_id]) {
             acc[set.workout_id] = [];
           }
@@ -138,7 +143,7 @@ export const useWorkoutStats = (days?: number) => {
       }
 
       const groupedExercises: Record<string, any[]> = {};
-      exerciseSets?.forEach(set => {
+      allExerciseSets.forEach(set => {
         if (!groupedExercises[set.exercise_name]) {
           groupedExercises[set.exercise_name] = [];
         }
@@ -176,7 +181,7 @@ export const useWorkoutStats = (days?: number) => {
         }
       });
 
-      exerciseSets?.forEach(set => {
+      allExerciseSets.forEach(set => {
         if (set.completed) {
           completedSets++;
           totalVolume += set.weight * set.reps;
@@ -184,7 +189,7 @@ export const useWorkoutStats = (days?: number) => {
       });
 
       const avgWorkoutLength = workouts?.length ? totalDuration / workouts.length : 0;
-      const completionRate = exerciseSets?.length ? (completedSets / exerciseSets.length) * 100 : 0;
+      const completionRate = allExerciseSets?.length ? (completedSets / allExerciseSets.length) * 100 : 0;
 
       const preferredDay = Object.keys(daysFrequency).reduce((a, b) => daysFrequency[a] > daysFrequency[b] ? a : b, '');
       const preferredTime = Object.keys(durationByTimeOfDay).reduce((a, b) => durationByTimeOfDay[a] > durationByTimeOfDay[b] ? a : b, '');
@@ -231,7 +236,7 @@ export const useWorkoutStats = (days?: number) => {
       }
 
       const volumeHistoryData: ExerciseVolumeHistory[] = [];
-      const exerciseNames = [...new Set(exerciseSets?.map(set => set.exercise_name))];
+      const exerciseNames = [...new Set(allExerciseSets.map(set => set.exercise_name))];
 
       exerciseNames.forEach(exerciseName => {
         const exerciseData = progressionData?.filter(prog => prog.exercise_name === exerciseName) || [];
@@ -258,7 +263,7 @@ export const useWorkoutStats = (days?: number) => {
           }
 
           volumeHistoryData.push({
-            exercise_name: exerciseName,
+            exercise_name: exerciseName as string,
             trend: trend,
             percentChange: percentChange,
             volume_history: volumes
@@ -274,7 +279,7 @@ export const useWorkoutStats = (days?: number) => {
       }
 
       const exerciseStats: Record<string, { sets: number, volume: number, weightSum: number }> = {};
-      exerciseSets?.forEach(set => {
+      allExerciseSets.forEach(set => {
         if (set.completed) {
           if (!exerciseStats[set.exercise_name]) {
             exerciseStats[set.exercise_name] = { sets: 0, volume: 0, weightSum: 0 };
