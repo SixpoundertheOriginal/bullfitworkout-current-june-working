@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import { toast } from "@/components/ui/sonner";
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 interface TrainingSessionProps {
   trainingConfig: TrainingConfig | null;
@@ -26,8 +27,12 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     exercises, 
     elapsedTime,
     sessionId,
-    persistWorkoutState
+    persistWorkoutState,
+    restoreWorkoutState
   } = useWorkoutState();
+  
+  // Use the page visibility hook to detect tab switching
+  const { isVisible } = usePageVisibility();
 
   // Debug logging for component state
   useEffect(() => {
@@ -36,9 +41,23 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       isActive, 
       exerciseCount: Object.keys(exercises).length,
       elapsedTime,
-      sessionId
+      sessionId,
+      isVisible 
     });
-  }, [trainingConfig, isActive, exercises, elapsedTime, sessionId]);
+  }, [trainingConfig, isActive, exercises, elapsedTime, sessionId, isVisible]);
+
+  // Handle tab visibility changes
+  useEffect(() => {
+    if (isVisible && isActive) {
+      console.log('Tab became visible, refreshing workout state from storage');
+      // Try to restore from storage when tab becomes visible again
+      restoreWorkoutState?.();
+    } else if (!isVisible && isActive) {
+      console.log('Tab became hidden, persisting workout state');
+      // Save current state when tab becomes hidden
+      persistWorkoutState?.();
+    }
+  }, [isVisible, isActive, persistWorkoutState, restoreWorkoutState]);
 
   // Session initialization logic - using useCallback to prevent multiple executions
   const initializeSession = useCallback(() => {
@@ -97,23 +116,6 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   useEffect(() => {
     initializeSession();
   }, [initializeSession]);
-  
-  // Make sure the page visibility API is used to refresh data
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isActive) {
-        console.log('Tab became visible, refreshing training session status');
-        
-        // Refresh state if needed by forcing navigation
-        if (window.location.pathname !== '/training-session') {
-          navigate('/training-session');
-        }
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isActive, navigate]);
 
   return (
     <div className="flex items-center justify-center h-full">

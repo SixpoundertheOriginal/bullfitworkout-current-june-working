@@ -5,6 +5,7 @@ import { Play, Timer, Dumbbell } from 'lucide-react';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 export const WorkoutBanner = () => {
   const navigate = useNavigate();
@@ -14,11 +15,23 @@ export const WorkoutBanner = () => {
     exercises, 
     workoutStatus, 
     lastActiveRoute,
-    explicitlyEnded
+    explicitlyEnded,
+    restoreWorkoutState
   } = useWorkoutState();
+  
+  // Add page visibility detection
+  const { isVisible } = usePageVisibility();
   
   // Local visibility state to prevent banner from flickering
   const [visible, setVisible] = useState<boolean>(false);
+  
+  // When the tab becomes visible again, check for workout state
+  useEffect(() => {
+    if (isVisible) {
+      console.log('Tab visible in WorkoutBanner, checking workout state');
+      restoreWorkoutState?.();
+    }
+  }, [isVisible, restoreWorkoutState]);
   
   // Determine visibility with debounce
   useEffect(() => {
