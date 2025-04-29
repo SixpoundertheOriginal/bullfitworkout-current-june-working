@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { WeightUnitContextProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
 import { DateRangeProvider } from "@/context/DateRangeContext";
+import { WorkoutBanner } from './components/training/WorkoutBanner';
 
 // Create the query client outside of the component
 const queryClient = new QueryClient();
@@ -24,7 +24,9 @@ function App() {
                 <TooltipProvider>
                   <Toaster />
                   <Sonner />
-                  <RouterProvider />
+                  <RouterProvider>
+                    <WorkoutBanner />
+                  </RouterProvider>
                 </TooltipProvider>
               </DateRangeProvider>
             </WeightUnitContextProvider>

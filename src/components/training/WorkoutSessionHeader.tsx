@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,22 @@ export const WorkoutSessionHeader: React.FC<WorkoutSessionHeaderProps> = ({
   restTimerResetSignal,
   currentRestTime
 }) => {
+  useEffect(() => {
+    // Ensure timer continuity by setting document title when component mounts
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+    
+    document.title = `Workout - ${formatTime(elapsedTime)}`;
+    
+    // Cleanup on unmount
+    return () => {
+      document.title = 'Fitness App';
+    };
+  }, [elapsedTime]);
+
   return (
     <>
       <div className="sticky top-16 z-10 bg-gray-900/80 backdrop-blur-lg">

@@ -17,10 +17,11 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   onCancel
 }) => {
   const navigate = useNavigate();
-  const { resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute } = useWorkoutState();
+  const { resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute, isActive } = useWorkoutState();
 
   useEffect(() => {
-    if (trainingConfig) {
+    // Only set up a new training session if there isn't already an active one
+    if (trainingConfig && !isActive) {
       // Reset any existing session first
       resetSession();
       
@@ -36,8 +37,11 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       
       // Show toast to confirm workout started
       toast.success("Workout started - You can return to it anytime from the banner");
+    } else if (isActive) {
+      // If there's an active workout, just navigate to the training session page
+      navigate('/training-session');
     }
-  }, [trainingConfig, navigate, resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute]);
+  }, [trainingConfig, navigate, resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute, isActive]);
 
   return (
     <div className="flex items-center justify-center h-full">
