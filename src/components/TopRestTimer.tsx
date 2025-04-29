@@ -13,6 +13,7 @@ interface TopRestTimerProps {
   onManualStart?: () => void;
   defaultRestTime?: number;
   currentRestTime?: number;
+  className?: string; // Added className prop
 }
 
 export const TopRestTimer = ({ 
@@ -22,7 +23,8 @@ export const TopRestTimer = ({
   onTimeUpdate,
   onManualStart,
   defaultRestTime = 60,
-  currentRestTime
+  currentRestTime,
+  className
 }: TopRestTimerProps) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -111,7 +113,7 @@ export const TopRestTimer = ({
   const progress = Math.min((elapsedTime / targetTime) * 100, 100);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={cn("flex flex-col items-center", className)}>
       <div className="relative">
         <CircularProgress 
           value={progress}
