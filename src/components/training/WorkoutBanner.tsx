@@ -16,7 +16,7 @@ export const WorkoutBanner = () => {
     workoutStatus, 
     lastActiveRoute,
     explicitlyEnded,
-    restoreWorkoutState
+    persistWorkoutState
   } = useWorkoutState();
   
   // Add page visibility detection
@@ -29,9 +29,9 @@ export const WorkoutBanner = () => {
   useEffect(() => {
     if (isVisible) {
       console.log('Tab visible in WorkoutBanner, checking workout state');
-      restoreWorkoutState?.();
+      persistWorkoutState?.();
     }
-  }, [isVisible, restoreWorkoutState]);
+  }, [isVisible, persistWorkoutState]);
   
   // Determine visibility with debounce
   useEffect(() => {

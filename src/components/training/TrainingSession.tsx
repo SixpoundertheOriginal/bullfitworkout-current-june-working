@@ -27,8 +27,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     exercises, 
     elapsedTime,
     sessionId,
-    persistWorkoutState,
-    restoreWorkoutState
+    persistWorkoutState
   } = useWorkoutState();
   
   // Use the page visibility hook to detect tab switching
@@ -50,14 +49,14 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   useEffect(() => {
     if (isVisible && isActive) {
       console.log('Tab became visible, refreshing workout state from storage');
-      // Try to restore from storage when tab becomes visible again
-      restoreWorkoutState?.();
+      // Instead of using restoreWorkoutState, we just ensure the state is persisted
+      persistWorkoutState?.();
     } else if (!isVisible && isActive) {
       console.log('Tab became hidden, persisting workout state');
       // Save current state when tab becomes hidden
       persistWorkoutState?.();
     }
-  }, [isVisible, isActive, persistWorkoutState, restoreWorkoutState]);
+  }, [isVisible, isActive, persistWorkoutState]);
 
   // Session initialization logic - using useCallback to prevent multiple executions
   const initializeSession = useCallback(() => {
