@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Timer, Dumbbell } from 'lucide-react';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
@@ -13,27 +13,51 @@ export const WorkoutBanner = () => {
     elapsedTime, 
     exercises, 
     workoutStatus, 
-    lastActiveRoute 
+    lastActiveRoute,
+    explicitlyEnded
   } = useWorkoutState();
   
+  // Local visibility state to prevent banner from flickering
+  const [visible, setVisible] = useState<boolean>(false);
+  
+  // Determine visibility with debounce
   useEffect(() => {
-    // Debug log for troubleshooting banner visibility
+    // Logic for when to show the banner
+    const shouldBeVisible = 
+      isActive && 
+      !explicitlyEnded &&
+      window.location.pathname !== '/training-session' && 
+      workoutStatus !== 'saved' &&
+      Object.keys(exercises).length > 0;
+    
+    // If it should become visible, show immediately
+    if (shouldBeVisible && !visible) {
+      setVisible(true);
+    } 
+    // If it should hide, add small delay to prevent flickering
+    else if (!shouldBeVisible && visible) {
+      const timer = setTimeout(() => {
+        setVisible(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive, window.location.pathname, workoutStatus, exercises, visible, explicitlyEnded]);
+  
+  // Debug logging
+  useEffect(() => {
     console.log('WorkoutBanner evaluated:', { 
       isActive, 
       workoutStatus,
       currentPath: window.location.pathname,
       exerciseCount: Object.keys(exercises).length,
-      elapsedTime
+      elapsedTime,
+      explicitlyEnded,
+      visible
     });
-  }, [isActive, workoutStatus, exercises, elapsedTime]);
+  }, [isActive, workoutStatus, exercises, elapsedTime, explicitlyEnded, visible]);
 
-  // Don't show the banner if:
-  // 1. No active workout
-  // 2. We're already on the training session page
-  // 3. The workout has been saved
-  if (!isActive || 
-      window.location.pathname === '/training-session' || 
-      workoutStatus === 'saved') {
+  // Don't render anything if not visible
+  if (!visible) {
     return null;
   }
 

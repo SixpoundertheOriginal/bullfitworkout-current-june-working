@@ -1,7 +1,7 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,9 +27,11 @@ export function WorkoutNavigationContextProvider({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isActive, updateLastActiveRoute } = useWorkoutState();
+  const { isActive, updateLastActiveRoute, persistWorkoutState } = useWorkoutState();
+  const { isVisible } = usePageVisibility();
   const [showDialog, setShowDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [lastPath, setLastPath] = useState<string>(location.pathname);
 
   const isTrainingRoute = location.pathname === '/training-session';
   
@@ -39,6 +41,9 @@ export function WorkoutNavigationContextProvider({
       updateLastActiveRoute(location.pathname);
       console.log('Updated last active route:', location.pathname);
     }
+    
+    // Keep track of last path for recovery
+    setLastPath(location.pathname);
   }, [isTrainingRoute, location.pathname, updateLastActiveRoute]);
 
   // Log debug info for navigation context
@@ -46,10 +51,19 @@ export function WorkoutNavigationContextProvider({
     console.log('WorkoutNavigationContext state:', { 
       isActive, 
       currentPath: location.pathname,
-      isTrainingRoute
+      isTrainingRoute,
+      isVisible
     });
-  }, [isActive, location.pathname, isTrainingRoute]);
+  }, [isActive, location.pathname, isTrainingRoute, isVisible]);
 
+  // When tab becomes visible again, ensure we persist state
+  useEffect(() => {
+    if (isVisible && isActive) {
+      persistWorkoutState?.();
+    }
+  }, [isVisible, isActive, persistWorkoutState]);
+
+  // Navigation confirmation logic
   const confirmNavigation = useCallback((to: string) => {
     // Skip confirmation if navigating to the same page
     if (to === location.pathname) {
@@ -60,10 +74,13 @@ export function WorkoutNavigationContextProvider({
       setShowDialog(true);
       setPendingNavigation(to);
       console.log('Confirming navigation from workout to:', to);
+      
+      // Make sure state is persisted before potential navigation
+      persistWorkoutState?.();
     } else {
       navigate(to);
     }
-  }, [isActive, isTrainingRoute, navigate, location.pathname]);
+  }, [isActive, isTrainingRoute, navigate, location.pathname, persistWorkoutState]);
 
   return (
     <Provider value={{ confirmNavigation }}>
@@ -73,7 +90,7 @@ export function WorkoutNavigationContextProvider({
           <AlertDialogHeader>
             <AlertDialogTitle>Active Workout in Progress</AlertDialogTitle>
             <AlertDialogDescription>
-              You have an active workout. Are you sure you want to leave? Your progress will be saved.
+              You have an active workout. Are you sure you want to leave? Your progress will be saved and you can return any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -82,6 +99,9 @@ export function WorkoutNavigationContextProvider({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
+                // Extra persistence before navigation
+                persistWorkoutState?.();
+                
                 if (pendingNavigation) {
                   navigate(pendingNavigation);
                 }
