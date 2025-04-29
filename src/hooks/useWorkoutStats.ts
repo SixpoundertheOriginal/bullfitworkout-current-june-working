@@ -5,6 +5,24 @@ import { useAuth } from "@/context/AuthContext";
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { calculateMuscleFocus } from "@/utils/exerciseUtils";
 
+// Enhanced workout type to include exercises property
+interface WorkoutWithExercises {
+  id: string;
+  user_id: string;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  created_at: string;
+  updated_at: string;
+  is_historical?: boolean;
+  logged_at?: string;
+  metadata?: any;
+  notes?: string;
+  name: string;
+  training_type: string;
+  exercises?: any[];
+}
+
 export interface WorkoutStats {
   totalWorkouts: number;
   totalDuration: number;
@@ -97,7 +115,7 @@ export const useWorkoutStats = (days?: number) => {
       }
       
       // Expand workout data with exercise sets
-      const workouts = [...(workoutsData || [])];
+      const workouts: WorkoutWithExercises[] = [...(workoutsData || [])];
       
       // Fetch all exercise sets for these workouts
       let allExerciseSets: any[] = [];
