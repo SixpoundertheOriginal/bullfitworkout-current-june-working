@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
@@ -41,7 +42,7 @@ export const WorkoutSessionHeader: React.FC<WorkoutSessionHeaderProps> = ({
 }) => {
   useEffect(() => {
     // Ensure timer continuity by setting document title when component mounts
-    const formatTime = (seconds) => {
+    const formatTime = (seconds: number) => {
       const mins = Math.floor(seconds / 60);
       const secs = seconds % 60;
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;

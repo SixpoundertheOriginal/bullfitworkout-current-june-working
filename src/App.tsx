@@ -9,6 +9,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { WeightUnitContextProvider } from "@/context/WeightUnitContext";
 import { RouterProvider } from "./context/RouterProvider";
 import { DateRangeProvider } from "@/context/DateRangeContext";
+import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationContext";
+import { WorkoutBanner } from './components/training/WorkoutBanner';
 
 // Create the query client outside of the component
 const queryClient = new QueryClient();
@@ -21,11 +23,14 @@ function App() {
           <AuthProvider>
             <WeightUnitContextProvider>
               <DateRangeProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <RouterProvider />
-                </TooltipProvider>
+                <WorkoutNavigationContextProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <RouterProvider />
+                    <WorkoutBanner />
+                  </TooltipProvider>
+                </WorkoutNavigationContextProvider>
               </DateRangeProvider>
             </WeightUnitContextProvider>
           </AuthProvider>

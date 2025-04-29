@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Timer, Dumbbell } from 'lucide-react';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
@@ -15,6 +15,17 @@ export const WorkoutBanner = () => {
     workoutStatus, 
     lastActiveRoute 
   } = useWorkoutState();
+  
+  useEffect(() => {
+    // Debug log for troubleshooting banner visibility
+    console.log('WorkoutBanner evaluated:', { 
+      isActive, 
+      workoutStatus,
+      currentPath: window.location.pathname,
+      exerciseCount: Object.keys(exercises).length,
+      elapsedTime
+    });
+  }, [isActive, workoutStatus, exercises, elapsedTime]);
 
   // Don't show the banner if:
   // 1. No active workout

@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import {
@@ -34,20 +34,36 @@ export function WorkoutNavigationContextProvider({
   const isTrainingRoute = location.pathname === '/training-session';
   
   // Update last active route if we're on the training session page
-  React.useEffect(() => {
+  useEffect(() => {
     if (isTrainingRoute) {
       updateLastActiveRoute(location.pathname);
+      console.log('Updated last active route:', location.pathname);
     }
   }, [isTrainingRoute, location.pathname, updateLastActiveRoute]);
 
+  // Log debug info for navigation context
+  useEffect(() => {
+    console.log('WorkoutNavigationContext state:', { 
+      isActive, 
+      currentPath: location.pathname,
+      isTrainingRoute
+    });
+  }, [isActive, location.pathname, isTrainingRoute]);
+
   const confirmNavigation = useCallback((to: string) => {
+    // Skip confirmation if navigating to the same page
+    if (to === location.pathname) {
+      return;
+    }
+    
     if (isActive && isTrainingRoute) {
       setShowDialog(true);
       setPendingNavigation(to);
+      console.log('Confirming navigation from workout to:', to);
     } else {
       navigate(to);
     }
-  }, [isActive, isTrainingRoute, navigate]);
+  }, [isActive, isTrainingRoute, navigate, location.pathname]);
 
   return (
     <Provider value={{ confirmNavigation }}>

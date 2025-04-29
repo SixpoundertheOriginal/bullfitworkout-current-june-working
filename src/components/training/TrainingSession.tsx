@@ -17,11 +17,28 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   onCancel
 }) => {
   const navigate = useNavigate();
-  const { resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute, isActive } = useWorkoutState();
+  const { 
+    resetSession, 
+    setTrainingConfig, 
+    startWorkout, 
+    updateLastActiveRoute, 
+    isActive, 
+    exercises, 
+    elapsedTime 
+  } = useWorkoutState();
 
   useEffect(() => {
-    // Only set up a new training session if there isn't already an active one
+    console.log('TrainingSession rendered with:', { 
+      trainingConfig, 
+      isActive, 
+      exerciseCount: Object.keys(exercises).length,
+      elapsedTime 
+    });
+
+    // Case 1: No active session, but new training config - Start a new session
     if (trainingConfig && !isActive) {
+      console.log('Starting new workout session with config:', trainingConfig);
+      
       // Reset any existing session first
       resetSession();
       
@@ -37,11 +54,29 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       
       // Show toast to confirm workout started
       toast.success("Workout started - You can return to it anytime from the banner");
-    } else if (isActive) {
+    } 
+    // Case 2: Active session exists - Just navigate to it
+    else if (isActive) {
+      console.log('Navigating to existing active workout session');
       // If there's an active workout, just navigate to the training session page
       navigate('/training-session');
+      
+      // Only show toast if we have exercises (not just a new session)
+      if (Object.keys(exercises).length > 0) {
+        toast.info("Resuming your active workout");
+      }
     }
-  }, [trainingConfig, navigate, resetSession, setTrainingConfig, startWorkout, updateLastActiveRoute, isActive]);
+    // Case 3: No config, no active session - Do nothing, component will unmount
+  }, [
+    trainingConfig, 
+    navigate, 
+    resetSession, 
+    setTrainingConfig, 
+    startWorkout, 
+    updateLastActiveRoute, 
+    isActive, 
+    exercises
+  ]);
 
   return (
     <div className="flex items-center justify-center h-full">

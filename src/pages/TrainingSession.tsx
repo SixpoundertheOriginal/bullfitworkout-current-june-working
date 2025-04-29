@@ -46,7 +46,9 @@ const TrainingSessionPage = () => {
     workoutId,
     deleteExercise,
     startWorkout,
-    updateLastActiveRoute
+    updateLastActiveRoute,
+    startTime,
+    isActive
   } = workoutState;
 
   const { play: playBell } = useSound('/sounds/bell.mp3');
@@ -54,6 +56,7 @@ const TrainingSessionPage = () => {
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showRestTimerModal, setShowRestTimerModal] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
   const [completedSets, totalSets] = Object.entries(exercises).reduce(
@@ -64,54 +67,85 @@ const TrainingSessionPage = () => {
     [0, 0]
   );
 
+  // Mark page as loaded after initial render
+  useEffect(() => {
+    setPageLoaded(true);
+  }, []);
+
   // Update last active route whenever we load this page
   useEffect(() => {
     updateLastActiveRoute('/training-session');
-  }, [updateLastActiveRoute]);
+    
+    // Debug logging
+    console.log('TrainingSession page loaded with state:', { 
+      isActive, 
+      exerciseCount: Object.keys(exercises).length,
+      elapsedTime,
+      workoutStatus,
+      startTime
+    });
+  }, [updateLastActiveRoute, isActive, exercises, elapsedTime, workoutStatus, startTime]);
 
-  // Start a workout if not already started
+  // Start a workout if not already started but we have exercises
   useEffect(() => {
-    if (workoutStatus === 'idle' && (Object.keys(exercises).length > 0 || location.state?.trainingConfig)) {
+    if (pageLoaded && workoutStatus === 'idle' && Object.keys(exercises).length > 0) {
+      console.log('Auto-starting workout due to existing exercises');
       startWorkout();
     }
-  }, [workoutStatus, exercises, location.state, startWorkout]);
+  }, [pageLoaded, workoutStatus, exercises, startWorkout]);
 
+  // Handle training config from navigation state
   useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
-    }, 1000);
+    if (location.state?.trainingConfig && !isActive) {
+      console.log('Setting training config from navigation state');
+      workoutState.setTrainingConfig(location.state.trainingConfig);
+    }
+  }, [location.state, workoutState.setTrainingConfig, isActive]);
 
-    return () => clearInterval(timer);
-  }, [setElapsedTime]);
+  // Timer effect to update elapsed time based on start time
+  useEffect(() => {
+    if (isActive) {
+      // Initial calculation of elapsed time based on start time
+      const calculateElapsedSeconds = () => {
+        const now = new Date();
+        const startTimeObj = startTime instanceof Date ? startTime : new Date(startTime);
+        return Math.floor((now.getTime() - startTimeObj.getTime()) / 1000);
+      };
+      
+      // Update elapsed time initially
+      if (pageLoaded) {
+        const calculatedTime = calculateElapsedSeconds();
+        if (calculatedTime > elapsedTime) {
+          setElapsedTime(calculatedTime);
+        }
+      }
+      
+      // Set up interval to update elapsed time
+      const timer = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [isActive, startTime, pageLoaded, elapsedTime, setElapsedTime]);
 
+  // Handle reset parameter in URL
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const shouldReset = searchParams.get('reset') === 'true';
     
     if (shouldReset) {
       resetSession();
+      toast.info("Workout session reset");
+      
+      // Clean up URL parameter
+      navigate('/training-session', { replace: true });
     }
-  }, [location.search, resetSession]);
-
-  // Effect to handle training configuration from navigation state
-  useEffect(() => {
-    if (location.state?.trainingConfig) {
-      workoutState.setTrainingConfig(location.state.trainingConfig);
-    } else if (location.state?.trainingType) {
-      // Support for older navigation state format
-      workoutState.setTrainingConfig({
-        trainingType: location.state.trainingType,
-        tags: location.state.tags || [],
-        duration: location.state.duration || 45,
-        rankedExercises: location.state.rankedExercises
-      });
-    }
-  }, [location.state, workoutState.setTrainingConfig]);
+  }, [location.search, resetSession, navigate]);
 
   // Effect to handle workout completion status
   useEffect(() => {
     if (workoutStatus === 'saved') {
-      // Clear any workout in progress state after a successful save
       console.log('Workout saved successfully, cleaning up state');
     }
   }, [workoutStatus]);
@@ -119,6 +153,7 @@ const TrainingSessionPage = () => {
   const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     
+    // Only show warning toast if exercise exists
     if (exercises[exerciseName]) {
       toast(`${exerciseName} is already in your workout`);
       return;
@@ -133,6 +168,11 @@ const TrainingSessionPage = () => {
     
     setActiveExercise(exerciseName);
     toast(`Added ${exerciseName} to workout`);
+    
+    // Ensure workout is active
+    if (workoutStatus === 'idle') {
+      startWorkout();
+    }
   };
 
   const handleShowRestTimer = () => {
@@ -158,7 +198,7 @@ const TrainingSessionPage = () => {
       markAsSaving();
       
       const now = new Date();
-      const startTime = new Date(now.getTime() - elapsedTime * 1000);
+      const workoutStartTime = startTime instanceof Date ? startTime : new Date(startTime);
 
       const workoutMetadata = {
         trainingConfig: workoutState.trainingConfig || null,
@@ -171,8 +211,8 @@ const TrainingSessionPage = () => {
           }
         },
         progression: {
-          timeOfDay: startTime.getHours() < 12 ? 'morning' : 
-                     startTime.getHours() < 17 ? 'afternoon' : 'evening',
+          timeOfDay: workoutStartTime.getHours() < 12 ? 'morning' : 
+                     workoutStartTime.getHours() < 17 ? 'afternoon' : 'evening',
           totalVolume: Object.entries(exercises).reduce((acc, [exerciseName, sets]) => {
             return acc + sets.reduce((setAcc, set) => {
               return setAcc + (set.completed ? (set.weight * set.reps) : 0);
@@ -198,7 +238,7 @@ const TrainingSessionPage = () => {
       const workoutData = {
         exercises: normalizedExercises,
         duration: elapsedTime,
-        startTime: startTime,
+        startTime: workoutStartTime,
         endTime: now,
         trainingType: workoutState.trainingConfig?.trainingType || "Strength",
         name: workoutState.trainingConfig?.trainingType || "Workout",
