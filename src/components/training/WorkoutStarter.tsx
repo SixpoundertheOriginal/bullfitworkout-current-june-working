@@ -5,7 +5,8 @@ import { Dumbbell } from "lucide-react";
 import { TrainingStartButton } from './TrainingStartButton';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import { useExerciseSuggestions } from '@/hooks/useExerciseSuggestions';
-import { ExerciseFAB } from '@/components/ExerciseFAB';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface WorkoutStarterProps {
   trainingType?: string;
@@ -40,11 +41,13 @@ export const WorkoutStarter: React.FC<WorkoutStarterProps> = ({
             Your workout has started! Add your first exercise to begin tracking your progress.
           </p>
           
-          <ExerciseFAB 
-            onClick={onAddExerciseClick || (() => {})} 
-            visible={true}
-            className="static mb-4 transform-none" 
-          />
+          <Button
+            onClick={onAddExerciseClick || (() => {})}
+            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Add Exercise
+          </Button>
         </CardContent>
       </Card>
     );

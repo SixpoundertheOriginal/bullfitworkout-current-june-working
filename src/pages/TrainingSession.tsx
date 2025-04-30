@@ -13,7 +13,6 @@ import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { Button } from "@/components/ui/button";
 
 const TrainingSessionPage = () => {
@@ -427,13 +426,6 @@ const TrainingSessionPage = () => {
               {isSaving ? "Saving..." : "Finish Workout"}
             </Button>
           </div>
-          
-          {/* Add Exercise Floating Action Button */}
-          <ExerciseFAB 
-            onClick={() => setIsAddExerciseSheetOpen(true)} 
-            visible={true}
-            className="bottom-28"
-          />
         </div>
       </main>
 
