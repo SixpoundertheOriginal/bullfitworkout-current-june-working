@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -15,6 +14,7 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Button } from "@/components/ui/button";
+import { ExerciseFAB } from "@/components/training/ExerciseFAB";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -168,7 +168,7 @@ const TrainingSessionPage = () => {
     }));
     
     setActiveExercise(exerciseName);
-    toast(`Added ${exerciseName} to workout`);
+    toast.success(`Added ${exerciseName} to workout`);
     
     // Ensure workout is active
     if (workoutStatus === 'idle') {
@@ -428,12 +428,18 @@ const TrainingSessionPage = () => {
           <div className="fixed bottom-20 right-6 z-40">
             <Button
               onClick={handleFinishWorkout}
-              disabled={isSaving}
+              disabled={isSaving || Object.keys(exercises).length === 0}
               className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Finish Workout"}
             </Button>
           </div>
+          
+          <ExerciseFAB
+            onClick={() => setIsAddExerciseSheetOpen(true)}
+            visible={!isAddExerciseSheetOpen}
+            showOnlyIfActive={true}
+          />
         </div>
       </main>
 
@@ -441,6 +447,7 @@ const TrainingSessionPage = () => {
         open={isAddExerciseSheetOpen}
         onOpenChange={setIsAddExerciseSheetOpen}
         onSelectExercise={handleAddExercise}
+        trainingType={trainingConfig?.trainingType}
       />
       
       <BottomNav />
