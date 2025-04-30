@@ -303,7 +303,17 @@ export const WorkoutCard = ({
               workoutId={id}
               exerciseCount={exerciseCount}
               setCount={setCount}
-              exerciseData={workoutDetails?.exercises || {}}
+              exerciseData={workoutDetails?.exerciseSets ? 
+                // Transform exerciseSets into the format expected by WorkoutSummaryPreview
+                workoutDetails.exerciseSets.reduce((acc: Record<string, any[]>, set: any) => {
+                  if (!acc[set.exercise_name]) {
+                    acc[set.exercise_name] = [];
+                  }
+                  acc[set.exercise_name].push(set);
+                  return acc;
+                }, {}) : 
+                {}
+              }
               duration={duration}
               weightUnit={weightUnit}
               isLoading={isLoadingDetails}
