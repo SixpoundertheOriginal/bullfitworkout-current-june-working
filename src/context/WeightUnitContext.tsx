@@ -69,8 +69,9 @@ export const WeightUnitContextProvider: React.FC<{ children: React.ReactNode }> 
       toast("Weight unit preference saved");
     } catch (error) {
       console.error("Error saving weight unit preference:", error);
-      toast("Failed to save weight unit preference", {
-        description: "Please try again",
+      toast({
+        title: "Failed to save weight unit preference",
+        description: "Please try again"
       });
     }
   };

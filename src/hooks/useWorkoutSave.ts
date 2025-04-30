@@ -44,7 +44,8 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       errors: [...prev.errors, ...errors]
     }));
 
-    toast("Workout partially saved", {
+    toast({
+      title: "Workout partially saved",
       description: "Some data couldn't be saved. You can try again later.",
       duration: 5000,
     });
@@ -93,7 +94,7 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
     
     if (!user) {
       toast.error("Authentication required", {
-        description: "You need to be logged in to save workouts",
+        description: "You need to be logged in to save workouts"
       });
       return null;
     }

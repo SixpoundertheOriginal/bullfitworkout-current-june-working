@@ -6,13 +6,18 @@ import { toast as sonnerToast, type ExternalToast } from "sonner"
 const recentToasts = new Map<string, number>();
 const TOAST_EXPIRY_TIME = 3000; // 3 seconds
 
-export type ToastProps = ExternalToast & {
+export interface ToastProps extends ExternalToast {
   title?: React.ReactNode
   description?: React.ReactNode
   variant?: "default" | "destructive"
 }
 
-function toast(props: ToastProps) {
+function toast(message: string | ToastProps) {
+  // If message is just a string, convert it to our ToastProps format
+  const props = typeof message === 'string' 
+    ? { title: message } as ToastProps
+    : message;
+  
   const { title, description, ...options } = props;
   
   // Create a message key for duplicate detection

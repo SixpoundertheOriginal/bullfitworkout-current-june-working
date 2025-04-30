@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedExerciseSet, WorkoutError, SaveProgress } from "@/types/workout";
 import { ExerciseSet } from "@/types/exercise";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 
 interface SaveWorkoutParams {
   userData: {
@@ -507,9 +507,11 @@ export const processRetryQueue = async (userId: string): Promise<boolean> => {
   return success;
 };
 
-export const recoverPartiallyCompletedWorkout = async (workoutId: string): Promise<SaveResult> => {
+export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
   try {
-    console.log(`Attempting to recover workout ${workoutId}`);
+    toast({
+      title: "Attempting workout recovery..."
+    });
     
     // Attempt recovery using edge function
     const { data, error } = await supabase.functions.invoke('recover-workout', {
@@ -549,18 +551,14 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string): Promi
       }
     }
     
-    return {
-      success: true,
-      workoutId
-    };
+    return { success: true };
   } catch (error) {
     console.error("Error recovering workout:", error);
     return {
       success: false,
       error: {
         type: 'unknown',
-        message: 'An unexpected error occurred during recovery',
-        details: error,
+        message: error instanceof Error ? error.message : 'Unknown error during recovery',
         timestamp: new Date().toISOString(),
         recoverable: false
       }
@@ -569,7 +567,7 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string): Promi
 };
 
 // New helper function to perform immediate recovery
-export const attemptImmediateRecovery = async (workoutId: string): Promise<boolean> => {
+export const attemptImmediateRecovery = async (workoutId: string) => {
   try {
     toast("Attempting workout recovery...");
     

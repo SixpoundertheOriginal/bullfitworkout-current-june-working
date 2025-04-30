@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
@@ -88,7 +88,10 @@ export const WorkoutCompletePage = () => {
         setNotes(location.state.workoutData.notes);
       }
     } else {
-      toast("No workout data found - Please complete a workout session first");
+      toast({
+        title: "No workout data found",
+        description: "Please complete a workout session first"
+      });
       navigate("/");
     }
   }, [location.state, navigate, explicitlyEnded]);
@@ -150,7 +153,10 @@ export const WorkoutCompletePage = () => {
             if (updateError.message && updateError.message.includes("materialized view")) {
               console.warn("Materialized view error during update:", updateError.message);
               
-              toast("Notes saved with limited analytics - Your workout notes were saved but some analytics couldn't be processed");
+              toast({
+                title: "Notes saved with limited analytics",
+                description: "Your workout notes were saved but some analytics couldn't be processed"
+              });
               
               setSavingStats({
                 completed: true,
@@ -168,10 +174,16 @@ export const WorkoutCompletePage = () => {
           if (saveAsTemplate) {
             try {
               await saveWorkoutTemplate();
-              toast("Template saved! - Your workout template has been created");
+              toast({
+                title: "Template saved!",
+                description: "Your workout template has been created"
+              });
             } catch (templateError) {
               console.error("Error saving workout template:", templateError);
-              toast("Workout saved, but template could not be created - There was a problem saving your workout template");
+              toast({
+                title: "Workout saved, but template could not be created",
+                description: "There was a problem saving your workout template"
+              });
             }
           }
           
@@ -181,14 +193,20 @@ export const WorkoutCompletePage = () => {
           });
           
           setSaveStatus('saved');
-          toast("Workout updated! - Your workout notes have been saved");
+          toast({
+            title: "Workout updated!",
+            description: "Your workout notes have been saved"
+          });
           
           return workoutId;
         } catch (error) {
           console.error("Error updating workout:", error);
           
           if (error instanceof Error && error.message.includes("materialized view")) {
-            toast("Notes partially saved - Your workout notes were recorded but analytics couldn't be updated");
+            toast({
+              title: "Notes partially saved",
+              description: "Your workout notes were recorded but analytics couldn't be updated"
+            });
             
             setSavingStats({
               completed: true,
@@ -260,7 +278,10 @@ export const WorkoutCompletePage = () => {
         if (workoutError) {
           if (workoutError.message && workoutError.message.includes("materialized view")) {
             console.warn("Materialized view error detected:", workoutError.message);
-            toast("Workout partially saved - There was an issue with analytics processing, but your workout will be saved.");
+            toast({
+              title: "Workout partially saved",
+              description: "There was an issue with analytics processing, but your workout will be saved."
+            });
             
             try {
               const { data: latestWorkout } = await supabase
@@ -306,16 +327,25 @@ export const WorkoutCompletePage = () => {
             await saveExerciseSets(workoutSession.id);
           } catch (exerciseError) {
             console.error("Error saving exercise sets:", exerciseError);
-            toast("Workout saved with limited details - We couldn't save all exercise details, but your workout was recorded");
+            toast({
+              title: "Workout saved with limited details",
+              description: "We couldn't save all exercise details, but your workout was recorded"
+            });
           }
           
           if (saveAsTemplate) {
             try {
               await saveWorkoutTemplate(workoutSession.id);
-              toast("Template saved! - Your workout template has been created");
+              toast({
+                title: "Template saved!",
+                description: "Your workout template has been created"
+              });
             } catch (templateError) {
               console.error("Error saving workout template:", templateError);
-              toast("Workout saved, but template could not be created - There was a problem saving your workout template");
+              toast({
+                title: "Workout saved, but template could not be created",
+                description: "There was a problem saving your workout template"
+              });
             }
           }
           
@@ -325,7 +355,10 @@ export const WorkoutCompletePage = () => {
           });
           
           setSaveStatus('saved');
-          toast("Workout saved! - Your workout has been successfully recorded");
+          toast({
+            title: "Workout saved!",
+            description: "Your workout has been successfully recorded"
+          });
           
           return workoutSession.id;
         }
@@ -334,7 +367,10 @@ export const WorkoutCompletePage = () => {
         
         if (error.message && error.message.includes("jsonb_set") && error.message.includes("does not exist")) {
           console.warn("Possible experience points update issue:", error.message);
-          toast("Workout may have been saved - There was an issue with the experience points system, but your workout data was sent to the server.");
+          toast({
+            title: "Workout may have been saved",
+            description: "There was an issue with the experience points system, but your workout data was sent to the server."
+          });
           
           try {
             const { data: latestWorkout } = await supabase
@@ -514,7 +550,9 @@ export const WorkoutCompletePage = () => {
     try {
       const savedWorkoutId = await saveWorkout();
       if (savedWorkoutId) {
-        toast("Workout saved successfully");
+        toast({
+          title: "Workout saved successfully"
+        });
         
         resetSession();
         
