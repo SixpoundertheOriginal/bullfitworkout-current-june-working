@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, BarChart3, CalendarDays, Dumbbell, Flame, Timer, Zap } from "lucide-react";
-import { WorkoutStats } from "@/hooks/useWorkoutStats";
+import { WorkoutStats } from "@/types/workout-metrics";
 
 interface WorkoutSummaryProps {
   stats: WorkoutStats;

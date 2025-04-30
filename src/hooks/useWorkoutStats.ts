@@ -109,6 +109,9 @@ export function useWorkoutStats(
         // Exercise volume history for tracking progress
         const exerciseVolumes: Record<string, any> = {};
         
+        // Get most recent workout date
+        const mostRecentDate = workoutData[0]?.start_time || new Date().toISOString();
+        
         workoutData.forEach(workout => {
           // Count workout types
           if (workout.training_type) {
@@ -117,7 +120,8 @@ export function useWorkoutStats(
           
           // Track workout day frequency
           const workoutDate = new Date(workout.start_time);
-          const day = workoutDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+          // Use correct weekday formatting
+          const day = workoutDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
           if (daysFrequency[day] !== undefined) {
             daysFrequency[day]++;
           }
@@ -134,11 +138,14 @@ export function useWorkoutStats(
             durationByTimeOfDay.night += workout.duration || 0;
           }
           
-          // Count tags
-          if (workout.tags && Array.isArray(workout.tags)) {
-            workout.tags.forEach(tag => {
-              if (tag) tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-            });
+          // Check for tags in metadata if it exists
+          if (workout.metadata && typeof workout.metadata === 'object') {
+            const workoutTags = workout.metadata.tags || [];
+            if (Array.isArray(workoutTags)) {
+              workoutTags.forEach((tag: string) => {
+                if (tag) tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+              });
+            }
           }
           
           // Count exercises and sets
@@ -182,7 +189,8 @@ export function useWorkoutStats(
         // Convert workout types to array
         const workoutTypes = Object.entries(typeCounts).map(([type, count]) => ({
           type,
-          count
+          count,
+          percentage: (count / totalWorkouts) * 100
         })).sort((a, b) => b.count - a.count);
         
         // Convert tags to array
@@ -240,7 +248,8 @@ export function useWorkoutStats(
             durationByTimeOfDay
           },
           muscleFocus: muscleFocusData,
-          exerciseVolumeHistory
+          exerciseVolumeHistory,
+          lastWorkoutDate: mostRecentDate
         });
       }
     } catch (error) {

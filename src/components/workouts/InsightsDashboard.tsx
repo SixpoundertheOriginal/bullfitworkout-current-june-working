@@ -10,7 +10,7 @@ import {
   ChartLine,
   GaugeCircle
 } from "lucide-react";
-import { WorkoutStats } from "@/hooks/useWorkoutStats";
+import { WorkoutStats } from "@/types/workout-metrics";
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { MuscleFocusChart } from "../metrics/MuscleFocusChart";
 
@@ -73,7 +73,8 @@ export function InsightsDashboard({ stats, className = "" }: InsightsDashboardPr
     
     // Map exercise counts to muscle groups
     Object.entries(stats.muscleFocus || {}).forEach(([muscle, count]) => {
-      focusData[muscle] = count;
+      // Ensure count is treated as a number
+      focusData[muscle] = typeof count === 'number' ? count : 0;
     });
     
     return focusData;
@@ -132,7 +133,7 @@ export function InsightsDashboard({ stats, className = "" }: InsightsDashboardPr
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#222', border: 'none' }}
                     itemStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value} workouts`, 'Frequency']}
+                    formatter={(value: any) => [`${value} workouts`, 'Frequency']}
                   />
                   <Bar 
                     dataKey="workouts" 

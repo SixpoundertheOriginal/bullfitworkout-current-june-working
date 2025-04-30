@@ -41,10 +41,12 @@ export function createBackwardCompatibleStats(metrics: ProcessedWorkoutMetrics):
     totalDuration: metrics.duration,
     avgDuration: metrics.duration,
     workoutTypes: [],
-    efficiency: metrics.efficiency,
-    density: metrics.density,
-    intensity: metrics.intensity,
-    totalVolume: metrics.totalVolume,
+    // Include these properties as they're now in WorkoutStats
+    progressMetrics: {
+      volumeChangePercentage: 0,
+      strengthTrend: 'stable',
+      consistencyScore: 0
+    },
     // Include muscle focus for backward compatibility
     muscleFocus: metrics.muscleFocus,
     // Create empty time patterns data
@@ -57,6 +59,10 @@ export function createBackwardCompatibleStats(metrics: ProcessedWorkoutMetrics):
         night: 0
       }
     },
-    exerciseVolumeHistory: []
+    exerciseVolumeHistory: [],
+    totalVolume: metrics.totalVolume,
+    density: metrics.density,
+    intensity: metrics.intensity,
+    efficiency: metrics.efficiency
   };
 }

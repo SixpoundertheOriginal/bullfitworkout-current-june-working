@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
-import { WorkoutTypeStats } from "@/hooks/useWorkoutStats";
+import { WorkoutTypeStats } from "@/types/workout-metrics";
 
 interface WorkoutTypeChartProps {
   data: WorkoutTypeStats[];

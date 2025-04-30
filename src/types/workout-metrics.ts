@@ -34,7 +34,7 @@ export interface WorkoutStats {
   totalSets: number;
   totalDuration: number;
   avgDuration: number;
-  workoutTypes: { type: string; count: number }[];
+  workoutTypes: WorkoutTypeStats[];
   recommendedType?: string;
   recommendedDuration?: number;
   recommendedTags?: string[];
@@ -62,6 +62,11 @@ export interface WorkoutStats {
     trend: 'increasing' | 'decreasing' | 'stable' | 'fluctuating';
     percentChange: number;
   }>;
+  lastWorkoutDate?: string;
+  efficiency?: number;
+  density?: number;
+  intensity?: number;
+  totalVolume?: number;
 }
 
 // Updated TopExerciseStats interface to include trend properties
