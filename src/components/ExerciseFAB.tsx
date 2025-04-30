@@ -3,14 +3,28 @@ import React from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 
 interface ExerciseFABProps {
   onClick: () => void;
   className?: string;
   visible?: boolean;
+  showOnlyIfActive?: boolean;
 }
 
-export const ExerciseFAB = ({ onClick, className, visible = true }: ExerciseFABProps) => {
+export const ExerciseFAB = ({ 
+  onClick, 
+  className, 
+  visible = true,
+  showOnlyIfActive = false
+}: ExerciseFABProps) => {
+  const { isActive } = useWorkoutState();
+  
+  // Option to only show when workout is active
+  if (showOnlyIfActive && !isActive) {
+    return null;
+  }
+  
   return (
     <Button
       variant="gradient"
@@ -20,7 +34,7 @@ export const ExerciseFAB = ({ onClick, className, visible = true }: ExerciseFABP
       iconOnly
       onClick={onClick}
       className={cn(
-        "fixed bottom-24 right-6 z-50", // Raised position to avoid overlapping with AddExerciseBar
+        "fixed bottom-24 right-6 z-50", 
         "transform transition-all duration-300 ease-in-out",
         "bg-gradient-to-r from-purple-600 to-pink-500",
         "hover:from-purple-700 hover:to-pink-600",

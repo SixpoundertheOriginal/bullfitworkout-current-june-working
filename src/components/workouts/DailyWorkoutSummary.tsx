@@ -7,6 +7,7 @@ import { WorkoutCard } from "@/components/WorkoutCard";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { TrainingStartButton } from '@/components/training/TrainingStartButton';
 
 interface DailyWorkoutSummaryProps {
   date: string;
@@ -116,9 +117,19 @@ export const DailyWorkoutSummary = ({ date, onClose, preview = false }: DailyWor
             )}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-4">
             <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No workouts recorded on this date</p>
+            <p className="text-gray-400 mb-6">No workouts recorded on this date</p>
+            
+            {/* Add start button for current date */}
+            {date === format(new Date(), 'yyyy-MM-dd') && (
+              <div className="flex justify-center mt-4">
+                <TrainingStartButton 
+                  label="Start Today's Workout" 
+                  size={100}
+                />
+              </div>
+            )}
           </div>
         )}
       </CardContent>
