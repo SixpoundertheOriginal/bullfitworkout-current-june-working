@@ -13,8 +13,7 @@ import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { Button } from "@/components/ui/button";
-import { ExerciseFAB } from "@/components/ExerciseFAB";
+import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -22,7 +21,7 @@ const TrainingSessionPage = () => {
   const { user } = useAuth();
   const { exercises: allExercises, isLoading: loadingExercises } = useExercises();
   
-  // Use the new Zustand store
+  // Use the Zustand store
   const {
     exercises,
     setExercises,
@@ -427,39 +426,16 @@ const TrainingSessionPage = () => {
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
             setExercises={setExercises}
           />
-          
-          {/* Bottom action buttons - new responsive layout */}
-          <div className="fixed bottom-20 left-0 right-0 px-4 z-40">
-            <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto">
-              <Button
-                onClick={() => setIsAddExerciseSheetOpen(true)}
-                className="w-full py-3 flex items-center justify-center gap-2 
-                  bg-gradient-to-r from-indigo-600 to-purple-600
-                  hover:from-indigo-700 hover:to-purple-700
-                  text-white font-semibold rounded-full
-                  shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                Add Exercise
-              </Button>
-              
-              {hasExercises && (
-                <Button
-                  onClick={handleFinishWorkout}
-                  disabled={isSaving}
-                  className="w-full py-3 flex items-center justify-center gap-2
-                    bg-gradient-to-r from-purple-600 to-pink-500 
-                    hover:from-purple-700 hover:to-pink-600
-                    text-white font-semibold rounded-full
-                    shadow-lg hover:shadow-xl transition-all duration-200
-                    animate-fade-in"
-                >
-                  {isSaving ? "Saving..." : "Finish Workout"}
-                </Button>
-              )}
-            </div>
-          </div>
         </div>
       </main>
+
+      {/* New unified footer component */}
+      <WorkoutSessionFooter
+        onAddExercise={() => setIsAddExerciseSheetOpen(true)}
+        onFinishWorkout={handleFinishWorkout}
+        hasExercises={hasExercises}
+        isSaving={isSaving}
+      />
 
       <AddExerciseSheet
         open={isAddExerciseSheetOpen}
