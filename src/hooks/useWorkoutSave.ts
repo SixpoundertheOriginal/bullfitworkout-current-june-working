@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -174,10 +175,12 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       const { success, error } = await recoverPartiallyCompletedWorkout(workoutId);
       
       if (!success) {
+        // This is the problematic section - need to ensure we create a proper WorkoutError
         setSaveStatus(prev => ({
+          ...prev,
           status: 'partial',
           errors: [...prev.errors, error || {
-            type: 'database',
+            type: 'database' as const, // Use const assertion to ensure it's the right type
             message: 'Failed to recover workout data',
             timestamp: new Date().toISOString(),
             recoverable: false
@@ -209,9 +212,10 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       return true;
     } catch (error) {
       setSaveStatus(prev => ({
+        ...prev,
         status: 'partial',
         errors: [...prev.errors, {
-          type: 'database',
+          type: 'database' as const, // Use const assertion to ensure it's the right type
           message: 'Failed to recover workout data',
           details: error,
           timestamp: new Date().toISOString(),

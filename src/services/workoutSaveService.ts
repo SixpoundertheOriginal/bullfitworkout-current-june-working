@@ -507,6 +507,7 @@ export const processRetryQueue = async (userId: string): Promise<boolean> => {
   return success;
 };
 
+// Fix the error handling in the recoverPartiallyCompletedWorkout function
 export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
   try {
     toast({
@@ -541,7 +542,7 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
         return {
           success: false,
           error: {
-            type: 'database',
+            type: 'database' as const,
             message: 'Failed to recover workout',
             details: dbError,
             timestamp: new Date().toISOString(),
@@ -557,7 +558,7 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
     return {
       success: false,
       error: {
-        type: 'unknown',
+        type: 'unknown' as const,
         message: error instanceof Error ? error.message : 'Unknown error during recovery',
         timestamp: new Date().toISOString(),
         recoverable: false
