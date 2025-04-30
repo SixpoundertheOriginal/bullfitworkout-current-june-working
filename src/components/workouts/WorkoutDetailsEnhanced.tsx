@@ -1,11 +1,6 @@
 
 import React, { useMemo } from 'react';
 import { ExerciseSet } from '@/types/exercise';
-import { 
-  calculateMuscleFocus, 
-  analyzeWorkoutComposition 
-} from '@/utils/exerciseUtils';
-import { MuscleFocusChart } from '../metrics/MuscleFocusChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -23,6 +18,7 @@ import { WeightUnit } from '@/utils/unitConversion';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { cn } from '@/lib/utils';
 import { WorkoutAnalysisSection } from './analysis/WorkoutAnalysisSection';
+import { processWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 interface WorkoutDetailsEnhancedProps {
   workout: {
@@ -50,41 +46,13 @@ export const WorkoutDetailsEnhanced = ({
 }: WorkoutDetailsEnhancedProps) => {
   const { weightUnit } = useWeightUnit();
   
-  const exerciseCount = Object.keys(exercises).length;
-  const setCount = Object.values(exercises).reduce(
-    (total, sets) => total + sets.length, 0
-  );
-  const completedSets = Object.values(exercises).reduce(
-    (total, sets) => total + sets.filter(set => set.completed).length, 0
-  );
+  // Use the centralized workout metrics processor
+  const metrics = useMemo(() => processWorkoutMetrics(
+    exercises,
+    workout.duration,
+    weightUnit
+  ), [exercises, workout.duration, weightUnit]);
   
-  const efficiency = setCount > 0 ? (completedSets / setCount) * 100 : 0;
-  
-  let totalVolume = 0;
-  let weightedSetCount = 0;
-  let maxWeight = 0;
-  let totalRestTime = 0;
-  
-  Object.values(exercises).flat().forEach(set => {
-    if (set.completed && set.weight > 0) {
-      totalVolume += set.weight * set.reps;
-      weightedSetCount++;
-      if (set.weight > maxWeight) maxWeight = set.weight;
-    }
-    
-    if (set.restTime) {
-      totalRestTime += set.restTime;
-    } else {
-      totalRestTime += 60;
-    }
-  });
-  
-  const avgWeight = weightedSetCount > 0 ? totalVolume / weightedSetCount : 0;
-  const intensity = maxWeight > 0 ? (avgWeight / maxWeight) * 100 : 0;
-  const activeWorkoutTime = workout.duration - (totalRestTime / 60);
-  const muscleFocus = useMemo(() => calculateMuscleFocus(exercises), [exercises]);
-  const composition = useMemo(() => analyzeWorkoutComposition(exercises), [exercises]);
-
   const handleEditExercise = (exerciseName: string) => {
     if (onEditExercise) {
       onEditExercise(exerciseName, exercises);
@@ -98,10 +66,10 @@ export const WorkoutDetailsEnhanced = ({
         <WorkoutAnalysisSection
           workout={workout}
           exerciseSets={exercises}
-          muscleFocus={muscleFocus}
-          activeWorkoutTime={activeWorkoutTime}
-          totalVolume={totalVolume}
-          totalRestTime={totalRestTime}
+          muscleFocus={metrics.muscleFocus}
+          activeWorkoutTime={metrics.timeDistribution.activeTime}
+          totalVolume={metrics.totalVolume}
+          totalRestTime={metrics.timeDistribution.restTime}
         />
       </div>
 
@@ -126,7 +94,7 @@ export const WorkoutDetailsEnhanced = ({
                 </div>
                 <div className="text-lg font-semibold">{workout.duration} min</div>
                 <div className="text-xs text-gray-500">
-                  Active: {activeWorkoutTime.toFixed(0)} min
+                  Active: {metrics.timeDistribution.activeTime.toFixed(0)} min
                 </div>
               </CardContent>
             </Card>
@@ -137,8 +105,8 @@ export const WorkoutDetailsEnhanced = ({
                   <Dumbbell className="h-4 w-4 text-purple-400 mr-2" />
                   <span className="text-sm text-gray-400">Exercises</span>
                 </div>
-                <div className="text-lg font-semibold">{exerciseCount}</div>
-                <div className="text-xs text-gray-500">{setCount} sets total</div>
+                <div className="text-lg font-semibold">{metrics.exerciseCount}</div>
+                <div className="text-xs text-gray-500">{metrics.setCount.total} sets total</div>
               </CardContent>
             </Card>
             
@@ -148,8 +116,8 @@ export const WorkoutDetailsEnhanced = ({
                   <BarChart3 className="h-4 w-4 text-purple-400 mr-2" />
                   <span className="text-sm text-gray-400">Efficiency</span>
                 </div>
-                <div className="text-lg font-semibold">{Math.round(efficiency)}%</div>
-                <div className="text-xs text-gray-500">{completedSets} of {setCount} sets</div>
+                <div className="text-lg font-semibold">{Math.round(metrics.efficiency)}%</div>
+                <div className="text-xs text-gray-500">{metrics.setCount.completed} of {metrics.setCount.total} sets</div>
               </CardContent>
             </Card>
           </div>
@@ -167,12 +135,12 @@ export const WorkoutDetailsEnhanced = ({
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <span className="font-medium">Compound</span>
-                  <span className="text-gray-400">{composition.compound.count} ({Math.round(composition.compound.percentage)}%)</span>
+                  <span className="text-gray-400">{metrics.composition.compound.count} ({Math.round(metrics.composition.compound.percentage)}%)</span>
                 </div>
                 <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
                   <div 
                     className="h-full rounded-full bg-gradient-to-r from-amber-500/30 to-amber-700/30"
-                    style={{ width: `${composition.compound.percentage}%` }}
+                    style={{ width: `${metrics.composition.compound.percentage}%` }}
                   />
                 </div>
               </div>
@@ -180,41 +148,41 @@ export const WorkoutDetailsEnhanced = ({
               <div className="space-y-1 mt-2">
                 <div className="flex justify-between text-xs">
                   <span className="font-medium">Isolation</span>
-                  <span className="text-gray-400">{composition.isolation.count} ({Math.round(composition.isolation.percentage)}%)</span>
+                  <span className="text-gray-400">{metrics.composition.isolation.count} ({Math.round(metrics.composition.isolation.percentage)}%)</span>
                 </div>
                 <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
                   <div 
                     className="h-full rounded-full bg-gradient-to-r from-blue-500/30 to-blue-700/30"
-                    style={{ width: `${composition.isolation.percentage}%` }}
+                    style={{ width: `${metrics.composition.isolation.percentage}%` }}
                   />
                 </div>
               </div>
               
-              {composition.bodyweight.count > 0 && (
+              {metrics.composition.bodyweight.count > 0 && (
                 <div className="space-y-1 mt-2">
                   <div className="flex justify-between text-xs">
                     <span className="font-medium">Bodyweight</span>
-                    <span className="text-gray-400">{composition.bodyweight.count} ({Math.round(composition.bodyweight.percentage)}%)</span>
+                    <span className="text-gray-400">{metrics.composition.bodyweight.count} ({Math.round(metrics.composition.bodyweight.percentage)}%)</span>
                   </div>
                   <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
                     <div 
                       className="h-full rounded-full bg-gradient-to-r from-green-500/30 to-green-700/30"
-                      style={{ width: `${composition.bodyweight.percentage}%` }}
+                      style={{ width: `${metrics.composition.bodyweight.percentage}%` }}
                     />
                   </div>
                 </div>
               )}
               
-              {composition.isometric.count > 0 && (
+              {metrics.composition.isometric.count > 0 && (
                 <div className="space-y-1 mt-2">
                   <div className="flex justify-between text-xs">
                     <span className="font-medium">Isometric</span>
-                    <span className="text-gray-400">{composition.isometric.count} ({Math.round(composition.isometric.percentage)}%)</span>
+                    <span className="text-gray-400">{metrics.composition.isometric.count} ({Math.round(metrics.composition.isometric.percentage)}%)</span>
                   </div>
                   <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
                     <div 
                       className="h-full rounded-full bg-gradient-to-r from-purple-500/30 to-purple-700/30"
-                      style={{ width: `${composition.isometric.percentage}%` }}
+                      style={{ width: `${metrics.composition.isometric.percentage}%` }}
                     />
                   </div>
                 </div>
@@ -236,7 +204,7 @@ export const WorkoutDetailsEnhanced = ({
                     <Activity className="h-3 w-3 text-purple-400 mr-1" />
                     <span className="text-xs text-gray-400">Intensity</span>
                   </div>
-                  <div className="text-xl font-semibold">{Math.round(intensity)}%</div>
+                  <div className="text-xl font-semibold">{Math.round(metrics.intensity)}%</div>
                 </div>
                 
                 <div className="bg-gray-800/50 rounded-lg p-3">
@@ -244,7 +212,7 @@ export const WorkoutDetailsEnhanced = ({
                     <Percent className="h-3 w-3 text-purple-400 mr-1" />
                     <span className="text-xs text-gray-400">Efficiency</span>
                   </div>
-                  <div className="text-xl font-semibold">{Math.round(efficiency)}%</div>
+                  <div className="text-xl font-semibold">{Math.round(metrics.efficiency)}%</div>
                 </div>
               </div>
               
@@ -252,11 +220,11 @@ export const WorkoutDetailsEnhanced = ({
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="text-xs text-gray-400">Exercises</span>
-                    <div className="text-lg font-semibold">{exerciseCount}</div>
+                    <div className="text-lg font-semibold">{metrics.exerciseCount}</div>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-gray-400">Sets</span>
-                    <div className="text-lg font-semibold">{setCount}</div>
+                    <div className="text-lg font-semibold">{metrics.setCount.total}</div>
                   </div>
                 </div>
               </div>

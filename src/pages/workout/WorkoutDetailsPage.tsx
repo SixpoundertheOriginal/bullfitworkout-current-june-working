@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -6,7 +7,6 @@ import { WorkoutDetailsHeader } from "@/components/workouts/WorkoutDetailsHeader
 import { WorkoutDetailsEnhanced } from "@/components/workouts/WorkoutDetailsEnhanced";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useExerciseManagement } from "@/hooks/useExerciseManagement";
-import { calculateMuscleFocus } from '@/utils/exerciseUtils';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { EditWorkoutModal } from "@/components/EditWorkoutModal";
@@ -17,10 +17,13 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
 import { useDeleteOperation } from "@/hooks/useAsyncOperation";
 import { deleteWorkout } from "@/services/workoutService";
 import { Loader2 } from "lucide-react";
+import { processWorkoutMetrics } from "@/utils/workoutMetricsProcessor";
+import { useWeightUnit } from "@/context/WeightUnitContext";
 
 const WorkoutDetailsPage = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
+  const { weightUnit } = useWeightUnit();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const { 
@@ -61,15 +64,13 @@ const WorkoutDetailsPage = () => {
   if (loading) {
     return <WorkoutDetailsLoading />;
   }
-
-  // Calculate workout analysis metrics
-  const totalRestTime = Object.values(exerciseSets).flat().reduce((total, set) => 
-    total + (set.restTime || 60), 0);
-  const activeWorkoutTime = workoutDetails ? workoutDetails.duration - (totalRestTime / 60) : 0;
-  const totalVolume = Object.values(exerciseSets).flat()
-    .filter(set => set.completed)
-    .reduce((sum, set) => sum + (set.weight * set.reps), 0);
-  const muscleFocus = calculateMuscleFocus(exerciseSets);
+  
+  // Use our centralized metrics processor to get consistent metrics
+  const metrics = processWorkoutMetrics(
+    exerciseSets,
+    workoutDetails ? workoutDetails.duration : 0,
+    weightUnit
+  );
 
   return (
     <ErrorBoundary>

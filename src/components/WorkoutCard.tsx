@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dumbbell, Clock, Trash2, Edit, Check, Loader2, Wrench, Eye, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -12,7 +11,6 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { trainingTypes } from '@/constants/trainingTypes';
-import { formatDuration } from '@/utils/exerciseUtils';
 import { cn } from '@/lib/utils';
 import { typography } from '@/lib/typography';
 import { Progress } from '@/components/ui/progress';
@@ -21,6 +19,7 @@ import { WorkoutSummaryPreview } from './workouts/WorkoutSummaryPreview';
 import { useQuery } from '@tanstack/react-query';
 import { getWorkoutWithExercises } from '@/services/workoutService';
 import { useWeightUnit } from '@/context/WeightUnitContext';
+import { processWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 interface WorkoutCardProps {
   id: string;
@@ -64,11 +63,10 @@ export const WorkoutCard = ({
   const trainingType = trainingTypes.find(t => t.id === type) || trainingTypes[0];
   const formattedDate = format(parseISO(date), 'MMM d, yyyy');
   const formattedTime = format(parseISO(date), 'h:mm a');
-  const formattedDuration = formatDuration(duration);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Calculate completion percentage (placeholder - will be replaced with actual data)
-  const completionPercentage = Math.min(100, Math.max(0, (setCount / (setCount + 1)) * 100));
+  // Calculate completion percentage (using central metrics processor logic)
+  const completionPercentage = Math.min(100, Math.max(0, (setCount > 0 ? setCount / (setCount + 1) : 0) * 100));
   
   // Identify potentially incomplete workouts (no exercises or sets)
   const isPotentiallyIncomplete = exerciseCount === 0 || setCount === 0;
@@ -262,7 +260,7 @@ export const WorkoutCard = ({
           </div>
           <div className="flex items-center text-sm">
             <Clock size={14} className="mr-1 text-gray-500" />
-            <span>{formattedDuration}</span>
+            <span>{duration} min</span>
           </div>
         </div>
         

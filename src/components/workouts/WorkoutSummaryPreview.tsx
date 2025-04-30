@@ -6,9 +6,8 @@ import { Dumbbell, Clock, BarChart3, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { useWorkoutMetricsEnhanced } from "@/hooks/useWorkoutMetricsEnhanced";
-import { calculateMuscleFocus } from '@/utils/exerciseUtils';
 import { Skeleton } from "@/components/ui/skeleton";
+import { processWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 interface WorkoutSummaryPreviewProps {
   workoutId: string;
@@ -29,20 +28,15 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
   weightUnit = 'kg',
   isLoading = false
 }) => {
-  // Calculate metrics using the existing hook if we have exercise data
-  const { metrics, muscleFocus, composition } = useWorkoutMetricsEnhanced(
+  // Use the centralized workout metrics processor
+  const metrics = processWorkoutMetrics(
     exerciseData || {},
     duration,
     weightUnit
   );
 
-  // Format time distribution
-  const activeTimePercent = metrics ? Math.round((metrics.performance.efficiency / 100) * duration) : 0;
-  const activeTimeMinutes = Math.round(activeTimePercent / 60);
-  const restTimeMinutes = Math.round((duration - activeTimePercent) / 60);
-
   // Get the primary muscle focus
-  const muscleGroups = muscleFocus ? Object.entries(muscleFocus).sort((a, b) => b[1] - a[1]) : [];
+  const muscleGroups = Object.entries(metrics.muscleFocus).sort((a, b) => b[1] - a[1]);
   const primaryMuscle = muscleGroups.length > 0 ? muscleGroups[0][0] : null;
   const secondaryMuscle = muscleGroups.length > 1 ? muscleGroups[1][0] : null;
 
@@ -71,7 +65,7 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
                 <span className="text-xs text-gray-300">Volume</span>
               </div>
               <span className="text-sm font-semibold">
-                {metrics ? Math.round(metrics.performance.volume) : 0} {weightUnit}
+                {Math.round(metrics.totalVolume)} {weightUnit}
               </span>
             </div>
           </CardContent>
@@ -85,7 +79,7 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
                 <span className="text-xs text-gray-300">Density</span>
               </div>
               <span className="text-sm font-semibold">
-                {metrics ? metrics.performance.density : 0} sets/min
+                {metrics.density.toFixed(1)} sets/min
               </span>
             </div>
           </CardContent>
@@ -137,7 +131,7 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
       )}
 
       {/* Exercise Composition */}
-      {composition && composition.totalExercises > 0 && (
+      {metrics.composition.totalExercises > 0 && (
         <div>
           <div className="flex items-center mb-1.5">
             <Activity className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
@@ -145,28 +139,28 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-            {composition.compound.count > 0 && (
+            {metrics.composition.compound.count > 0 && (
               <div className="flex justify-between">
                 <span className="text-gray-400">Compound</span>
-                <span>{Math.round(composition.compound.percentage)}%</span>
+                <span>{Math.round(metrics.composition.compound.percentage)}%</span>
               </div>
             )}
-            {composition.isolation.count > 0 && (
+            {metrics.composition.isolation.count > 0 && (
               <div className="flex justify-between">
                 <span className="text-gray-400">Isolation</span>
-                <span>{Math.round(composition.isolation.percentage)}%</span>
+                <span>{Math.round(metrics.composition.isolation.percentage)}%</span>
               </div>
             )}
-            {composition.bodyweight.count > 0 && (
+            {metrics.composition.bodyweight.count > 0 && (
               <div className="flex justify-between">
                 <span className="text-gray-400">Bodyweight</span>
-                <span>{Math.round(composition.bodyweight.percentage)}%</span>
+                <span>{Math.round(metrics.composition.bodyweight.percentage)}%</span>
               </div>
             )}
-            {composition.isometric.count > 0 && (
+            {metrics.composition.isometric.count > 0 && (
               <div className="flex justify-between">
                 <span className="text-gray-400">Isometric</span>
-                <span>{Math.round(composition.isometric.percentage)}%</span>
+                <span>{Math.round(metrics.composition.isometric.percentage)}%</span>
               </div>
             )}
           </div>
@@ -183,15 +177,15 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
           <div 
             className="h-full bg-purple-600"
-            style={{ width: `${metrics ? metrics.performance.efficiency : 0}%` }}
+            style={{ width: `${metrics.timeDistribution.activeTimePercentage}%` }}
           />
         </div>
         
         <div className="flex justify-between text-xs mt-1 text-gray-400">
-          <span>Active: {activeTimeMinutes}min</span>
-          <span>Rest: {restTimeMinutes}min</span>
+          <span>Active: {Math.round(metrics.timeDistribution.activeTime)}min</span>
+          <span>Rest: {Math.round(metrics.timeDistribution.restTime)}min</span>
         </div>
       </div>
     </div>
   );
-};
+}
