@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
@@ -94,11 +93,12 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "checkmark": "checkmark 0.32s cubic-bezier(0.39,0.58,0.57,1) forwards",
-        "fade-in": "fade-in 0.22s ease-in",
+        "fade-in": "fadeIn 0.5s ease-out forwards",
         "pulse-slow": "pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
 };
+
 export default config;

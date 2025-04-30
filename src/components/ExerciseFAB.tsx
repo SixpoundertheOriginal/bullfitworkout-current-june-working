@@ -10,13 +10,15 @@ interface ExerciseFABProps {
   className?: string;
   visible?: boolean;
   showOnlyIfActive?: boolean;
+  hideOnMobile?: boolean;
 }
 
 export const ExerciseFAB = ({ 
   onClick, 
   className, 
   visible = true,
-  showOnlyIfActive = false
+  showOnlyIfActive = false,
+  hideOnMobile = true
 }: ExerciseFABProps) => {
   const { isActive } = useWorkoutState();
   
@@ -30,6 +32,7 @@ export const ExerciseFAB = ({
       "fixed bottom-24 right-6 z-50", 
       "transform transition-all duration-300 ease-in-out",
       visible ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0 pointer-events-none",
+      hideOnMobile ? "hidden md:block" : "",
       className
     )}>
       <CircularGradientButton

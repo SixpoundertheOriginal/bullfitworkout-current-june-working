@@ -61,14 +61,8 @@ const TrainingSessionPage = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
-  const [completedSets, totalSets] = Object.entries(exercises).reduce(
-    ([completed, total], [exerciseName, sets]) => [
-      completed + sets.filter(set => set.completed).length,
-      total + sets.length
-    ],
-    [0, 0]
-  );
-
+  const hasExercises = exerciseCount > 0;
+  
   // Mark page as loaded after initial render
   useEffect(() => {
     setPageLoaded(true);
@@ -189,7 +183,7 @@ const TrainingSessionPage = () => {
   };
 
   const handleFinishWorkout = async () => {
-    if (Object.keys(exercises).length === 0) {
+    if (!hasExercises) {
       toast.error("No exercises added - Please add at least one exercise before finishing your workout");
       return;
     }
@@ -424,22 +418,37 @@ const TrainingSessionPage = () => {
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
             setExercises={setExercises}
           />
-
-          <div className="fixed bottom-20 right-6 z-40">
-            <Button
-              onClick={handleFinishWorkout}
-              disabled={isSaving || Object.keys(exercises).length === 0}
-              className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
-            >
-              {isSaving ? "Saving..." : "Finish Workout"}
-            </Button>
-          </div>
           
-          <ExerciseFAB
-            onClick={() => setIsAddExerciseSheetOpen(true)}
-            visible={!isAddExerciseSheetOpen}
-            showOnlyIfActive={true}
-          />
+          {/* Bottom action buttons - new responsive layout */}
+          <div className="fixed bottom-20 left-0 right-0 px-4 z-40">
+            <div className={`flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto transition-all duration-300 ${hasExercises ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+              <Button
+                onClick={() => setIsAddExerciseSheetOpen(true)}
+                className="w-full py-3 flex items-center justify-center gap-2 
+                  bg-gradient-to-r from-indigo-600 to-purple-600
+                  hover:from-indigo-700 hover:to-purple-700
+                  text-white font-semibold rounded-full
+                  shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Add Exercise
+              </Button>
+              
+              {hasExercises && (
+                <Button
+                  onClick={handleFinishWorkout}
+                  disabled={isSaving}
+                  className="w-full py-3 flex items-center justify-center gap-2
+                    bg-gradient-to-r from-purple-600 to-pink-500 
+                    hover:from-purple-700 hover:to-pink-600
+                    text-white font-semibold rounded-full
+                    shadow-lg hover:shadow-xl transition-all duration-200
+                    animate-fade-in"
+                >
+                  {isSaving ? "Saving..." : "Finish Workout"}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </main>
 
