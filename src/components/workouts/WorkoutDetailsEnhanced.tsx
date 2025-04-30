@@ -70,6 +70,7 @@ export const WorkoutDetailsEnhanced = ({
           activeWorkoutTime={metrics.timeDistribution.activeTime}
           totalVolume={metrics.totalVolume}
           totalRestTime={metrics.timeDistribution.restTime}
+          densityMetrics={metrics.densityMetrics}
         />
       </div>
 
@@ -225,6 +226,19 @@ export const WorkoutDetailsEnhanced = ({
                   <div className="text-right">
                     <span className="text-xs text-gray-400">Sets</span>
                     <div className="text-lg font-semibold">{metrics.setCount.total}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-800/50 rounded-lg p-3 mt-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-xs text-gray-400">Density</span>
+                    <div className="text-base font-semibold">{metrics.densityMetrics.formattedOverallDensity}</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-400">Active Only</span>
+                    <div className="text-base font-semibold">{metrics.densityMetrics.formattedActiveOnlyDensity}</div>
                   </div>
                 </div>
               </div>

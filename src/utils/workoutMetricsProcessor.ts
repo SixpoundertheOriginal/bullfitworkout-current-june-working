@@ -37,6 +37,13 @@ export interface WorkoutTimeDistribution {
   restTimePercentage: number;
 }
 
+export interface DensityMetrics {
+  overallDensity: number;       // volume per total minutes
+  activeOnlyDensity: number;    // volume per active minutes
+  formattedOverallDensity: string;
+  formattedActiveOnlyDensity: string;
+}
+
 export interface ProcessedWorkoutMetrics {
   // Core metrics
   duration: number;    // in minutes
@@ -69,6 +76,9 @@ export interface ProcessedWorkoutMetrics {
     isometric: number;
     total: number;
   };
+  
+  // Density metrics
+  densityMetrics: DensityMetrics;
 }
 
 /**
@@ -201,6 +211,14 @@ export function processWorkoutMetrics(
     groupsMap[group].totalVolume += exerciseVolume;
   });
 
+  // Calculate workout density metrics (volume per minute)
+  const overallDensity = duration > 0 ? totalVolume / duration : 0;
+  const activeOnlyDensity = activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0;
+  
+  const formatDensity = (value: number): string => {
+    return value < 10 ? value.toFixed(2) : value.toFixed(1);
+  };
+
   return {
     // Core metrics
     duration: duration,
@@ -237,6 +255,14 @@ export function processWorkoutMetrics(
       bodyweight: bodyweightCount,
       isometric: isometricCount,
       total: weightedCount + bodyweightCount + isometricCount
+    },
+    
+    // Density metrics
+    densityMetrics: {
+      overallDensity: overallDensity,
+      activeOnlyDensity: activeOnlyDensity,
+      formattedOverallDensity: `${formatDensity(overallDensity)} ${weightUnit}/min`,
+      formattedActiveOnlyDensity: `${formatDensity(activeOnlyDensity)} ${weightUnit}/min`
     }
   };
 }
@@ -272,6 +298,12 @@ function getEmptyWorkoutMetrics(duration: number): ProcessedWorkoutMetrics {
     maxWeight: 0,
     exerciseTypeCounts: {
       weighted: 0, bodyweight: 0, isometric: 0, total: 0
+    },
+    densityMetrics: {
+      overallDensity: 0,
+      activeOnlyDensity: 0,
+      formattedOverallDensity: '0 kg/min',
+      formattedActiveOnlyDensity: '0 kg/min'
     }
   };
 }

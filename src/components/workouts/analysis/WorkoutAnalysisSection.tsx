@@ -15,6 +15,12 @@ interface WorkoutAnalysisSectionProps {
   activeWorkoutTime: number;
   totalVolume: number;
   totalRestTime: number;
+  densityMetrics?: {
+    overallDensity: number;
+    activeOnlyDensity: number;
+    formattedOverallDensity: string;
+    formattedActiveOnlyDensity: string;
+  };
 }
 
 export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
@@ -24,8 +30,16 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
   activeWorkoutTime,
   totalVolume,
   totalRestTime,
+  densityMetrics,
 }) => {
   const { weightUnit } = useWeightUnit();
+  
+  // Calculate density metrics if not provided (for backward compatibility)
+  const overallDensity = densityMetrics?.overallDensity ?? 
+    (workout.duration > 0 ? totalVolume / workout.duration : 0);
+  
+  const activeOnlyDensity = densityMetrics?.activeOnlyDensity ?? 
+    (activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -42,6 +56,8 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
               restTime={totalRestTime / 60}
               totalVolume={totalVolume}
               weightUnit={weightUnit}
+              overallDensity={overallDensity}
+              activeOnlyDensity={activeOnlyDensity}
             />
           </div>
         </div>

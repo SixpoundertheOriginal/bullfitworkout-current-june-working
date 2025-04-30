@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkoutCalendarTab } from "@/components/workouts/WorkoutCalendarTab";
@@ -23,10 +23,20 @@ import {
   format 
 } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { WorkoutDensityTrendChart } from "@/components/metrics/WorkoutDensityTrendChart";
+import { processWorkoutMetrics } from "@/utils/workoutMetricsProcessor";
+import { useWeightUnit } from "@/context/WeightUnitContext";
 
 interface TonnageData {
   date: string;
   tonnage: number;
+}
+
+interface DensityDataPoint {
+  date: string;
+  formattedDate: string;
+  overallDensity: number;
+  activeOnlyDensity: number;
 }
 
 type TimeRange = 'this-week' | 'previous-week' | 'last-30-days' | 'all-time' | 'custom';
@@ -35,6 +45,7 @@ export const OverviewPage = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const { weightUnit } = useWeightUnit();
   
   // Global time range state that will be used by all components
   const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
@@ -83,7 +94,7 @@ export const OverviewPage = () => {
   }, [activeTab]);
   
   // Calculate tonnage data from exercise sets filtered by date range
-  const tonnageData = React.useMemo<TonnageData[]>(() => {
+  const tonnageData = useMemo<TonnageData[]>(() => {
     if (!stats?.workouts || stats.workouts.length === 0) return [];
     
     console.log("Computing tonnage data from workouts:", stats.workouts.length);
@@ -150,6 +161,59 @@ export const OverviewPage = () => {
   }, [stats?.workouts, calculatedDateRange]);
 
   console.log("Final tonnage data calculated:", tonnageData);
+
+  // Calculate density data from exercise sets filtered by date range
+  const densityData = useMemo<DensityDataPoint[]>(() => {
+    if (!stats?.workouts || stats.workouts.length === 0) return [];
+    
+    // Filter workouts by date range if provided
+    let filteredWorkouts = [...stats.workouts];
+    
+    if (calculatedDateRange?.from && calculatedDateRange?.to) {
+      const fromDate = new Date(calculatedDateRange.from);
+      const toDate = new Date(calculatedDateRange.to);
+      toDate.setHours(23, 59, 59, 999); // End of day
+      
+      filteredWorkouts = filteredWorkouts.filter(workout => {
+        const workoutDate = new Date(workout.start_time);
+        return workoutDate >= fromDate && workoutDate <= toDate;
+      });
+    }
+    
+    // Create a map to hold workout density data
+    const densityByWorkout: DensityDataPoint[] = [];
+    
+    // Process each workout using our centralized processor
+    filteredWorkouts.forEach(workout => {
+      const workoutDate = new Date(workout.start_time);
+      
+      // Prepare exercise sets in the expected format for our processor
+      const exercises: Record<string, any[]> = {};
+      
+      if (workout.exercises?.length) {
+        workout.exercises.forEach(set => {
+          if (!exercises[set.exercise_name]) {
+            exercises[set.exercise_name] = [];
+          }
+          exercises[set.exercise_name].push(set);
+        });
+        
+        // Process metrics using our centralized utility
+        const metrics = processWorkoutMetrics(exercises, workout.duration, weightUnit);
+        
+        // Add density data point
+        densityByWorkout.push({
+          date: workout.start_time,
+          formattedDate: format(workoutDate, 'MMM dd'),
+          overallDensity: metrics.densityMetrics.overallDensity,
+          activeOnlyDensity: metrics.densityMetrics.activeOnlyDensity
+        });
+      }
+    });
+    
+    // Sort by date and return
+    return densityByWorkout.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [stats?.workouts, calculatedDateRange, weightUnit]);
 
   // Get date range text for display
   const getDateRangeText = () => {
@@ -237,10 +301,19 @@ export const OverviewPage = () => {
             </div>
             
             <QuickStatsSection showDateRange={false} />
-            <TonnageChart 
-              data={tonnageData} 
-              className="mt-4"
-            />
+            
+            {/* Add our new Workout Density trend chart */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <TonnageChart 
+                data={tonnageData} 
+                className=""
+              />
+              <WorkoutDensityTrendChart 
+                data={densityData}
+                className=""  
+              />
+            </div>
+            
             <WeeklyTrainingPatterns 
               externalTimeframe={timeRange as any} 
               externalDateRange={calculatedDateRange} 
