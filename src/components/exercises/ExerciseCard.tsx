@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowUpRight, ArrowDownRight, PlusCircle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, PlusCircle, Trash2 } from 'lucide-react';
 import { SetRow } from '@/components/SetRow';
 import { Badge } from "@/components/ui/badge";
 import { ExerciseHeader } from '@/components/ExerciseHeader';
@@ -37,7 +37,7 @@ interface ExerciseCardProps {
   isActive: boolean;
   onShowRestTimer: () => void;
   onResetRestTimer: () => void;
-  onDeleteExercise: () => void; // Add this prop to match what's being passed
+  onDeleteExercise: () => void;
 }
 
 // Sample exercise history data with exercise groups
@@ -90,7 +90,7 @@ const ExerciseCard = ({
   isActive,
   onShowRestTimer,
   onResetRestTimer,
-  onDeleteExercise // Add this prop to the destructuring
+  onDeleteExercise
 }) => {
   const { weightUnit } = useWeightUnit();
   const { exercises: dbExercises } = useExercises();
@@ -138,6 +138,17 @@ const ExerciseCard = ({
           }}
           weightUnit={weightUnit}
         />
+
+        {/* Add Delete Button for Exercise */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-1 top-1 text-gray-400 hover:text-red-500 hover:bg-gray-800/50"
+          onClick={onDeleteExercise}
+          aria-label="Delete exercise"
+        >
+          <Trash2 size={16} />
+        </Button>
         
         <div className="px-4 pb-4">
           <Progress 

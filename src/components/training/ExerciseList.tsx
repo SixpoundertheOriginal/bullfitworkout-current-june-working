@@ -80,4 +80,4 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
       ))}
     </div>
   );
-};
+}

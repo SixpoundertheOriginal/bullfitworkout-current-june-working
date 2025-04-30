@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -168,7 +167,10 @@ const TrainingSessionPage = () => {
     
     // Only show warning toast if exercise exists
     if (storeExercises[exerciseName]) {
-      toast(`${exerciseName} is already in your workout`);
+      toast({
+        title: "Exercise already added",
+        description: `${exerciseName} is already in your workout`
+      });
       return;
     }
 
@@ -180,12 +182,16 @@ const TrainingSessionPage = () => {
     }));
     
     setActiveExercise(exerciseName);
-    toast.success(`Added ${exerciseName} to workout`);
+    
+    // Toast notification is now handled in AddExerciseSheet
     
     // Ensure workout is active
     if (workoutStatus === 'idle') {
       startWorkout();
     }
+    
+    // Close the exercise sheet after adding
+    setIsAddExerciseSheetOpen(false);
   };
 
   const handleShowRestTimer = () => {
@@ -345,7 +351,10 @@ const TrainingSessionPage = () => {
               setStoreExercises(newStoreExercises);
             }}
             onCompleteSet={handleCompleteSet}
-            onDeleteExercise={deleteExercise}
+            onDeleteExercise={(exerciseName) => {
+              // Ensure the deleteExercise function is properly called
+              deleteExercise(exerciseName);
+            }}
             onRemoveSet={(exerciseName, setIndex) => {
               const newStoreExercises = {...storeExercises};
               newStoreExercises[exerciseName] = storeExercises[exerciseName].filter((_, i) => i !== setIndex);

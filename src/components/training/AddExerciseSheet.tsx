@@ -80,7 +80,15 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     onSelectExercise(exercise);
-    toast(`Added ${exerciseName} to workout`);
+    
+    // Close the sheet immediately after selecting an exercise
+    onOpenChange(false);
+    
+    // Show toast notification
+    toast({
+      title: "Exercise added",
+      description: `Added ${exerciseName} to your workout`
+    });
   };
 
   const handleBackToTabs = () => {
@@ -177,10 +185,8 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
             <div className="h-full overflow-hidden relative">
               <AllExercisesPage 
                 onSelectExercise={(exercise) => {
-                  onSelectExercise(exercise);
+                  handleAddExercise(exercise);
                   setShowAllExercises(false);
-                  onOpenChange(false);
-                  toast(`Added ${typeof exercise === 'string' ? exercise : exercise.name} to workout`);
                 }}
               />
               <div className="absolute bottom-4 left-4 z-20">
