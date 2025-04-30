@@ -14,7 +14,7 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Button } from "@/components/ui/button";
-import { ExerciseFAB } from "@/components/training/ExerciseFAB";
+import { ExerciseFAB } from "@/components/ExerciseFAB"; // Fixed import path
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();

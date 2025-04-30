@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, Plus, ChevronLeft } from "lucide-react";
@@ -183,7 +182,6 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
                   onOpenChange(false);
                   toast(`Added ${typeof exercise === 'string' ? exercise : exercise.name} to workout`);
                 }}
-                mode="compact"
               />
               <div className="absolute bottom-4 left-4 z-20">
                 <Button 
