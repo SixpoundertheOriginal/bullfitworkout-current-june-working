@@ -6,6 +6,8 @@ import { ExerciseSelector } from "@/components/exercises/ExerciseSelector";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
 import { Exercise } from "@/types/exercise";
 import AllExercisesPage from "@/pages/AllExercisesPage";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 interface AddExerciseSheetProps {
   open: boolean;
@@ -33,7 +35,6 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     const muscleGroups = new Set<string>();
     if (currentExercises.length > 0) {
       // Here we could analyze current exercises to determine focus areas
-      // This would require passing the full exercise objects instead of just names
       return Array.from(muscleGroups);
     }
     return [];
@@ -77,15 +78,14 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
               }}
             />
             <div className="fixed bottom-4 left-4 z-20">
-              <button 
+              <Button 
                 onClick={handleBackToSuggestions}
-                className="bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center"
+                variant="secondary"
+                className="flex items-center gap-2 rounded-full bg-gray-800/70 hover:bg-gray-800 shadow-lg"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
+                <ChevronLeft size={16} />
                 Back
-              </button>
+              </Button>
             </div>
           </div>
         )}

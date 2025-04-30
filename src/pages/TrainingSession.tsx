@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -8,13 +7,14 @@ import { useExercises } from "@/hooks/useExercises";
 import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { ExerciseFAB } from "@/components/ExerciseFAB";
+import { Button } from "@/components/ui/button";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -419,14 +419,21 @@ const TrainingSessionPage = () => {
           />
 
           <div className="fixed bottom-20 right-6 z-40">
-            <button
+            <Button
               onClick={handleFinishWorkout}
               disabled={isSaving || workoutStatus === 'saving'}
               className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Finish Workout"}
-            </button>
+            </Button>
           </div>
+          
+          {/* Add Exercise Floating Action Button */}
+          <ExerciseFAB 
+            onClick={() => setIsAddExerciseSheetOpen(true)} 
+            visible={true}
+            className="bottom-28"
+          />
         </div>
       </main>
 
