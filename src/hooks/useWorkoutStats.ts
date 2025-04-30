@@ -120,7 +120,7 @@ export function useWorkoutStats(
           
           // Track workout day frequency
           const workoutDate = new Date(workout.start_time);
-          // Use correct weekday formatting
+          // Use correct weekday formatting - lowercase is not a valid option
           const day = workoutDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
           if (daysFrequency[day] !== undefined) {
             daysFrequency[day]++;
@@ -140,7 +140,10 @@ export function useWorkoutStats(
           
           // Check for tags in metadata if it exists
           if (workout.metadata && typeof workout.metadata === 'object') {
-            const workoutTags = workout.metadata.tags || [];
+            // Fix: Safely check for tags in metadata
+            const metadataObj = workout.metadata as Record<string, any>;
+            const workoutTags = metadataObj.tags || [];
+            
             if (Array.isArray(workoutTags)) {
               workoutTags.forEach((tag: string) => {
                 if (tag) tagCounts[tag] = (tagCounts[tag] || 0) + 1;
