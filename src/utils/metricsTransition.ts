@@ -28,3 +28,22 @@ export function legacyMetricsAdapter(metrics: ProcessedWorkoutMetrics): WorkoutM
 export function extractDensityMetrics(metrics: ProcessedWorkoutMetrics) {
   return metrics.densityMetrics;
 }
+
+/**
+ * Creates a backward-compatible stats object from ProcessedWorkoutMetrics
+ * for components that expect the old format.
+ */
+export function createBackwardCompatibleStats(metrics: ProcessedWorkoutMetrics) {
+  return {
+    totalWorkouts: 1,
+    totalExercises: metrics.exerciseCount,
+    totalSets: metrics.setCount.total,
+    totalDuration: metrics.duration,
+    avgDuration: metrics.duration,
+    efficiency: metrics.efficiency,
+    density: metrics.density,
+    intensity: metrics.intensity,
+    totalVolume: metrics.totalVolume,
+    // Add other fields as needed by components
+  };
+}

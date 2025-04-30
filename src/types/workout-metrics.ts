@@ -29,3 +29,11 @@ export interface WorkoutPerformanceMetrics {
 
 // Export the new centralized metrics type to support transition
 export type { ProcessedWorkoutMetrics };
+
+// For backward compatibility
+export interface WorkoutStatsResult extends ProcessedWorkoutMetrics {
+  stats: any;
+  loading: boolean;
+  refetch: () => void;
+  workouts?: any[];
+}
