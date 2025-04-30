@@ -25,8 +25,12 @@ function App() {
               <DateRangeProvider>
                 <WorkoutNavigationContextProvider>
                   <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
+                    <Sonner 
+                      position="top-right" 
+                      closeButton={true}
+                      duration={3000}
+                      richColors
+                    />
                     <RouterProvider />
                     <WorkoutBanner />
                   </TooltipProvider>
