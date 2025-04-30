@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React from 'react';
+import { useState, useEffect } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Exercise } from "@/types/exercise";
 import { useExercises } from "@/hooks/useExercises";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 interface SmartExerciseFABProps {

@@ -1,11 +1,11 @@
-
-import React, { useState, useEffect } from "react";
+import React from 'react';
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useWorkoutDates } from "@/hooks/useWorkoutHistory";
 import { Loader2, Plus } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import {
   Tooltip,
   TooltipContent,

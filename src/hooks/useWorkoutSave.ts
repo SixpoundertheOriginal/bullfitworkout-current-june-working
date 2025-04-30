@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -46,8 +45,7 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
 
     toast({
       title: "Workout partially saved",
-      description: "Some data couldn't be saved. You can try again later.",
-      duration: 5000,
+      description: "Some data couldn't be saved. You can try again later."
     });
   }, []);
 
@@ -163,7 +161,7 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       });
       
       toast.error("Error", {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
       });
       return null;
     }
@@ -187,7 +185,7 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
         }));
         
         toast.error("Recovery failed", {
-          description: "We couldn't recover your workout data. Please try again.",
+          description: "We couldn't recover your workout data. Please try again."
         });
         
         return false;
@@ -203,8 +201,9 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
         workoutId
       });
       
-      toast("Workout recovered", {
-        description: "Your workout data has been successfully recovered.",
+      toast({
+        title: "Workout recovered",
+        description: "Your workout data has been successfully recovered."
       });
       
       return true;
@@ -221,7 +220,7 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       }));
       
       toast.error("Recovery failed", {
-        description: "We couldn't recover your workout data. Please try again.",
+        description: "We couldn't recover your workout data. Please try again."
       });
       
       return false;

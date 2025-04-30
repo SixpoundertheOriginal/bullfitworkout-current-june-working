@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Storage } from '@/utils/storage';
 import { WorkoutStatus, WorkoutError } from '@/types/workout';
 import { TrainingConfig } from './useTrainingSetupPersistence';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 
 export interface ExerciseSet {
   weight: number;
