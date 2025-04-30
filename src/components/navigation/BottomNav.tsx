@@ -43,9 +43,9 @@ export const BottomNav = () => {
       />
       <NavButton 
         icon={<Dumbbell size={20} />} 
-        label="Exercises"
-        active={isActive('/all-exercises')}
-        onClick={() => confirmNavigation('/all-exercises')}
+        label="Workouts"
+        active={isActive('/workouts')}
+        onClick={() => confirmNavigation('/workouts')}
       />
       <NavButton 
         icon={<UserIcon size={20} />} 
