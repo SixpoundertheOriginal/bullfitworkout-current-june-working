@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutStore } from '@/store/workoutStore';
 import { WorkoutCompletion } from "@/components/training/WorkoutCompletion";
-import { NotesSection } from "@/components/workouts/NotesSection";
+import NotesSection from "@/components/workouts/NotesSection";
 import { useWorkoutSave } from "@/hooks/useWorkoutSave";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { SaveTemplateSection } from "@/components/workouts/SaveTemplateSection";
+import SaveTemplateSection from "@/components/workouts/SaveTemplateSection";
 import { useEffect as useEffectState } from 'react';
 
 export interface WorkoutPageState {
@@ -266,14 +266,16 @@ export const WorkoutCompletePage = () => {
       
       <main className="container max-w-3xl mx-auto px-4 py-6">
         <WorkoutCompletion
-          workoutData={workoutData}
           exercises={workoutData.exercises}
           duration={workoutData.duration}
+          intensity={75} // Default values for required props
+          efficiency={80} // Default values for required props
+          onComplete={handleSave}
         />
         
         <NotesSection 
-          value={notes}
-          onChange={setNotes}
+          notes={notes}
+          setNotes={setNotes}
           className="mb-6"
         />
         
@@ -282,8 +284,7 @@ export const WorkoutCompletePage = () => {
           setSaveAsTemplate={setSaveAsTemplate}
           templateName={templateName}
           setTemplateName={setTemplateName}
-          templateDescription={templateDescription}
-          setTemplateDescription={setTemplateDescription}
+          workoutData={workoutData}
         />
         
         <div className="flex justify-end gap-4 mt-8">

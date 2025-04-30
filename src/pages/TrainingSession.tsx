@@ -45,7 +45,8 @@ const TrainingSessionPage = () => {
     updateLastActiveRoute,
     trainingConfig,
     isActive,
-    setTrainingConfig
+    setTrainingConfig,
+    setWorkoutStatus
   } = useWorkoutStore();
   
   // Use workout timer hook for elapsed time tracking
@@ -83,12 +84,11 @@ const TrainingSessionPage = () => {
       
       // If we're coming from the workout complete page but still have exercises,
       // we need to ensure the workout is marked as active again
-      if (isActive && workoutStatus !== 'active') {
-        const workoutStore = useWorkoutStore.getState();
-        workoutStore.setWorkoutStatus('active');
+      if (isActive) {
+        setWorkoutStatus('active');
       }
     }
-  }, [exercises, workoutStatus, isActive]);
+  }, [exercises, workoutStatus, isActive, setWorkoutStatus]);
 
   // Update last active route whenever we load this page
   useEffect(() => {

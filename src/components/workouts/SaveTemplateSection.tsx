@@ -2,19 +2,25 @@
 import React from "react";
 import { Save, CheckCircle } from "lucide-react";
 
+interface SaveTemplateSectionProps {
+  saveAsTemplate: boolean;
+  setSaveAsTemplate: (v: boolean) => void;
+  templateName: string;
+  setTemplateName: (v: string) => void;
+  templateDescription?: string;
+  setTemplateDescription?: (v: string) => void;
+  workoutData: any;
+}
+
 const SaveTemplateSection = ({
   saveAsTemplate,
   setSaveAsTemplate,
   templateName,
   setTemplateName,
+  templateDescription,
+  setTemplateDescription,
   workoutData
-}: {
-  saveAsTemplate: boolean;
-  setSaveAsTemplate: (v: boolean) => void;
-  templateName: string;
-  setTemplateName: (v: string) => void;
-  workoutData: any;
-}) => (
+}: SaveTemplateSectionProps) => (
   <div className="mb-8">
     <div 
       className="flex justify-between items-center p-4 bg-gray-900 border border-gray-800 rounded-lg mb-2"
@@ -38,6 +44,18 @@ const SaveTemplateSection = ({
           placeholder={`${workoutData?.trainingType} Template`}
           className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         />
+        
+        {setTemplateDescription && (
+          <>
+            <label className="block text-sm font-medium mt-4 mb-2">Description (Optional)</label>
+            <textarea
+              value={templateDescription || ""}
+              onChange={(e) => setTemplateDescription(e.target.value)}
+              placeholder="Describe what this workout template is for..."
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent h-20"
+            />
+          </>
+        )}
       </div>
     )}
   </div>

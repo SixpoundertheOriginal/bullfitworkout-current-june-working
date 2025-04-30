@@ -18,8 +18,9 @@ interface LocalExerciseSet {
   isEditing: boolean;
 }
 
-interface WorkoutCompletionProps {
+export interface WorkoutCompletionProps {
   exercises: Record<string, LocalExerciseSet[]>;
+  duration: number;
   intensity: number;
   efficiency: number;
   onComplete: () => void;
@@ -27,6 +28,7 @@ interface WorkoutCompletionProps {
 
 export const WorkoutCompletion = ({
   exercises,
+  duration,
   intensity,
   efficiency,
   onComplete
@@ -100,3 +102,5 @@ export const WorkoutCompletion = ({
     </div>
   );
 };
+
+export default WorkoutCompletion;
