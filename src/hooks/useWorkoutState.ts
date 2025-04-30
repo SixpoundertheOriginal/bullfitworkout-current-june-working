@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Storage } from '@/utils/storage';
 import { WorkoutStatus, WorkoutError } from '@/types/workout';

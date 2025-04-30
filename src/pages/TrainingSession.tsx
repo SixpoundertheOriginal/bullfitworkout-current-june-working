@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { useWorkoutStore } from '@/store/workoutStore';
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer';
 import { useExercises } from "@/hooks/useExercises";
 import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 import { Loader2 } from "lucide-react";
-import { WeightUnitToggle } from "@/components/WeightUnitToggle";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
@@ -20,25 +20,21 @@ const TrainingSessionPage = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { exercises: allExercises, isLoading: loadingExercises } = useExercises();
-  const workoutState = useWorkoutState();
+  
+  // Use the new Zustand store
   const {
     exercises,
     setExercises,
     activeExercise,
     setActiveExercise,
     elapsedTime,
-    setElapsedTime,
     resetSession,
     restTimerActive,
     setRestTimerActive,
-    restTimerResetSignal,
-    triggerRestTimerReset,
     currentRestTime,
     setCurrentRestTime,
     handleCompleteSet,
     workoutStatus,
-    saveProgress,
-    attemptRecovery,
     markAsSaving,
     markAsSaved,
     markAsFailed,
@@ -46,15 +42,20 @@ const TrainingSessionPage = () => {
     deleteExercise,
     startWorkout,
     updateLastActiveRoute,
-    startTime,
-    isActive
-  } = workoutState;
+    trainingConfig,
+    isActive,
+    setTrainingConfig
+  } = useWorkoutStore();
+  
+  // Use workout timer hook for elapsed time tracking
+  useWorkoutTimer();
 
   const { play: playBell } = useSound('/sounds/bell.mp3');
   const { play: playTick } = useSound('/sounds/tick.mp3');
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showRestTimerModal, setShowRestTimerModal] = useState(false);
+  const [restTimerResetSignal, setRestTimerResetSignal] = useState(0);
   const [pageLoaded, setPageLoaded] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
@@ -80,10 +81,9 @@ const TrainingSessionPage = () => {
       isActive, 
       exerciseCount: Object.keys(exercises).length,
       elapsedTime,
-      workoutStatus,
-      startTime
+      workoutStatus
     });
-  }, [updateLastActiveRoute, isActive, exercises, elapsedTime, workoutStatus, startTime]);
+  }, [updateLastActiveRoute, isActive, exercises, elapsedTime, workoutStatus]);
 
   // Start a workout if not already started but we have exercises
   useEffect(() => {
@@ -97,36 +97,9 @@ const TrainingSessionPage = () => {
   useEffect(() => {
     if (location.state?.trainingConfig && !isActive) {
       console.log('Setting training config from navigation state');
-      workoutState.setTrainingConfig(location.state.trainingConfig);
+      setTrainingConfig(location.state.trainingConfig);
     }
-  }, [location.state, workoutState.setTrainingConfig, isActive]);
-
-  // Timer effect to update elapsed time based on start time
-  useEffect(() => {
-    if (isActive) {
-      // Initial calculation of elapsed time based on start time
-      const calculateElapsedSeconds = () => {
-        const now = new Date();
-        const startTimeObj = startTime instanceof Date ? startTime : new Date(startTime);
-        return Math.floor((now.getTime() - startTimeObj.getTime()) / 1000);
-      };
-      
-      // Update elapsed time initially
-      if (pageLoaded) {
-        const calculatedTime = calculateElapsedSeconds();
-        if (calculatedTime > elapsedTime) {
-          setElapsedTime(calculatedTime);
-        }
-      }
-      
-      // Set up interval to update elapsed time
-      const timer = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
-      
-      return () => clearInterval(timer);
-    }
-  }, [isActive, startTime, pageLoaded, elapsedTime, setElapsedTime]);
+  }, [location.state, isActive, setTrainingConfig]);
 
   // Handle reset parameter in URL
   useEffect(() => {
@@ -148,6 +121,10 @@ const TrainingSessionPage = () => {
       console.log('Workout saved successfully, cleaning up state');
     }
   }, [workoutStatus]);
+
+  const triggerRestTimerReset = () => {
+    setRestTimerResetSignal(prev => prev + 1);
+  };
 
   const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
@@ -197,10 +174,10 @@ const TrainingSessionPage = () => {
       markAsSaving();
       
       const now = new Date();
-      const workoutStartTime = startTime instanceof Date ? startTime : new Date(startTime);
+      const workoutStartTime = new Date(now.getTime() - elapsedTime * 1000);
 
       const workoutMetadata = {
-        trainingConfig: workoutState.trainingConfig || null,
+        trainingConfig: trainingConfig || null,
         performance: {
           completedSets,
           totalSets,
@@ -239,9 +216,9 @@ const TrainingSessionPage = () => {
         duration: elapsedTime,
         startTime: workoutStartTime,
         endTime: now,
-        trainingType: workoutState.trainingConfig?.trainingType || "Strength",
-        name: workoutState.trainingConfig?.trainingType || "Workout",
-        trainingConfig: workoutState.trainingConfig || null,
+        trainingType: trainingConfig?.trainingType || "Strength",
+        name: trainingConfig?.trainingType || "Workout",
+        trainingConfig: trainingConfig || null,
         notes: "",
         metadata: workoutMetadata
       };
@@ -266,6 +243,12 @@ const TrainingSessionPage = () => {
     }
   };
 
+  const attemptRecovery = async () => {
+    // This would be implemented to recover failed workout saves
+    console.log("Recovery attempt for workout:", workoutId);
+    toast.info("Attempting to recover workout data...");
+  };
+
   if (loadingExercises) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -287,7 +270,7 @@ const TrainingSessionPage = () => {
               totalSets={totalSets}
               workoutStatus={workoutStatus}
               isRecoveryMode={!!workoutId}
-              saveProgress={saveProgress}
+              saveProgress={0}
               onRetrySave={() => workoutId ? attemptRecovery() : null}
               onResetWorkout={resetSession}
               restTimerActive={restTimerActive}

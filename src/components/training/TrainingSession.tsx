@@ -2,7 +2,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
-import { useWorkoutState } from '@/hooks/useWorkoutState';
+import { useWorkoutStore } from '@/store/workoutStore';
 import { toast } from "@/components/ui/sonner";
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
@@ -18,6 +18,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   onCancel
 }) => {
   const navigate = useNavigate();
+  const { isVisible } = usePageVisibility();
   const { 
     resetSession, 
     setTrainingConfig, 
@@ -26,13 +27,9 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     isActive, 
     exercises, 
     elapsedTime,
-    sessionId,
-    persistWorkoutState
-  } = useWorkoutState();
+    sessionId
+  } = useWorkoutStore();
   
-  // Use the page visibility hook to detect tab switching
-  const { isVisible } = usePageVisibility();
-
   // Debug logging for component state
   useEffect(() => {
     console.log('TrainingSession rendered with:', { 
@@ -44,20 +41,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       isVisible 
     });
   }, [trainingConfig, isActive, exercises, elapsedTime, sessionId, isVisible]);
-
-  // Handle tab visibility changes
-  useEffect(() => {
-    if (isVisible && isActive) {
-      console.log('Tab became visible, refreshing workout state from storage');
-      // Instead of using restoreWorkoutState, we just ensure the state is persisted
-      persistWorkoutState?.();
-    } else if (!isVisible && isActive) {
-      console.log('Tab became hidden, persisting workout state');
-      // Save current state when tab becomes hidden
-      persistWorkoutState?.();
-    }
-  }, [isVisible, isActive, persistWorkoutState]);
-
+  
   // Session initialization logic - using useCallback to prevent multiple executions
   const initializeSession = useCallback(() => {
     if (trainingConfig && !isActive) {
@@ -72,11 +56,6 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       // Start workout and update route - order matters here
       updateLastActiveRoute('/training-session');
       startWorkout();
-      
-      // Explicitly persist state after initialization
-      setTimeout(() => {
-        persistWorkoutState?.();
-      }, 100);
       
       // Navigate to the training session page
       navigate('/training-session');
@@ -107,8 +86,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     startWorkout, 
     updateLastActiveRoute, 
     navigate, 
-    exercises,
-    persistWorkoutState
+    exercises
   ]);
 
   // Run initialization once on mount
