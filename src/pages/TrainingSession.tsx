@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -72,6 +73,23 @@ const TrainingSessionPage = () => {
     setPageLoaded(true);
   }, []);
 
+  // Reset saving state when returning to this page
+  // This is crucial for fixing the bug when returning from Workout Complete page
+  useEffect(() => {
+    // Only execute this if there are exercises (meaning workout is still valid)
+    if (Object.keys(exercises).length > 0 && workoutStatus === 'saving') {
+      console.log('Resetting saving state after returning to training session');
+      setIsSaving(false);
+      
+      // If we're coming from the workout complete page but still have exercises,
+      // we need to ensure the workout is marked as active again
+      if (isActive && workoutStatus !== 'active') {
+        const workoutStore = useWorkoutStore.getState();
+        workoutStore.setWorkoutStatus('active');
+      }
+    }
+  }, [exercises, workoutStatus, isActive]);
+
   // Update last active route whenever we load this page
   useEffect(() => {
     updateLastActiveRoute('/training-session');
@@ -81,7 +99,8 @@ const TrainingSessionPage = () => {
       isActive, 
       exerciseCount: Object.keys(exercises).length,
       elapsedTime,
-      workoutStatus
+      workoutStatus,
+      isSaving
     });
   }, [updateLastActiveRoute, isActive, exercises, elapsedTime, workoutStatus]);
 
@@ -98,6 +117,12 @@ const TrainingSessionPage = () => {
     if (location.state?.trainingConfig && !isActive) {
       console.log('Setting training config from navigation state');
       setTrainingConfig(location.state.trainingConfig);
+    }
+    
+    // Check if we're returning from discarding
+    if (location.state?.fromDiscard) {
+      console.log('Returning from discard action, ensuring workout is active');
+      setIsSaving(false); // Ensure saving state is reset
     }
   }, [location.state, isActive, setTrainingConfig]);
 
@@ -403,7 +428,7 @@ const TrainingSessionPage = () => {
           <div className="fixed bottom-20 right-6 z-40">
             <Button
               onClick={handleFinishWorkout}
-              disabled={isSaving || workoutStatus === 'saving'}
+              disabled={isSaving}
               className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-semibold rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Finish Workout"}

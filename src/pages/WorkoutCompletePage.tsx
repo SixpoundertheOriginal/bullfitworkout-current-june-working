@@ -1,671 +1,351 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { WeightUnitToggle } from "@/components/WeightUnitToggle";
+import { TrainingConfig } from "@/hooks/useTrainingSetupPersistence";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { convertWeight, formatWeightWithUnit } from "@/utils/unitConversion";
-import { isValidTrainingType } from "@/components/TrainingTypeTag";
-import WorkoutSummaryCard from "@/components/workouts/WorkoutSummaryCard";
-import { VolumeByExerciseChart } from "@/components/workouts/VolumeByExerciseChart";
-import NotesSection from "@/components/workouts/NotesSection";
-import SaveTemplateSection from "@/components/workouts/SaveTemplateSection";
-import ExercisesCompletedList from "@/components/workouts/ExercisesCompletedList";
-import { useWeightUnit } from "@/context/WeightUnitContext";
-import { recoverPartialWorkout } from "@/services/workoutService";
-import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
-import { WorkoutStatus } from "@/types/workout";
 import { useWorkoutStore } from '@/store/workoutStore';
+import { WorkoutCompletion } from "@/components/training/WorkoutCompletion";
+import { NotesSection } from "@/components/workouts/NotesSection";
+import { useWorkoutSave } from "@/hooks/useWorkoutSave";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { SaveTemplateSection } from "@/components/workouts/SaveTemplateSection";
+import { useEffect as useEffectState } from 'react';
 
-interface ExerciseSet {
-  weight: number;
-  reps: number;
-  restTime: number;
-  completed: boolean;
-  isEditing?: boolean;
-}
-
-interface WorkoutExercises {
-  [key: string]: ExerciseSet[];
-}
-
-interface WorkoutData {
-  exercises: WorkoutExercises;
-  duration: number;
-  startTime: Date;
-  endTime: Date;
-  trainingType: string;
-  name: string;
-  notes?: string;
-  trainingConfig?: {
-    tags?: string[];
-    duration?: number;
-    timeOfDay?: string;
-    intensity?: number;
+export interface WorkoutPageState {
+  workoutData?: {
+    exercises: Record<string, any[]>;
+    duration: number;
+    startTime: Date;
+    endTime: Date;
+    trainingType: string;
+    name: string;
+    trainingConfig: TrainingConfig | null;
+    notes: string;
+    metadata: any;
   };
 }
 
 export const WorkoutCompletePage = () => {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { weightUnit } = useWeightUnit();
-  const { resetSession, explicitlyEnded } = useWorkoutStore();
-
+  
+  // Access the workout store
+  const { 
+    resetSession, 
+    exercises, 
+    elapsedTime,
+    isActive,
+    setWorkoutStatus
+  } = useWorkoutStore();
+  
+  // Local state for this page
   const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
-  const [workoutData, setWorkoutData] = useState<WorkoutData | null>(null);
-  const [workoutId, setWorkoutId] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<WorkoutStatus>('idle');
-  const [savingStats, setSavingStats] = useState({
-    completed: false,
-    error: false
-  });
-  const [navigatePending, setNavigatePending] = useState<{
-    pending: boolean;
-    exerciseName: string | null;
-  }>({ pending: false, exerciseName: null });
-
-  useEffect(() => {
-    // Check if workout is already ended to avoid double-ending
-    if (!explicitlyEnded) {
-      console.log('Ending workout on WorkoutCompletePage mount');
-      // This will mark the workout as ended but preserve data for potential saving
-      useWorkoutStore.getState().endWorkout();
-    }
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  
+  // State from the route transition
+  const state = location.state as WorkoutPageState;
+  const workoutData = state?.workoutData;
+  
+  // Initialize the workout save hook with the proper data
+  const {
+    saveStatus,
+    savingErrors,
+    workoutId,
+    handleCompleteWorkout,
+  } = useWorkoutSave(
+    workoutData?.exercises || exercises,
+    workoutData?.duration || elapsedTime,
+    resetSession
+  );
+  
+  // When page loads, validate if we have workout data
+  useEffectState(() => {
+    console.log("Workout Complete Page - Initial State:", { 
+      hasWorkoutData: !!workoutData,
+      exercises: Object.keys(workoutData?.exercises || {}).length,
+      isActive,
+      saveStatus
+    });
     
-    if (location.state?.workoutId) setWorkoutId(location.state.workoutId);
-    if (location.state?.workoutData) {
-      setWorkoutData(location.state.workoutData);
-      if (location.state.workoutData.name) setTemplateName(location.state.workoutData.name);
-      else if (location.state.workoutData.trainingType)
-        setTemplateName(`${location.state.workoutData.trainingType} Template`);
-      
-      if (location.state.workoutData.notes) {
-        setNotes(location.state.workoutData.notes);
-      }
-    } else {
+    if (!workoutData && Object.keys(exercises).length === 0) {
       toast({
         title: "No workout data found",
-        description: "Please complete a workout session first"
+        description: "Please complete a workout session first",
+        variant: "destructive"
       });
-      navigate("/");
+      
+      // Navigate back to workout page
+      navigate('/training-session');
     }
-  }, [location.state, navigate, explicitlyEnded]);
+  }, []);
 
+  // Initialize template name from workout data
   useEffect(() => {
-    if (navigatePending.pending && workoutId && navigatePending.exerciseName) {
-      navigate(`/workout-details/${workoutId}`, {
-        state: { highlightExercise: navigatePending.exerciseName }
-      });
-      setNavigatePending({ pending: false, exerciseName: null });
+    if (workoutData) {
+      setTemplateName(workoutData.name || "My Workout");
     }
-  }, [navigatePending, workoutId, navigate]);
+  }, [workoutData]);
 
-  const totalVolume = workoutData ? Object.keys(workoutData.exercises).reduce((total, exercise) => {
-    return total + workoutData.exercises[exercise].reduce((exerciseTotal, set) => {
-      if (set.completed) {
-        const convertedWeight = convertWeight(set.weight, "lb", weightUnit);
-        return exerciseTotal + (convertedWeight * set.reps);
-      }
-      return exerciseTotal;
-    }, 0);
-  }, 0) : 0;
-
-  const totalSets = workoutData ? Object.keys(workoutData.exercises).reduce((total, exercise) => {
-    return total + workoutData.exercises[exercise].length;
-  }, 0) : 0;
-
-  const completedSets = workoutData ? Object.keys(workoutData.exercises).reduce((total, exercise) => {
-    return total + workoutData.exercises[exercise].filter(set => set.completed).length;
-  }, 0) : 0;
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // Back button handler
+  const handleBack = () => {
+    setShowDiscardDialog(true);
   };
 
-  const saveWorkout = async () => {
-    if (!workoutData) return null;
-    
-    setSaving(true);
-    setSaveStatus('saving');
+  // Save workout handler
+  const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "You need to be logged in to save your workout",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
-      if (workoutId && user) {
-        try {
-          const { error: updateError } = await supabase
-            .from('workout_sessions')
-            .update({
-              notes: notes || null,
-              metadata: workoutData.trainingConfig ? 
-                JSON.stringify({
-                  trainingConfig: workoutData.trainingConfig
-                }) : null
-            })
-            .eq('id', workoutId);
-
-          if (updateError) {
-            if (updateError.message && updateError.message.includes("materialized view")) {
-              console.warn("Materialized view error during update:", updateError.message);
-              
-              toast({
-                title: "Notes saved with limited analytics",
-                description: "Your workout notes were saved but some analytics couldn't be processed"
-              });
-              
-              setSavingStats({
-                completed: true,
-                error: false
-              });
-              
-              setSaveStatus('saved');
-              return workoutId;
-            }
-            
-            console.error("Error updating workout notes:", updateError);
-            throw updateError;
-          }
-
-          if (saveAsTemplate) {
-            try {
-              await saveWorkoutTemplate();
-              toast({
-                title: "Template saved!",
-                description: "Your workout template has been created"
-              });
-            } catch (templateError) {
-              console.error("Error saving workout template:", templateError);
-              toast({
-                title: "Workout saved, but template could not be created",
-                description: "There was a problem saving your workout template"
-              });
-            }
-          }
-          
-          setSavingStats({
-            completed: true,
-            error: false
-          });
-          
-          setSaveStatus('saved');
-          toast({
-            title: "Workout updated!",
-            description: "Your workout notes have been saved"
-          });
-          
-          return workoutId;
-        } catch (error) {
-          console.error("Error updating workout:", error);
-          
-          if (error instanceof Error && error.message.includes("materialized view")) {
-            toast({
-              title: "Notes partially saved",
-              description: "Your workout notes were recorded but analytics couldn't be updated"
-            });
-            
-            setSavingStats({
-              completed: true,
-              error: false
-            });
-            
-            setSaveStatus('partial');
-            return workoutId;
-          }
-          
-          setSavingStats({
-            completed: true,
-            error: true
-          });
-          
-          setSaveStatus('failed');
-          toast.error("Error updating workout - There was a problem saving your workout notes");
-          
-          return null;
-        } finally {
-          setSaving(false);
-        }
-      }
+      setIsLoading(true);
       
-      if (!user) {
-        toast.error("Please log in - You need to be logged in to save workouts");
-        setSaving(false);
-        setSaveStatus('failed');
-        return null;
-      }
-      
-      const trainingTypeValue = isValidTrainingType(workoutData.trainingType) 
-        ? workoutData.trainingType 
-        : 'Strength';
-      
-      console.log("Saving new workout with data:", {
-        user_id: user.id,
-        name: workoutData.name || workoutData.trainingType || "Workout",
-        training_type: trainingTypeValue,
-        start_time: workoutData.startTime.toISOString(),
-        end_time: workoutData.endTime.toISOString(),
-        duration: workoutData.duration || 0,
-        notes: notes || null,
-        metadata: workoutData.trainingConfig ? 
-          JSON.stringify({
-            trainingConfig: workoutData.trainingConfig
-          }) : null
-      });
-      
-      try {
-        const { data: workoutSession, error: workoutError } = await supabase
-          .from('workout_sessions')
-          .insert({
-            user_id: user.id,
-            name: workoutData.name || workoutData.trainingType || "Workout",
-            training_type: trainingTypeValue,
-            start_time: workoutData.startTime.toISOString(),
-            end_time: workoutData.endTime.toISOString(),
-            duration: workoutData.duration || 0,
-            notes: notes || null,
-            metadata: workoutData.trainingConfig ? 
-              JSON.stringify({
-                trainingConfig: workoutData.trainingConfig
-              }) : null
-          })
-          .select('id')
-          .single();
-  
-        if (workoutError) {
-          if (workoutError.message && workoutError.message.includes("materialized view")) {
-            console.warn("Materialized view error detected:", workoutError.message);
-            toast({
-              title: "Workout partially saved",
-              description: "There was an issue with analytics processing, but your workout will be saved."
-            });
-            
-            try {
-              const { data: latestWorkout } = await supabase
-                .from('workout_sessions')
-                .select('id')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-                
-              if (latestWorkout) {
-                setWorkoutId(latestWorkout.id);
-                
-                try {
-                  await saveExerciseSets(latestWorkout.id);
-                  
-                  await recoverPartialWorkout(latestWorkout.id);
-                } catch (exerciseError) {
-                  console.error("Error saving exercise sets:", exerciseError);
-                }
-                
-                setSavingStats({
-                  completed: true,
-                  error: false
-                });
-                
-                setSaveStatus('saved');
-                return latestWorkout.id;
-              }
-            } catch (recoveryError) {
-              console.error("Error recovering workout ID:", recoveryError);
-            }
-          }
-          
-          console.error("Error saving workout session:", workoutError);
-          throw workoutError;
-        }
-        
-        if (workoutSession) {
-          setWorkoutId(workoutSession.id);
-          
-          try {
-            await saveExerciseSets(workoutSession.id);
-          } catch (exerciseError) {
-            console.error("Error saving exercise sets:", exerciseError);
-            toast({
-              title: "Workout saved with limited details",
-              description: "We couldn't save all exercise details, but your workout was recorded"
-            });
-          }
-          
-          if (saveAsTemplate) {
-            try {
-              await saveWorkoutTemplate(workoutSession.id);
-              toast({
-                title: "Template saved!",
-                description: "Your workout template has been created"
-              });
-            } catch (templateError) {
-              console.error("Error saving workout template:", templateError);
-              toast({
-                title: "Workout saved, but template could not be created",
-                description: "There was a problem saving your workout template"
-              });
-            }
-          }
-          
-          setSavingStats({
-            completed: true,
-            error: false
-          });
-          
-          setSaveStatus('saved');
-          toast({
-            title: "Workout saved!",
-            description: "Your workout has been successfully recorded"
-          });
-          
-          return workoutSession.id;
-        }
-      } catch (error: any) {
-        console.error("Error saving workout session:", error);
-        
-        if (error.message && error.message.includes("jsonb_set") && error.message.includes("does not exist")) {
-          console.warn("Possible experience points update issue:", error.message);
-          toast({
-            title: "Workout may have been saved",
-            description: "There was an issue with the experience points system, but your workout data was sent to the server."
-          });
-          
-          try {
-            const { data: latestWorkout } = await supabase
-              .from('workout_sessions')
-              .select('id')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-              
-            if (latestWorkout) {
-              setWorkoutId(latestWorkout.id);
-              
-              try {
-                await saveExerciseSets(latestWorkout.id);
-                
-                await recoverPartialWorkout(latestWorkout.id);
-              } catch (exerciseError) {
-                console.error("Error during recovery process:", exerciseError);
-              }
-              
-              setSaveStatus('saved');
-              return latestWorkout.id;
-            }
-          } catch (recoveryError) {
-            console.error("Error recovering workout ID:", recoveryError);
-          }
-        } else {
-          setSavingStats({
-            completed: true,
-            error: true
-          });
-          
-          setSaveStatus('failed');
-          toast.error("Error saving workout - There was a problem saving your workout data. Please try again.");
-        }
-      }
-      
-      return null;
-    } catch (error: any) {
-      console.error("Error in saveWorkout function:", error);
-      setSavingStats({
-        completed: true,
-        error: true
-      });
-      
-      setSaveStatus('failed');
-      toast.error("Error saving workout - An unexpected error occurred while saving your workout");
-      
-      return null;
-    } finally {
-      setSaving(false);
-    }
-  };
-  
-  const saveExerciseSets = async (sessionId: string) => {
-    if (!workoutData) return;
-    
-    try {
-      const exerciseSets = [];
-      
-      for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
-        sets.forEach((set, index) => {
-          exerciseSets.push({
-            workout_id: sessionId,
-            exercise_name: exerciseName,
-            weight: set.weight || 0,
-            reps: set.reps || 0,
-            set_number: index + 1,
-            completed: set.completed || false,
-            rest_time: set.restTime || 60
-          });
-        });
-      }
-      
-      if (exerciseSets.length === 0) {
-        console.log("No sets to save");
-        return;
-      }
-      
-      const batchSize = 25;
-      const batches = [];
-      
-      for (let i = 0; i < exerciseSets.length; i += batchSize) {
-        batches.push(exerciseSets.slice(i, i + batchSize));
-      }
-      
-      let errorCount = 0;
-      for (const batch of batches) {
-        try {
-          const { error: batchError } = await supabase
-            .from('exercise_sets')
-            .insert(batch);
-            
-          if (batchError) {
-            console.error("Error saving exercise set batch:", batchError);
-            errorCount++;
-          }
-        } catch (batchError) {
-          console.error("Exception saving exercise set batch:", batchError);
-          errorCount++;
-        }
-      }
-      
-      if (errorCount > 0) {
-        console.warn(`${errorCount} batches failed to save properly`);
-      }
-    } catch (error) {
-      console.error("Error saving exercise sets:", error);
-    }
-  };
-  
-  const saveWorkoutTemplate = async (sessionId?: string) => {
-    if (!user || !workoutData) return;
-    
-    try {
-      const validTrainingType = isValidTrainingType(workoutData.trainingType)
-        ? workoutData.trainingType
-        : 'Strength';
-      
-      const { error: templateError } = await supabase
-        .from('workout_templates')
-        .insert({
-          name: templateName || `${workoutData.trainingType || 'Workout'} Template`,
-          description: `Created from workout on ${new Date().toLocaleDateString()}`,
-          training_type: validTrainingType,
-          exercises: JSON.stringify(workoutData.exercises),
-          created_by: user.id,
-          estimated_duration: workoutData.duration || 0
-        });
-        
-      if (templateError) {
-        console.error("Error saving workout template:", templateError);
-        throw templateError;
-      }
-    } catch (templateError) {
-      console.error("Error saving workout template:", templateError);
-      throw templateError;
-    }
-  };
-
-  const getVolumeChartData = () => {
-    if (!workoutData) return [];
-    
-    return Object.keys(workoutData.exercises).map(exercise => {
-      const totalExerciseVolume = workoutData.exercises[exercise].reduce((total, set) => {
-        if (set.completed) {
-          const convertedWeight = convertWeight(set.weight || 0, "lb", weightUnit);
-          return total + (convertedWeight * (set.reps || 0));
-        }
-        return total;
-      }, 0);
-      
-      return {
-        name: exercise,
-        volume: Math.round(totalExerciseVolume * 10) / 10
+      // Prepare the workout data with user notes
+      const finalWorkoutData = {
+        ...workoutData,
+        notes
       };
-    });
-  };
-
-  const handleExerciseClick = async (exerciseName: string) => {
-    if (!workoutId) {
-      console.log("No workout ID available yet, saving workout first");
-      setNavigatePending({ pending: true, exerciseName });
-      await saveWorkout();
-    } else {
-      console.log(`Navigating to details with workout ID: ${workoutId}`);
-      navigate(`/workout-details/${workoutId}`, {
-        state: { highlightExercise: exerciseName }
+      
+      console.log("Saving workout with data:", finalWorkoutData);
+      
+      // Save workout and get the ID
+      const savedWorkoutId = await handleCompleteWorkout({
+        ...finalWorkoutData?.trainingConfig,
+        notes
       });
-    }
-  };
-
-  const handleSaveAndExit = async () => {
-    setSaving(true);
-    setSaveStatus('saving');
-    try {
-      const savedWorkoutId = await saveWorkout();
-      if (savedWorkoutId) {
-        toast({
-          title: "Workout saved successfully"
-        });
-        
-        resetSession();
-        
-        navigate(`/workout-details/${savedWorkoutId}`, {
-          state: { from: 'workout-complete' }
-        });
+      
+      // Handle template creation if requested
+      if (savedWorkoutId && saveAsTemplate) {
+        try {
+          // Logic for saving template would go here
+          console.log("Saving template:", {
+            name: templateName,
+            description: templateDescription,
+            exercises: finalWorkoutData.exercises
+          });
+          
+          toast({
+            title: "Template saved!",
+            description: "Your workout template has been created"
+          });
+        } catch (templateError) {
+          console.error("Error saving template:", templateError);
+          toast({
+            title: "Workout saved, but template could not be created",
+            description: "There was a problem saving your workout template",
+            variant: "destructive"
+          });
+        }
       }
+
+      // Success - show toast and delay navigation to allow it to be seen
+      console.log("Workout saved with ID:", savedWorkoutId);
+      toast({
+        title: "Workout saved!",
+        description: "Your workout has been successfully recorded"
+      });
+      
+      // Navigate after short delay to show the success message
+      setTimeout(() => {
+        navigate('/overview');
+      }, 1500);
+      
     } catch (error) {
       console.error("Error saving workout:", error);
-      toast.error("Failed to save workout");
-      setSaveStatus('failed');
-    } finally {
-      setSaving(false);
+      toast({
+        title: "Error saving workout",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
+      });
+      setIsLoading(false);
     }
   };
 
+  // Discard workout handler
   const handleDiscard = () => {
-    // Fully terminate the workout session
+    console.log("Discarding workout");
+    // Reset state related to the workout
     resetSession();
     
-    // Show confirmation toast
-    toast.success("Workout discarded", {
-      description: "Your workout session has been terminated"
+    // Close the dialog
+    setShowDiscardDialog(false);
+    
+    // Show confirmation
+    toast({
+      title: "Workout discarded",
+      description: "Your workout session has been discarded"
     });
     
-    // Navigate to main dashboard
-    navigate('/');
+    // Navigate to home screen
+    navigate('/overview');
+  };
+  
+  // Cancel discard and return to training session
+  const handleContinueWorkout = () => {
+    console.log("Continuing workout");
+    // Ensure workout status is set back to active when returning
+    setWorkoutStatus('active');
+    setShowDiscardDialog(false);
+    
+    // Navigate back to training session with a flag to indicate we're returning from discard
+    navigate('/training-session', { 
+      state: { fromDiscard: true }
+    });
   };
 
-  if (!workoutData) {
+  // Render error state
+  if (savingErrors.length > 0) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        <p>Loading workout data...</p>
+      <div className="min-h-screen bg-black text-white p-6">
+        <h1 className="text-2xl font-bold mb-4">Error Saving Workout</h1>
+        <div className="bg-red-900/30 border border-red-800 p-4 rounded-lg mb-6">
+          <p className="text-red-200 mb-2">There was an error saving your workout:</p>
+          <p className="font-mono text-sm bg-black/50 p-2 rounded whitespace-pre-wrap">
+            {savingErrors.map((err, i) => (
+              <div key={i} className="mb-2">
+                <strong>{err.type}:</strong> {err.message}
+              </div>
+            ))}
+          </p>
+        </div>
+        <div className="flex gap-4 justify-end">
+          <Button variant="outline" onClick={() => navigate('/training-session')}>
+            Back to Workout
+          </Button>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading || !workoutData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
+        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <p>Processing your workout...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
-      <header className="flex justify-between items-center p-4 border-b border-gray-800">
-        <button 
-          onClick={() => {
-            resetSession();
-            navigate('/');
-          }}
-          className="p-2 rounded-full hover:bg-gray-900"
+    <div className="min-h-screen bg-black text-white pb-20">
+      <header className="sticky top-0 z-10 bg-black p-4 border-b border-gray-800 flex items-center">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBack}
+          className="mr-2"
         >
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="title-large">Workout Complete</h1>
-        <WeightUnitToggle variant="badge" />
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-semibold flex-1">Complete Workout</h1>
       </header>
-
-      <main className="flex-1 overflow-auto px-4 py-6">
-        {saveStatus !== 'idle' && (
-          <div className="mb-4">
-            <WorkoutSaveStatus 
-              status={saveStatus}
-              className="mb-4"
-            />
-          </div>
-        )}
-        
-        <WorkoutSummaryCard 
-          workoutData={workoutData} 
-          completedSets={completedSets}
-          totalSets={totalSets}
-          totalVolume={totalVolume}
-          weightUnit={weightUnit}
-        />
-        <VolumeByExerciseChart 
+      
+      <main className="container max-w-3xl mx-auto px-4 py-6">
+        <WorkoutCompletion
           workoutData={workoutData}
-          weightUnit={weightUnit}
+          exercises={workoutData.exercises}
+          duration={workoutData.duration}
         />
-        <NotesSection
-          notes={notes}
-          setNotes={setNotes}
+        
+        <NotesSection 
+          value={notes}
+          onChange={setNotes}
+          className="mb-6"
         />
+        
         <SaveTemplateSection
           saveAsTemplate={saveAsTemplate}
           setSaveAsTemplate={setSaveAsTemplate}
           templateName={templateName}
           setTemplateName={setTemplateName}
-          workoutData={workoutData}
+          templateDescription={templateDescription}
+          setTemplateDescription={setTemplateDescription}
         />
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <button
-            className="btn btn-outline border-gray-700 text-white"
-            onClick={handleDiscard}
+        
+        <div className="flex justify-end gap-4 mt-8">
+          <Button 
+            variant="outline" 
+            onClick={handleBack}
           >
-            Discard
-          </button>
-          <button
-            className="bg-purple-600 hover:bg-purple-700 font-medium rounded-md px-4 py-3 transition disabled:opacity-700"
-            onClick={handleSaveAndExit}
-            disabled={saving}
+            Back
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={isLoading}
+            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
           >
-            {saving ? "Saving..." : "Save & Exit"}
-          </button>
-          <button
-            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 font-medium rounded-md px-4 py-3 transition disabled:opacity-70"
-            onClick={saveWorkout}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save Workout"}
-          </button>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Workout"
+            )}
+          </Button>
         </div>
-        <ExercisesCompletedList
-          exercises={workoutData.exercises}
-          workoutId={workoutId}
-          handleExerciseClick={handleExerciseClick}
-        />
       </main>
+      
+      {/* Discard confirmation dialog */}
+      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <DialogContent className="bg-gray-900 text-white">
+          <DialogHeader>
+            <DialogTitle>Discard Workout?</DialogTitle>
+            <DialogDescription>
+              Do you want to discard this workout or continue editing it?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDiscardDialog(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="secondary"
+              onClick={handleContinueWorkout}
+              className="w-full sm:w-auto"
+            >
+              Continue Workout
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDiscard}
+              className="w-full sm:w-auto"
+            >
+              Discard Workout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+export default WorkoutCompletePage;

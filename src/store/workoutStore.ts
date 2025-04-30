@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
@@ -66,6 +67,7 @@ export interface WorkoutState {
   setCurrentRestTime: (time: number) => void;
   setTrainingConfig: (config: TrainingConfig | null) => void;
   updateLastActiveRoute: (route: string) => void;
+  setWorkoutStatus: (status: WorkoutStatus) => void;
   
   // Workout lifecycle actions
   startWorkout: () => void;
@@ -148,6 +150,12 @@ export const useWorkoutStore = create<WorkoutState>()(
       
       updateLastActiveRoute: (route) => set({ 
         lastActiveRoute: route,
+        lastTabActivity: Date.now(),
+      }),
+      
+      // New action to directly modify workout status
+      setWorkoutStatus: (status) => set({ 
+        workoutStatus: status,
         lastTabActivity: Date.now(),
       }),
       
