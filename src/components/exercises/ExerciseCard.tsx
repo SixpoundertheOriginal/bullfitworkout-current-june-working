@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,20 +23,21 @@ interface ExerciseHistoryData {
 interface ExerciseCardProps {
   exercise: string;
   sets: { weight: number; reps: number; restTime?: number; completed: boolean; isEditing?: boolean }[];
-  onAddSet: (exerciseName: string) => void;
-  onCompleteSet: (exerciseName: string, setIndex: number) => void;
-  onRemoveSet: (exerciseName: string, setIndex: number) => void;
-  onEditSet: (exerciseName: string, setIndex: number) => void;
-  onSaveSet: (exerciseName: string, setIndex: number) => void;
-  onWeightChange: (exerciseName: string, setIndex: number, value: string) => void;
-  onRepsChange: (exerciseName: string, setIndex: number, value: string) => void;
-  onRestTimeChange?: (exerciseName: string, setIndex: number, value: string) => void;
-  onWeightIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
-  onRepsIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
-  onRestTimeIncrement?: (exerciseName: string, setIndex: number, increment: number) => void;
+  onAddSet: () => void;
+  onCompleteSet: (setIndex: number) => void;
+  onRemoveSet: (setIndex: number) => void;
+  onEditSet: (setIndex: number) => void;
+  onSaveSet: (setIndex: number) => void;
+  onWeightChange: (setIndex: number, value: string) => void;
+  onRepsChange: (setIndex: number, value: string) => void;
+  onRestTimeChange?: (setIndex: number, value: string) => void;
+  onWeightIncrement: (setIndex: number, increment: number) => void;
+  onRepsIncrement: (setIndex: number, increment: number) => void;
+  onRestTimeIncrement?: (setIndex: number, increment: number) => void;
   isActive: boolean;
   onShowRestTimer: () => void;
   onResetRestTimer: () => void;
+  onDeleteExercise: () => void; // Add this prop to match what's being passed
 }
 
 // Sample exercise history data with exercise groups
@@ -89,7 +89,8 @@ const ExerciseCard = ({
   onRestTimeIncrement,
   isActive,
   onShowRestTimer,
-  onResetRestTimer
+  onResetRestTimer,
+  onDeleteExercise // Add this prop to the destructuring
 }) => {
   const { weightUnit } = useWeightUnit();
   const { exercises: dbExercises } = useExercises();
@@ -155,16 +156,16 @@ const ExerciseCard = ({
                 completed={set.completed}
                 isEditing={set.isEditing || false}
                 exerciseName={exercise}
-                onComplete={() => onCompleteSet(exercise, index)}
-                onEdit={() => onEditSet(exercise, index)}
-                onSave={() => onSaveSet(exercise, index)}
-                onRemove={() => onRemoveSet(exercise, index)}
-                onWeightChange={(e) => onWeightChange(exercise, index, e.target.value)}
-                onRepsChange={(e) => onRepsChange(exercise, index, e.target.value)}
-                onRestTimeChange={onRestTimeChange ? (e) => onRestTimeChange(exercise, index, e.target.value) : undefined}
-                onWeightIncrement={(value) => onWeightIncrement(exercise, index, value)}
-                onRepsIncrement={(value) => onRepsIncrement(exercise, index, value)}
-                onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(exercise, index, value) : undefined}
+                onComplete={() => onCompleteSet(index)}
+                onEdit={() => onEditSet(index)}
+                onSave={() => onSaveSet(index)}
+                onRemove={() => onRemoveSet(index)}
+                onWeightChange={(e) => onWeightChange(index, e.target.value)}
+                onRepsChange={(e) => onRepsChange(index, e.target.value)}
+                onRestTimeChange={onRestTimeChange ? (e) => onRestTimeChange(index, e.target.value) : undefined}
+                onWeightIncrement={(value) => onWeightIncrement(index, value)}
+                onRepsIncrement={(value) => onRepsIncrement(index, value)}
+                onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(index, value) : undefined}
                 weightUnit={weightUnit}
                 currentVolume={set.weight * set.reps}
               />
@@ -200,7 +201,7 @@ const ExerciseCard = ({
           </div>
 
           <Button
-            onClick={() => onAddSet(exercise)}
+            onClick={onAddSet}
             className="w-full mt-4 py-3 flex items-center justify-center text-sm 
               bg-gradient-to-r from-purple-600 to-pink-500 
               hover:from-purple-700 hover:to-pink-600 
