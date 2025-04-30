@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { toast } from "@/components/ui/sonner";
+import React from 'react';
 
 export interface ExerciseSet {
   weight: number;
