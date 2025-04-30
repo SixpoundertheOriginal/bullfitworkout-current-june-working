@@ -14,7 +14,7 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Button } from "@/components/ui/button";
-import { ExerciseFAB } from "@/components/ExerciseFAB"; // Fixed import path
+import { ExerciseFAB } from "@/components/ExerciseFAB";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -48,6 +48,15 @@ const TrainingSessionPage = () => {
     setTrainingConfig,
     setWorkoutStatus
   } = useWorkoutStore();
+  
+  // Calculate completedSets and totalSets
+  const [completedSets, totalSets] = Object.entries(exercises).reduce(
+    ([completed, total], [_, sets]) => [
+      completed + sets.filter(set => set.completed).length,
+      total + sets.length
+    ],
+    [0, 0]
+  );
   
   // Use workout timer hook for elapsed time tracking
   useWorkoutTimer();
@@ -421,7 +430,7 @@ const TrainingSessionPage = () => {
           
           {/* Bottom action buttons - new responsive layout */}
           <div className="fixed bottom-20 left-0 right-0 px-4 z-40">
-            <div className={`flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto transition-all duration-300 ${hasExercises ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+            <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto">
               <Button
                 onClick={() => setIsAddExerciseSheetOpen(true)}
                 className="w-full py-3 flex items-center justify-center gap-2 
