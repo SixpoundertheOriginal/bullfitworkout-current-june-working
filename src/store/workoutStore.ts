@@ -292,7 +292,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         sessionId: state.sessionId,
         explicitlyEnded: state.explicitlyEnded,
       }),
-      onRehydrateStorage: (state) => {
+      onRehydrateStorage: () => {
         return (rehydratedState, error) => {
           if (error) {
             console.error('Error rehydrating workout state:', error);
@@ -313,7 +313,9 @@ export const useWorkoutStore = create<WorkoutState>()(
               // Only update if calculated time is greater than stored time
               if (calculatedElapsedTime > (rehydratedState.elapsedTime || 0)) {
                 setTimeout(() => {
-                  set({ elapsedTime: calculatedElapsedTime });
+                  // Using the Zustand store's set function through the get() method
+                  const store = useWorkoutStore.getState();
+                  store.setElapsedTime(calculatedElapsedTime);
                   console.log(`Restored elapsed time: ${calculatedElapsedTime}s`);
                 }, 100);
               }
