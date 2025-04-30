@@ -12,6 +12,19 @@ export async function updateWorkout(workoutId: string, data: {
   duration?: number;
   notes?: string | null;
 }) {
+  // Ensure duration is a proper number
+  if (data.duration !== undefined) {
+    data.duration = Number(data.duration);
+  }
+  
+  // Calculate end_time based on start_time and duration if only one is provided
+  if (data.start_time && data.duration !== undefined && !data.end_time) {
+    const startDate = new Date(data.start_time);
+    const endDate = new Date(startDate);
+    endDate.setMinutes(startDate.getMinutes() + data.duration);
+    data.end_time = endDate.toISOString();
+  }
+  
   const { data: workout, error } = await supabase
     .from('workout_sessions')
     .update(data)

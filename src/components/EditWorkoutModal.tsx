@@ -20,6 +20,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface WorkoutDetails {
   id: string;
@@ -42,6 +43,7 @@ export function EditWorkoutModal({ workout, open, onOpenChange, onSave }: EditWo
   const [formData, setFormData] = useState<WorkoutDetails | null>(null);
   const [saving, setSaving] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (workout) {
@@ -108,6 +110,12 @@ export function EditWorkoutModal({ workout, open, onOpenChange, onSave }: EditWo
     try {
       setSaving(true);
       await onSave(formData);
+      
+      // Invalidate all related queries to ensure data refreshes everywhere
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      queryClient.invalidateQueries({ queryKey: ['workout-details', formData.id] });
+      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
+      
       onOpenChange(false);
       toast.success("Workout updated successfully");
     } catch (error) {

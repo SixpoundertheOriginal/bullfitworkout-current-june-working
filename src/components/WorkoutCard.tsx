@@ -77,7 +77,8 @@ export const WorkoutCard = ({
   const { data: workoutDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['workout-details', id, isExpanded],
     queryFn: () => isExpanded ? getWorkoutWithExercises(id) : null,
-    enabled: isExpanded
+    enabled: isExpanded,
+    staleTime: 30000, // Consider data stale after 30 seconds to facilitate refreshes
   });
   
   const handleCardClick = () => {
