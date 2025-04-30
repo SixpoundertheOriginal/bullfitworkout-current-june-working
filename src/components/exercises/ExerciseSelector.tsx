@@ -28,18 +28,18 @@ export function ExerciseSelector({
   difficulty
 }: ExerciseSelectorProps) {
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
-  const { data } = useWorkoutHistory();
+  const { workouts } = useWorkoutHistory();
   const { exercises: allExercises } = useExercises();
   const timeOfDay = getCurrentTimeOfDay();
   
   // Extract recently used exercises from workout history
   const recentExercises = React.useMemo(() => {
-    if (!data?.workouts?.length) return [];
+    if (!workouts?.length) return [];
     
     const exerciseMap = new Map<string, Exercise>();
     
     // Get unique exercise names from recent workouts' exercise sets
-    data.workouts.slice(0, 5).forEach(workout => {
+    workouts.slice(0, 5).forEach(workout => {
       const exerciseNames = new Set<string>();
       
       // Collect unique exercise names from the workout's exercise sets
@@ -57,7 +57,7 @@ export function ExerciseSelector({
     });
     
     return Array.from(exerciseMap.values());
-  }, [data, allExercises]);
+  }, [workouts, allExercises]);
 
   // Process and rank exercises based on user preferences
   const rankedExercises = React.useMemo(() => {

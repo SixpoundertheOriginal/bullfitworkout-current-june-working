@@ -29,7 +29,7 @@ export function WorkoutHistory({
   onWorkoutSelected,
   onPageChange
 }: WorkoutHistoryProps) {
-  const { data, isLoading, refetch } = useWorkoutHistory(filters);
+  const { workouts, exerciseCounts, totalCount, isLoading, refetch } = useWorkoutHistory(filters);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [fixingId, setFixingId] = React.useState<string | null>(null);
   
@@ -64,10 +64,9 @@ export function WorkoutHistory({
   };
   
   // Calculate pagination
-  const totalWorkouts = data?.totalCount || 0;
   const workoutsPerPage = filters.limit || 5;
   const currentPage = Math.floor((filters.offset || 0) / workoutsPerPage) + 1;
-  const totalPages = Math.ceil(totalWorkouts / workoutsPerPage);
+  const totalPages = Math.ceil(totalCount / workoutsPerPage);
   
   if (isLoading) {
     return (
@@ -79,7 +78,7 @@ export function WorkoutHistory({
     );
   }
   
-  if (!data?.workouts || data.workouts.length === 0) {
+  if (!workouts || workouts.length === 0) {
     return (
       <div className={`p-8 text-center border border-dashed border-gray-800 rounded-lg ${className}`}>
         <p className="text-gray-400">No workouts found</p>
@@ -93,7 +92,7 @@ export function WorkoutHistory({
   return (
     <div className={className}>
       <div className="space-y-4">
-        {data.workouts.map((workout) => {
+        {workouts.map((workout) => {
           const trainingType = trainingTypes.find(
             (t) => t.id === workout.training_type
           ) || {
@@ -103,8 +102,8 @@ export function WorkoutHistory({
             color: "#6E59A5"
           };
           
-          const exerciseCount = data.exerciseCounts[workout.id]?.exercises || 0;
-          const setCount = data.exerciseCounts[workout.id]?.sets || 0;
+          const exerciseCount = exerciseCounts[workout.id]?.exercises || 0;
+          const setCount = exerciseCounts[workout.id]?.sets || 0;
           const isPotentiallyIncomplete = exerciseCount === 0 || setCount === 0;
           
           return (
@@ -138,7 +137,7 @@ export function WorkoutHistory({
       {showPagination && totalPages > 1 && (
         <div className="flex justify-between items-center mt-4">
           <div className="text-sm text-gray-400">
-            Showing {Math.min(filters.limit || 5, data.workouts.length)} of {totalWorkouts} workouts
+            Showing {Math.min(filters.limit || 5, workouts.length)} of {totalCount} workouts
           </div>
           <Pagination>
             <Button

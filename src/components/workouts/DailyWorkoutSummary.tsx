@@ -15,11 +15,11 @@ interface DailyWorkoutSummaryProps {
 }
 
 export const DailyWorkoutSummary = ({ date, onClose, preview = false }: DailyWorkoutSummaryProps) => {
-  const { data, isLoading } = useWorkoutHistory({
+  const { workouts, exerciseCounts, isLoading } = useWorkoutHistory({
     startDate: date,
     endDate: date
   });
-  const workouts = data?.workouts || [];
+  
   const navigate = useNavigate();
   
   const formattedDate = format(new Date(date), 'MMMM d, yyyy');
@@ -98,8 +98,8 @@ export const DailyWorkoutSummary = ({ date, onClose, preview = false }: DailyWor
                   type={workout.training_type}
                   date={workout.start_time}
                   duration={workout.duration}
-                  exerciseCount={data.exerciseCounts[workout.id]?.exercises || 0}
-                  setCount={data.exerciseCounts[workout.id]?.sets || 0}
+                  exerciseCount={exerciseCounts[workout.id]?.exercises || 0}
+                  setCount={exerciseCounts[workout.id]?.sets || 0}
                 />
               ))}
             </div>
