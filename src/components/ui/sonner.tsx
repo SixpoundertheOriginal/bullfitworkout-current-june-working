@@ -2,6 +2,7 @@
 "use client"
 
 import { Toaster as Sonner } from "sonner"
+import { toast } from "@/hooks/use-toast"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -31,5 +32,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-// Export both the Toaster component and re-export the toast function from our hook
-export { Toaster }
+export { Toaster, toast }

@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
 import { WorkoutError, EnhancedExerciseSet } from "@/types/workout";
 import { ExerciseSet } from '@/hooks/useWorkoutState';

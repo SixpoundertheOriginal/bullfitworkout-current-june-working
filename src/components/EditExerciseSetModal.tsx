@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MinusCircle, PlusCircle, Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 

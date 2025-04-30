@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WeightUnit } from "@/utils/unitConversion";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { createContext } from "@/utils/createContext";
 import { useLoadingState } from "@/hooks/useLoadingState";
 import { useAuth } from "./AuthContext";

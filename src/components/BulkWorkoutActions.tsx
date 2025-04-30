@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, Loader2, RefreshCcw, Trash2 } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { TrainingTypeTag, trainingTypes } from "@/components/TrainingTypeTag";
 import { bulkDeleteWorkouts, bulkUpdateWorkouts, bulkResetWorkoutSets } from "@/services/workoutService";
 

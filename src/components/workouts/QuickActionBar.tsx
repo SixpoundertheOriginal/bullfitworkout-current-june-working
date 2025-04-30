@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { 
@@ -11,7 +10,7 @@ import {
   X,
   History
 } from 'lucide-react';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 
 interface QuickActionBarProps {
   selectedWorkoutIds: string[];
