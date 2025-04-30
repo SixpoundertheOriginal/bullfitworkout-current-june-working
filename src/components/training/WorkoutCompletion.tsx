@@ -5,6 +5,9 @@ import { IntelligentMetricsDisplay } from '@/components/metrics/IntelligentMetri
 import { ExerciseVolumeChart } from '@/components/metrics/ExerciseVolumeChart';
 import { ExerciseSet } from "@/types/exercise";
 import { useWeightUnit } from "@/context/WeightUnitContext";
+import { useWorkoutStore } from "@/store/workoutStore";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/sonner";
 
 // Define a local version of ExerciseSet to match what's used in the workout state
 interface LocalExerciseSet {
@@ -29,6 +32,8 @@ export const WorkoutCompletion = ({
   onComplete
 }: WorkoutCompletionProps) => {
   const { weightUnit } = useWeightUnit();
+  const { resetSession } = useWorkoutStore();
+  const navigate = useNavigate();
 
   // Convert LocalExerciseSet to ExerciseSet for the chart components
   const convertedExercises = Object.entries(exercises).reduce((acc, [exerciseName, sets]) => {
@@ -44,14 +49,35 @@ export const WorkoutCompletion = ({
     })) as ExerciseSet[];
     return acc;
   }, {} as Record<string, ExerciseSet[]>);
+  
+  const handleDiscard = () => {
+    // Fully terminate the workout session
+    resetSession();
+    
+    // Show confirmation toast
+    toast.success("Workout discarded", {
+      description: "Your workout session has been terminated"
+    });
+    
+    // Navigate to main dashboard
+    navigate('/');
+  };
 
   return (
     <div className="mt-8 flex flex-col items-center">
-      <div className="flex w-full">
+      <div className="flex w-full justify-between gap-3 mb-4">
         <Button
-          className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-500 
+          variant="outline"
+          className="w-1/2 py-3 border-gray-700 hover:bg-gray-800"
+          onClick={handleDiscard}
+        >
+          Discard
+        </Button>
+        
+        <Button
+          className="w-1/2 py-3 bg-gradient-to-r from-green-600 to-emerald-500 
             hover:from-green-700 hover:to-emerald-600 text-white font-medium 
-            rounded-full shadow-lg hover:shadow-xl mb-4"
+            rounded-full shadow-lg hover:shadow-xl"
           onClick={onComplete}
         >
           Complete Workout

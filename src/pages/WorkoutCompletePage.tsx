@@ -16,7 +16,7 @@ import { useWeightUnit } from "@/context/WeightUnitContext";
 import { recoverPartialWorkout } from "@/services/workoutService";
 import { WorkoutSaveStatus } from "@/components/WorkoutSaveStatus";
 import { WorkoutStatus } from "@/types/workout";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { useWorkoutStore } from '@/store/workoutStore';
 
 interface ExerciseSet {
   weight: number;
@@ -51,7 +51,7 @@ export const WorkoutCompletePage = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
-  const { resetSession, endWorkout, markAsSaved } = useWorkoutState();
+  const { resetSession, explicitlyEnded } = useWorkoutStore();
 
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -70,7 +70,12 @@ export const WorkoutCompletePage = () => {
   }>({ pending: false, exerciseName: null });
 
   useEffect(() => {
-    endWorkout();
+    // Check if workout is already ended to avoid double-ending
+    if (!explicitlyEnded) {
+      console.log('Ending workout on WorkoutCompletePage mount');
+      // This will mark the workout as ended but preserve data for potential saving
+      useWorkoutStore.getState().endWorkout();
+    }
     
     if (location.state?.workoutId) setWorkoutId(location.state.workoutId);
     if (location.state?.workoutData) {
@@ -86,7 +91,7 @@ export const WorkoutCompletePage = () => {
       toast("No workout data found - Please complete a workout session first");
       navigate("/");
     }
-  }, [location.state, navigate, endWorkout]);
+  }, [location.state, navigate, explicitlyEnded]);
 
   useEffect(() => {
     if (navigatePending.pending && workoutId && navigatePending.exerciseName) {
@@ -526,6 +531,19 @@ export const WorkoutCompletePage = () => {
     }
   };
 
+  const handleDiscard = () => {
+    // Fully terminate the workout session
+    resetSession();
+    
+    // Show confirmation toast
+    toast.success("Workout discarded", {
+      description: "Your workout session has been terminated"
+    });
+    
+    // Navigate to main dashboard
+    navigate('/');
+  };
+
   if (!workoutData) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -585,7 +603,7 @@ export const WorkoutCompletePage = () => {
         <div className="grid grid-cols-3 gap-3 mb-6">
           <button
             className="btn btn-outline border-gray-700 text-white"
-            onClick={() => navigate('/')}
+            onClick={handleDiscard}
           >
             Discard
           </button>
