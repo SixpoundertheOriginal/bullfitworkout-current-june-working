@@ -17,6 +17,10 @@ import { cn } from '@/lib/utils';
 import { typography } from '@/lib/typography';
 import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
+import { WorkoutSummaryPreview } from './workouts/WorkoutSummaryPreview';
+import { useQuery } from '@tanstack/react-query';
+import { getWorkoutWithExercises } from '@/services/workoutService';
+import { useWeightUnit } from '@/context/WeightUnitContext';
 
 interface WorkoutCardProps {
   id: string;
@@ -56,6 +60,7 @@ export const WorkoutCard = ({
   showFixOption = false
 }: WorkoutCardProps) => {
   const navigate = useNavigate();
+  const { weightUnit } = useWeightUnit();
   const trainingType = trainingTypes.find(t => t.id === type) || trainingTypes[0];
   const formattedDate = format(parseISO(date), 'MMM d, yyyy');
   const formattedTime = format(parseISO(date), 'h:mm a');
@@ -67,6 +72,13 @@ export const WorkoutCard = ({
   
   // Identify potentially incomplete workouts (no exercises or sets)
   const isPotentiallyIncomplete = exerciseCount === 0 || setCount === 0;
+  
+  // Load detailed exercise data when expanded
+  const { data: workoutDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['workout-details', id, isExpanded],
+    queryFn: () => isExpanded ? getWorkoutWithExercises(id) : null,
+    enabled: isExpanded
+  });
   
   const handleCardClick = () => {
     if (!selectionMode) {
@@ -267,7 +279,10 @@ export const WorkoutCard = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="w-full h-6 text-xs text-gray-500 hover:text-white"
+            className={cn(
+              "w-full h-6 text-xs text-gray-500 hover:text-white transition-colors",
+              isExpanded && "text-gray-300"
+            )}
             onClick={handleToggleExpand}
           >
             {isExpanded ? (
@@ -279,8 +294,22 @@ export const WorkoutCard = ({
         </div>
 
         {isExpanded && (
-          <div className="mt-2 pt-3 border-t border-gray-800">
-            <div className="grid grid-cols-2 gap-2">
+          <div className={cn(
+            "mt-2 pt-3 border-t border-gray-800 animate-fade-in",
+            isExpanded ? "opacity-100" : "opacity-0"
+          )}>
+            {/* Enhanced Summary Component */}
+            <WorkoutSummaryPreview
+              workoutId={id}
+              exerciseCount={exerciseCount}
+              setCount={setCount}
+              exerciseData={workoutDetails?.exercises || {}}
+              duration={duration}
+              weightUnit={weightUnit}
+              isLoading={isLoadingDetails}
+            />
+
+            <div className="grid grid-cols-2 gap-2 mt-4">
               <Button 
                 variant="outline" 
                 size="sm" 
