@@ -4,7 +4,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WorkoutDetailsLoading } from "@/components/workouts/WorkoutDetailsLoading";
 import { WorkoutDetailsHeader } from "@/components/workouts/WorkoutDetailsHeader";
 import { WorkoutDetailsEnhanced } from "@/components/workouts/WorkoutDetailsEnhanced";
-import { WorkoutAnalysisSection } from "@/components/workouts/analysis/WorkoutAnalysisSection";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useExerciseManagement } from "@/hooks/useExerciseManagement";
 import { calculateMuscleFocus } from '@/utils/exerciseUtils';
@@ -93,17 +92,6 @@ const WorkoutDetailsPage = () => {
                 onEditClick={() => setEditModalOpen(true)}
                 onDeleteClick={() => setDeleteDialogOpen(true)}
               />
-
-              <div className="mt-6">
-                <WorkoutAnalysisSection
-                  workout={workoutDetails}
-                  exerciseSets={exerciseSets}
-                  muscleFocus={muscleFocus}
-                  activeWorkoutTime={activeWorkoutTime}
-                  totalVolume={totalVolume}
-                  totalRestTime={totalRestTime}
-                />
-              </div>
 
               <WorkoutDetailsEnhanced
                 workout={workoutDetails}
