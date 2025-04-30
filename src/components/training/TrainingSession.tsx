@@ -3,7 +3,7 @@ import React, { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { useWorkoutStore } from '@/store/workoutStore';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 interface TrainingSessionProps {
@@ -61,8 +61,9 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       navigate('/training-session');
       
       // Show toast to confirm workout started
-      toast.success("Workout started - You can return to it anytime from the banner", {
-        duration: 4000
+      toast({
+        title: "Workout started",
+        description: "You can return to it anytime from the banner"
       });
     } 
     // Case 2: Active session exists - Just navigate to it
@@ -74,7 +75,9 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       
       // Only show toast if we have exercises (not just a new session)
       if (Object.keys(exercises).length > 0) {
-        toast.info("Resuming your active workout");
+        toast({
+          title: "Resuming your active workout"
+        });
       }
     }
     // Case 3: No config, no active session - Do nothing, component will unmount

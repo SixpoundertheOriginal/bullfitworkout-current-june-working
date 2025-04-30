@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { updateWorkout, updateExerciseSets, addExerciseToWorkout, removeExerciseFromWorkout } from "@/services/workoutService";
 import { ExerciseSet } from "@/types/exercise";
 
@@ -21,11 +21,16 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
     
     try {
       const updated = await updateWorkout(workoutId, updatedWorkout);
-      toast.success("Workout updated successfully");
+      toast({
+        title: "Workout updated successfully"
+      });
       return updated;
     } catch (error) {
       console.error("Error updating workout:", error);
-      toast.error("Failed to update workout");
+      toast({
+        title: "Failed to update workout",
+        variant: "destructive"
+      });
       throw error;
     }
   };
@@ -42,7 +47,9 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
     
     try {
       const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
-      toast.success("Exercise sets updated");
+      toast({
+        title: "Exercise sets updated"
+      });
       
       // Create a new object first, then pass it to onUpdate
       onUpdate((prev: Record<string, ExerciseSet[]>) => {
@@ -53,7 +60,10 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
       
     } catch (error) {
       console.error("Error updating exercise sets:", error);
-      toast.error("Failed to update exercise sets");
+      toast({
+        title: "Failed to update exercise sets",
+        variant: "destructive"
+      });
       throw error;
     }
   };
@@ -71,10 +81,15 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         return newSetsRecord;
       });
       
-      toast.success(`Added ${exerciseName} to workout`);
+      toast({
+        title: `Added ${exerciseName} to workout`
+      });
     } catch (error) {
       console.error("Error adding exercise:", error);
-      toast.error("Failed to add exercise");
+      toast({
+        title: "Failed to add exercise",
+        variant: "destructive"
+      });
       throw error;
     }
   };
@@ -92,12 +107,17 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         return newSets;
       });
       
-      toast.success(`Removed ${exerciseToDelete} from workout`);
+      toast({
+        title: `Removed ${exerciseToDelete} from workout`
+      });
       setDeleteAlertOpen(false);
       setExerciseToDelete("");
     } catch (error) {
       console.error("Error removing exercise:", error);
-      toast.error("Failed to remove exercise");
+      toast({
+        title: "Failed to remove exercise",
+        variant: "destructive"
+      });
     }
   };
 

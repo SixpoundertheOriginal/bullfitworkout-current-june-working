@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Dumbbell, PlayCircle, Clock } from 'lucide-react';
 import { formatTime } from '@/utils/formatTime';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 
 export const WorkoutBanner: React.FC = () => {
   const navigate = useNavigate();
@@ -57,7 +57,9 @@ export const WorkoutBanner: React.FC = () => {
     navigate('/training-session');
     
     if (Object.keys(exercises).length > 0) {
-      toast.info("Resuming your workout");
+      toast({
+        title: "Resuming your workout",
+      });
     }
   };
   

@@ -4,7 +4,7 @@ import { Play } from 'lucide-react';
 import { CircularGradientButton } from '@/components/CircularGradientButton';
 import { cn } from '@/lib/utils';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface StartTrainingButtonProps {
   trainingType?: string;
@@ -50,7 +50,9 @@ export const StartTrainingButton = ({
       state: { trainingType }
     });
     
-    toast.success("Workout started!", { duration: 3000 });
+    toast({
+      title: "Workout started!"
+    });
   };
   
   return (

@@ -31,4 +31,5 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
+// Export both the Toaster component and re-export the toast function from our hook
 export { Toaster }

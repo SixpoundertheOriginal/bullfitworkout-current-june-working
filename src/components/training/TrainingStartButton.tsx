@@ -5,7 +5,7 @@ import { Play } from 'lucide-react';
 import { CircularGradientButton } from '@/components/CircularGradientButton';
 import { cn } from '@/lib/utils';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface TrainingStartButtonProps {
   onStartClick?: () => void;
@@ -36,8 +36,8 @@ export const TrainingStartButton = ({
     // Navigate to the training session page
     navigate('/training-session');
     
-    toast.success("Workout started! Add exercises to begin", {
-      duration: 3000
+    toast({
+      title: "Workout started! Add exercises to begin"
     });
   };
   

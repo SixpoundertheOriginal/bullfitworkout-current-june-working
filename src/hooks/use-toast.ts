@@ -1,12 +1,12 @@
 
 import * as React from "react"
-import { toast as sonnerToast, type Toast } from "sonner"
+import { toast as sonnerToast, type ExternalToast } from "sonner"
 
 // Define the toast message cache to prevent duplicates
 const recentToasts = new Map<string, number>();
 const TOAST_EXPIRY_TIME = 3000; // 3 seconds
 
-export type ToastProps = Toast & {
+export type ToastProps = ExternalToast & {
   title?: React.ReactNode
   description?: React.ReactNode
   variant?: "default" | "destructive"
@@ -37,7 +37,7 @@ function toast(props: ToastProps) {
     }
   }, TOAST_EXPIRY_TIME);
   
-  return sonnerToast(title, {
+  return sonnerToast(title as React.ReactNode, {
     ...options,
     description,
   });
@@ -73,14 +73,18 @@ toast.warning = (title: string, options?: Omit<ToastProps, "title">) => {
   });
 };
 
+// Forward these methods directly from sonner
 toast.dismiss = sonnerToast.dismiss;
-toast.update = sonnerToast.update;
 toast.promise = sonnerToast.promise;
 toast.custom = sonnerToast.custom;
 toast.loading = sonnerToast.loading;
-toast.success = sonnerToast.success;
-toast.error = sonnerToast.error;
-toast.info = sonnerToast.info;
-toast.warning = sonnerToast.warning;
+toast.message = sonnerToast.message;
 
-export { toast }
+// Create a useToast hook that returns the toast function
+export function useToast() {
+  return {
+    toast
+  };
+}
+
+export { toast };

@@ -7,7 +7,7 @@ import { ExerciseSet } from "@/types/exercise";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useWorkoutStore } from "@/store/workoutStore";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 
 // Define a local version of ExerciseSet to match what's used in the workout state
 interface LocalExerciseSet {
@@ -55,7 +55,8 @@ export const WorkoutCompletion = ({
     resetSession();
     
     // Show confirmation toast
-    toast.success("Workout discarded", {
+    toast({
+      title: "Workout discarded",
       description: "Your workout session has been terminated"
     });
     

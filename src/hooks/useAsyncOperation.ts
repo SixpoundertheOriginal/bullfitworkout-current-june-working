@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface AsyncOperationOptions {
   successMessage?: string;
@@ -34,7 +34,9 @@ export function useAsyncOperation<T extends (...args: any[]) => Promise<any>>(
         setError(null);
         const result = await operation(...args);
         if (showSuccessToast) {
-          toast.success(successMessage);
+          toast({
+            title: successMessage
+          });
         }
         if (onSuccess) {
           onSuccess();
@@ -44,8 +46,10 @@ export function useAsyncOperation<T extends (...args: any[]) => Promise<any>>(
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
         if (showErrorToast) {
-          toast.error(errorMessage, {
-            description: error.message
+          toast({
+            title: errorMessage,
+            description: error.message,
+            variant: "destructive"
           });
         }
         if (onError) {

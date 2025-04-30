@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
@@ -25,12 +24,7 @@ function App() {
               <DateRangeProvider>
                 <WorkoutNavigationContextProvider>
                   <TooltipProvider>
-                    <Sonner 
-                      position="top-right" 
-                      closeButton={true}
-                      duration={3000}
-                      richColors
-                    />
+                    <Toaster />
                     <RouterProvider />
                     <WorkoutBanner />
                   </TooltipProvider>

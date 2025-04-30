@@ -6,7 +6,7 @@ import { trainingTypes } from "@/constants/trainingTypes";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { deleteWorkout } from "@/services/workoutService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
 import { Pagination } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 
@@ -38,11 +38,16 @@ export function WorkoutHistory({
       try {
         setDeletingId(id);
         await deleteWorkout(id);
-        toast.success("Workout deleted");
+        toast({
+          title: "Workout deleted"
+        });
         refetch();
       } catch (error) {
         console.error("Error deleting workout:", error);
-        toast.error("Failed to delete workout");
+        toast({
+          title: "Failed to delete workout",
+          variant: "destructive"
+        });
       } finally {
         setDeletingId(null);
       }
@@ -53,11 +58,16 @@ export function WorkoutHistory({
     try {
       setFixingId(id);
       // TODO: Implement workout fixing functionality
-      toast.success("Workout data updated");
+      toast({
+        title: "Workout data updated"
+      });
       refetch();
     } catch (error) {
       console.error("Error fixing workout:", error);
-      toast.error("Failed to fix workout data");
+      toast({
+        title: "Failed to fix workout data",
+        variant: "destructive"
+      });
     } finally {
       setFixingId(null);
     }
