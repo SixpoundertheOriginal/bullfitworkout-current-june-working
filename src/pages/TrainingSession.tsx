@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
+import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -23,8 +25,8 @@ const TrainingSessionPage = () => {
   
   // Use the Zustand store
   const {
-    exercises,
-    setExercises,
+    exercises: storeExercises,
+    setExercises: setStoreExercises,
     activeExercise,
     setActiveExercise,
     elapsedTime,
@@ -47,6 +49,9 @@ const TrainingSessionPage = () => {
     setTrainingConfig,
     setWorkoutStatus
   } = useWorkoutStore();
+  
+  // Adapt the store exercises to the expected format for exercise components
+  const exercises = adaptExerciseSets(storeExercises);
   
   // Calculate completedSets and totalSets
   const [completedSets, totalSets] = Object.entries(exercises).reduce(
@@ -157,12 +162,12 @@ const TrainingSessionPage = () => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     
     // Only show warning toast if exercise exists
-    if (exercises[exerciseName]) {
+    if (storeExercises[exerciseName]) {
       toast(`${exerciseName} is already in your workout`);
       return;
     }
 
-    setExercises(prev => ({
+    setStoreExercises(prev => ({
       ...prev,
       [exerciseName]: [
         { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }
@@ -216,21 +221,21 @@ const TrainingSessionPage = () => {
         progression: {
           timeOfDay: workoutStartTime.getHours() < 12 ? 'morning' : 
                      workoutStartTime.getHours() < 17 ? 'afternoon' : 'evening',
-          totalVolume: Object.entries(exercises).reduce((acc, [exerciseName, sets]) => {
+          totalVolume: Object.entries(storeExercises).reduce((acc, [exerciseName, sets]) => {
             return acc + sets.reduce((setAcc, set) => {
               return setAcc + (set.completed ? (set.weight * set.reps) : 0);
             }, 0);
           }, 0)
         },
         sessionDetails: {
-          exerciseCount: Object.keys(exercises).length,
+          exerciseCount: Object.keys(storeExercises).length,
           averageRestTime: currentRestTime,
           workoutDensity: completedSets / (elapsedTime / 60)
         }
       };
 
       const normalizedExercises = {};
-      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+      Object.entries(storeExercises).forEach(([exerciseName, sets]) => {
         normalizedExercises[exerciseName] = sets.map(set => ({
           ...set,
           isEditing: set.isEditing || false
@@ -247,7 +252,7 @@ const TrainingSessionPage = () => {
         name: trainingConfig?.trainingType || "Workout",
         trainingConfig: trainingConfig || null,
         notes: "",
-        metadata: workoutMetadata
+        metrics: workoutMetadata
       };
 
       // Navigate to workout complete with workout data
@@ -327,104 +332,97 @@ const TrainingSessionPage = () => {
             exercises={exercises}
             activeExercise={activeExercise}
             onAddSet={(exerciseName) => {
-              setExercises(prev => ({
-                ...prev,
-                [exerciseName]: [
-                  ...prev[exerciseName],
-                  { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }
-                ]
-              }));
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = [
+                ...storeExercises[exerciseName],
+                { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }
+              ];
+              setStoreExercises(newStoreExercises);
             }}
             onCompleteSet={handleCompleteSet}
             onDeleteExercise={deleteExercise}
             onRemoveSet={(exerciseName, setIndex) => {
-              setExercises(prev => ({
-                ...prev,
-                [exerciseName]: prev[exerciseName].filter((_, i) => i !== setIndex)
-              }));
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = storeExercises[exerciseName].filter((_, i) => i !== setIndex);
+              setStoreExercises(newStoreExercises);
             }}
             onEditSet={(exerciseName, setIndex) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                newExercises[exerciseName] = prev[exerciseName].map((set, i) => 
-                  i === setIndex ? { ...set, isEditing: true } : set
-                );
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
+                i === setIndex ? { ...set, isEditing: true } : set
+              );
+              setStoreExercises(newStoreExercises);
             }}
             onSaveSet={(exerciseName, setIndex) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                newExercises[exerciseName] = prev[exerciseName].map((set, i) => 
-                  i === setIndex ? { ...set, isEditing: false } : set
-                );
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
+                i === setIndex ? { ...set, isEditing: false } : set
+              );
+              setStoreExercises(newStoreExercises);
             }}
             onWeightChange={(exerciseName, setIndex, value) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                newExercises[exerciseName] = prev[exerciseName].map((set, i) => 
-                  i === setIndex ? { ...set, weight: parseFloat(value) || 0 } : set
-                );
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
+                i === setIndex ? { ...set, weight: parseFloat(value) || 0 } : set
+              );
+              setStoreExercises(newStoreExercises);
             }}
             onRepsChange={(exerciseName, setIndex, value) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                newExercises[exerciseName] = prev[exerciseName].map((set, i) => 
-                  i === setIndex ? { ...set, reps: parseInt(value) || 0 } : set
-                );
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
+                i === setIndex ? { ...set, reps: parseInt(value) || 0 } : set
+              );
+              setStoreExercises(newStoreExercises);
             }}
             onRestTimeChange={(exerciseName, setIndex, value) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                newExercises[exerciseName] = prev[exerciseName].map((set, i) => 
-                  i === setIndex ? { ...set, restTime: parseInt(value) || 60 } : set
-                );
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
+                i === setIndex ? { ...set, restTime: parseInt(value) || 60 } : set
+              );
+              setStoreExercises(newStoreExercises);
             }}
             onWeightIncrement={(exerciseName, setIndex, increment) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                const set = prev[exerciseName][setIndex];
-                newExercises[exerciseName][setIndex] = { 
-                  ...set, 
-                  weight: Math.max(0, (set.weight || 0) + increment)
-                };
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              const set = storeExercises[exerciseName][setIndex];
+              newStoreExercises[exerciseName][setIndex] = { 
+                ...set, 
+                weight: Math.max(0, (set.weight || 0) + increment)
+              };
+              setStoreExercises(newStoreExercises);
             }}
             onRepsIncrement={(exerciseName, setIndex, increment) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                const set = prev[exerciseName][setIndex];
-                newExercises[exerciseName][setIndex] = { 
-                  ...set, 
-                  reps: Math.max(0, (set.reps || 0) + increment)
-                };
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              const set = storeExercises[exerciseName][setIndex];
+              newStoreExercises[exerciseName][setIndex] = { 
+                ...set, 
+                reps: Math.max(0, (set.reps || 0) + increment)
+              };
+              setStoreExercises(newStoreExercises);
             }}
             onRestTimeIncrement={(exerciseName, setIndex, increment) => {
-              setExercises(prev => {
-                const newExercises = { ...prev };
-                const set = prev[exerciseName][setIndex];
-                newExercises[exerciseName][setIndex] = { 
-                  ...set, 
-                  restTime: Math.max(0, (set.restTime || 60) + increment)
-                };
-                return newExercises;
-              });
+              const newStoreExercises = {...storeExercises};
+              const set = storeExercises[exerciseName][setIndex];
+              newStoreExercises[exerciseName][setIndex] = { 
+                ...set, 
+                restTime: Math.max(0, (set.restTime || 60) + increment)
+              };
+              setStoreExercises(newStoreExercises);
             }}
             onShowRestTimer={handleShowRestTimer}
             onResetRestTimer={triggerRestTimerReset}
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
-            setExercises={setExercises}
+            setExercises={(newExercises) => {
+              // Convert adapted exercises back to store format before setting
+              if (typeof newExercises === 'function') {
+                setStoreExercises((prev) => {
+                  const adaptedPrev = adaptExerciseSets(prev);
+                  const result = newExercises(adaptedPrev);
+                  return adaptToStoreFormat(result);
+                });
+              } else {
+                setStoreExercises(adaptToStoreFormat(newExercises));
+              }
+            }}
           />
         </div>
       </main>

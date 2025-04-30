@@ -1,7 +1,8 @@
 
 import React from "react";
-import { ExerciseCard } from "./ExerciseCard";
+import { Card } from "@/components/ui/card";
 import { ExerciseSet } from "@/types/exercise";
+import ExerciseCard from '@/components/exercises/ExerciseCard';
 
 interface ExerciseListProps {
   exercises: Record<string, ExerciseSet[]>;
@@ -58,7 +59,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
       {exerciseList.map(exerciseName => (
         <ExerciseCard
           key={exerciseName}
-          exerciseName={exerciseName}
+          exercise={exerciseName}
           sets={exercises[exerciseName]}
           isActive={activeExercise === exerciseName}
           onAddSet={() => onAddSet(exerciseName)}
