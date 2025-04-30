@@ -5,42 +5,7 @@ import { processWorkoutMetrics, ProcessedWorkoutMetrics } from '@/utils/workoutM
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-
-// Define the WorkoutStats type that components expect
-export interface WorkoutStats {
-  totalWorkouts: number;
-  totalExercises: number;
-  totalSets: number;
-  totalDuration: number;
-  avgDuration: number;
-  workoutTypes: { type: string; count: number }[];
-  recommendedType?: string;
-  recommendedDuration?: number;
-  recommendedTags?: string[];
-  tags?: { name: string; count: number }[];
-  progressMetrics?: {
-    volumeChangePercentage: number;
-    strengthTrend: 'increasing' | 'decreasing' | 'stable';
-    consistencyScore: number;
-  };
-  streakDays?: number;
-  workouts?: any[]; // For backward compatibility
-}
-
-// Define the TopExerciseStats type for components that use it
-export interface TopExerciseStats {
-  exerciseName: string;
-  totalVolume: number;
-  totalSets: number;
-  averageWeight: number;
-}
-
-// Define the WorkoutTypeStats type for components that use it
-export interface WorkoutTypeStats {
-  type: string;
-  count: number;
-  percentage: number;
-}
+import { WorkoutStats, WorkoutStatsResult } from '@/types/workout-metrics';
 
 /**
  * Hook to calculate and return comprehensive workout statistics
@@ -55,7 +20,7 @@ export function useWorkoutStats(
   exercises?: Record<string, ExerciseSet[]>,
   duration?: number,
   userBodyInfo?: { weight: number; unit: string }
-) {
+): WorkoutStatsResult {
   const { weightUnit } = useWeightUnit();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -67,7 +32,18 @@ export function useWorkoutStats(
     totalDuration: 0,
     avgDuration: 0,
     workoutTypes: [],
-    tags: []
+    tags: [],
+    timePatterns: {
+      daysFrequency: {},
+      durationByTimeOfDay: {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0
+      }
+    },
+    muscleFocus: {},
+    exerciseVolumeHistory: []
   });
   
   // Process workout metrics if exercises are provided
@@ -90,9 +66,10 @@ export function useWorkoutStats(
   const fetchWorkoutData = async () => {
     setLoading(true);
     try {
+      // Fix table name - use workout_sessions instead of workouts
       const { data: workoutData, error } = await supabase
-        .from('workouts')
-        .select('*, exercises(*)')
+        .from('workout_sessions')
+        .select('*, exercises:exercise_sets(*)')
         .order('start_time', { ascending: false });
         
       if (error) throw error;
@@ -113,10 +90,48 @@ export function useWorkoutStats(
         const typeCounts: Record<string, number> = {};
         const tagCounts: Record<string, number> = {};
         
+        // Prepare time patterns data
+        const daysFrequency: Record<string, number> = {
+          monday: 0, tuesday: 0, wednesday: 0, thursday: 0, 
+          friday: 0, saturday: 0, sunday: 0
+        };
+        
+        const durationByTimeOfDay = {
+          morning: 0,   // 5am-11:59am
+          afternoon: 0, // 12pm-4:59pm
+          evening: 0,   // 5pm-8:59pm
+          night: 0      // 9pm-4:59am
+        };
+        
+        // Muscle focus tracking
+        const muscleFocusData: Record<string, number> = {};
+        
+        // Exercise volume history for tracking progress
+        const exerciseVolumes: Record<string, any> = {};
+        
         workoutData.forEach(workout => {
           // Count workout types
           if (workout.training_type) {
             typeCounts[workout.training_type] = (typeCounts[workout.training_type] || 0) + 1;
+          }
+          
+          // Track workout day frequency
+          const workoutDate = new Date(workout.start_time);
+          const day = workoutDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+          if (daysFrequency[day] !== undefined) {
+            daysFrequency[day]++;
+          }
+          
+          // Track time of day
+          const hour = workoutDate.getHours();
+          if (hour >= 5 && hour < 12) {
+            durationByTimeOfDay.morning += workout.duration || 0;
+          } else if (hour >= 12 && hour < 17) {
+            durationByTimeOfDay.afternoon += workout.duration || 0;
+          } else if (hour >= 17 && hour < 21) {
+            durationByTimeOfDay.evening += workout.duration || 0;
+          } else {
+            durationByTimeOfDay.night += workout.duration || 0;
           }
           
           // Count tags
@@ -129,11 +144,38 @@ export function useWorkoutStats(
           // Count exercises and sets
           if (workout.exercises && Array.isArray(workout.exercises)) {
             // Get unique exercise names
-            const uniqueExercises = new Set(workout.exercises.map(e => e.exercise_name));
+            const exerciseNames = workout.exercises.map(e => e.exercise_name);
+            const uniqueExercises = new Set(exerciseNames);
             exerciseCount += uniqueExercises.size;
             
             // Count sets
             setCount += workout.exercises.length;
+            
+            // Track muscle focus (simple implementation)
+            Array.from(uniqueExercises).forEach(exerciseName => {
+              // This is simplified - in a real app, you'd get the muscle groups from an exercise database
+              const muscleGroup = getExerciseMainMuscleGroup(exerciseName as string);
+              if (muscleGroup) {
+                muscleFocusData[muscleGroup] = (muscleFocusData[muscleGroup] || 0) + 1;
+              }
+            });
+            
+            // Track exercise volume for progress tracking
+            workout.exercises.forEach(set => {
+              const name = set.exercise_name;
+              if (!exerciseVolumes[name]) {
+                exerciseVolumes[name] = {
+                  volume: 0,
+                  count: 0,
+                  recent: true,
+                };
+              }
+              
+              if (set.weight && set.reps && set.completed) {
+                exerciseVolumes[name].volume += set.weight * set.reps;
+                exerciseVolumes[name].count++;
+              }
+            });
           }
         });
         
@@ -169,6 +211,16 @@ export function useWorkoutStats(
           consistencyScore: 85 // Placeholder
         };
         
+        // Create exercise volume history with trends
+        const exerciseVolumeHistory = Object.entries(exerciseVolumes)
+          .map(([exercise_name, data]) => ({
+            exercise_name,
+            trend: 'increasing' as const,
+            percentChange: 10 // Placeholder value
+          }))
+          .sort((a, b) => b.percentChange - a.percentChange)
+          .slice(0, 5);
+        
         setStats({
           totalWorkouts,
           totalExercises: exerciseCount,
@@ -182,15 +234,43 @@ export function useWorkoutStats(
           tags,
           progressMetrics,
           streakDays,
-          workouts: workoutData
+          workouts: workoutData,
+          timePatterns: {
+            daysFrequency,
+            durationByTimeOfDay
+          },
+          muscleFocus: muscleFocusData,
+          exerciseVolumeHistory
         });
       }
-      
     } catch (error) {
       console.error('Error fetching workout data:', error);
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Helper function to map exercise names to muscle groups (simplified)
+  const getExerciseMainMuscleGroup = (exerciseName: string): string => {
+    const nameLower = exerciseName.toLowerCase();
+    
+    if (nameLower.includes('bench') || nameLower.includes('chest') || nameLower.includes('pec')) {
+      return 'chest';
+    } else if (nameLower.includes('squat') || nameLower.includes('leg') || nameLower.includes('quad')) {
+      return 'legs';
+    } else if (nameLower.includes('dead') || nameLower.includes('back') || nameLower.includes('row')) {
+      return 'back';
+    } else if (nameLower.includes('shoulder') || nameLower.includes('press') || nameLower.includes('delt')) {
+      return 'shoulders';
+    } else if (nameLower.includes('bicep') || nameLower.includes('curl')) {
+      return 'arms';
+    } else if (nameLower.includes('tricep') || nameLower.includes('extension')) {
+      return 'arms';
+    } else if (nameLower.includes('core') || nameLower.includes('ab')) {
+      return 'core';
+    }
+    
+    return 'other';
   };
   
   // Calculate streak days
@@ -248,10 +328,10 @@ export function useWorkoutStats(
   
   // Combine the metrics with the backward compatibility properties
   return {
-    ...workoutMetrics,  // Include the processed metrics
+    ...(workoutMetrics || {} as ProcessedWorkoutMetrics),  // Include the processed metrics
     stats,              // Include backward compatibility stats
     loading,
     refetch,
     workouts
-  };
+  } as WorkoutStatsResult;
 }

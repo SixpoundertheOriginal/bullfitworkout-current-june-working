@@ -1,5 +1,5 @@
 
-import { WorkoutMetrics } from '@/types/workout-metrics';
+import { WorkoutMetrics, WorkoutStats } from '@/types/workout-metrics';
 import { ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 /**
@@ -33,17 +33,30 @@ export function extractDensityMetrics(metrics: ProcessedWorkoutMetrics) {
  * Creates a backward-compatible stats object from ProcessedWorkoutMetrics
  * for components that expect the old format.
  */
-export function createBackwardCompatibleStats(metrics: ProcessedWorkoutMetrics) {
+export function createBackwardCompatibleStats(metrics: ProcessedWorkoutMetrics): WorkoutStats {
   return {
     totalWorkouts: 1,
     totalExercises: metrics.exerciseCount,
     totalSets: metrics.setCount.total,
     totalDuration: metrics.duration,
     avgDuration: metrics.duration,
+    workoutTypes: [],
     efficiency: metrics.efficiency,
     density: metrics.density,
     intensity: metrics.intensity,
     totalVolume: metrics.totalVolume,
-    // Add other fields as needed by components
+    // Include muscle focus for backward compatibility
+    muscleFocus: metrics.muscleFocus,
+    // Create empty time patterns data
+    timePatterns: {
+      daysFrequency: {},
+      durationByTimeOfDay: {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0
+      }
+    },
+    exerciseVolumeHistory: []
   };
 }

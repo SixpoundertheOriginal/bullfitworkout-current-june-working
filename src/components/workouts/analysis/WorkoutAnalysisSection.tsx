@@ -45,6 +45,9 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
   const activeOnlyDensity = metrics?.densityMetrics?.activeOnlyDensity ?? 
     densityMetrics?.activeOnlyDensity ?? 
     (activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0);
+    
+  // If metrics provides muscleFocus, use it, otherwise use the prop
+  const muscleGroups = metrics?.muscleFocus || muscleFocus;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -71,7 +74,7 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
       <Card className="bg-gray-900/80 border-gray-800">
         <div className="p-4">
           <h3 className="text-sm mb-4">Muscle Focus Distribution</h3>
-          <MuscleFocusChart muscleGroups={muscleFocus} />
+          <MuscleFocusChart muscleGroups={muscleGroups} />
         </div>
       </Card>
     </div>

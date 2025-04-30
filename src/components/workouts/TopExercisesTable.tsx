@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dumbbell, ChevronDown, ChevronRight } from "lucide-react";
-import { TopExerciseStats } from "@/hooks/useWorkoutStats";
+import { TopExerciseStats } from "@/types/workout-metrics";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { convertWeight } from "@/utils/unitConversion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
