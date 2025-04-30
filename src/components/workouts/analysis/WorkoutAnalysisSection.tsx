@@ -5,6 +5,7 @@ import { WorkoutDensityChart } from '@/components/metrics/WorkoutDensityChart';
 import { MuscleFocusChart } from '@/components/metrics/MuscleFocusChart';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { Activity } from 'lucide-react';
+import { ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 interface WorkoutAnalysisSectionProps {
   workout: {
@@ -15,6 +16,7 @@ interface WorkoutAnalysisSectionProps {
   activeWorkoutTime: number;
   totalVolume: number;
   totalRestTime: number;
+  metrics?: ProcessedWorkoutMetrics; // Now accepting full metrics object
   densityMetrics?: {
     overallDensity: number;
     activeOnlyDensity: number;
@@ -30,15 +32,18 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
   activeWorkoutTime,
   totalVolume,
   totalRestTime,
-  densityMetrics,
+  metrics, // Full metrics object
+  densityMetrics, // For backward compatibility
 }) => {
   const { weightUnit } = useWeightUnit();
   
-  // Calculate density metrics if not provided (for backward compatibility)
-  const overallDensity = densityMetrics?.overallDensity ?? 
+  // Use metrics if available, otherwise use individual props or calculate
+  const overallDensity = metrics?.densityMetrics?.overallDensity ?? 
+    densityMetrics?.overallDensity ??
     (workout.duration > 0 ? totalVolume / workout.duration : 0);
   
-  const activeOnlyDensity = densityMetrics?.activeOnlyDensity ?? 
+  const activeOnlyDensity = metrics?.densityMetrics?.activeOnlyDensity ?? 
+    densityMetrics?.activeOnlyDensity ?? 
     (activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0);
 
   return (

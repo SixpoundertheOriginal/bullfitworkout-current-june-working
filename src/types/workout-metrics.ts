@@ -1,4 +1,6 @@
 
+import { ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
+
 export interface WorkoutMetrics {
   time: number;
   exerciseCount: number;
@@ -24,3 +26,6 @@ export interface WorkoutPerformanceMetrics {
   setCompletionRate: number;
   metrics: Record<string, any>;
 }
+
+// Export the new centralized metrics type to support transition
+export type { ProcessedWorkoutMetrics };
