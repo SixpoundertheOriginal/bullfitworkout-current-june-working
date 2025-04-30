@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,48 +25,114 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 interface WeeklyTrainingPatternsProps {
   className?: string;
+  externalTimeframe?: 'this-week' | 'previous-week' | 'last-30-days' | 'all-time' | 'custom';
+  externalDateRange?: DateRange;
 }
 
 type TimeframeOption = 'current-week' | 'previous-week' | 'last-30-days' | 'last-90-days' | 'custom';
 
-export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProps) => {
+export const WeeklyTrainingPatterns = ({ 
+  className,
+  externalTimeframe,
+  externalDateRange
+}: WeeklyTrainingPatternsProps) => {
+  // Local state only used if no external control is provided
   const [timeframe, setTimeframe] = useState<TimeframeOption>('current-week');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const { stats, loading, refetch } = useWorkoutStats();
   
+  // Map external timeframe to internal timeframe if provided
+  useEffect(() => {
+    if (externalTimeframe) {
+      switch (externalTimeframe) {
+        case 'this-week':
+          setTimeframe('current-week');
+          break;
+        case 'previous-week':
+          setTimeframe('previous-week');
+          break;
+        case 'last-30-days':
+          setTimeframe('last-30-days');
+          break;
+        case 'all-time':
+          setTimeframe('last-90-days'); // Use 90 days as approximation for all-time view
+          break;
+        case 'custom':
+          setTimeframe('custom');
+          break;
+      }
+    }
+  }, [externalTimeframe]);
+  
+  // Update custom date range when external date range changes
+  useEffect(() => {
+    if (externalDateRange) {
+      setCustomDateRange(externalDateRange);
+    }
+  }, [externalDateRange]);
+  
   // Calculate date range based on selected timeframe
   const getDateRange = (): { start: Date, end: Date } => {
+    // If external date range is provided and valid, use it
+    if (externalTimeframe === 'custom' && externalDateRange?.from && externalDateRange?.to) {
+      return {
+        start: externalDateRange.from,
+        end: externalDateRange.to
+      };
+    }
+    
     const today = new Date();
     let start: Date;
     let end: Date = today;
     
-    switch(timeframe) {
-      case 'previous-week':
-        // Previous full week (Monday to Sunday)
-        start = subWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1); // Monday of previous week
-        end = subDays(startOfWeek(today, { weekStartsOn: 1 }), 1); // Sunday before this week
-        break;
-      case 'last-30-days':
-        start = subDays(today, 29); // 30 days including today
-        break;
-      case 'last-90-days':
-        start = subDays(today, 89); // 90 days including today
-        break;
-      case 'custom':
-        if (customDateRange?.from && customDateRange?.to) {
-          return {
-            start: customDateRange.from,
-            end: customDateRange.to
-          };
-        }
-        // Fallback to current week if no custom range is set
-        start = startOfWeek(today, { weekStartsOn: 1 });
-        break;
-      case 'current-week':
-      default:
-        // Current week (Monday to today)
-        start = startOfWeek(today, { weekStartsOn: 1 });
-        break;
+    // If external timeframe is provided, use it
+    if (externalTimeframe) {
+      switch(externalTimeframe) {
+        case 'this-week':
+          start = startOfWeek(today, { weekStartsOn: 1 });
+          break;
+        case 'previous-week':
+          start = subWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1);
+          end = subDays(startOfWeek(today, { weekStartsOn: 1 }), 1);
+          break;
+        case 'last-30-days':
+          start = subDays(today, 29);
+          break;
+        case 'all-time':
+          start = subDays(today, 89); // Show last 90 days for "all time" view
+          break;
+        default:
+          start = startOfWeek(today, { weekStartsOn: 1 });
+      }
+    } else {
+      // Use local timeframe if no external control
+      switch(timeframe) {
+        case 'previous-week':
+          start = subWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1);
+          end = subDays(startOfWeek(today, { weekStartsOn: 1 }), 1);
+          break;
+        case 'last-30-days':
+          start = subDays(today, 29);
+          break;
+        case 'last-90-days':
+          start = subDays(today, 89);
+          break;
+        case 'custom':
+          if (customDateRange?.from && customDateRange?.to) {
+            return {
+              start: customDateRange.from,
+              end: customDateRange.to
+            };
+          }
+          // Fallback to current week if no custom range is set
+          start = startOfWeek(today, { weekStartsOn: 1 });
+          break;
+        case 'current-week':
+        default:
+          // Current week (Monday to today)
+          start = startOfWeek(today, { weekStartsOn: 1 });
+          break;
+      }
     }
     
     return { start, end };
@@ -77,16 +144,34 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   const formatDateRangeDisplay = () => {
     const { start, end } = dateRange;
     
-    if (timeframe === 'current-week') {
-      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (This Week)`;
-    } else if (timeframe === 'previous-week') {
-      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Previous Week)`;
-    } else if (timeframe === 'last-30-days') {
-      return `Last 30 Days`;
-    } else if (timeframe === 'last-90-days') {
-      return `Last 90 Days`;
+    // Use different text based on timeframe
+    if (externalTimeframe) {
+      switch (externalTimeframe) {
+        case 'this-week':
+          return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (This Week)`;
+        case 'previous-week':
+          return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Previous Week)`;
+        case 'last-30-days':
+          return `Last 30 Days`;
+        case 'all-time':
+          return `Last 90 Days`;
+        case 'custom':
+          return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Custom)`;
+        default:
+          return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+      }
     } else {
-      return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Custom)`;
+      if (timeframe === 'current-week') {
+        return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (This Week)`;
+      } else if (timeframe === 'previous-week') {
+        return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Previous Week)`;
+      } else if (timeframe === 'last-30-days') {
+        return `Last 30 Days`;
+      } else if (timeframe === 'last-90-days') {
+        return `Last 90 Days`;
+      } else {
+        return `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")} (Custom)`;
+      }
     }
   };
   
@@ -187,18 +272,20 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
   
   const consistencyScore = calculateConsistencyScore();
   
-  // Handle timeframe change
+  // Handle timeframe change - only used if external control is not provided
   const handleTimeframeChange = (value: string) => {
-    setTimeframe(value as TimeframeOption);
-    // If switching from custom to another timeframe, refresh stats
-    if (timeframe === 'custom' && value !== 'custom') {
-      refetch();
+    if (!externalTimeframe) {
+      setTimeframe(value as TimeframeOption);
+      // If switching from custom to another timeframe, refresh stats
+      if (timeframe === 'custom' && value !== 'custom') {
+        refetch();
+      }
     }
   };
   
-  // Handle custom date range change
+  // Handle custom date range change - only used if external control is not provided
   const handleDateRangeChange = (range: DateRange | undefined) => {
-    if (range?.from && range?.to) {
+    if (!externalDateRange && range?.from && range?.to) {
       setCustomDateRange(range);
       setTimeframe('custom');
     }
@@ -211,45 +298,52 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
           <CalendarDays className="mr-2 h-5 w-5 text-purple-400" />
           Training Patterns
         </h3>
-        <div className="flex items-center space-x-2">
-          <Select
-            value={timeframe}
-            onValueChange={handleTimeframeChange}
-          >
-            <SelectTrigger className="w-[160px] bg-gray-900 border-gray-800">
-              <SelectValue placeholder="Time period" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800">
-              <SelectItem value="current-week">This Week</SelectItem>
-              <SelectItem value="previous-week">Previous Week</SelectItem>
-              <SelectItem value="last-30-days">Last 30 Days</SelectItem>
-              <SelectItem value="last-90-days">Last 90 Days</SelectItem>
-              <SelectItem value="custom">Custom Range</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {timeframe === 'custom' && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="bg-gray-900 border-gray-800">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Select Dates
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <DateRangePicker
-                  value={customDateRange}
-                  onChange={handleDateRangeChange}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
+        
+        {/* Only show selector if no external control is provided */}
+        {!externalTimeframe && (
+          <div className="flex items-center space-x-2">
+            <Select
+              value={timeframe}
+              onValueChange={handleTimeframeChange}
+            >
+              <SelectTrigger className="w-[160px] bg-gray-900 border-gray-800">
+                <SelectValue placeholder="Time period" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-gray-800">
+                <SelectItem value="current-week">This Week</SelectItem>
+                <SelectItem value="previous-week">Previous Week</SelectItem>
+                <SelectItem value="last-30-days">Last 30 Days</SelectItem>
+                <SelectItem value="last-90-days">Last 90 Days</SelectItem>
+                <SelectItem value="custom">Custom Range</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {timeframe === 'custom' && !externalDateRange && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="bg-gray-900 border-gray-800">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Select Dates
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <DateRangePicker
+                    value={customDateRange}
+                    onChange={handleDateRangeChange}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        )}
       </div>
       
-      <div className="text-sm text-gray-400">
-        {formatDateRangeDisplay()}
-      </div>
+      {/* Only show this when using internal timeframe control */}
+      {!externalTimeframe && (
+        <div className="text-sm text-gray-400">
+          {formatDateRangeDisplay()}
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="bg-gray-900 border-gray-800">
@@ -353,3 +447,4 @@ export const WeeklyTrainingPatterns = ({ className }: WeeklyTrainingPatternsProp
     </div>
   );
 };
+

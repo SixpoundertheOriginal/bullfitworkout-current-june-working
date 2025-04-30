@@ -14,20 +14,68 @@ import { TonnageChart } from "@/components/metrics/TonnageChart";
 import { useDateRange } from "@/context/DateRangeContext";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  startOfWeek, 
+  endOfWeek, 
+  subWeeks,
+  subDays,
+  format 
+} from "date-fns";
+import { DateRange } from "react-day-picker";
 
 interface TonnageData {
   date: string;
   tonnage: number;
 }
 
+type TimeRange = 'this-week' | 'previous-week' | 'last-30-days' | 'all-time' | 'custom';
+
 export const OverviewPage = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-  const { dateRange } = useDateRange();
-  const { stats, loading: statsLoading } = useWorkoutStats();
-  const { data: basicStats, isLoading: basicStatsLoading } = useBasicWorkoutStats(dateRange);
   
+  // Global time range state that will be used by all components
+  const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
+  const [calculatedDateRange, setCalculatedDateRange] = useState<DateRange | undefined>();
+  
+  const { dateRange, setDateRange } = useDateRange();
+  const { stats, loading: statsLoading, refetch } = useWorkoutStats();
+  
+  // Effect to calculate date range based on selected time range
+  useEffect(() => {
+    const now = new Date();
+    let newDateRange: DateRange | undefined;
+    
+    switch (timeRange) {
+      case 'this-week': {
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday as end of week
+        newDateRange = { from: weekStart, to: weekEnd };
+        break;
+      }
+      case 'previous-week': {
+        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
+        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
+        newDateRange = { from: previousWeekStart, to: previousWeekEnd };
+        break;
+      }
+      case 'last-30-days': {
+        newDateRange = { from: subDays(now, 30), to: now };
+        break;
+      }
+      case 'all-time': {
+        newDateRange = undefined; // No date range filter for all-time
+        break;
+      }
+    }
+    
+    setCalculatedDateRange(newDateRange);
+    setDateRange(newDateRange);
+  }, [timeRange, setDateRange]);
+  
+  // When the tab changes to history, ensure workouts are shown
   useEffect(() => {
     if (activeTab === "history") {
       setShowWorkouts(true);
@@ -43,9 +91,9 @@ export const OverviewPage = () => {
     // Filter workouts by date range if provided
     let filteredWorkouts = [...stats.workouts];
     
-    if (dateRange?.from && dateRange?.to) {
-      const fromDate = new Date(dateRange.from);
-      const toDate = new Date(dateRange.to);
+    if (calculatedDateRange?.from && calculatedDateRange?.to) {
+      const fromDate = new Date(calculatedDateRange.from);
+      const toDate = new Date(calculatedDateRange.to);
       toDate.setHours(23, 59, 59, 999); // End of day
       
       filteredWorkouts = filteredWorkouts.filter(workout => {
@@ -99,9 +147,33 @@ export const OverviewPage = () => {
     // Convert map to array and sort by date
     return Array.from(workoutsByDate.values())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [stats?.workouts, dateRange]);
+  }, [stats?.workouts, calculatedDateRange]);
 
   console.log("Final tonnage data calculated:", tonnageData);
+
+  // Get date range text for display
+  const getDateRangeText = () => {
+    const now = new Date();
+    
+    switch (timeRange) {
+      case 'this-week': {
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+      }
+      case 'previous-week': {
+        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
+        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
+        return `${format(previousWeekStart, "MMM d")} - ${format(previousWeekEnd, "MMM d, yyyy")}`;
+      }
+      case 'last-30-days':
+        return `${format(subDays(now, 30), "MMM d")} - ${format(now, "MMM d, yyyy")}`;
+      case 'all-time':
+        return "All time";
+      default:
+        return "Select period";
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
@@ -139,12 +211,41 @@ export const OverviewPage = () => {
           </TabsList>
           
           <TabsContent value="overview" className="mt-4 space-y-6">
-            <QuickStatsSection showDateRange={true} />
+            {/* Global time period selector */}
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Overview</h3>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={timeRange}
+                  onValueChange={(value) => setTimeRange(value as TimeRange)}
+                >
+                  <SelectTrigger className="w-[140px] bg-gray-900 border-gray-800">
+                    <SelectValue placeholder="Time period" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-800">
+                    <SelectItem value="this-week">This Week</SelectItem>
+                    <SelectItem value="previous-week">Previous Week</SelectItem>
+                    <SelectItem value="last-30-days">Last 30 Days</SelectItem>
+                    <SelectItem value="all-time">All Time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="text-sm text-gray-400 -mt-4 mb-2">
+              {getDateRangeText()}
+            </div>
+            
+            <QuickStatsSection showDateRange={false} />
             <TonnageChart 
               data={tonnageData} 
               className="mt-4"
             />
-            <WeeklyTrainingPatterns />
+            <WeeklyTrainingPatterns 
+              externalTimeframe={timeRange as any} 
+              externalDateRange={calculatedDateRange} 
+              className="" 
+            />
             <InsightsDashboard stats={stats} className="mb-8" />
           </TabsContent>
           

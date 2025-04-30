@@ -16,68 +16,22 @@ interface QuickStatsSectionProps {
 }
 
 export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionProps) => {
-  const [timeRange, setTimeRange] = useState<TimeRange>('this-week');
-  const [calculatedDateRange, setCalculatedDateRange] = useState<DateRange | undefined>();
+  // Get date range from context instead of managing our own
+  const { dateRange } = useDateRange();
   
-  // Only use the DateRange context when showDateRange is true
-  const dateRangeContext = showDateRange ? useDateRange() : null;
-  
-  // Update date range when time range changes
-  useEffect(() => {
-    const now = new Date();
-    let newDateRange: DateRange | undefined;
-    
-    switch (timeRange) {
-      case 'this-week': {
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday as end of week
-        newDateRange = { from: weekStart, to: weekEnd };
-        break;
-      }
-      case 'previous-week': {
-        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
-        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
-        newDateRange = { from: previousWeekStart, to: previousWeekEnd };
-        break;
-      }
-      case 'last-30-days': {
-        newDateRange = { from: subDays(now, 30), to: now };
-        break;
-      }
-      case 'all-time': {
-        newDateRange = undefined; // No date range filter for all-time
-        break;
-      }
-    }
-    
-    setCalculatedDateRange(newDateRange);
-    if (dateRangeContext?.setDateRange && showDateRange) {
-      dateRangeContext.setDateRange(newDateRange);
-    }
-  }, [timeRange, dateRangeContext, showDateRange]);
+  // Use the basic stats hook with the date range from context
+  const { data: stats, isLoading } = useBasicWorkoutStats(dateRange);
 
-  const { data: stats, isLoading } = useBasicWorkoutStats(calculatedDateRange);
-
-  // Calculate date range text based on selected time range
+  // Calculate date range text based on dateRange from context
   const getDateRangeText = () => {
-    const now = new Date();
-    
-    switch (timeRange) {
-      case 'this-week': {
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
-      }
-      case 'previous-week': {
-        const previousWeekStart = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1);
-        const previousWeekEnd = subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1);
-        return `${format(previousWeekStart, "MMM d")} - ${format(previousWeekEnd, "MMM d, yyyy")}`;
-      }
-      case 'last-30-days':
-        return `${format(subDays(now, 30), "MMM d")} - ${format(now, "MMM d, yyyy")}`;
-      case 'all-time':
-        return "All time";
+    if (!dateRange || !dateRange.from) {
+      return "All time";
     }
+    
+    const from = dateRange.from;
+    const to = dateRange.to || new Date();
+    
+    return `${format(from, "MMM d")} - ${format(to, "MMM d, yyyy")}`;
   };
 
   // Get the most active day of the week
@@ -108,20 +62,7 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
       
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Quick Stats</h3>
-        <Select
-          value={timeRange}
-          onValueChange={(value) => setTimeRange(value as TimeRange)}
-        >
-          <SelectTrigger className="w-[140px] bg-gray-900 border-gray-800">
-            <SelectValue placeholder="Time period" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-900 border-gray-800">
-            <SelectItem value="this-week">This Week</SelectItem>
-            <SelectItem value="previous-week">Previous Week</SelectItem>
-            <SelectItem value="last-30-days">Last 30 Days</SelectItem>
-            <SelectItem value="all-time">All Time</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Remove the time period selector from here since we're using the global one */}
       </div>
       
       {/* Use glass/card-gradient for light/dark */}
@@ -133,7 +74,7 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
         <MetricCard
           icon={Calendar}
           value={isLoading ? "..." : stats?.weeklyWorkouts?.toString() || "0"}
-          label={timeRange === 'all-time' ? 'Total Workouts' : 'Workouts'}
+          label={!dateRange ? 'Total Workouts' : 'Workouts'}
           description={dateRangeText}
           tooltip={`Workouts completed in the selected time period`}
           gradientClass="from-violet-600/20 via-black/5 to-violet-900/20 hover:from-violet-600/30 hover:to-violet-900/30"
@@ -152,7 +93,7 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
         <MetricCard
           icon={Target}
           value={isLoading ? "..." : `${Math.round(stats?.weeklyVolume || 0).toLocaleString()}`}
-          label={timeRange === 'all-time' ? 'Total Volume' : 'Period Volume'}
+          label={!dateRange ? 'Total Volume' : 'Period Volume'}
           tooltip="Total weight lifted (reps × weight) in this period"
           progressValue={stats?.weeklyVolume ? Math.min(100, stats.weeklyVolume / 1000) : 0}
           gradientClass="from-emerald-600/20 via-black/5 to-emerald-900/20 hover:from-emerald-600/30 hover:to-emerald-900/30"
