@@ -148,9 +148,17 @@ export const useWorkoutStore = create<WorkoutState>()(
         lastTabActivity: Date.now(),
       }),
       
-      updateLastActiveRoute: (route) => set({ 
-        lastActiveRoute: route,
-        lastTabActivity: Date.now(),
+      // Fixed: This function was causing infinite loops by updating on every call
+      // Now we check if the route is actually different before updating state
+      updateLastActiveRoute: (route) => set((state) => {
+        // Only update if the route has actually changed
+        if (state.lastActiveRoute !== route) {
+          return { 
+            lastActiveRoute: route,
+            lastTabActivity: Date.now(),
+          };
+        }
+        return {}; // Return empty object if no changes needed
       }),
       
       // New action to directly modify workout status

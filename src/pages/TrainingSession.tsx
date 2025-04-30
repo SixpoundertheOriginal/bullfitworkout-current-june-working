@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -98,8 +98,12 @@ const TrainingSessionPage = () => {
   }, [exercises, workoutStatus, isActive, setWorkoutStatus]);
 
   // Update last active route whenever we load this page
+  // THIS IS THE MAIN ISSUE - Need to add dependencies to prevent infinite loop
   useEffect(() => {
-    updateLastActiveRoute('/training-session');
+    // Only update route when actually needed - once on mount
+    if (location.pathname === '/training-session') {
+      updateLastActiveRoute('/training-session');
+    }
     
     // Debug logging
     console.log('TrainingSession page loaded with state:', { 
@@ -109,7 +113,8 @@ const TrainingSessionPage = () => {
       workoutStatus,
       isSaving
     });
-  }, [updateLastActiveRoute, isActive, exercises, elapsedTime, workoutStatus]);
+    // Only run this effect once when component mounts
+  }, []);
 
   // Start a workout if not already started but we have exercises
   useEffect(() => {
