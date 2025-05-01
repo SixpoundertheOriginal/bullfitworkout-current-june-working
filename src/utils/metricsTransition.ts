@@ -1,3 +1,4 @@
+
 /**
  * This utility helps transition between the old metrics format and the new format
  * by creating a backward compatible stats object that works with both versions.
@@ -8,6 +9,8 @@ interface LegacyStatsFormat {
   totalExercises: number;
   workoutTypes: any[];
   muscleFocus: Record<string, number>;
+  activeTime?: number;
+  restTime?: number;
   // Add other fields as needed
 }
 
@@ -35,12 +38,18 @@ export const createBackwardCompatibleStats = (metrics: any): LegacyStatsFormat =
     ? metrics.muscleFocus
     : {};
     
+  // Add support for time-related metrics from the new format
+  const activeTime = metrics.activeTimeMinutes || metrics.timeMetrics?.activeTimeMinutes || 0;
+  const restTime = metrics.restTimeMinutes || metrics.timeMetrics?.restTimeMinutes || 0;
+    
   // Return a compatible format
   return {
     totalVolume,
     totalExercises,
     workoutTypes,
     muscleFocus,
+    activeTime,
+    restTime,
     // Add other fields as needed
   };
 };
