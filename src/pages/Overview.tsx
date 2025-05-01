@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,7 +113,7 @@ const Overview = () => {
       {
         title: "Workout Types",
         renderComponent: (data: any) => (
-          <WorkoutTypeChart workoutTypes={data} />
+          <WorkoutTypeChart data={data} />
         ),
         data: safeWorkoutTypes
       },

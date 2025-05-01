@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface WorkoutTypeData {
   type: string;
