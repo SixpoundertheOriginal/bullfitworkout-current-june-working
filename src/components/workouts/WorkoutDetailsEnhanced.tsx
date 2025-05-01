@@ -46,11 +46,11 @@ export const WorkoutDetailsEnhanced = ({
 }: WorkoutDetailsEnhancedProps) => {
   const { weightUnit } = useWeightUnit();
   
-  // Use the centralized workout metrics processor
+  // Use the centralized workout metrics processor with type assertion for weightUnit
   const metrics = useMemo(() => processWorkoutMetrics(
     exercises,
     workout.duration,
-    weightUnit
+    weightUnit as 'kg' | 'lb'
   ), [exercises, workout.duration, weightUnit]);
   
   const handleEditExercise = (exerciseName: string) => {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -61,7 +60,10 @@ export function ExerciseDialog({
     equipment_type: [] as EquipmentType[],
     movement_pattern: "push" as MovementPattern,
     difficulty: "beginner" as Difficulty,
-    instructions: {},
+    instructions: {
+      steps: "", // Initialize steps property
+      form: ""   // Initialize form property
+    },
     is_compound: false,
     tips: [] as string[],
     variations: [] as string[],
@@ -97,7 +99,10 @@ export function ExerciseDialog({
         equipment_type: [],
         movement_pattern: "push",
         difficulty: "beginner",
-        instructions: {},
+        instructions: {
+          steps: "", // Initialize steps property
+          form: ""   // Initialize form property
+        },
         is_compound: false,
         tips: [],
         variations: [],

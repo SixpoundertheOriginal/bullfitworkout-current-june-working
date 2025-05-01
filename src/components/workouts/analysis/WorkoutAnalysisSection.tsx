@@ -1,23 +1,27 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { WorkoutDensityChart } from '@/components/metrics/WorkoutDensityChart';
 import { MuscleFocusChart } from '@/components/metrics/MuscleFocusChart';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { Activity } from 'lucide-react';
-import { ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
+import { processWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 interface WorkoutAnalysisSectionProps {
   workout: {
+    id: string;
+    name: string;
+    training_type: string;
+    start_time: string;
     duration: number;
   };
-  exerciseSets: Record<string, any[]>;
+  exerciseSets: Record<string, any>;
   muscleFocus: Record<string, number>;
-  activeWorkoutTime: number;
   totalVolume: number;
+  activeWorkoutTime: number;
   totalRestTime: number;
-  metrics?: ProcessedWorkoutMetrics; // Now accepting full metrics object
-  densityMetrics?: {
+  densityMetrics: {
+    setsPerMinute: number;
+    volumePerMinute: number;
     overallDensity: number;
     activeOnlyDensity: number;
     formattedOverallDensity: string;
@@ -29,25 +33,22 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
   workout,
   exerciseSets,
   muscleFocus,
-  activeWorkoutTime,
   totalVolume,
+  activeWorkoutTime,
   totalRestTime,
-  metrics, // Full metrics object
-  densityMetrics, // For backward compatibility
+  densityMetrics
 }) => {
   const { weightUnit } = useWeightUnit();
   
   // Use metrics if available, otherwise use individual props or calculate
-  const overallDensity = metrics?.densityMetrics?.overallDensity ?? 
-    densityMetrics?.overallDensity ??
+  const overallDensity = densityMetrics.overallDensity ?? 
     (workout.duration > 0 ? totalVolume / workout.duration : 0);
   
-  const activeOnlyDensity = metrics?.densityMetrics?.activeOnlyDensity ?? 
-    densityMetrics?.activeOnlyDensity ?? 
+  const activeOnlyDensity = densityMetrics.activeOnlyDensity ?? 
     (activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0);
     
   // If metrics provides muscleFocus, use it, otherwise use the prop
-  const muscleGroups = metrics?.muscleFocus || muscleFocus;
+  const muscleGroups = muscleFocus;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

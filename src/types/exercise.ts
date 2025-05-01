@@ -1,4 +1,3 @@
-
 export interface ExerciseSet {
   id: string;
   weight: number;
@@ -11,6 +10,7 @@ export interface ExerciseSet {
   exercise_name: string;
   workout_id: string;
   weightCalculation?: WeightCalculation;
+  metadata?: Record<string, any>; // Add metadata property for RPE and other set-specific data
 }
 
 export type MuscleGroup = 

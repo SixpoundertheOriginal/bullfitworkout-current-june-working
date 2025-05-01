@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -28,11 +27,11 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
   weightUnit = 'kg',
   isLoading = false
 }) => {
-  // Use the centralized workout metrics processor
+  // Use the centralized workout metrics processor with type assertion for weightUnit
   const metrics = processWorkoutMetrics(
     exerciseData || {},
     duration,
-    weightUnit
+    weightUnit as 'kg' | 'lb'
   );
 
   // Get the primary muscle focus

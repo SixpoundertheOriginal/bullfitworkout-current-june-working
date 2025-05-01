@@ -20,6 +20,10 @@ export interface ProcessedWorkoutMetrics {
   densityMetrics: {
     setsPerMinute: number;
     volumePerMinute: number;
+    overallDensity: number;
+    activeOnlyDensity: number;
+    formattedOverallDensity: string;
+    formattedActiveOnlyDensity: string;
   };
   intensityMetrics: {
     averageRpe: number;
@@ -29,6 +33,19 @@ export interface ProcessedWorkoutMetrics {
   muscleFocus: Record<string, number>;
   estimatedEnergyExpenditure: number;
   movementPatterns: Record<string, number>;
+  composition: {
+    compound: { count: number; percentage: number };
+    isolation: { count: number; percentage: number };
+    bodyweight: { count: number; percentage: number };
+    isometric: { count: number; percentage: number };
+    totalExercises: number;
+  };
+  timeDistribution: {
+    activeTime: number;
+    restTime: number;
+    activeTimePercentage: number;
+    restTimePercentage: number;
+  };
 }
 
 // Main function to process workout metrics
@@ -55,6 +72,10 @@ export const processWorkoutMetrics = (
     densityMetrics: {
       setsPerMinute: 0,
       volumePerMinute: 0,
+      overallDensity: 0,
+      activeOnlyDensity: 0,
+      formattedOverallDensity: '0.0 sets/min',
+      formattedActiveOnlyDensity: '0.0 sets/min'
     },
     intensityMetrics: {
       averageRpe: 0,
@@ -64,6 +85,19 @@ export const processWorkoutMetrics = (
     muscleFocus: {},
     estimatedEnergyExpenditure: 0,
     movementPatterns: {},
+    composition: {
+      compound: { count: 0, percentage: 0 },
+      isolation: { count: 0, percentage: 0 },
+      bodyweight: { count: 0, percentage: 0 },
+      isometric: { count: 0, percentage: 0 },
+      totalExercises: 0
+    },
+    timeDistribution: {
+      activeTime: 0,
+      restTime: 0,
+      activeTimePercentage: 0,
+      restTimePercentage: 0
+    }
   };
 
   // If no exercises or duration, return initialized metrics
@@ -87,6 +121,14 @@ export const processWorkoutMetrics = (
   let peakLoad = 0;
   let totalLoad = 0;
   let totalReps = 0;
+  
+  // Initialize composition counters
+  let compoundCount = 0;
+  let isolationCount = 0;
+  let bodyweightCount = 0;
+  let isometricCount = 0;
+  let totalRestTime = 0;
+  let totalActiveTime = 0;
 
   // Process each exercise
   exerciseNames.forEach(exerciseName => {
@@ -94,6 +136,28 @@ export const processWorkoutMetrics = (
     if (!sets || sets.length === 0) return;
 
     metrics.setCount.total += sets.length;
+
+    // Determine exercise type for composition
+    if (exerciseName.toLowerCase().includes('plank') || 
+        exerciseName.toLowerCase().includes('hold') || 
+        exerciseName.toLowerCase().includes('isometric')) {
+      isometricCount++;
+    } else if (exerciseName.toLowerCase().includes('push-up') || 
+               exerciseName.toLowerCase().includes('pull-up') || 
+               exerciseName.toLowerCase().includes('bodyweight')) {
+      bodyweightCount++;
+    } else if (exerciseName.toLowerCase().includes('bench') || 
+               exerciseName.toLowerCase().includes('squat') || 
+               exerciseName.toLowerCase().includes('deadlift') || 
+               exerciseName.toLowerCase().includes('press')) {
+      compoundCount++;
+    } else {
+      isolationCount++;
+    }
+    
+    // Calculate rest time and active time
+    let exerciseRestTime = 0;
+    const exerciseStartTime = 0;
 
     // Process each set in the exercise
     sets.forEach(set => {
@@ -115,7 +179,7 @@ export const processWorkoutMetrics = (
           metrics.adjustedVolume += standardVolume;
         }
         
-        // Track RPE if available
+        // Track RPE if available - ensure we check if metadata exists first
         if (set.metadata && typeof set.metadata === 'object' && 'rpe' in set.metadata) {
           const rpe = Number(set.metadata.rpe);
           if (!isNaN(rpe) && rpe > 0) {
@@ -131,6 +195,16 @@ export const processWorkoutMetrics = (
         totalReps += set.reps;
       } else {
         metrics.setCount.failed += 1;
+      }
+      
+      // Add rest time
+      if (set.restTime) {
+        exerciseRestTime += set.restTime;
+        totalRestTime += set.restTime;
+      } else {
+        // Default rest time of 60 seconds if not specified
+        exerciseRestTime += 60;
+        totalRestTime += 60;
       }
     });
 
@@ -150,11 +224,32 @@ export const processWorkoutMetrics = (
     }
   });
 
+  // Calculate time distribution
+  const totalRestTimeMinutes = totalRestTime / 60;
+  const totalActiveTimeMinutes = duration - totalRestTimeMinutes;
+  
+  metrics.timeDistribution = {
+    activeTime: Math.max(totalActiveTimeMinutes, 0),
+    restTime: totalRestTimeMinutes,
+    activeTimePercentage: (totalActiveTimeMinutes / duration) * 100,
+    restTimePercentage: (totalRestTimeMinutes / duration) * 100
+  };
+
   // Calculate density metrics (work per unit time)
   if (duration > 0) {
     metrics.densityMetrics.setsPerMinute = metrics.setCount.completed / duration;
     metrics.densityMetrics.volumePerMinute = metrics.totalVolume / duration;
     metrics.density = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
+    
+    // Add enhanced density metrics
+    metrics.densityMetrics.overallDensity = metrics.setCount.completed / duration;
+    metrics.densityMetrics.activeOnlyDensity = totalActiveTimeMinutes > 0 ? 
+      metrics.setCount.completed / totalActiveTimeMinutes : 0;
+      
+    metrics.densityMetrics.formattedOverallDensity = 
+      `${metrics.densityMetrics.overallDensity.toFixed(1)} sets/min`;
+    metrics.densityMetrics.formattedActiveOnlyDensity = 
+      `${metrics.densityMetrics.activeOnlyDensity.toFixed(1)} sets/min`;
   }
 
   // Calculate intensity metrics
@@ -167,6 +262,29 @@ export const processWorkoutMetrics = (
   metrics.efficiency = metrics.setCount.total > 0 
     ? (metrics.setCount.completed / metrics.setCount.total) * 100 
     : 0;
+
+  // Composition percentages
+  const totalExercises = compoundCount + isolationCount + bodyweightCount + isometricCount;
+  
+  metrics.composition = {
+    compound: { 
+      count: compoundCount, 
+      percentage: totalExercises > 0 ? (compoundCount / totalExercises) * 100 : 0 
+    },
+    isolation: { 
+      count: isolationCount, 
+      percentage: totalExercises > 0 ? (isolationCount / totalExercises) * 100 : 0 
+    },
+    bodyweight: { 
+      count: bodyweightCount, 
+      percentage: totalExercises > 0 ? (bodyweightCount / totalExercises) * 100 : 0 
+    },
+    isometric: { 
+      count: isometricCount, 
+      percentage: totalExercises > 0 ? (isometricCount / totalExercises) * 100 : 0 
+    },
+    totalExercises
+  };
 
   // Estimate energy expenditure (very simplified calculation)
   metrics.estimatedEnergyExpenditure = calculateEstimatedEnergyExpenditure(
