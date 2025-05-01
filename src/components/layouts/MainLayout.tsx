@@ -1,4 +1,3 @@
-
 import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
@@ -101,7 +100,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       )}
       
-      <style jsx global>{`
+      <style>
+        {`
         .force-no-transition * {
           transition: none !important;
           animation: none !important;
@@ -110,7 +110,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         .content-container {
           min-height: calc(100vh - 48px);
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
