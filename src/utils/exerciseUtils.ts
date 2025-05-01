@@ -335,7 +335,13 @@ export const calculateTotalVolume = (workouts: any[]): number => {
     // Skip if workout has no exercises
     if (!workout.exercises) return total;
 
-    const workoutVolume = Object.values(workout.exercises).reduce((exerciseTotal, sets: any[]) => {
+    const workoutVolume = Object.entries(workout.exercises).reduce((exerciseTotal, [exerciseName, sets]) => {
+      // Make sure sets is an array before using reduce
+      if (!Array.isArray(sets)) {
+        console.warn(`Sets for ${exerciseName} is not an array:`, sets);
+        return exerciseTotal;
+      }
+
       // Calculate the volume for each set and sum them up
       const setsVolume = sets.reduce((setsTotal, set) => {
         if (set.completed && set.weight && set.reps) {

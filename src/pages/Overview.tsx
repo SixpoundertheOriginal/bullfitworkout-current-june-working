@@ -59,6 +59,19 @@ const Overview = () => {
   const timePatterns = stats?.timePatterns || defaultTimePatterns;
   const durationByTimeOfDay = timePatterns.durationByTimeOfDay;
   
+  // Safely calculate the total volume with error handling
+  const getTotalVolume = () => {
+    try {
+      if (stats?.workouts) {
+        return Math.round(calculateTotalVolume(stats.workouts)).toLocaleString();
+      }
+      return "0";
+    } catch (error) {
+      console.error("Error calculating total volume:", error);
+      return "0";
+    }
+  };
+  
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6 text-white">Workout Overview</h1>
@@ -104,7 +117,7 @@ const Overview = () => {
                 <CardTitle className="flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold">{Math.round((stats?.workouts ? calculateTotalVolume(stats.workouts) : 0)).toLocaleString()}</div>
+                <div className="text-4xl font-bold">{getTotalVolume()}</div>
                 <p className="text-sm text-gray-500">Total weight lifted</p>
               </CardContent>
             </Card>
