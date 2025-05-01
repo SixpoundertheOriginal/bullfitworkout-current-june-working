@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,19 +44,77 @@ const Overview = () => {
     if (dateRange && refetch) refetch();
   }, [dateRange, refetch]);
 
-  const timePatterns = useMemo(() => stats?.timePatterns || {
-    daysFrequency: {},
-    durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
-  }, [stats?.timePatterns]);
+  // Create safe defaults for timePatterns
+  const timePatterns = useMemo(() => {
+    const defaultTimePatterns = {
+      daysFrequency: {
+        monday: 0,
+        tuesday: 0,
+        wednesday: 0,
+        thursday: 0,
+        friday: 0,
+        saturday: 0,
+        sunday: 0
+      },
+      durationByTimeOfDay: {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0
+      }
+    };
+    
+    if (!stats || !stats.timePatterns) return defaultTimePatterns;
+    
+    return {
+      daysFrequency: stats.timePatterns.daysFrequency || defaultTimePatterns.daysFrequency,
+      durationByTimeOfDay: stats.timePatterns.durationByTimeOfDay || defaultTimePatterns.durationByTimeOfDay
+    };
+  }, [stats]);
 
-  const hasData = (value: any) => Array.isArray(value) ? value.length > 0 : Object.keys(value || {}).length > 0;
+  // Safety check function for data
+  const hasData = (value: any) => {
+    if (value === undefined || value === null) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value).length > 0;
+    return false;
+  };
+
+  // Safe access to density metrics
+  const safeWorkoutTypes = useMemo(() => stats?.workoutTypes || [], [stats]);
+  const safeMuscleFocus = useMemo(() => stats?.muscleFocus || {}, [stats]);
+  const safeDensityMetrics = useMemo(() => {
+    const defaultMetrics = {
+      activeTime: 0,
+      restTime: 0,
+      totalVolume: 0,
+      setsPerMinute: 0,
+      volumePerMinute: 0,
+      overallDensity: 0,
+      activeOnlyDensity: 0
+    };
+    
+    if (!metricsData || !metricsData.densityMetrics) return defaultMetrics;
+    
+    return {
+      ...defaultMetrics,
+      ...metricsData.densityMetrics
+    };
+  }, [metricsData]);
+  
+  // Safe access to exercise volume history
+  const safeExerciseVolumeHistory = useMemo(() => stats?.exerciseVolumeHistory || [], [stats]);
 
   return (
     <div className="container mx-auto py-6 px-4 overflow-x-hidden overflow-y-auto space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <div className="md:col-span-8">
           <Card className="min-h-[300px] h-[300px] bg-card overflow-hidden">
-            {loading ? <Skeleton className="w-full h-full" /> : <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} />}
+            {loading ? <Skeleton className="w-full h-full" /> : 
+              (volumeOverTimeData && volumeOverTimeData.length > 0) ? 
+                <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} /> : 
+                <div className="flex items-center justify-center h-full text-gray-500">No volume data available</div>
+            }
           </Card>
         </div>
         <div className="md:col-span-4 space-y-4">
@@ -81,11 +140,11 @@ const Overview = () => {
       {[{
         title: "Workout Types",
         Component: WorkoutTypeChart,
-        data: stats?.workoutTypes
+        data: safeWorkoutTypes
       }, {
         title: "Muscle Group Focus",
         Component: MuscleGroupChart,
-        data: stats?.muscleFocus
+        data: safeMuscleFocus
       }, {
         title: "Workout Days",
         Component: WorkoutDaysChart,
@@ -97,24 +156,45 @@ const Overview = () => {
       }, {
         title: "Top Exercises",
         Component: TopExercisesTable,
-        data: stats?.exerciseVolumeHistory
+        data: safeExerciseVolumeHistory
       }, {
         title: "Workout Density",
         Component: WorkoutDensityChart,
-        data: metricsData.densityMetrics
+        data: safeDensityMetrics
       }].map(({ title, Component, data }, idx) => (
         <Card key={idx} className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">{title}</CardTitle>
           </CardHeader>
           <CardContent className="h-[250px] flex items-center justify-center">
-            {loading ? <Skeleton className="w-3/4 h-3/4 rounded-lg" /> : hasData(data) ? <Component {...{ [title.replace(/\s/g, '').toLowerCase()]: data }} /> : <div className="text-gray-500">No data available</div>}
+            {loading ? 
+              <Skeleton className="w-3/4 h-3/4 rounded-lg" /> : 
+              hasData(data) ? 
+                <Component 
+                  {...{ 
+                    [title.replace(/\s/g, '').toLowerCase()]: data,
+                    ...(title === "Workout Density" ? {
+                      totalTime: legacyStats?.activeTime || 0,
+                      activeTime: legacyStats?.activeTime || 0,
+                      restTime: legacyStats?.restTime || 0,
+                      totalVolume: volumeStats.total || 0,
+                      weightUnit: weightUnit
+                    } : {})
+                  }} 
+                /> : 
+                <div className="text-gray-500">No data available</div>
+            }
           </CardContent>
         </Card>
       ))}
 
       <Card className="min-h-[250px] h-[250px] mb-6 overflow-hidden w-full">
-        {loading ? <Skeleton className="w-full h-full" /> : <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />}
+        {loading ? 
+          <Skeleton className="w-full h-full" /> : 
+          (densityOverTimeData && densityOverTimeData.length > 0) ? 
+            <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} /> : 
+            <div className="flex items-center justify-center h-full text-gray-500">No density data available</div>
+        }
       </Card>
     </div>
   );

@@ -13,38 +13,40 @@ interface WorkoutDensityChartProps {
 }
 
 export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.memo(({
-  totalTime,
-  activeTime,
-  restTime,
-  totalVolume,
-  weightUnit,
+  totalTime = 0,
+  activeTime = 0,
+  restTime = 0,
+  totalVolume = 0,
+  weightUnit = 'kg',
   overallDensity: propOverallDensity,
   activeOnlyDensity: propActiveOnlyDensity
 }) => {
+  // Add more debug logging
   console.log("WorkoutDensityChart rendering with props:", { 
-    totalTime, activeTime, restTime, totalVolume, 
+    totalTime, activeTime, restTime, totalVolume, weightUnit,
     overallDensity: propOverallDensity, 
     activeOnlyDensity: propActiveOnlyDensity 
   });
   
-  // Calculate density metrics if not provided
+  // Calculate density metrics if not provided or if they're zero
   const overallDensity = propOverallDensity ?? (totalTime > 0 ? totalVolume / totalTime : 0);
   const activeOnlyDensity = propActiveOnlyDensity ?? (activeTime > 0 ? totalVolume / activeTime : 0);
   
   const formatDensity = (value: number) => {
+    if (isNaN(value) || value === undefined || value === null) return "0.0";
     return value < 10 ? value.toFixed(1) : Math.round(value).toString();
   };
   
   const densityData = React.useMemo(() => [
     {
       name: 'Overall',
-      density: overallDensity,
+      density: overallDensity || 0,
       color: '#8b5cf6',
       displayValue: `${formatDensity(overallDensity)} ${weightUnit}/min`
     },
     {
       name: 'Active Only',
-      density: activeOnlyDensity,
+      density: activeOnlyDensity || 0,
       color: '#4ade80',
       displayValue: `${formatDensity(activeOnlyDensity)} ${weightUnit}/min`
     }
