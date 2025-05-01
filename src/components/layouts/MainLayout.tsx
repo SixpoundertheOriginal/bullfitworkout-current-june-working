@@ -4,6 +4,8 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { WorkoutBanner } from "@/components/training/WorkoutBanner";
 import { useLocation } from "react-router-dom";
+import { useLayout } from "@/context/LayoutContext";
+import { DateRangeFilter } from "@/components/date-filters/DateRangeFilter";
 
 // Function to get page title based on the current route
 const getPageTitle = (pathname: string): string => {
@@ -42,11 +44,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   noFooter = false 
 }) => {
   const location = useLocation();
+  const { isFilterVisible } = useLayout();
   const title = getPageTitle(location.pathname);
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-900">
-      {!noHeader && <PageHeader title={title} />}
+      {!noHeader && (
+        <PageHeader title={title}>
+          {isFilterVisible && <DateRangeFilter />}
+        </PageHeader>
+      )}
       <WorkoutBanner />
       
       <main className="flex-grow pt-16 pb-16">

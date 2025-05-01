@@ -1,4 +1,3 @@
-
 import { useMemo, useState, useEffect } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { processWorkoutMetrics, ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
@@ -6,6 +5,7 @@ import { useWeightUnit } from '@/context/WeightUnitContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { WorkoutStats, WorkoutStatsResult } from '@/types/workout-metrics';
+import { useDateRange } from '@/context/DateRangeContext';
 
 /**
  * Hook to calculate and return comprehensive workout statistics
@@ -23,6 +23,7 @@ export function useWorkoutStats(
 ): WorkoutStatsResult {
   const { weightUnit } = useWeightUnit();
   const { user } = useAuth();
+  const { dateRange } = useDateRange();
   const [loading, setLoading] = useState(true);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [stats, setStats] = useState<WorkoutStats>({
@@ -338,12 +339,23 @@ export function useWorkoutStats(
     }
   };
   
+  // Modify your fetch or processing logic to filter by dateRange
+  // For example:
+  
+  useEffect(() => {
+    // When dateRange changes, you might want to refetch or filter data
+    if (dateRange?.from && dateRange?.to) {
+      // Update filtering logic or refetch with new date range
+    }
+  }, [dateRange]);
+  
   // Combine the metrics with the backward compatibility properties
   return {
     ...(workoutMetrics || {} as ProcessedWorkoutMetrics),  // Include the processed metrics
     stats,              // Include backward compatibility stats
     loading,
     refetch,
-    workouts
+    workouts,
+    dateRange
   } as WorkoutStatsResult;
 }
