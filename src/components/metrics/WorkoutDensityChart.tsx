@@ -3,11 +3,12 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 interface WorkoutDensityChartProps {
-  totalTime: number;
-  activeTime: number;
-  restTime: number;
-  totalVolume: number;
-  weightUnit: string;
+  // Make these props optional with default values
+  totalTime?: number;
+  activeTime?: number;
+  restTime?: number;
+  totalVolume?: number;
+  weightUnit?: string;
   overallDensity?: number;
   activeOnlyDensity?: number;
 }
