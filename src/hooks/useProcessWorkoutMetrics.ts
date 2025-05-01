@@ -47,16 +47,33 @@ export function useProcessWorkoutMetrics(
         let volume = 0;
         
         if (workout.exercises) {
+let exerciseMap: Record<string, any[]> = {};
+
+if (Array.isArray(workout.exercises)) {
+  workout.exercises.forEach(set => {
+    const name = set.exercise_name || 'Unknown';
+    if (!exerciseMap[name]) exerciseMap[name] = [];
+    exerciseMap[name].push(set);
+  });
+} else if (typeof workout.exercises === 'object') {
+  exerciseMap = workout.exercises;
+}
+
           // Check if exercises is an object
           if (typeof workout.exercises === 'object' && workout.exercises !== null) {
-            Object.entries(workout.exercises).forEach(([exerciseName, sets]) => {
+            Object.entries(exerciseMap).forEach(([exerciseName, sets]) => {
               // Make sure sets is an array before processing
               if (Array.isArray(sets)) {
-                sets.forEach(set => {
-                  if (set.completed && set.weight && set.reps) {
-                    volume += (set.weight * set.reps);
-                  }
-                });
+console.log(`[Metrics] 🧩 ${exerciseName} →`, sets);
+
+               sets.forEach(set => {
+  if (set.completed && set.weight && set.reps) {
+    const setVolume = set.weight * set.reps;
+    console.log(`[Volume] ➕ ${set.exercise_name || 'Unknown'} → ${set.weight}kg x ${set.reps} = ${setVolume}`);
+    volume += setVolume;
+  }
+});
+
               }
             });
           }
