@@ -137,67 +137,100 @@ const Overview = () => {
     return (totalDensity / densityOverTimeData.length).toFixed(1);
   };
   
+  // Create skeleton loaders for consistent heights
+  const VolumeChartSkeleton = () => (
+    <div className="h-[300px] w-full flex items-center justify-center bg-gray-900 border border-gray-800 rounded-lg">
+      <Skeleton className="w-3/4 h-[200px] rounded-lg" />
+    </div>
+  );
+  
+  const StatCardSkeleton = () => (
+    <Card className="bg-gray-900 border-gray-800">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Skeleton className="h-4 w-4 mr-2" /> 
+          <Skeleton className="h-6 w-32" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-24 mb-2" />
+        <Skeleton className="h-4 w-32" />
+      </CardContent>
+    </Card>
+  );
+  
+  const ChartSkeleton = () => (
+    <Card className="bg-gray-900 border-gray-800">
+      <CardHeader>
+        <CardTitle>
+          <Skeleton className="h-6 w-32" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="h-[200px] flex items-center justify-center">
+        <Skeleton className="w-3/4 h-3/4 rounded-lg" />
+      </CardContent>
+    </Card>
+  );
+  
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
         <div className="md:col-span-8">
           {loading ? (
-            <Skeleton className="h-64 w-full" />
+            <VolumeChartSkeleton />
           ) : (
             <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} className="h-full" />
           )}
         </div>
         
         <div className="md:col-span-4 grid grid-cols-1 gap-4">
-          <Card className="bg-gray-900 border-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center"><Users2 className="mr-2 h-4 w-4" /> Total Workouts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                <div className="text-4xl font-bold">{stats?.totalWorkouts || 0}</div>
-              )}
-              <p className="text-sm text-gray-500">All time</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gray-900 border-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-32" />
-              ) : (
-                <div className="text-4xl font-bold">{getTotalVolume()}</div>
-              )}
-              <p className="text-sm text-gray-500">Total weight lifted</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gray-900 border-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center"><Activity className="mr-2 h-4 w-4" /> Avg Density</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                <div className="text-4xl font-bold">{getAverageDensity()}</div>
-              )}
-              <p className="text-sm text-gray-500">{weightUnit}/min</p>
-            </CardContent>
-          </Card>
+          {loading ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : (
+            <>
+              <Card className="bg-gray-900 border-gray-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center"><Users2 className="mr-2 h-4 w-4" /> Total Workouts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold">{stats?.totalWorkouts || 0}</div>
+                  <p className="text-sm text-gray-500">All time</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gray-900 border-gray-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold">{getTotalVolume()}</div>
+                  <p className="text-sm text-gray-500">Total weight lifted</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gray-900 border-gray-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center"><Activity className="mr-2 h-4 w-4" /> Avg Density</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-bold">{getAverageDensity()}</div>
+                  <p className="text-sm text-gray-500">{weightUnit}/min</p>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {loading ? (
           <>
-            <Skeleton className="h-80 w-full" />
-            <Skeleton className="h-80 w-full" />
+            <ChartSkeleton />
+            <ChartSkeleton />
           </>
         ) : (
           <>
@@ -205,8 +238,14 @@ const Overview = () => {
               <CardHeader>
                 <CardTitle>Workout Types</CardTitle>
               </CardHeader>
-              <CardContent>
-                <WorkoutTypeChart workoutTypes={stats?.workoutTypes || []} />
+              <CardContent className="h-[300px]">
+                {stats?.workoutTypes && stats.workoutTypes.length > 0 ? (
+                  <WorkoutTypeChart workoutTypes={stats.workoutTypes || []} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No workout type data available
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -214,8 +253,14 @@ const Overview = () => {
               <CardHeader>
                 <CardTitle>Muscle Group Focus</CardTitle>
               </CardHeader>
-              <CardContent>
-                <MuscleGroupChart muscleFocus={stats?.muscleFocus || {}} />
+              <CardContent className="h-[300px]">
+                {stats?.muscleFocus && Object.keys(stats.muscleFocus).length > 0 ? (
+                  <MuscleGroupChart muscleFocus={stats.muscleFocus || {}} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No muscle group data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </>
@@ -224,17 +269,17 @@ const Overview = () => {
       
       <div className="mb-6">
         {loading ? (
-          <Skeleton className="h-80 w-full" />
+          <VolumeChartSkeleton />
         ) : (
-          <WorkoutDensityOverTimeChart data={densityOverTimeData} />
+          <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />
         )}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {loading ? (
           <>
-            <Skeleton className="h-80 w-full" />
-            <Skeleton className="h-80 w-full" />
+            <ChartSkeleton />
+            <ChartSkeleton />
           </>
         ) : (
           <>
@@ -242,8 +287,14 @@ const Overview = () => {
               <CardHeader>
                 <CardTitle>Workout Days</CardTitle>
               </CardHeader>
-              <CardContent>
-                <WorkoutDaysChart daysFrequency={timePatterns.daysFrequency} />
+              <CardContent className="h-[300px]">
+                {Object.keys(timePatterns.daysFrequency).length > 0 ? (
+                  <WorkoutDaysChart daysFrequency={timePatterns.daysFrequency} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No workout days data available
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -251,8 +302,14 @@ const Overview = () => {
               <CardHeader>
                 <CardTitle>Time of Day</CardTitle>
               </CardHeader>
-              <CardContent>
-                <TimeOfDayChart durationByTimeOfDay={durationByTimeOfDay} />
+              <CardContent className="h-[300px]">
+                {Object.values(durationByTimeOfDay).some(v => v > 0) ? (
+                  <TimeOfDayChart durationByTimeOfDay={durationByTimeOfDay} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No time of day data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </>
@@ -262,8 +319,8 @@ const Overview = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {loading ? (
           <>
-            <Skeleton className="h-80 w-full" />
-            <Skeleton className="h-80 w-full" />
+            <ChartSkeleton />
+            <ChartSkeleton />
           </>
         ) : (
           <>
@@ -271,8 +328,14 @@ const Overview = () => {
               <CardHeader>
                 <CardTitle>Top Exercises</CardTitle>
               </CardHeader>
-              <CardContent>
-                <TopExercisesTable exerciseVolumeHistory={stats?.exerciseVolumeHistory || []} />
+              <CardContent className="h-[300px] overflow-y-auto">
+                {stats?.exerciseVolumeHistory && stats.exerciseVolumeHistory.length > 0 ? (
+                  <TopExercisesTable exerciseVolumeHistory={stats.exerciseVolumeHistory || []} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No exercise history data available
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -280,7 +343,7 @@ const Overview = () => {
               <CardHeader>
                 <CardTitle>Workout Density</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="h-[300px]">
                 {densityMetrics && legacyStats ? (
                   <WorkoutDensityChart
                     totalTime={stats?.totalDuration || 0}
@@ -292,7 +355,7 @@ const Overview = () => {
                     activeOnlyDensity={densityMetrics.activeOnlyDensity}
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-60 text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500">
                     No density data available
                   </div>
                 )}

@@ -16,11 +16,13 @@ interface DensityDataPoint {
 interface WorkoutDensityTrendChartProps {
   data: DensityDataPoint[];
   className?: string;
+  height?: number;
 }
 
-export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> = ({
+export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> = React.memo(({
   data,
-  className = ''
+  className = '',
+  height = 200
 }) => {
   const { weightUnit } = useWeightUnit();
   
@@ -73,7 +75,7 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
           )}
         </div>
         
-        <div className="h-48">
+        <div style={{ height: `${height}px`, minHeight: '48px' }} className="w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -102,6 +104,7 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
                 fill="#8b5cf6" 
                 radius={[4, 4, 0, 0]} 
                 barSize={16}
+                isAnimationActive={false}
               />
               <Bar 
                 dataKey="activeOnlyDensity" 
@@ -109,6 +112,7 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
                 fill="#4ade80" 
                 radius={[4, 4, 0, 0]} 
                 barSize={16} 
+                isAnimationActive={false}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -127,4 +131,5 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
       </CardContent>
     </Card>
   );
-};
+});
+

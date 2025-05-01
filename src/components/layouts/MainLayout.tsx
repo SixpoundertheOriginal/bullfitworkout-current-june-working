@@ -48,16 +48,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const title = getPageTitle(location.pathname);
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900">
+    <div className="flex flex-col h-screen bg-gray-900">
       {!noHeader && (
-        <PageHeader title={title}>
-          {isFilterVisible && <DateRangeFilter />}
-        </PageHeader>
+        <>
+          <PageHeader title={title}>
+            {isFilterVisible && <DateRangeFilter />}
+          </PageHeader>
+          <WorkoutBanner />
+        </>
       )}
-      <WorkoutBanner />
       
-      <main className="flex-grow pt-16 pb-16">
-        {children}
+      <main className="flex-grow overflow-y-auto pt-16 pb-16 will-change-transform">
+        <div className="content-container">
+          {children}
+        </div>
       </main>
       
       {!noFooter && <BottomNav />}

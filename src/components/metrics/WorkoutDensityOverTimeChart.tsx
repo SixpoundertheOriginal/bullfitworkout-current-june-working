@@ -13,11 +13,13 @@ interface WorkoutDensityOverTimeChartProps {
     activeOnlyDensity?: number;
   }>;
   className?: string;
+  height?: number;
 }
 
-export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartProps> = ({ 
+export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartProps> = React.memo(({ 
   data,
-  className = ''
+  className = '',
+  height = 200
 }) => {
   const { weightUnit } = useWeightUnit();
   
@@ -67,7 +69,7 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] mt-4">
+        <div style={{ height: `${height}px`, minHeight: '200px' }} className="w-full">
           {!hasData ? (
             <div className="flex items-center justify-center h-full text-gray-400">
               No density data available for the selected period
@@ -159,4 +161,5 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
       </CardContent>
     </Card>
   );
-};
+});
+

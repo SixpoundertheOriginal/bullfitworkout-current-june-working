@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,6 +17,7 @@ type DateRangeOption = {
 export function DateRangeFilter() {
   const { dateRange, setDateRange } = useDateRange();
   const [isOpen, setIsOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const today = new Date();
   
@@ -52,6 +53,18 @@ export function DateRangeFilter() {
   ];
 
   const [selectedPreset, setSelectedPreset] = useState<string>('This Week');
+
+  // Initialize with "This Week" on component mount
+  useEffect(() => {
+    if (!isInitialized && !dateRange) {
+      const thisWeekRange = dateRangeOptions.find(option => option.label === 'This Week');
+      if (thisWeekRange) {
+        setDateRange(thisWeekRange.value());
+        setSelectedPreset(thisWeekRange.label);
+        setIsInitialized(true);
+      }
+    }
+  }, [dateRange, isInitialized, setDateRange]);
 
   const handleSelect = (preset: DateRangeOption) => {
     const range = preset.value();

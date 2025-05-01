@@ -17,7 +17,7 @@ interface WorkoutVolumeOverTimeChartProps {
   height?: number;
 }
 
-export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProps> = ({ 
+export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProps> = React.memo(({ 
   data,
   className = '',
   height = 200 
@@ -51,7 +51,7 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`h-[${height}px] mt-4`}>
+        <div style={{ height: `${height}px`, minHeight: '200px' }} className="w-full">
           {!hasData ? (
             <div className="flex items-center justify-center h-full text-gray-400">
               No workout data available for the selected period
@@ -114,4 +114,5 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
       </CardContent>
     </Card>
   );
-};
+});
+
