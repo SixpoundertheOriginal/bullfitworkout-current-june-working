@@ -25,7 +25,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { WorkoutTypeChart } from "@/components/workouts/WorkoutTypeChart";
+import { WorkoutTypeChart } from "@/components/metrics/WorkoutTypeChart";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
 import { StatCard } from "@/components/metrics/StatCard";
 import StatsLoadingSkeleton from "@/components/metrics/StatsLoadingSkeleton";
