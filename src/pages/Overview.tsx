@@ -28,6 +28,10 @@ const Overview = () => {
   const [userWeightUnit, setUserWeightUnit] = useState<string | null>(null);
 
   const { stats, loading, refetch, workouts, ...metricsData } = useWorkoutStats();
+useEffect(() => {
+  console.log("[Overview] 🏋️‍♀️ Fetched workouts:", workouts);
+}, [workouts]);
+
   const legacyStats = useMemo(() => metricsData ? createBackwardCompatibleStats(metricsData) : null, [metricsData]);
 
   const {
