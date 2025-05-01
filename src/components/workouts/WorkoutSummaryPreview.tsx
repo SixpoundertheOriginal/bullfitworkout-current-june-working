@@ -27,7 +27,7 @@ export const WorkoutSummaryPreview: React.FC<WorkoutSummaryPreviewProps> = ({
   weightUnit = 'kg',
   isLoading = false
 }) => {
-  // Use the centralized workout metrics processor with type assertion for weightUnit
+  // Use the centralized workout metrics processor with type assertion
   const metrics = processWorkoutMetrics(
     exerciseData || {},
     duration,

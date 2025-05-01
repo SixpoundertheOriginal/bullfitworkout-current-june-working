@@ -12,7 +12,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import Auth from "@/pages/Auth";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { PageHeader } from "@/components/navigation/PageHeader";
-import { OverviewPage } from "@/pages/Overview";
+import Overview from "@/pages/Overview";
 import { WorkoutManagementPage } from "@/pages/WorkoutManagementPage";
 
 const getPageTitle = (pathname: string): string => {
@@ -68,7 +68,7 @@ export const RouterProvider = () => {
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/overview" element={<ProtectedRoute><OverviewPage /></ProtectedRoute>} />
+            <Route path="/overview" element={<ProtectedRoute><Overview /></ProtectedRoute>} />
             <Route path="/workouts" element={<ProtectedRoute><WorkoutManagementPage /></ProtectedRoute>} />
             <Route path="/training-session" element={<ProtectedRoute><TrainingSessionPage /></ProtectedRoute>} />
             <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />

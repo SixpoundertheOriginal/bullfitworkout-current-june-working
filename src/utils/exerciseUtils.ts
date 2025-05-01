@@ -1,4 +1,3 @@
-
 import { ExerciseSet } from '@/types/exercise';
 
 export const calculateSetVolume = (set: ExerciseSet, exerciseName?: string, userBodyweight?: number): number => {
@@ -326,4 +325,21 @@ export const analyzeWorkoutComposition = (exercises: Record<string, ExerciseSet[
     },
     totalExercises
   };
+};
+
+// Add the missing calculateTotalVolume function
+export const calculateTotalVolume = (workouts: any[]): number => {
+  let totalVolume = 0;
+
+  workouts?.forEach(workout => {
+    if (workout.exercises && Array.isArray(workout.exercises)) {
+      workout.exercises.forEach((set: any) => {
+        if (set.weight && set.reps && set.completed) {
+          totalVolume += set.weight * set.reps;
+        }
+      });
+    }
+  });
+
+  return totalVolume;
 };

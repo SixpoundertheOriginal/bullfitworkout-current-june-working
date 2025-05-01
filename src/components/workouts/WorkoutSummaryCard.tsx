@@ -18,11 +18,11 @@ const WorkoutSummaryCard = ({
   totalVolume: number;
   weightUnit: string;
 }) => {
-  // Use the centralized workout metrics processor
+  // Use the centralized workout metrics processor with type assertion
   const metrics = processWorkoutMetrics(
     workoutData?.exercises || {},
     workoutData?.duration || 0,
-    weightUnit
+    weightUnit as 'kg' | 'lb'
   );
   
   // Format time as MM:SS
