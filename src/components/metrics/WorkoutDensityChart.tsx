@@ -21,7 +21,11 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.mem
   overallDensity: propOverallDensity,
   activeOnlyDensity: propActiveOnlyDensity
 }) => {
-  console.log("WorkoutDensityChart rendering with props:", { totalTime, activeTime, restTime, totalVolume });
+  console.log("WorkoutDensityChart rendering with props:", { 
+    totalTime, activeTime, restTime, totalVolume, 
+    overallDensity: propOverallDensity, 
+    activeOnlyDensity: propActiveOnlyDensity 
+  });
   
   // Calculate density metrics if not provided
   const overallDensity = propOverallDensity ?? (totalTime > 0 ? totalVolume / totalTime : 0);
@@ -31,7 +35,7 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.mem
     return value < 10 ? value.toFixed(1) : Math.round(value).toString();
   };
   
-  const densityData = [
+  const densityData = React.useMemo(() => [
     {
       name: 'Overall',
       density: overallDensity,
@@ -44,25 +48,27 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.mem
       color: '#4ade80',
       displayValue: `${formatDensity(activeOnlyDensity)} ${weightUnit}/min`
     }
-  ];
+  ], [overallDensity, activeOnlyDensity, weightUnit]);
   
   // Use fallback values for time data to avoid NaN
-  const safeActiveTime = activeTime || 0;
-  const safeRestTime = restTime || 0;
-  const safeTotalTime = totalTime || 1; // Avoid division by zero
-  
-  const timeData = [
-    {
-      name: 'Time',
-      activeTime: safeActiveTime,
-      restTime: safeRestTime,
-      percentage: Math.round((safeActiveTime / safeTotalTime) * 100) || 0
-    }
-  ];
+  const timeData = React.useMemo(() => {
+    const safeActiveTime = activeTime || 0;
+    const safeRestTime = restTime || 0;
+    const safeTotalTime = totalTime || 1; // Avoid division by zero
+    
+    return [
+      {
+        name: 'Time',
+        activeTime: safeActiveTime,
+        restTime: safeRestTime,
+        percentage: Math.round((safeActiveTime / safeTotalTime) * 100) || 0
+      }
+    ];
+  }, [activeTime, restTime, totalTime]);
   
   return (
     <div className="space-y-4">
-      <div className="h-28 min-h-[112px]">
+      <div className="h-28 min-h-[112px] overflow-hidden">
         <h3 className="text-xs text-center mb-1">Workout Density</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -112,13 +118,13 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.mem
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-xs text-gray-400">
-            Active: {Math.round(safeActiveTime)}m
+            Active: {Math.round(timeData[0].activeTime)}m
           </span>
           <span className="text-xs text-gray-400">
             {timeData[0].percentage}%
           </span>
           <span className="text-xs text-gray-400">
-            Rest: {Math.round(safeRestTime)}m
+            Rest: {Math.round(timeData[0].restTime)}m
           </span>
         </div>
       </div>

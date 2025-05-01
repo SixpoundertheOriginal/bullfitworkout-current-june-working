@@ -17,6 +17,7 @@ import { createBackwardCompatibleStats } from '@/utils/metricsTransition';
 import { useDateRange } from '@/context/DateRangeContext';
 import { WorkoutVolumeOverTimeChart } from '@/components/metrics/WorkoutVolumeOverTimeChart';
 import { WorkoutDensityOverTimeChart } from '@/components/metrics/WorkoutDensityOverTimeChart';
+import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
 
 const Overview = React.memo(() => {
   const { user } = useAuth();
@@ -26,7 +27,13 @@ const Overview = React.memo(() => {
   const [userWeightUnit, setUserWeightUnit] = useState<string | null>(null);
   
   // Fetch workout stats using the hook
-  const { stats, loading, refetch, workouts, ...metricsData } = useWorkoutStats();
+  const { 
+    stats, 
+    loading, 
+    refetch, 
+    workouts, 
+    ...metricsData 
+  } = useWorkoutStats();
   
   console.log("Overview page rendering. Stats loaded:", !loading, "Workout count:", workouts?.length || 0);
   
@@ -34,6 +41,16 @@ const Overview = React.memo(() => {
   const legacyStats = useMemo(() => {
     return metricsData ? createBackwardCompatibleStats(metricsData) : null;
   }, [metricsData]);
+  
+  // Process workout metrics using our dedicated hook
+  const {
+    volumeOverTimeData,
+    densityOverTimeData,
+    volumeStats,
+    densityStats,
+    hasVolumeData,
+    hasDensityData
+  } = useProcessWorkoutMetrics(workouts, weightUnit);
   
   useEffect(() => {
     const storedWeight = localStorage.getItem('userWeight');
@@ -47,87 +64,6 @@ const Overview = React.memo(() => {
       refetch();
     }
   }, [dateRange, refetch]);
-  
-  // Prepare volume over time data with memoization and data validation
-  const volumeOverTimeData = useMemo(() => {
-    if (!Array.isArray(workouts) || workouts.length === 0) return [];
-    
-    console.log("Calculating volumeOverTimeData from workouts:", workouts.length);
-    
-    try {
-      return workouts.map(workout => {
-        // Calculate volume for each workout
-        let volume = 0;
-        
-        if (workout.exercises) {
-          // Check if exercises is an object
-          if (typeof workout.exercises === 'object' && workout.exercises !== null) {
-            Object.entries(workout.exercises).forEach(([exerciseName, sets]) => {
-              // Make sure sets is an array before reducing
-              if (Array.isArray(sets)) {
-                sets.forEach(set => {
-                  if (set.completed && set.weight && set.reps) {
-                    volume += (set.weight * set.reps);
-                  }
-                });
-              }
-            });
-          }
-        }
-        
-        return {
-          date: workout.start_time,
-          volume: volume
-        };
-      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    } catch (error) {
-      console.error("Error processing volume over time data:", error);
-      return [];
-    }
-  }, [workouts]);
-  
-  // Prepare density over time data with memoization and data validation
-  const densityOverTimeData = useMemo(() => {
-    if (!Array.isArray(workouts) || workouts.length === 0) return [];
-    
-    console.log("Calculating densityOverTimeData from workouts:", workouts.length);
-    
-    try {
-      return workouts.map(workout => {
-        const densityMetrics = workout.metrics?.densityMetrics || {};
-        
-        return {
-          date: workout.start_time,
-          overallDensity: densityMetrics.overallDensity || 0,
-          activeOnlyDensity: densityMetrics.activeOnlyDensity || 0
-        };
-      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    } catch (error) {
-      console.error("Error processing density over time data:", error);
-      return [];
-    }
-  }, [workouts]);
-  
-  // Safely calculate the total volume with error handling and memoization
-  const getTotalVolume = useMemo(() => {
-    try {
-      if (stats?.workouts && Array.isArray(stats.workouts)) {
-        return Math.round(calculateTotalVolume(stats.workouts)).toLocaleString();
-      }
-      return "0";
-    } catch (error) {
-      console.error("Error calculating total volume:", error);
-      return "0";
-    }
-  }, [stats?.workouts]);
-  
-  // Calculate average workout density with memoization
-  const getAverageDensity = useMemo(() => {
-    if (!Array.isArray(densityOverTimeData) || densityOverTimeData.length === 0) return "0";
-    
-    const totalDensity = densityOverTimeData.reduce((sum, item) => sum + item.overallDensity, 0);
-    return (totalDensity / densityOverTimeData.length).toFixed(1);
-  }, [densityOverTimeData]);
   
   // Default empty time patterns to avoid type errors
   const defaultTimePatterns = useMemo(() => ({
@@ -146,13 +82,13 @@ const Overview = React.memo(() => {
   
   // Create skeleton loaders for consistent heights
   const VolumeChartSkeleton = () => (
-    <div className="h-[300px] w-full flex items-center justify-center bg-gray-900 border border-gray-800 rounded-lg">
+    <div className="h-[300px] w-full flex items-center justify-center bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
       <Skeleton className="w-3/4 h-[200px] rounded-lg" />
     </div>
   );
   
   const StatCardSkeleton = () => (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card className="bg-gray-900 border-gray-800 min-h-[100px] overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Skeleton className="h-4 w-4 mr-2" /> 
@@ -167,13 +103,13 @@ const Overview = React.memo(() => {
   );
   
   const ChartSkeleton = () => (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
       <CardHeader>
         <CardTitle>
           <Skeleton className="h-6 w-32" />
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[200px] flex items-center justify-center">
+      <CardContent className="h-[250px] flex items-center justify-center">
         <Skeleton className="w-3/4 h-3/4 rounded-lg" />
       </CardContent>
     </Card>
@@ -187,10 +123,10 @@ const Overview = React.memo(() => {
   const hasExerciseHistory = useMemo(() => stats?.exerciseVolumeHistory && stats.exerciseVolumeHistory.length > 0, [stats?.exerciseVolumeHistory]);
   
   return (
-    <div className="container mx-auto py-6 px-4 overflow-x-hidden">
+    <div className="container mx-auto py-6 px-4 overflow-x-hidden overflow-y-auto">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
         <div className="md:col-span-8">
-          <div className="min-h-[300px] overflow-hidden">
+          <div className="min-h-[300px] h-[300px] overflow-hidden w-full">
             {loading ? (
               <VolumeChartSkeleton />
             ) : (
@@ -223,7 +159,9 @@ const Overview = React.memo(() => {
                   <CardTitle className="text-sm flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold">{getTotalVolume}</div>
+                  <div className="text-4xl font-bold">
+                    {volumeStats.total ? Math.round(volumeStats.total).toLocaleString() : "0"}
+                  </div>
                   <p className="text-sm text-gray-500">Total weight lifted</p>
                 </CardContent>
               </Card>
@@ -233,7 +171,9 @@ const Overview = React.memo(() => {
                   <CardTitle className="text-sm flex items-center"><Activity className="mr-2 h-4 w-4" /> Avg Density</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold">{getAverageDensity}</div>
+                  <div className="text-4xl font-bold">
+                    {densityStats.avgOverallDensity ? densityStats.avgOverallDensity.toFixed(1) : "0"}
+                  </div>
                   <p className="text-sm text-gray-500">{weightUnit}/min</p>
                 </CardContent>
               </Card>
@@ -283,7 +223,7 @@ const Overview = React.memo(() => {
         )}
       </div>
       
-      <div className="mb-6 min-h-[250px] overflow-hidden">
+      <div className="min-h-[250px] h-[250px] mb-6 overflow-hidden w-full">
         {loading ? (
           <VolumeChartSkeleton />
         ) : (
@@ -363,8 +303,8 @@ const Overview = React.memo(() => {
                 {metricsData && legacyStats ? (
                   <WorkoutDensityChart
                     totalTime={stats?.totalDuration || 0}
-                    activeTime={0}
-                    restTime={0}
+                    activeTime={stats?.totalActiveTime || 0}
+                    restTime={stats?.totalRestTime || 0}
                     totalVolume={legacyStats.totalVolume || 0}
                     weightUnit={weightUnit}
                     overallDensity={metricsData.densityMetrics?.overallDensity}

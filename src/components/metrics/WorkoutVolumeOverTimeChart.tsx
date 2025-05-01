@@ -2,17 +2,15 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { Dumbbell } from 'lucide-react';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { convertWeight } from '@/utils/unitConversion';
 import { useDateRange } from '@/context/DateRangeContext';
+import { VolumeDataPoint } from '@/hooks/useProcessWorkoutMetrics';
 
 interface WorkoutVolumeOverTimeChartProps {
-  data: Array<{
-    date: string;
-    volume: number;
-  }>;
+  data: VolumeDataPoint[];
   className?: string;
   height?: number;
 }
@@ -23,9 +21,10 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
   height = 200 
 }) => {
   const { weightUnit } = useWeightUnit();
-  const { dateRange } = useDateRange();
   
-  console.log("WorkoutVolumeOverTimeChart rendering with data:", data?.length || 0, "items");
+  console.log("WorkoutVolumeOverTimeChart rendering with data:", 
+    Array.isArray(data) ? `${data.length} items` : "invalid data", 
+    Array.isArray(data) && data[0] ? `First item: ${JSON.stringify(data[0])}` : "");
   
   // Ensure we have data to display
   const hasData = Array.isArray(data) && data.length > 0 && data.some(item => item.volume > 0);

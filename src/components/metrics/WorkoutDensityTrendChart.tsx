@@ -29,7 +29,9 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
   // Check if we have valid data to display
   const hasData = Array.isArray(data) && data.length > 0;
   
-  console.log("WorkoutDensityTrendChart rendering with data:", hasData ? data.length : 0, "items");
+  console.log("WorkoutDensityTrendChart rendering with data:", 
+    hasData ? `${data.length} items` : "no data", 
+    hasData && data[0] ? `First item: ${JSON.stringify(data[0])}` : "");
   
   // Calculate average density across all workouts - memoized
   const stats = useMemo(() => {
@@ -83,17 +85,18 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
                 data={data}
                 margin={{ top: 15, right: 10, left: 0, bottom: 20 }}
                 barGap={3}
+                layout="vertical"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis 
-                  dataKey="formattedDate" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  tick={{ fontSize: 10, fill: '#aaa' }}
-                  height={50}
-                />
                 <YAxis 
-                  tick={{ fontSize: 10, fill: '#aaa' }} 
+                  dataKey="formattedDate" 
+                  type="category"
+                  tick={{ fontSize: 10, fill: '#aaa' }}
+                  width={50}
+                />
+                <XAxis 
+                  type="number"
+                  tick={{ fontSize: 10, fill: '#aaa' }}
                   tickFormatter={(value) => `${value}`}
                 />
                 <Tooltip
@@ -106,7 +109,7 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
                   dataKey="overallDensity" 
                   name="Overall Density"
                   fill="#8b5cf6" 
-                  radius={[4, 4, 0, 0]} 
+                  radius={[0, 4, 4, 0]} 
                   barSize={16}
                   isAnimationActive={false}
                 />
@@ -114,7 +117,7 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
                   dataKey="activeOnlyDensity" 
                   name="Active Time Density"
                   fill="#4ade80" 
-                  radius={[4, 4, 0, 0]} 
+                  radius={[0, 4, 4, 0]} 
                   barSize={16} 
                   isAnimationActive={false}
                 />

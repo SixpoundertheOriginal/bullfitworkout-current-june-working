@@ -5,13 +5,10 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianG
 import { format } from 'date-fns';
 import { Activity } from 'lucide-react';
 import { useWeightUnit } from '@/context/WeightUnitContext';
+import { DensityDataPoint } from '@/hooks/useProcessWorkoutMetrics';
 
 interface WorkoutDensityOverTimeChartProps {
-  data: Array<{
-    date: string;
-    overallDensity: number;
-    activeOnlyDensity?: number;
-  }>;
+  data: DensityDataPoint[];
   className?: string;
   height?: number;
 }
@@ -23,7 +20,9 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
 }) => {
   const { weightUnit } = useWeightUnit();
   
-  console.log("WorkoutDensityOverTimeChart rendering with data:", data?.length || 0, "items");
+  console.log("WorkoutDensityOverTimeChart rendering with data:", 
+    Array.isArray(data) ? `${data.length} items` : "invalid data",
+    Array.isArray(data) && data[0] ? `First item: ${JSON.stringify(data[0])}` : "");
   
   // Ensure we have data to display
   const hasData = Array.isArray(data) && data.length > 0 && data.some(item => item.overallDensity > 0);
@@ -64,9 +63,11 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
               <Activity className="h-4 w-4 mr-2 text-purple-400" />
               Workout Density Over Time
             </div>
-            <div className="text-xs text-gray-400">
-              Avg: {averages.overall} {weightUnit}/min
-            </div>
+            {hasData && (
+              <div className="text-xs text-gray-400">
+                Avg: {averages.overall} {weightUnit}/min
+              </div>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
