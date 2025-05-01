@@ -35,19 +35,29 @@ export const WeightUnitContextProvider: React.FC<{ children: React.ReactNode }> 
       }
 
       try {
+        // Changed from .single() to .maybeSingle() to handle the case where no profile exists
         const { data, error } = await supabase
           .from("user_profiles")
           .select("weight_unit")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching weight unit preference:", error);
+          return;
+        }
 
+        // If data exists, use its weight_unit, otherwise fallback to "kg"
         const userWeightUnit = data?.weight_unit as WeightUnit || "kg";
         setWeightUnit(userWeightUnit);
         setDefaultWeightUnit(userWeightUnit);
+        
+        console.log(`[WeightUnit] Loaded user preference: ${userWeightUnit}`);
       } catch (error) {
         console.error("Error fetching weight unit preference:", error);
+        // If there's an error, fall back to "kg"
+        setWeightUnit("kg");
+        setDefaultWeightUnit("kg");
       }
     };
 
@@ -58,20 +68,29 @@ export const WeightUnitContextProvider: React.FC<{ children: React.ReactNode }> 
     if (!user) return;
 
     try {
+      // Try to update the profile if it exists, otherwise insert a new one
       const { error } = await supabase
         .from("user_profiles")
-        .update({ weight_unit: weightUnit })
-        .eq("id", user.id);
+        .upsert({ 
+          id: user.id, 
+          weight_unit: weightUnit 
+        });
 
       if (error) throw error;
       
       setDefaultWeightUnit(weightUnit);
-      toast("Weight unit preference saved");
+      toast({ 
+        title: "Success",
+        description: "Weight unit preference saved" 
+      });
+      
+      console.log(`[WeightUnit] Saved user preference: ${weightUnit}`);
     } catch (error) {
       console.error("Error saving weight unit preference:", error);
       toast({
         title: "Failed to save weight unit preference",
-        description: "Please try again"
+        description: "Please try again",
+        variant: "destructive"
       });
     }
   };
