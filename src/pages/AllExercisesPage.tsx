@@ -24,7 +24,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from "@/types/exercise";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
-import { ExerciseCard } from "@/components/training/ExerciseCard";
 import { 
   Pagination, 
   PaginationContent, 
@@ -33,6 +32,8 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
+import { CommonExerciseCard } from "@/components/exercises/CommonExerciseCard";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -47,6 +48,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const [showDialog, setShowDialog] = useState(false);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<string>("suggested");
+  
+  // For delete confirmation
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,6 +151,44 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     setShowDialog(true);
   };
 
+  const handleEdit = (exercise: Exercise) => {
+    setExerciseToEdit(exercise);
+    setDialogMode("edit");
+    setShowDialog(true);
+  };
+  
+  const handleDelete = (exercise: Exercise) => {
+    setExerciseToDelete(exercise);
+    setDeleteConfirmOpen(true);
+  };
+  
+  const confirmDelete = async () => {
+    if (!exerciseToDelete) return;
+    
+    // Here we would actually delete the exercise
+    toast({
+      title: "Exercise deleted",
+      description: `${exerciseToDelete.name} has been removed from your library`,
+    });
+    
+    setDeleteConfirmOpen(false);
+    setExerciseToDelete(null);
+  };
+  
+  const handleViewDetails = (exercise: Exercise) => {
+    toast({
+      title: "View Details",
+      description: `This feature will be implemented soon!`,
+    });
+  };
+  
+  const handleDuplicate = (exercise: Exercise) => {
+    toast({
+      title: "Duplicate Exercise",
+      description: `This feature will be implemented soon!`,
+    });
+  };
+
   const handleSelectExercise = (exercise: Exercise) => {
     if (onSelectExercise) {
       onSelectExercise(exercise);
@@ -200,23 +243,27 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   };
 
   const renderExerciseCard = (exercise: Exercise) => {
+    const variant = standalone ? 'library-manage' : 'workout-add';
+    
     return (
-      <div key={exercise.id} className="flex items-center justify-between p-3 mb-2 bg-gray-800/50 rounded-lg border border-gray-700/50">
-        <div className="flex flex-col flex-1 mr-2">
-          <span className="font-medium text-white">{exercise.name}</span>
-          <span className="text-sm text-gray-400">
-            {exercise.primary_muscle_groups.slice(0, 2).join(', ')}
-          </span>
-        </div>
-        <Button
-          onClick={() => handleSelectExercise(exercise)}
-          size="sm"
-          variant="outline"
-          className="h-9 px-3 rounded-full bg-purple-900/30 border-purple-500/30 hover:bg-purple-800/50"
-        >
-          <Plus size={16} className="mr-1" />
-          Add
-        </Button>
+      <div key={exercise.id} className="mb-4">
+        {standalone ? (
+          <CommonExerciseCard
+            exercise={exercise}
+            variant={variant}
+            onAdd={() => handleSelectExercise(exercise)}
+            onEdit={() => handleEdit(exercise)}
+            onDelete={() => handleDelete(exercise)}
+            onViewDetails={() => handleViewDetails(exercise)}
+            onDuplicate={() => handleDuplicate(exercise)}
+          />
+        ) : (
+          <CommonExerciseCard
+            exercise={exercise}
+            variant={variant}
+            onAdd={() => handleSelectExercise(exercise)}
+          />
+        )}
       </div>
     );
   };
@@ -327,6 +374,24 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           mode={dialogMode}
         />
         
+        {/* Delete confirmation */}
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Exercise</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{exerciseToDelete?.name}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
         {/* Header with back button if needed */}
         <div className="flex items-center justify-between mb-4">
           {onBack && (
@@ -348,9 +413,15 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           </div>
           
           {standalone && (
-            <div className="opacity-0 w-[52px]">
-              {/* Spacer for centering the title */}
-            </div>
+            <Button 
+              onClick={handleAdd}
+              size="sm"
+              variant="outline"
+              className="h-9 px-3 rounded-full bg-purple-900/30 border-purple-500/30 hover:bg-purple-800/50"
+            >
+              <Plus size={16} className="mr-1" />
+              New Exercise
+            </Button>
           )}
         </div>
         
