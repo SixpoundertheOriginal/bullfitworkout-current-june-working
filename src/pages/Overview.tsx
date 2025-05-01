@@ -40,6 +40,14 @@ useEffect(() => {
     volumeStats,
     densityStats
   } = useProcessWorkoutMetrics(workouts, weightUnit);
+useEffect(() => {
+  console.log("[Overview] 📊 Processed Metrics:");
+  console.log("  volumeOverTimeData:", volumeOverTimeData);
+  console.log("  densityOverTimeData:", densityOverTimeData);
+  console.log("  volumeStats:", volumeStats);
+  console.log("  densityStats:", densityStats);
+}, [volumeOverTimeData, densityOverTimeData, volumeStats, densityStats]);
+
 
   useEffect(() => {
     const storedWeight = localStorage.getItem('userWeight');
