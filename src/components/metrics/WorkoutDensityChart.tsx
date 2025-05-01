@@ -12,7 +12,7 @@ interface WorkoutDensityChartProps {
   activeOnlyDensity?: number;
 }
 
-export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = ({
+export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.memo(({
   totalTime,
   activeTime,
   restTime,
@@ -21,12 +21,14 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = ({
   overallDensity: propOverallDensity,
   activeOnlyDensity: propActiveOnlyDensity
 }) => {
+  console.log("WorkoutDensityChart rendering with props:", { totalTime, activeTime, restTime, totalVolume });
+  
   // Calculate density metrics if not provided
   const overallDensity = propOverallDensity ?? (totalTime > 0 ? totalVolume / totalTime : 0);
   const activeOnlyDensity = propActiveOnlyDensity ?? (activeTime > 0 ? totalVolume / activeTime : 0);
   
   const formatDensity = (value: number) => {
-    return value < 10 ? value.toFixed(1) : Math.round(value);
+    return value < 10 ? value.toFixed(1) : Math.round(value).toString();
   };
   
   const densityData = [
@@ -44,24 +46,30 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = ({
     }
   ];
   
+  // Use fallback values for time data to avoid NaN
+  const safeActiveTime = activeTime || 0;
+  const safeRestTime = restTime || 0;
+  const safeTotalTime = totalTime || 1; // Avoid division by zero
+  
   const timeData = [
     {
       name: 'Time',
-      activeTime,
-      restTime,
-      percentage: Math.round((activeTime / totalTime) * 100)
+      activeTime: safeActiveTime,
+      restTime: safeRestTime,
+      percentage: Math.round((safeActiveTime / safeTotalTime) * 100) || 0
     }
   ];
   
   return (
     <div className="space-y-4">
-      <div className="h-28">
+      <div className="h-28 min-h-[112px]">
         <h3 className="text-xs text-center mb-1">Workout Density</h3>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={densityData}
             margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
             layout="vertical"
+            barGap={0}
           >
             <XAxis type="number" hide={true} />
             <YAxis 
@@ -74,8 +82,13 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = ({
             <Tooltip
               formatter={(value) => [`${value} ${weightUnit}/min`, 'Density']}
               contentStyle={{ backgroundColor: '#1e1e2e', border: 'none' }}
+              isAnimationActive={false}
             />
-            <Bar dataKey="density" radius={[0, 4, 4, 0]}>
+            <Bar 
+              dataKey="density" 
+              radius={[0, 4, 4, 0]} 
+              isAnimationActive={false}
+            >
               {densityData.map((entry, index) => (
                 <LabelList 
                   key={`label-${index}`}
@@ -99,16 +112,18 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = ({
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-xs text-gray-400">
-            Active: {Math.round(activeTime)}m
+            Active: {Math.round(safeActiveTime)}m
           </span>
           <span className="text-xs text-gray-400">
             {timeData[0].percentage}%
           </span>
           <span className="text-xs text-gray-400">
-            Rest: {Math.round(restTime)}m
+            Rest: {Math.round(safeRestTime)}m
           </span>
         </div>
       </div>
     </div>
   );
-};
+});
+
+WorkoutDensityChart.displayName = 'WorkoutDensityChart';

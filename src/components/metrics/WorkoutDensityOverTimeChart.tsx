@@ -23,12 +23,14 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
 }) => {
   const { weightUnit } = useWeightUnit();
   
-  // Ensure we have data to display
-  const hasData = data && data.length > 0 && data.some(item => item.overallDensity > 0);
+  console.log("WorkoutDensityOverTimeChart rendering with data:", data?.length || 0, "items");
   
-  // Format data for the chart
+  // Ensure we have data to display
+  const hasData = Array.isArray(data) && data.length > 0 && data.some(item => item.overallDensity > 0);
+  
+  // Format data for the chart - memoized to prevent re-processing
   const formattedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!hasData) return [];
     
     return data.map(item => ({
       date: format(new Date(item.date), 'MMM d'),
@@ -36,22 +38,22 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
       activeOnlyDensity: item.activeOnlyDensity ? Number(item.activeOnlyDensity.toFixed(1)) : undefined,
       originalDate: item.date,
     }));
-  }, [data]);
+  }, [data, hasData]);
   
-  // Calculate average densities
-  const averageOverallDensity = useMemo(() => {
-    if (!data || data.length === 0) return 0;
-    const sum = data.reduce((acc, item) => acc + item.overallDensity, 0);
-    return Number((sum / data.length).toFixed(1));
-  }, [data]);
-  
-  const averageActiveOnlyDensity = useMemo(() => {
-    if (!data || data.length === 0) return 0;
-    const validItems = data.filter(item => item.activeOnlyDensity !== undefined);
-    if (validItems.length === 0) return 0;
-    const sum = validItems.reduce((acc, item) => acc + (item.activeOnlyDensity || 0), 0);
-    return Number((sum / validItems.length).toFixed(1));
-  }, [data]);
+  // Calculate average densities - memoized
+  const averages = useMemo(() => {
+    if (!hasData) return { overall: 0, activeOnly: 0 };
+    
+    const sumOverall = data.reduce((acc, item) => acc + item.overallDensity, 0);
+    const overall = Number((sumOverall / data.length).toFixed(1));
+    
+    const validActiveItems = data.filter(item => item.activeOnlyDensity !== undefined);
+    const activeOnly = validActiveItems.length === 0 
+      ? 0 
+      : Number((validActiveItems.reduce((acc, item) => acc + (item.activeOnlyDensity || 0), 0) / validActiveItems.length).toFixed(1));
+    
+    return { overall, activeOnly };
+  }, [data, hasData]);
 
   return (
     <Card className={`bg-gray-900 border-gray-800 hover:border-purple-500/50 transition-all ${className}`}>
@@ -63,7 +65,7 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
               Workout Density Over Time
             </div>
             <div className="text-xs text-gray-400">
-              Avg: {averageOverallDensity} {weightUnit}/min
+              Avg: {averages.overall} {weightUnit}/min
             </div>
           </div>
         </CardTitle>
@@ -76,7 +78,10 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={formattedData} margin={{ top: 5, right: 5, left: 5, bottom: 20 }}>
+              <LineChart 
+                data={formattedData} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#333333" vertical={false} />
                 <XAxis
                   dataKey="date"
@@ -119,6 +124,7 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
                     }
                     return null;
                   }}
+                  isAnimationActive={false}
                 />
                 <Line
                   type="monotone"
@@ -147,14 +153,14 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
           <div className="text-center">
             <p className="text-xs text-gray-400 mb-1">Overall Density</p>
             <p className="text-lg font-semibold text-purple-400">
-              {averageOverallDensity} <span className="text-sm text-gray-400">{weightUnit}/min</span>
+              {averages.overall} <span className="text-sm text-gray-400">{weightUnit}/min</span>
             </p>
           </div>
           
           <div className="text-center">
             <p className="text-xs text-gray-400 mb-1">Active Density</p>
             <p className="text-lg font-semibold text-blue-400">
-              {averageActiveOnlyDensity} <span className="text-sm text-gray-400">{weightUnit}/min</span>
+              {averages.activeOnly} <span className="text-sm text-gray-400">{weightUnit}/min</span>
             </p>
           </div>
         </div>
@@ -162,3 +168,5 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
     </Card>
   );
 });
+
+WorkoutDensityOverTimeChart.displayName = 'WorkoutDensityOverTimeChart';

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { WorkoutBanner } from "@/components/training/WorkoutBanner";
@@ -47,19 +47,50 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const { isFilterVisible } = useLayout();
   const title = getPageTitle(location.pathname);
   
+  // Prevent content shifts and flickering by disabling overflow during UI transitions
+  useLayoutEffect(() => {
+    // Prevent layout shifts by disabling animations on initial render
+    const mainContent = document.querySelector('.content-container');
+    if (mainContent) {
+      // Temporarily disable transitions
+      mainContent.classList.add('force-no-transition');
+      
+      // Re-enable transitions after a short delay
+      setTimeout(() => {
+        mainContent.classList.remove('force-no-transition');
+      }, 100);
+    }
+    
+    // Lock scroll momentarily when navigating to the overview page
+    if (location.pathname === '/overview') {
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        document.body.style.overflow = '';
+      }, 50);
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [location.pathname]);
+  
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
+    <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
       {!noHeader && (
         <div className="fixed top-0 left-0 right-0 z-50">
           <PageHeader title={title}>
-            {isFilterVisible && <DateRangeFilter />}
+            {isFilterVisible && (
+              <div className="h-[36px] overflow-hidden">
+                <DateRangeFilter />
+              </div>
+            )}
           </PageHeader>
           <WorkoutBanner />
         </div>
       )}
       
       <main className="flex-grow overflow-y-auto pt-16 pb-16 will-change-transform">
-        <div className="content-container">
+        <div className="content-container w-full">
           {children}
         </div>
       </main>
@@ -69,6 +100,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <BottomNav />
         </div>
       )}
+      
+      <style jsx global>{`
+        .force-no-transition * {
+          transition: none !important;
+          animation: none !important;
+        }
+        
+        .content-container {
+          min-height: calc(100vh - 48px);
+        }
+      `}</style>
     </div>
   );
 };

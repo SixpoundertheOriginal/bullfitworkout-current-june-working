@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { Activity } from 'lucide-react';
@@ -26,30 +26,25 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
 }) => {
   const { weightUnit } = useWeightUnit();
   
+  // Check if we have valid data to display
   const hasData = Array.isArray(data) && data.length > 0;
   
-  if (!hasData) {
-    return (
-      <Card className={`bg-gray-900 border-gray-800 ${className}`}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center">
-            <Activity className="h-4 w-4 mr-2 text-purple-400" />
-            Workout Density Trend
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center h-48 text-gray-500">
-          <p>No workout density data available</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Calculate average density across all workouts
-  const avgOverallDensity = data.reduce((sum, item) => sum + item.overallDensity, 0) / data.length;
-  const avgActiveOnlyDensity = data.reduce((sum, item) => sum + item.activeOnlyDensity, 0) / data.length;
+  console.log("WorkoutDensityTrendChart rendering with data:", hasData ? data.length : 0, "items");
   
-  // Find the workout with the highest density (most efficient)
-  const mostEfficientWorkout = [...data].sort((a, b) => b.activeOnlyDensity - a.activeOnlyDensity)[0];
+  // Calculate average density across all workouts - memoized
+  const stats = useMemo(() => {
+    if (!hasData) return { avgOverallDensity: 0, avgActiveOnlyDensity: 0, mostEfficientWorkout: null };
+    
+    const avgOverallDensity = data.reduce((sum, item) => sum + item.overallDensity, 0) / data.length;
+    const avgActiveOnlyDensity = data.reduce((sum, item) => sum + item.activeOnlyDensity, 0) / data.length;
+    
+    // Find the workout with the highest density (most efficient)
+    const mostEfficientWorkout = [...data].sort((a, b) => b.activeOnlyDensity - a.activeOnlyDensity)[0];
+
+    return { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout };
+  }, [data, hasData]);
+  
+  const { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout } = stats;
 
   return (
     <Card className={`bg-gray-900 border-gray-800 ${className}`}>
@@ -78,46 +73,54 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
         </div>
         
         <div style={{ height: `${height}px`, minHeight: '48px' }} className="w-full overflow-hidden">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              margin={{ top: 15, right: 10, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-              <XAxis 
-                dataKey="formattedDate" 
-                angle={-45} 
-                textAnchor="end" 
-                tick={{ fontSize: 10, fill: '#aaa' }}
-                height={50}
-              />
-              <YAxis 
-                tick={{ fontSize: 10, fill: '#aaa' }} 
-                tickFormatter={(value) => `${value}`}
-              />
-              <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)} ${weightUnit}/min`, 'Density']}
-                labelFormatter={(label) => `Date: ${label}`}
-                contentStyle={{ backgroundColor: '#1e1e2e', border: 'none', borderRadius: '4px' }}
-              />
-              <Bar 
-                dataKey="overallDensity" 
-                name="Overall Density"
-                fill="#8b5cf6" 
-                radius={[4, 4, 0, 0]} 
-                barSize={16}
-                isAnimationActive={false}
-              />
-              <Bar 
-                dataKey="activeOnlyDensity" 
-                name="Active Time Density"
-                fill="#4ade80" 
-                radius={[4, 4, 0, 0]} 
-                barSize={16} 
-                isAnimationActive={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          {!hasData ? (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              No density data available
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                margin={{ top: 15, right: 10, left: 0, bottom: 20 }}
+                barGap={3}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                <XAxis 
+                  dataKey="formattedDate" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  tick={{ fontSize: 10, fill: '#aaa' }}
+                  height={50}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10, fill: '#aaa' }} 
+                  tickFormatter={(value) => `${value}`}
+                />
+                <Tooltip
+                  formatter={(value: number) => [`${value.toFixed(1)} ${weightUnit}/min`, 'Density']}
+                  labelFormatter={(label) => `Date: ${label}`}
+                  contentStyle={{ backgroundColor: '#1e1e2e', border: 'none', borderRadius: '4px' }}
+                  isAnimationActive={false}
+                />
+                <Bar 
+                  dataKey="overallDensity" 
+                  name="Overall Density"
+                  fill="#8b5cf6" 
+                  radius={[4, 4, 0, 0]} 
+                  barSize={16}
+                  isAnimationActive={false}
+                />
+                <Bar 
+                  dataKey="activeOnlyDensity" 
+                  name="Active Time Density"
+                  fill="#4ade80" 
+                  radius={[4, 4, 0, 0]} 
+                  barSize={16} 
+                  isAnimationActive={false}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
         
         <div className="flex justify-center mt-2 space-x-4">
@@ -134,3 +137,5 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
     </Card>
   );
 });
+
+WorkoutDensityTrendChart.displayName = 'WorkoutDensityTrendChart';

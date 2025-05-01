@@ -25,12 +25,14 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
   const { weightUnit } = useWeightUnit();
   const { dateRange } = useDateRange();
   
-  // Ensure we have data to display
-  const hasData = data && data.length > 0 && data.some(item => item.volume > 0);
+  console.log("WorkoutVolumeOverTimeChart rendering with data:", data?.length || 0, "items");
   
-  // Format data for the chart
+  // Ensure we have data to display
+  const hasData = Array.isArray(data) && data.length > 0 && data.some(item => item.volume > 0);
+  
+  // Format data for the chart - memoized
   const formattedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!hasData) return [];
     
     return data.map(item => ({
       date: format(new Date(item.date), 'MMM d'),
@@ -38,15 +40,35 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
       originalDate: item.date,
       formattedValue: `${convertWeight(item.volume, 'kg', weightUnit).toLocaleString()} ${weightUnit}`
     }));
-  }, [data, weightUnit]);
+  }, [data, weightUnit, hasData]);
+  
+  // Calculate total and average volume
+  const volumeStats = useMemo(() => {
+    if (!hasData) return { total: 0, average: 0 };
+    
+    const total = data.reduce((sum, item) => sum + item.volume, 0);
+    const average = total / data.length;
+    
+    return {
+      total: convertWeight(total, 'kg', weightUnit),
+      average: convertWeight(average, 'kg', weightUnit)
+    };
+  }, [data, weightUnit, hasData]);
 
   return (
     <Card className={`bg-gray-900 border-gray-800 hover:border-purple-500/50 transition-all ${className}`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">
-          <div className="flex items-center">
-            <Dumbbell className="h-4 w-4 mr-2 text-purple-400" />
-            Volume Over Time
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Dumbbell className="h-4 w-4 mr-2 text-purple-400" />
+              Volume Over Time
+            </div>
+            {hasData && (
+              <div className="text-xs text-gray-400">
+                Avg: {Math.round(volumeStats.average).toLocaleString()} {weightUnit}
+              </div>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
@@ -94,12 +116,12 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
                     }
                     return null;
                   }}
+                  isAnimationActive={false}
                 />
                 <Bar
                   dataKey="volume"
                   fill="url(#volumeGradient)"
                   radius={[4, 4, 0, 0]}
-                  animationDuration={1000}
                   isAnimationActive={false}
                 />
                 <defs>
@@ -112,7 +134,27 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
             </ResponsiveContainer>
           )}
         </div>
+        
+        {hasData && (
+          <div className="mt-3 grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <p className="text-xs text-gray-400 mb-1">Total Volume</p>
+              <p className="text-lg font-semibold text-purple-400">
+                {Math.round(volumeStats.total).toLocaleString()} <span className="text-sm text-gray-400">{weightUnit}</span>
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-xs text-gray-400 mb-1">Average Volume</p>
+              <p className="text-lg font-semibold text-blue-400">
+                {Math.round(volumeStats.average).toLocaleString()} <span className="text-sm text-gray-400">{weightUnit}</span>
+              </p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 });
+
+WorkoutVolumeOverTimeChart.displayName = 'WorkoutVolumeOverTimeChart';

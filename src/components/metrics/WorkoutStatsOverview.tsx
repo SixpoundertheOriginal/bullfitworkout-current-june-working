@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { formatWeightWithUnit } from '@/utils/unitConversion';
@@ -25,44 +25,64 @@ export const WorkoutStatsOverview = React.memo(({
 }: WorkoutStatsOverviewProps) => {
   const { weightUnit } = useWeightUnit();
   
-  // Process workout data for density chart
-  const densityTrendData = recentWorkouts.map(workout => {
-    const date = new Date(workout.start_time);
-    return {
-      date: workout.start_time,
-      formattedDate: `${date.getMonth() + 1}/${date.getDate()}`,
-      overallDensity: workout.metrics?.densityMetrics?.overallDensity || 0,
-      activeOnlyDensity: workout.metrics?.densityMetrics?.activeOnlyDensity || 0,
-    };
-  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  
-  // Calculate average density and find most efficient workout
-  const avgOverallDensity = densityTrendData.length > 0 ? 
-    densityTrendData.reduce((sum, data) => sum + data.overallDensity, 0) / densityTrendData.length : 0;
+  // Process workout data for density chart - memoized to prevent recalculation
+  const densityTrendData = useMemo(() => {
+    console.log("Processing density trend data from workouts:", recentWorkouts?.length || 0);
     
-  const avgActiveOnlyDensity = densityTrendData.length > 0 ? 
-    densityTrendData.reduce((sum, data) => sum + data.activeOnlyDensity, 0) / densityTrendData.length : 0;
+    if (!Array.isArray(recentWorkouts) || recentWorkouts.length === 0) {
+      return [];
+    }
+    
+    return recentWorkouts.map(workout => {
+      const date = new Date(workout.start_time);
+      return {
+        date: workout.start_time,
+        formattedDate: `${date.getMonth() + 1}/${date.getDate()}`,
+        overallDensity: workout.metrics?.densityMetrics?.overallDensity || 0,
+        activeOnlyDensity: workout.metrics?.densityMetrics?.activeOnlyDensity || 0,
+      };
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [recentWorkouts]);
   
-  // Find most efficient workout
-  const mostEfficientWorkout = densityTrendData.length > 0 ?
-    [...densityTrendData].sort((a, b) => b.activeOnlyDensity - a.activeOnlyDensity)[0] : null;
+  // Calculate average density and find most efficient workout - memoized
+  const densityStats = useMemo(() => {
+    if (!Array.isArray(densityTrendData) || densityTrendData.length === 0) {
+      return { 
+        avgOverallDensity: 0, 
+        avgActiveOnlyDensity: 0, 
+        mostEfficientWorkout: null 
+      };
+    }
+    
+    const avgOverallDensity = densityTrendData.reduce((sum, data) => sum + data.overallDensity, 0) / densityTrendData.length;
+    const avgActiveOnlyDensity = densityTrendData.reduce((sum, data) => sum + data.activeOnlyDensity, 0) / densityTrendData.length;
+    const mostEfficientWorkout = [...densityTrendData].sort((a, b) => b.activeOnlyDensity - a.activeOnlyDensity)[0];
+    
+    return { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout };
+  }, [densityTrendData]);
+  
+  const { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout } = densityStats;
+  const hasData = Array.isArray(densityTrendData) && densityTrendData.length > 0;
   
   return (
     <div className={`space-y-4 ${className}`}>
       <h2 className="text-xl font-bold mb-2">Performance Insights</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        {/* Density Trend Chart */}
+        {/* Density Trend Chart with fixed height container */}
         <div className="md:col-span-8">
-          <WorkoutDensityTrendChart 
-            data={densityTrendData} 
-            className="h-full"
-          />
+          <div className="min-h-[240px] bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            <WorkoutDensityTrendChart 
+              data={densityTrendData} 
+              className="h-full"
+              height={220}
+            />
+          </div>
         </div>
         
         {/* Stats Summary Cards */}
         <div className="md:col-span-4 flex flex-col gap-4">
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className="bg-gray-900 border-gray-800 min-h-[120px] overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center">
                 <Activity className="h-4 w-4 mr-2 text-purple-400" />
@@ -110,7 +130,7 @@ export const WorkoutStatsOverview = React.memo(({
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className="bg-gray-900 border-gray-800 min-h-[120px] overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center">
                 <BarChart3 className="h-4 w-4 mr-2 text-purple-400" />
@@ -118,7 +138,7 @@ export const WorkoutStatsOverview = React.memo(({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {allTimeStats && (
+              {allTimeStats ? (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-400">Total Volume</span>
@@ -130,6 +150,10 @@ export const WorkoutStatsOverview = React.memo(({
                     <span className="text-xs text-gray-400">Total Workouts</span>
                     <span className="font-medium">{allTimeStats.totalWorkouts}</span>
                   </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-16 text-gray-500">
+                  No stats available
                 </div>
               )}
             </CardContent>
