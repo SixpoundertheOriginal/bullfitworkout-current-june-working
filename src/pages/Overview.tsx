@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -303,8 +302,8 @@ const Overview = React.memo(() => {
                 {metricsData && legacyStats ? (
                   <WorkoutDensityChart
                     totalTime={stats?.totalDuration || 0}
-                    activeTime={stats?.totalActiveTime || 0}
-                    restTime={stats?.totalRestTime || 0}
+                    activeTime={legacyStats.activeTime || stats?.totalDuration * 0.6 || 0} 
+                    restTime={legacyStats.restTime || stats?.totalDuration * 0.4 || 0}
                     totalVolume={legacyStats.totalVolume || 0}
                     weightUnit={weightUnit}
                     overallDensity={metricsData.densityMetrics?.overallDensity}
