@@ -1,3 +1,4 @@
+
 import { useMemo, useState, useEffect } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { processWorkoutMetrics, ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
@@ -62,19 +63,38 @@ export function useWorkoutStats(
     } else if (!exercises) {
       setLoading(false);
     }
-  }, [user, exercises]);
+  }, [user, exercises, dateRange]);
   
   const fetchWorkoutData = async () => {
     setLoading(true);
+    console.log("Fetching workout data with date range:", dateRange);
+    
     try {
-      // Fix table name - use workout_sessions instead of workouts
+      // Extract date range values safely
+      const now = new Date();
+      const defaultTo = now;
+      const defaultFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
+      
+      const fromDate = dateRange?.from || defaultFrom;
+      const toDate = dateRange?.to || defaultTo;
+      
+      // Add one day to toDate to include the entire end day (up to 23:59:59)
+      const adjustedToDate = new Date(toDate);
+      adjustedToDate.setDate(adjustedToDate.getDate() + 1);
+      
+      console.log("Filtering workouts between:", fromDate.toISOString(), "and", adjustedToDate.toISOString());
+      
+      // Apply date filtering to the Supabase query
       const { data: workoutData, error } = await supabase
         .from('workout_sessions')
         .select('*, exercises:exercise_sets(*)')
+        .gte('start_time', fromDate.toISOString())
+        .lt('start_time', adjustedToDate.toISOString())
         .order('start_time', { ascending: false });
         
       if (error) throw error;
       
+      console.log(`Fetched ${workoutData?.length || 0} workouts within date range`);
       setWorkouts(workoutData || []);
       
       // Calculate stats
@@ -338,16 +358,6 @@ export function useWorkoutStats(
       fetchWorkoutData();
     }
   };
-  
-  // Modify your fetch or processing logic to filter by dateRange
-  // For example:
-  
-  useEffect(() => {
-    // When dateRange changes, you might want to refetch or filter data
-    if (dateRange?.from && dateRange?.to) {
-      // Update filtering logic or refetch with new date range
-    }
-  }, [dateRange]);
   
   // Combine the metrics with the backward compatibility properties
   return {

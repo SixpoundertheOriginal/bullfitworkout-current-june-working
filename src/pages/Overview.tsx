@@ -18,6 +18,8 @@ import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useDateRange } from '@/context/DateRangeContext';
 import { createBackwardCompatibleStats } from '@/utils/metricsTransition';
 import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
+import { DateRangeFilter } from "@/components/date-filters/DateRangeFilter";
+import { DateRangeBadge } from "@/components/date-filters/DateRangeBadge";
 
 const Overview = () => {
   const { user } = useAuth();
@@ -173,6 +175,14 @@ const Overview = () => {
 
   return (
     <div className="container mx-auto py-6 px-4 overflow-x-hidden overflow-y-auto space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Workout Overview</h1>
+        <div className="flex gap-2 items-center">
+          <DateRangeBadge />
+          <DateRangeFilter />
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <div className="md:col-span-8">
           <Card className="min-h-[300px] h-[300px] bg-card overflow-hidden">
