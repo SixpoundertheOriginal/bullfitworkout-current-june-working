@@ -24,8 +24,8 @@ const Overview = () => {
   // Fetch workout stats using the hook
   const { stats, loading, refetch, ...metrics } = useWorkoutStats();
   
-  // Create backward compatible stats object
-  const legacyStats = createBackwardCompatibleStats(metrics);
+  // Create backward compatible stats object with null checks
+  const legacyStats = metrics ? createBackwardCompatibleStats(metrics) : null;
   
   useEffect(() => {
     const storedWeight = localStorage.getItem('userWeight');
@@ -47,7 +47,7 @@ const Overview = () => {
     localStorage.setItem('userWeightUnit', newUnit);
   };
   
-  const densityMetrics = metrics.densityMetrics;
+  const densityMetrics = metrics?.densityMetrics;
   
   // Default empty time patterns to avoid type errors
   const defaultTimePatterns = {
@@ -84,7 +84,7 @@ const Overview = () => {
                 <CardTitle className="flex items-center"><Users2 className="mr-2 h-4 w-4" /> Total Workouts</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold">{stats?.totalWorkouts}</div>
+                <div className="text-4xl font-bold">{stats?.totalWorkouts || 0}</div>
                 <p className="text-sm text-gray-500">All time</p>
               </CardContent>
             </Card>
@@ -94,7 +94,7 @@ const Overview = () => {
                 <CardTitle className="flex items-center"><Dumbbell className="mr-2 h-4 w-4" /> Total Exercises</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold">{stats?.totalExercises}</div>
+                <div className="text-4xl font-bold">{stats?.totalExercises || 0}</div>
                 <p className="text-sm text-gray-500">Different exercises</p>
               </CardContent>
             </Card>
@@ -104,7 +104,7 @@ const Overview = () => {
                 <CardTitle className="flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold">{Math.round(calculateTotalVolume(stats?.workouts || [])).toLocaleString()}</div>
+                <div className="text-4xl font-bold">{Math.round((stats?.workouts ? calculateTotalVolume(stats.workouts) : 0)).toLocaleString()}</div>
                 <p className="text-sm text-gray-500">Total weight lifted</p>
               </CardContent>
             </Card>
@@ -165,16 +165,20 @@ const Overview = () => {
                 <CardTitle>Workout Density</CardTitle>
               </CardHeader>
               <CardContent>
-                {densityMetrics && (
+                {densityMetrics && legacyStats ? (
                   <WorkoutDensityChart
                     totalTime={stats?.totalDuration || 0}
                     activeTime={0}
                     restTime={0}
-                    totalVolume={legacyStats?.totalVolume || 0}
+                    totalVolume={legacyStats.totalVolume || 0}
                     weightUnit={weightUnit}
                     overallDensity={densityMetrics.overallDensity}
                     activeOnlyDensity={densityMetrics.activeOnlyDensity}
                   />
+                ) : (
+                  <div className="flex items-center justify-center h-60 text-gray-500">
+                    No density data available
+                  </div>
                 )}
               </CardContent>
             </Card>
