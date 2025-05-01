@@ -329,17 +329,24 @@ export const analyzeWorkoutComposition = (exercises: Record<string, ExerciseSet[
 
 // Add the missing calculateTotalVolume function
 export const calculateTotalVolume = (workouts: any[]): number => {
-  let totalVolume = 0;
+  if (!workouts || workouts.length === 0) return 0;
 
-  workouts?.forEach(workout => {
-    if (workout.exercises && Array.isArray(workout.exercises)) {
-      workout.exercises.forEach((set: any) => {
-        if (set.weight && set.reps && set.completed) {
-          totalVolume += set.weight * set.reps;
+  return workouts.reduce((total, workout) => {
+    // Skip if workout has no exercises
+    if (!workout.exercises) return total;
+
+    const workoutVolume = Object.values(workout.exercises).reduce((exerciseTotal, sets: any[]) => {
+      // Calculate the volume for each set and sum them up
+      const setsVolume = sets.reduce((setsTotal, set) => {
+        if (set.completed && set.weight && set.reps) {
+          return setsTotal + (set.weight * set.reps);
         }
-      });
-    }
-  });
+        return setsTotal;
+      }, 0);
 
-  return totalVolume;
+      return exerciseTotal + setsVolume;
+    }, 0);
+
+    return total + workoutVolume;
+  }, 0);
 };

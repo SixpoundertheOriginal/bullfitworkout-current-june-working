@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,6 +48,16 @@ const Overview = () => {
   };
   
   const densityMetrics = metrics.densityMetrics;
+  
+  // Default empty time patterns to avoid type errors
+  const defaultTimePatterns = {
+    daysFrequency: {},
+    durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+  };
+  
+  // Use default values if stats or timePatterns is undefined
+  const timePatterns = stats?.timePatterns || defaultTimePatterns;
+  const durationByTimeOfDay = timePatterns.durationByTimeOfDay;
   
   return (
     <div className="container mx-auto py-8">
@@ -125,7 +136,7 @@ const Overview = () => {
                 <CardTitle>Workout Days</CardTitle>
               </CardHeader>
               <CardContent>
-                <WorkoutDaysChart daysFrequency={stats?.timePatterns?.daysFrequency || {}} />
+                <WorkoutDaysChart daysFrequency={timePatterns.daysFrequency} />
               </CardContent>
             </Card>
             
@@ -134,7 +145,7 @@ const Overview = () => {
                 <CardTitle>Time of Day</CardTitle>
               </CardHeader>
               <CardContent>
-                <TimeOfDayChart durationByTimeOfDay={stats?.timePatterns?.durationByTimeOfDay || {}} />
+                <TimeOfDayChart durationByTimeOfDay={durationByTimeOfDay} />
               </CardContent>
             </Card>
           </div>

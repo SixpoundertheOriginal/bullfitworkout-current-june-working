@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 interface TimeOfDayChartProps {
   durationByTimeOfDay: {
@@ -31,10 +31,10 @@ export const TimeOfDayChart: React.FC<TimeOfDayChartProps> = ({ durationByTimeOf
           <YAxis 
             tick={{ fill: '#f9fafb', fontSize: 12 }} 
             axisLine={{ stroke: '#374151' }}
-            tickFormatter={(value) => `${Math.round(value)}m`}
+            tickFormatter={(value: number) => `${Math.round(value)}m`}
           />
           <Tooltip 
-            formatter={(value) => [`${Math.round(value)} minutes`, 'Duration']}
+            formatter={(value: number) => [`${Math.round(value)} minutes`, 'Duration']}
             contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
             cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
           />

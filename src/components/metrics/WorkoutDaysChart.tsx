@@ -17,7 +17,7 @@ export const WorkoutDaysChart: React.FC<WorkoutDaysChartProps> = ({ daysFrequenc
   }));
   
   // Determine today for highlighting
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   
   return (
     <div className="h-60">
