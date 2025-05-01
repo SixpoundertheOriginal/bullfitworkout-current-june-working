@@ -158,7 +158,6 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: 1,
-    useErrorBoundary: false
+    retry: 1
   });
 };

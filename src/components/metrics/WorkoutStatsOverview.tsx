@@ -141,5 +141,3 @@ export const WorkoutStatsOverview = React.memo(({
 });
 
 WorkoutStatsOverview.displayName = 'WorkoutStatsOverview';
-
-export { WorkoutStatsOverview };

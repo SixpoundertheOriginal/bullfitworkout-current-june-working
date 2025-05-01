@@ -26,12 +26,12 @@ const Overview = () => {
   const [userWeightUnit, setUserWeightUnit] = useState<string | null>(null);
   
   // Fetch workout stats using the hook
-  const { stats, loading, refetch, workouts, ...metrics } = useWorkoutStats();
+  const { stats, loading, refetch, workouts, ...metricsData } = useWorkoutStats();
   
   // Create backward compatible stats object with null checks
   const legacyStats = useMemo(() => {
-    return metrics ? createBackwardCompatibleStats(metrics) : null;
-  }, [metrics]);
+    return metricsData ? createBackwardCompatibleStats(metricsData) : null;
+  }, [metricsData]);
   
   useEffect(() => {
     const storedWeight = localStorage.getItem('userWeight');
@@ -337,15 +337,15 @@ const Overview = () => {
                 <CardTitle className="text-sm">Workout Density</CardTitle>
               </CardHeader>
               <CardContent className="h-[300px] overflow-hidden">
-                {densityMetrics && legacyStats ? (
+                {metricsData && legacyStats ? (
                   <WorkoutDensityChart
                     totalTime={stats?.totalDuration || 0}
                     activeTime={0}
                     restTime={0}
                     totalVolume={legacyStats.totalVolume || 0}
                     weightUnit={weightUnit}
-                    overallDensity={densityMetrics.overallDensity}
-                    activeOnlyDensity={densityMetrics.activeOnlyDensity}
+                    overallDensity={metricsData.densityMetrics?.overallDensity}
+                    activeOnlyDensity={metricsData.densityMetrics?.activeOnlyDensity}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
