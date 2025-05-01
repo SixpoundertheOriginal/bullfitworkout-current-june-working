@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Filter, X } from "lucide-react";
+import { Plus, Search, Filter, X, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
-import { Accordion } from "@/components/ui/accordion";
-import ExerciseAccordionCard from "@/components/exercises/ExerciseAccordionCard";
-import { PageHeader } from "@/components/navigation/PageHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { 
   Select, 
@@ -18,8 +18,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Card } from "@/components/ui/card";
+import { ExerciseFAB } from "@/components/ExerciseFAB";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/navigation/PageHeader";
+import { COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from "@/types/exercise";
+import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
+import { ExerciseCard } from "@/components/training/ExerciseCard";
 import { 
   Pagination, 
   PaginationContent, 
@@ -28,21 +33,20 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
-import { COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from "@/types/exercise";
-import { Card } from "@/components/ui/card";
-import { ExerciseFAB } from "@/components/ExerciseFAB";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
+  standalone?: boolean;
+  onBack?: () => void;
 }
 
-export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageProps = {}) {
+export default function AllExercisesPage({ onSelectExercise, standalone = true, onBack }: AllExercisesPageProps) {
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
+  const { workouts } = useWorkoutHistory();
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<string>("suggested");
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,39 +64,70 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [exerciseToEdit, setExerciseToEdit] = useState<any | null>(null);
 
+  // Extract recently used exercises from workout history
+  const recentExercises = React.useMemo(() => {
+    if (!workouts?.length) return [];
+    
+    const exerciseMap = new Map<string, Exercise>();
+    
+    // Get unique exercise names from recent workouts
+    workouts.slice(0, 8).forEach(workout => {
+      const exerciseNames = new Set<string>();
+      
+      workout.exerciseSets?.forEach(set => {
+        exerciseNames.add(set.exercise_name);
+      });
+      
+      exerciseNames.forEach(name => {
+        const exercise = exercises.find(e => e.name === name);
+        if (exercise && !exerciseMap.has(exercise.id)) {
+          exerciseMap.set(exercise.id, exercise);
+        }
+      });
+    });
+    
+    return Array.from(exerciseMap.values());
+  }, [workouts, exercises]);
+
   // Filter exercises based on search query and filters
-  const filteredExercises = exercises.filter(exercise => {
-    // Search filter
-    const matchesSearch = searchQuery === "" || 
-      exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exercise.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const filterExercises = (exercisesList: Exercise[]) => {
+    return exercisesList.filter(exercise => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        exercise.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Muscle group filter
-    const matchesMuscleGroup = selectedMuscleGroup === "all" || 
-      exercise.primary_muscle_groups.includes(selectedMuscleGroup as MuscleGroup) ||
-      exercise.secondary_muscle_groups.includes(selectedMuscleGroup as MuscleGroup);
+      // Muscle group filter
+      const matchesMuscleGroup = selectedMuscleGroup === "all" || 
+        exercise.primary_muscle_groups.includes(selectedMuscleGroup as MuscleGroup) ||
+        (exercise.secondary_muscle_groups && exercise.secondary_muscle_groups.includes(selectedMuscleGroup as MuscleGroup));
 
-    // Equipment filter
-    const matchesEquipment = selectedEquipment === "all" || 
-      exercise.equipment_type.includes(selectedEquipment as EquipmentType);
+      // Equipment filter
+      const matchesEquipment = selectedEquipment === "all" || 
+        exercise.equipment_type.includes(selectedEquipment as EquipmentType);
 
-    // Difficulty filter
-    const matchesDifficulty = selectedDifficulty === "all" || 
-      exercise.difficulty === selectedDifficulty;
+      // Difficulty filter
+      const matchesDifficulty = selectedDifficulty === "all" || 
+        exercise.difficulty === selectedDifficulty;
 
-    // Movement pattern filter
-    const matchesMovement = selectedMovement === "all" || 
-      exercise.movement_pattern === selectedMovement;
+      // Movement pattern filter
+      const matchesMovement = selectedMovement === "all" || 
+        exercise.movement_pattern === selectedMovement;
 
-    return matchesSearch && matchesMuscleGroup && matchesEquipment && 
-           matchesDifficulty && matchesMovement;
-  });
+      return matchesSearch && matchesMuscleGroup && matchesEquipment && 
+            matchesDifficulty && matchesMovement;
+    });
+  };
+
+  const suggestedExercises = filterExercises(exercises.slice(0, 20)); // Limit suggested to top 20 for better performance
+  const filteredRecent = filterExercises(recentExercises);
+  const filteredAll = filterExercises(exercises);
 
   // Pagination logic
   const indexOfLastExercise = currentPage * exercisesPerPage;
   const indexOfFirstExercise = indexOfLastExercise - exercisesPerPage;
-  const currentExercises = filteredExercises.slice(indexOfFirstExercise, indexOfLastExercise);
-  const totalPages = Math.ceil(filteredExercises.length / exercisesPerPage);
+  const currentExercises = filteredAll.slice(indexOfFirstExercise, indexOfLastExercise);
+  const totalPages = Math.ceil(filteredAll.length / exercisesPerPage);
 
   const paginate = (pageNumber: number) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
@@ -105,53 +140,15 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
     setCurrentPage(1);
   }, [searchQuery, selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]);
 
-  const handleEdit = (exerciseId: string) => {
-    const found = exercises.find(e => e.id === exerciseId);
-    if (found) {
-      setExerciseToEdit({
-        name: found.name,
-        description: found.description,
-        primary_muscle_groups: found.primary_muscle_groups,
-        secondary_muscle_groups: found.secondary_muscle_groups,
-        equipment_type: found.equipment_type,
-        movement_pattern: found.movement_pattern,
-        difficulty: found.difficulty,
-        instructions: found.instructions,
-        is_compound: found.is_compound,
-        tips: found.tips,
-        variations: found.variations,
-        metadata: found.metadata,
-      });
-      setDialogMode("edit");
-      setShowDialog(true);
-    } else {
-      toast({ title: "Exercise not found", variant: "destructive" });
-    }
-  };
-
-  const handleDelete = (exerciseId: string) => {
-    toast({
-      title: "Delete Exercise",
-      description: `Deleting exercise with ID: ${exerciseId}`,
-      variant: "destructive",
-    });
-  };
-
   const handleAdd = () => {
     setExerciseToEdit(null);
     setDialogMode("add");
     setShowDialog(true);
   };
 
-  const handleAccordionSelect = (value: string) => {
-    setActiveAccordion(prev => (prev === value ? null : value));
-  };
-
   const handleSelectExercise = (exercise: Exercise) => {
     if (onSelectExercise) {
       onSelectExercise(exercise);
-    } else {
-      handleAccordionSelect(exercise.id);
     }
   };
 
@@ -192,18 +189,135 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
           }
         );
       });
+      toast({
+        title: "Exercise added",
+        description: `Added ${exercise.name} to your library`
+      });
+      setShowDialog(false);
     } else {
-      // For now, just toast in edit mode (update functionality to be added)
       toast({ title: "Edit not implemented", description: "Update exercise functionality will be implemented soon!" });
     }
   };
 
+  const renderExerciseCard = (exercise: Exercise) => {
+    return (
+      <div key={exercise.id} className="flex items-center justify-between p-3 mb-2 bg-gray-800/50 rounded-lg border border-gray-700/50">
+        <div className="flex flex-col flex-1 mr-2">
+          <span className="font-medium text-white">{exercise.name}</span>
+          <span className="text-sm text-gray-400">
+            {exercise.primary_muscle_groups.slice(0, 2).join(', ')}
+          </span>
+        </div>
+        <Button
+          onClick={() => handleSelectExercise(exercise)}
+          size="sm"
+          variant="outline"
+          className="h-9 px-3 rounded-full bg-purple-900/30 border-purple-500/30 hover:bg-purple-800/50"
+        >
+          <Plus size={16} className="mr-1" />
+          Add
+        </Button>
+      </div>
+    );
+  };
+
+  const renderExerciseList = (exercisesList: Exercise[], showPagination = false) => {
+    if (exercisesList.length === 0) {
+      return (
+        <div className="text-center py-6 text-gray-400">
+          No exercises found
+        </div>
+      );
+    }
+
+    const listToRender = showPagination ? currentExercises : exercisesList;
+
+    return (
+      <div className="space-y-2">
+        {listToRender.map(renderExerciseCard)}
+        
+        {showPagination && totalPages > 1 && (
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => paginate(currentPage - 1)}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              
+              {/* First page */}
+              {currentPage > 2 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis */}
+              {currentPage > 3 && (
+                <PaginationItem>
+                  <span className="px-2">...</span>
+                </PaginationItem>
+              )}
+              
+              {/* Previous page */}
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(currentPage - 1)}>
+                    {currentPage - 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Current page */}
+              <PaginationItem>
+                <PaginationLink isActive>{currentPage}</PaginationLink>
+              </PaginationItem>
+              
+              {/* Next page */}
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(currentPage + 1)}>
+                    {currentPage + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis */}
+              {currentPage < totalPages - 2 && (
+                <PaginationItem>
+                  <span className="px-2">...</span>
+                </PaginationItem>
+              )}
+              
+              {/* Last page */}
+              {currentPage < totalPages - 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(totalPages)}>
+                    {totalPages}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => paginate(currentPage + 1)}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <>
-      <PageHeader title="All Exercises" />
+    <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
+      {standalone && <PageHeader title="Exercise Library" />}
       
       {/* Main content container */}
-      <div className="max-w-4xl mx-auto py-6 px-4 space-y-6 pt-20 pb-24">
+      <div className={`flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-4xl px-4 ${standalone ? 'py-4' : 'pt-0'}`}>
         <ExerciseDialog
           open={showDialog}
           onOpenChange={setShowDialog}
@@ -213,17 +327,70 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
           mode={dialogMode}
         />
         
-        {/* Header section with search and filter */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <h1 className="text-2xl font-bold text-white">Exercise Library</h1>
-            
-            <div className="flex gap-2">
+        {/* Header with back button if needed */}
+        <div className="flex items-center justify-between mb-4">
+          {onBack && (
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={onBack}
+              className="flex items-center gap-2 -ml-2"
+            >
+              <ChevronLeft size={18} />
+              Back
+            </Button>
+          )}
+          
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-xl font-semibold text-center">
+              {standalone ? "Exercise Library" : "Browse Exercises"}
+            </h1>
+          </div>
+          
+          {standalone && (
+            <div className="opacity-0 w-[52px]">
+              {/* Spacer for centering the title */}
+            </div>
+          )}
+        </div>
+        
+        {/* Search bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search exercises..."
+            className="pl-9 bg-gray-800 border-gray-700"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="absolute right-2 top-1.5 h-7 w-7 p-0"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+                
+        {/* Tabs for navigation */}
+        <Tabs className="flex-1 overflow-hidden flex flex-col" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="suggested">Suggested</TabsTrigger>
+            <TabsTrigger value="recent">Recent</TabsTrigger>
+            <TabsTrigger value="browse">Browse All</TabsTrigger>
+          </TabsList>
+          
+          {/* Filters button - only show in browse tab */}
+          {activeTab === 'browse' && (
+            <div className="mb-4">
               <Button 
                 variant="outline"
                 size="sm" 
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center ${showFilters ? 'bg-purple-900/50 border-purple-500' : ''}`}
+                className={`flex items-center w-full justify-center ${showFilters ? 'bg-purple-900/50 border-purple-500' : ''}`}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
@@ -239,41 +406,13 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
                   </Badge>
                 )}
               </Button>
-              
-              {!isMobile && (
-                <Button onClick={handleAdd} variant="gradient" size="sm" className="flex items-center">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Exercise
-                </Button>
-              )}
             </div>
-          </div>
-          
-          {/* Search box */}
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search exercises by name or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-800 border-gray-700"
-            />
-            {searchQuery && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="absolute right-2 top-1.5 h-7 w-7 p-0"
-                onClick={() => setSearchQuery("")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          )}
           
           {/* Filter section */}
-          {showFilters && (
-            <Card className="p-4 bg-gray-800/50 border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {showFilters && activeTab === 'browse' && (
+            <Card className="p-4 mb-4 bg-gray-800/50 border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-sm text-gray-300 mb-1 block">Muscle Group</label>
                   <Select 
@@ -357,7 +496,7 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
               
               <div className="flex justify-between">
                 <div className="text-sm text-gray-400">
-                  {filteredExercises.length} exercise{filteredExercises.length !== 1 ? 's' : ''} found
+                  {filteredAll.length} exercise{filteredAll.length !== 1 ? 's' : ''} found
                 </div>
                 
                 <Button
@@ -371,156 +510,81 @@ export default function AllExercisesPage({ onSelectExercise }: AllExercisesPageP
               </div>
             </Card>
           )}
-        </div>
-        
-        {/* Loading state */}
-        {isLoading && (
-          <div className="space-y-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index} className="bg-gray-900 border-gray-700 p-4">
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-6 w-3/4 bg-gray-800" />
-                  <Skeleton className="h-4 w-5/6 bg-gray-800" />
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-        
-        {/* Error state */}
-        {isError && (
-          <div className="text-red-500 text-center py-8">
-            Error loading exercises. Please try again later.
-          </div>
-        )}
-        
-        {/* Empty state */}
-        {!isLoading && !isError && filteredExercises.length === 0 && (
-          <div className="text-center py-12">
-            <div className="bg-gray-800/50 rounded-lg py-10 px-6 max-w-md mx-auto">
-              {searchQuery || selectedMuscleGroup !== "all" || selectedEquipment !== "all" || 
-               selectedDifficulty !== "all" || selectedMovement !== "all" ? (
-                <>
-                  <h3 className="text-xl font-medium mb-2">No matching exercises</h3>
-                  <p className="text-gray-400 mb-6">Try adjusting your filters or search query</p>
-                  <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-xl font-medium mb-2">No exercises found</h3>
-                  <p className="text-gray-400 mb-6">Create your first exercise to get started</p>
-                  <Button variant="gradient" onClick={handleAdd}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Your First Exercise
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* Exercise list */}
-        {!isLoading && !isError && currentExercises.length > 0 && (
-          <div className="space-y-4">
-            <Accordion
-              type="single"
-              collapsible
-              value={activeAccordion ? activeAccordion : ""}
-              onValueChange={val => setActiveAccordion(val as string)}
-            >
-              {currentExercises.map((exercise) => (
-                <ExerciseAccordionCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  expanded={activeAccordion === exercise.id}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onSelect={handleSelectExercise}
-                />
-              ))}
-            </Accordion>
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <Pagination className="mt-8">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => paginate(currentPage - 1)}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                    />
-                  </PaginationItem>
-                  
-                  {/* First page */}
-                  {currentPage > 2 && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  {/* Ellipsis */}
-                  {currentPage > 3 && (
-                    <PaginationItem>
-                      <span className="px-2">...</span>
-                    </PaginationItem>
-                  )}
-                  
-                  {/* Previous page */}
-                  {currentPage > 1 && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => paginate(currentPage - 1)}>
-                        {currentPage - 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  {/* Current page */}
-                  <PaginationItem>
-                    <PaginationLink isActive>{currentPage}</PaginationLink>
-                  </PaginationItem>
-                  
-                  {/* Next page */}
-                  {currentPage < totalPages && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => paginate(currentPage + 1)}>
-                        {currentPage + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  {/* Ellipsis */}
-                  {currentPage < totalPages - 2 && (
-                    <PaginationItem>
-                      <span className="px-2">...</span>
-                    </PaginationItem>
-                  )}
-                  
-                  {/* Last page */}
-                  {currentPage < totalPages - 1 && (
-                    <PaginationItem>
-                      <PaginationLink onClick={() => paginate(totalPages)}>
-                        {totalPages}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => paginate(currentPage + 1)}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+          
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Loading state */}
+            {isLoading && (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index} className="bg-gray-900 border-gray-700 p-4">
+                    <div className="flex flex-col gap-2">
+                      <Skeleton className="h-6 w-3/4 bg-gray-800" />
+                      <Skeleton className="h-4 w-5/6 bg-gray-800" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
             )}
+            
+            {/* Error state */}
+            {isError && (
+              <div className="text-red-500 text-center py-8">
+                Error loading exercises. Please try again later.
+              </div>
+            )}
+            
+            {/* Empty state */}
+            {!isLoading && !isError && filteredAll.length === 0 && activeTab === 'browse' && (
+              <div className="text-center py-12">
+                <div className="bg-gray-800/50 rounded-lg py-10 px-6 max-w-md mx-auto">
+                  {searchQuery || selectedMuscleGroup !== "all" || selectedEquipment !== "all" || 
+                  selectedDifficulty !== "all" || selectedMovement !== "all" ? (
+                    <>
+                      <h3 className="text-xl font-medium mb-2">No matching exercises</h3>
+                      <p className="text-gray-400 mb-6">Try adjusting your filters or search query</p>
+                      <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-xl font-medium mb-2">No exercises found</h3>
+                      <p className="text-gray-400 mb-6">Create your first exercise to get started</p>
+                      <Button variant="gradient" onClick={handleAdd}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Your First Exercise
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Tab content */}
+            <TabsContent value="suggested" className="mt-0 h-full">
+              <div className="overflow-y-auto">
+                {renderExerciseList(suggestedExercises)}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="recent" className="mt-0 h-full">
+              <div className="overflow-y-auto">
+                {renderExerciseList(filteredRecent)}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="browse" className="mt-0 h-full">
+              <div className="overflow-y-auto">
+                {renderExerciseList(filteredAll, true)}
+              </div>
+            </TabsContent>
           </div>
-        )}
+        </Tabs>
       </div>
       
       {/* Mobile Add Button */}
-      {isMobile && (
+      {standalone && isMobile && (
         <ExerciseFAB onClick={handleAdd} />
       )}
-    </>
+    </div>
   );
 }

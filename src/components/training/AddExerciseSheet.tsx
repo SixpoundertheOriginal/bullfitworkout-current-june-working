@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, Plus, ChevronLeft } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Exercise } from "@/types/exercise";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
@@ -91,10 +92,6 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     });
   };
 
-  const handleBackToTabs = () => {
-    setShowAllExercises(false);
-  };
-
   const renderExerciseCard = (exercise: Exercise) => {
     const muscleGroups = exercise.primary_muscle_groups.slice(0, 2).join(', ');
     
@@ -117,6 +114,23 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     );
   };
 
+  if (showAllExercises) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent 
+          side="bottom" 
+          className="h-[90vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"
+        >
+          <AllExercisesPage 
+            onSelectExercise={handleAddExercise}
+            standalone={false}
+            onBack={() => setShowAllExercises(false)}
+          />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
@@ -129,78 +143,55 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
             <div className="w-12 h-1.5 bg-gray-700 rounded-full"></div>
           </div>
           
-          {!showAllExercises ? (
-            <>
-              <div className="px-4 pb-2">
-                <SheetHeader className="mb-4">
-                  <SheetTitle className="text-xl font-bold text-center">Add an Exercise</SheetTitle>
-                </SheetHeader>
-                
-                {/* Search bar */}
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                  <Input
-                    placeholder="Search exercises..."
-                    className="pl-9 bg-gray-800 border-gray-700"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                {/* Tabs */}
-                <Tabs defaultValue="suggested" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-                  <TabsList className="grid grid-cols-3 mb-4">
-                    <TabsTrigger value="suggested">Suggested</TabsTrigger>
-                    <TabsTrigger value="recent">Recent</TabsTrigger>
-                    <TabsTrigger value="browse" onClick={() => setShowAllExercises(true)}>Browse All</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="suggested" className="mt-0">
-                    <div className="overflow-y-auto max-h-[calc(80vh-170px)]">
-                      {filteredSuggested.length > 0 ? (
-                        filteredSuggested.map(renderExerciseCard)
-                      ) : (
-                        <div className="text-center py-6 text-gray-400">
-                          No suggested exercises found
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="recent" className="mt-0">
-                    <div className="overflow-y-auto max-h-[calc(80vh-170px)]">
-                      {filteredRecent.length > 0 ? (
-                        filteredRecent.map(renderExerciseCard)
-                      ) : (
-                        <div className="text-center py-6 text-gray-400">
-                          No recent exercises found
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </>
-          ) : (
-            <div className="h-full overflow-hidden relative">
-              <AllExercisesPage 
-                onSelectExercise={(exercise) => {
-                  handleAddExercise(exercise);
-                  setShowAllExercises(false);
-                }}
+          <div className="px-4 pb-2 h-full flex flex-col">
+            <SheetHeader className="mb-4">
+              <SheetTitle className="text-xl font-bold text-center">Add an Exercise</SheetTitle>
+            </SheetHeader>
+            
+            {/* Search bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Search exercises..."
+                className="pl-9 bg-gray-800 border-gray-700"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <div className="absolute bottom-4 left-4 z-20">
-                <Button 
-                  onClick={handleBackToTabs}
-                  variant="secondary"
-                  className="flex items-center gap-2 rounded-full bg-gray-800/70 hover:bg-gray-800 shadow-lg"
-                >
-                  <ChevronLeft size={16} />
-                  Back
-                </Button>
-              </div>
             </div>
-          )}
+            
+            {/* Tabs */}
+            <Tabs defaultValue="suggested" className="w-full flex-1 flex flex-col" onValueChange={setActiveTab} value={activeTab}>
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="suggested">Suggested</TabsTrigger>
+                <TabsTrigger value="recent">Recent</TabsTrigger>
+                <TabsTrigger value="browse" onClick={() => setShowAllExercises(true)}>Browse All</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="suggested" className="mt-0 flex-1 overflow-auto">
+                <div className="overflow-y-auto max-h-[calc(80vh-170px)]">
+                  {filteredSuggested.length > 0 ? (
+                    filteredSuggested.map(renderExerciseCard)
+                  ) : (
+                    <div className="text-center py-6 text-gray-400">
+                      No suggested exercises found
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="recent" className="mt-0 flex-1 overflow-auto">
+                <div className="overflow-y-auto max-h-[calc(80vh-170px)]">
+                  {filteredRecent.length > 0 ? (
+                    filteredRecent.map(renderExerciseCard)
+                  ) : (
+                    <div className="text-center py-6 text-gray-400">
+                      No recent exercises found
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
