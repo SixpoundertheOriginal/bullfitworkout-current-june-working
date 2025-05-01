@@ -1,8 +1,8 @@
+
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { BottomNav } from "@/components/navigation/BottomNav";
-import { WorkoutBanner } from "@/components/training/WorkoutBanner";
 import { WorkoutNavigationContextProvider } from "@/context/WorkoutNavigationContext";
+import { MainLayout } from "@/components/layouts/MainLayout";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import TrainingSessionPage from "@/pages/TrainingSession";
@@ -11,33 +11,8 @@ import WorkoutDetailsPage from "@/pages/WorkoutDetailsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import Auth from "@/pages/Auth";
 import AllExercisesPage from "@/pages/AllExercisesPage";
-import { PageHeader } from "@/components/navigation/PageHeader";
 import Overview from "@/pages/Overview";
 import { WorkoutManagementPage } from "@/pages/WorkoutManagementPage";
-
-const getPageTitle = (pathname: string): string => {
-  switch (pathname) {
-    case "/":
-      return "Today";
-    case "/overview":
-      return "Overview";
-    case "/profile":
-      return "Profile";
-    case "/training-session":
-      return "Workout";
-    case "/workout-complete":
-      return "Workout Complete";
-    case "/all-exercises":
-      return "All Exercises";
-    case "/workouts":
-      return "Workouts";
-    default:
-      if (pathname.startsWith("/workout-details")) {
-        return "Workout Details";
-      }
-      return "404";
-  }
-};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -55,31 +30,84 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 export const RouterProvider = () => {
   const location = useLocation();
-  const title = getPageTitle(location.pathname);
   const isAuthPage = location.pathname === "/auth";
 
   return (
     <WorkoutNavigationContextProvider>
       <div className="bg-gray-900 min-h-screen">
-        {!isAuthPage && <PageHeader title={title} />}
-        {!isAuthPage && <WorkoutBanner />}
-
-        <div className={!isAuthPage ? "pt-16 pb-16" : ""}>
+        {isAuthPage ? (
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/overview" element={<ProtectedRoute><Overview /></ProtectedRoute>} />
-            <Route path="/workouts" element={<ProtectedRoute><WorkoutManagementPage /></ProtectedRoute>} />
-            <Route path="/training-session" element={<ProtectedRoute><TrainingSessionPage /></ProtectedRoute>} />
-            <Route path="/workout-complete" element={<ProtectedRoute><WorkoutComplete /></ProtectedRoute>} />
-            <Route path="/workout-details" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
-            <Route path="/workout-details/:workoutId" element={<ProtectedRoute><WorkoutDetailsPage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/all-exercises" element={<ProtectedRoute><AllExercisesPage /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/auth" replace />} />
+          </Routes>
+        ) : (
+          <Routes>
+            <Route path="/" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Index />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/overview" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Overview />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workouts" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutManagementPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/training-session" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <TrainingSessionPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-complete" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutComplete />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-details" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutDetailsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-details/:workoutId" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutDetailsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ProfilePage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/all-exercises" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AllExercisesPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          {!isAuthPage && <BottomNav />}
-        </div>
+        )}
       </div>
     </WorkoutNavigationContextProvider>
   );
