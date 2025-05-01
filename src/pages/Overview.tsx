@@ -105,6 +105,72 @@ const Overview = () => {
   // Safe access to exercise volume history
   const safeExerciseVolumeHistory = useMemo(() => stats?.exerciseVolumeHistory || [], [stats]);
 
+  // Prepare chart config objects and renderer functions for each chart type
+  const chartConfigs = useMemo(() => {
+    // Configuration for different chart types
+    return [
+      {
+        title: "Workout Types",
+        renderComponent: (data: any) => (
+          <WorkoutTypeChart workoutTypes={data} />
+        ),
+        data: safeWorkoutTypes
+      },
+      {
+        title: "Muscle Group Focus",
+        renderComponent: (data: any) => (
+          <MuscleGroupChart muscleFocus={data} />
+        ),
+        data: safeMuscleFocus
+      },
+      {
+        title: "Workout Days",
+        renderComponent: (data: any) => (
+          <WorkoutDaysChart daysFrequency={data} />
+        ),
+        data: timePatterns.daysFrequency
+      },
+      {
+        title: "Time of Day",
+        renderComponent: (data: any) => (
+          <TimeOfDayChart durationByTimeOfDay={data} />
+        ),
+        data: timePatterns.durationByTimeOfDay
+      },
+      {
+        title: "Top Exercises",
+        renderComponent: (data: any) => (
+          <TopExercisesTable exerciseVolumeHistory={data} />
+        ),
+        data: safeExerciseVolumeHistory
+      },
+      {
+        title: "Workout Density",
+        renderComponent: (data: any) => (
+          <WorkoutDensityChart
+            totalTime={legacyStats?.activeTime || 0}
+            activeTime={legacyStats?.activeTime || 0}
+            restTime={legacyStats?.restTime || 0}
+            totalVolume={volumeStats.total || 0}
+            weightUnit={weightUnit}
+            overallDensity={data.overallDensity}
+            activeOnlyDensity={data.activeOnlyDensity}
+          />
+        ),
+        data: safeDensityMetrics
+      }
+    ];
+  }, [
+    safeWorkoutTypes, 
+    safeMuscleFocus, 
+    timePatterns, 
+    safeExerciseVolumeHistory, 
+    safeDensityMetrics,
+    legacyStats,
+    volumeStats,
+    weightUnit
+  ]);
+
   return (
     <div className="container mx-auto py-6 px-4 overflow-x-hidden overflow-y-auto space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -137,31 +203,7 @@ const Overview = () => {
         </div>
       </div>
 
-      {[{
-        title: "Workout Types",
-        Component: WorkoutTypeChart,
-        data: safeWorkoutTypes
-      }, {
-        title: "Muscle Group Focus",
-        Component: MuscleGroupChart,
-        data: safeMuscleFocus
-      }, {
-        title: "Workout Days",
-        Component: WorkoutDaysChart,
-        data: timePatterns.daysFrequency
-      }, {
-        title: "Time of Day",
-        Component: TimeOfDayChart,
-        data: timePatterns.durationByTimeOfDay
-      }, {
-        title: "Top Exercises",
-        Component: TopExercisesTable,
-        data: safeExerciseVolumeHistory
-      }, {
-        title: "Workout Density",
-        Component: WorkoutDensityChart,
-        data: safeDensityMetrics
-      }].map(({ title, Component, data }, idx) => (
+      {chartConfigs.map(({ title, renderComponent, data }, idx) => (
         <Card key={idx} className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">{title}</CardTitle>
@@ -170,18 +212,7 @@ const Overview = () => {
             {loading ? 
               <Skeleton className="w-3/4 h-3/4 rounded-lg" /> : 
               hasData(data) ? 
-                <Component 
-                  {...{ 
-                    [title.replace(/\s/g, '').toLowerCase()]: data,
-                    ...(title === "Workout Density" ? {
-                      totalTime: legacyStats?.activeTime || 0,
-                      activeTime: legacyStats?.activeTime || 0,
-                      restTime: legacyStats?.restTime || 0,
-                      totalVolume: volumeStats.total || 0,
-                      weightUnit: weightUnit
-                    } : {})
-                  }} 
-                /> : 
+                renderComponent(data) : 
                 <div className="text-gray-500">No data available</div>
             }
           </CardContent>
