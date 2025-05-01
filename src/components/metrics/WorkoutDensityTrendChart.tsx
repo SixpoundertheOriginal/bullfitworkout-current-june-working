@@ -26,7 +26,9 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
 }) => {
   const { weightUnit } = useWeightUnit();
   
-  if (!data || data.length === 0) {
+  const hasData = Array.isArray(data) && data.length > 0;
+  
+  if (!hasData) {
     return (
       <Card className={`bg-gray-900 border-gray-800 ${className}`}>
         <CardHeader className="pb-2">
@@ -75,7 +77,7 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
           )}
         </div>
         
-        <div style={{ height: `${height}px`, minHeight: '48px' }} className="w-full">
+        <div style={{ height: `${height}px`, minHeight: '48px' }} className="w-full overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -132,4 +134,3 @@ export const WorkoutDensityTrendChart: React.FC<WorkoutDensityTrendChartProps> =
     </Card>
   );
 });
-

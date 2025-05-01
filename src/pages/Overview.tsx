@@ -29,7 +29,9 @@ const Overview = () => {
   const { stats, loading, refetch, workouts, ...metrics } = useWorkoutStats();
   
   // Create backward compatible stats object with null checks
-  const legacyStats = metrics ? createBackwardCompatibleStats(metrics) : null;
+  const legacyStats = useMemo(() => {
+    return metrics ? createBackwardCompatibleStats(metrics) : null;
+  }, [metrics]);
   
   useEffect(() => {
     const storedWeight = localStorage.getItem('userWeight');
@@ -43,30 +45,6 @@ const Overview = () => {
       refetch();
     }
   }, [dateRange, refetch]);
-  
-  const handleWeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newWeight = Number(event.target.value);
-    setUserWeight(newWeight);
-    localStorage.setItem('userWeight', String(newWeight));
-  };
-  
-  const handleUnitChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newUnit = event.target.value;
-    setUserWeightUnit(newUnit);
-    localStorage.setItem('userWeightUnit', newUnit);
-  };
-  
-  const densityMetrics = metrics?.densityMetrics;
-  
-  // Default empty time patterns to avoid type errors
-  const defaultTimePatterns = {
-    daysFrequency: {},
-    durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
-  };
-  
-  // Use default values if stats or timePatterns is undefined
-  const timePatterns = stats?.timePatterns || defaultTimePatterns;
-  const durationByTimeOfDay = timePatterns.durationByTimeOfDay;
   
   // Prepare volume over time data
   const volumeOverTimeData = useMemo(() => {
@@ -117,7 +95,7 @@ const Overview = () => {
   }, [workouts]);
   
   // Safely calculate the total volume with error handling
-  const getTotalVolume = () => {
+  const getTotalVolume = useMemo(() => {
     try {
       if (stats?.workouts) {
         return Math.round(calculateTotalVolume(stats.workouts)).toLocaleString();
@@ -127,15 +105,30 @@ const Overview = () => {
       console.error("Error calculating total volume:", error);
       return "0";
     }
-  };
+  }, [stats?.workouts]);
   
   // Calculate average workout density
-  const getAverageDensity = () => {
+  const getAverageDensity = useMemo(() => {
     if (!densityOverTimeData || densityOverTimeData.length === 0) return "0";
     
     const totalDensity = densityOverTimeData.reduce((sum, item) => sum + item.overallDensity, 0);
     return (totalDensity / densityOverTimeData.length).toFixed(1);
-  };
+  }, [densityOverTimeData]);
+  
+  // Default empty time patterns to avoid type errors
+  const defaultTimePatterns = useMemo(() => ({
+    daysFrequency: {},
+    durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+  }), []);
+  
+  // Use default values if stats or timePatterns is undefined
+  const timePatterns = useMemo(() => (
+    stats?.timePatterns || defaultTimePatterns
+  ), [stats?.timePatterns, defaultTimePatterns]);
+  
+  const durationByTimeOfDay = useMemo(() => (
+    timePatterns.durationByTimeOfDay
+  ), [timePatterns.durationByTimeOfDay]);
   
   // Create skeleton loaders for consistent heights
   const VolumeChartSkeleton = () => (
@@ -173,7 +166,7 @@ const Overview = () => {
   );
   
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4 overflow-x-hidden">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
         <div className="md:col-span-8">
           {loading ? (
@@ -193,8 +186,8 @@ const Overview = () => {
           ) : (
             <>
               <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center"><Users2 className="mr-2 h-4 w-4" /> Total Workouts</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center"><Users2 className="mr-2 h-4 w-4" /> Total Workouts</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-4xl font-bold">{stats?.totalWorkouts || 0}</div>
@@ -203,21 +196,21 @@ const Overview = () => {
               </Card>
               
               <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center"><Flame className="mr-2 h-4 w-4" /> Total Volume</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold">{getTotalVolume()}</div>
+                  <div className="text-4xl font-bold">{getTotalVolume}</div>
                   <p className="text-sm text-gray-500">Total weight lifted</p>
                 </CardContent>
               </Card>
               
               <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center"><Activity className="mr-2 h-4 w-4" /> Avg Density</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center"><Activity className="mr-2 h-4 w-4" /> Avg Density</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold">{getAverageDensity()}</div>
+                  <div className="text-4xl font-bold">{getAverageDensity}</div>
                   <p className="text-sm text-gray-500">{weightUnit}/min</p>
                 </CardContent>
               </Card>
@@ -235,10 +228,10 @@ const Overview = () => {
         ) : (
           <>
             <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle>Workout Types</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Workout Types</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[300px] overflow-hidden">
                 {stats?.workoutTypes && stats.workoutTypes.length > 0 ? (
                   <WorkoutTypeChart workoutTypes={stats.workoutTypes || []} />
                 ) : (
@@ -250,10 +243,10 @@ const Overview = () => {
             </Card>
             
             <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle>Muscle Group Focus</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Muscle Group Focus</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[300px] overflow-hidden">
                 {stats?.muscleFocus && Object.keys(stats.muscleFocus).length > 0 ? (
                   <MuscleGroupChart muscleFocus={stats.muscleFocus || {}} />
                 ) : (
@@ -284,10 +277,10 @@ const Overview = () => {
         ) : (
           <>
             <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle>Workout Days</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Workout Days</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[300px] overflow-hidden">
                 {Object.keys(timePatterns.daysFrequency).length > 0 ? (
                   <WorkoutDaysChart daysFrequency={timePatterns.daysFrequency} />
                 ) : (
@@ -299,10 +292,10 @@ const Overview = () => {
             </Card>
             
             <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle>Time of Day</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Time of Day</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[300px] overflow-hidden">
                 {Object.values(durationByTimeOfDay).some(v => v > 0) ? (
                   <TimeOfDayChart durationByTimeOfDay={durationByTimeOfDay} />
                 ) : (
@@ -325,10 +318,10 @@ const Overview = () => {
         ) : (
           <>
             <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle>Top Exercises</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Top Exercises</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px] overflow-y-auto">
+              <CardContent className="h-[300px] overflow-y-auto overflow-x-hidden">
                 {stats?.exerciseVolumeHistory && stats.exerciseVolumeHistory.length > 0 ? (
                   <TopExercisesTable exerciseVolumeHistory={stats.exerciseVolumeHistory || []} />
                 ) : (
@@ -340,10 +333,10 @@ const Overview = () => {
             </Card>
             
             <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle>Workout Density</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Workout Density</CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
+              <CardContent className="h-[300px] overflow-hidden">
                 {densityMetrics && legacyStats ? (
                   <WorkoutDensityChart
                     totalTime={stats?.totalDuration || 0}
@@ -368,4 +361,4 @@ const Overview = () => {
   );
 };
 
-export default Overview;
+export default React.memo(Overview);

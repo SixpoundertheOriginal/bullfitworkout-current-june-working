@@ -4,10 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { 
   startOfWeek, 
-  endOfWeek, 
-  subWeeks, 
-  subDays, 
-  startOfDay, 
+  endOfWeek,
   format 
 } from "date-fns";
 import { DateRange } from 'react-day-picker';
@@ -71,7 +68,7 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
         query = query.lte('start_time', dateRange.to.toISOString())
       }
       
-      const { data: periodWorkouts, error: periodError } = await query
+      const { data: periodWorkouts, error: periodError } = await query;
         
       if (periodError) throw periodError;
       
@@ -100,22 +97,29 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
       
       // Calculate weekly volume (weight * reps)
       const weeklyVolume = exerciseSets?.reduce((sum, set) => {
-        return sum + (set.weight * set.reps);
+        if (set.weight && set.reps) {
+          return sum + (set.weight * set.reps);
+        }
+        return sum;
       }, 0) || 0;
       
       // Calculate daily workout counts with a consistent day format
       const dailyWorkouts: Record<string, number> = {};
-      periodWorkouts?.forEach(workout => {
-        const day = new Date(workout.start_time).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-        dailyWorkouts[day] = (dailyWorkouts[day] || 0) + 1;
-      });
+      if (periodWorkouts) {
+        periodWorkouts.forEach(workout => {
+          if (workout.start_time) {
+            const day = new Date(workout.start_time).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+            dailyWorkouts[day] = (dailyWorkouts[day] || 0) + 1;
+          }
+        });
+      }
       
       // Calculate streak
       let streakDays = 0;
       if (allWorkouts && allWorkouts.length > 0) {
         const workoutDates = [...new Set(allWorkouts.map(w => 
-          new Date(w.start_time).toISOString().split('T')[0]
-        ))].sort().reverse();
+          w.start_time ? new Date(w.start_time).toISOString().split('T')[0] : null
+        ).filter(Boolean))].sort().reverse();
         
         const todayStr = new Date().toISOString().split('T')[0];
         if (workoutDates[0] === todayStr) {
@@ -153,6 +157,8 @@ export const useBasicWorkoutStats = (dateRange?: DateRange) => {
       };
     },
     enabled: !!user,
-    staleTime: 2 * 60 * 1000 // 2 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+    useErrorBoundary: false
   });
 };

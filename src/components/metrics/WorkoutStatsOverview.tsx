@@ -18,7 +18,7 @@ interface WorkoutStatsOverviewProps {
   className?: string;
 }
 
-export const WorkoutStatsOverview = ({ 
+export const WorkoutStatsOverview = React.memo(({ 
   recentWorkouts,
   allTimeStats,
   className = ''
@@ -138,4 +138,8 @@ export const WorkoutStatsOverview = ({
       </div>
     </div>
   );
-};
+});
+
+WorkoutStatsOverview.displayName = 'WorkoutStatsOverview';
+
+export { WorkoutStatsOverview };

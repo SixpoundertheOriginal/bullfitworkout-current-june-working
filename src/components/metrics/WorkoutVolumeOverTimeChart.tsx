@@ -51,7 +51,7 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div style={{ height: `${height}px`, minHeight: '200px' }} className="w-full">
+        <div style={{ height: `${height}px`, minHeight: '200px' }} className="w-full overflow-hidden">
           {!hasData ? (
             <div className="flex items-center justify-center h-full text-gray-400">
               No workout data available for the selected period
@@ -100,6 +100,7 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
                   fill="url(#volumeGradient)"
                   radius={[4, 4, 0, 0]}
                   animationDuration={1000}
+                  isAnimationActive={false}
                 />
                 <defs>
                   <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -115,4 +116,3 @@ export const WorkoutVolumeOverTimeChart: React.FC<WorkoutVolumeOverTimeChartProp
     </Card>
   );
 });
-

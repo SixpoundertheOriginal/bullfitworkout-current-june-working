@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { 
   BarChart,
   Bar,
@@ -19,12 +19,12 @@ interface VolumeByExerciseChartProps {
   weightUnit: WeightUnit;
 }
 
-export const VolumeByExerciseChart: React.FC<VolumeByExerciseChartProps> = ({
+export const VolumeByExerciseChart: React.FC<VolumeByExerciseChartProps> = React.memo(({
   workoutData,
   weightUnit
 }) => {
-  const getVolumeChartData = () => {
-    if (!workoutData) return [];
+  const data = useMemo(() => {
+    if (!workoutData?.exercises) return [];
     
     return Object.keys(workoutData.exercises).map(exercise => {
       const totalExerciseVolume = workoutData.exercises[exercise].reduce((total: number, set: any) => {
@@ -39,12 +39,13 @@ export const VolumeByExerciseChart: React.FC<VolumeByExerciseChartProps> = ({
         volume: Math.round(totalExerciseVolume * 10) / 10
       };
     });
-  };
+  }, [workoutData]);
 
-  const data = getVolumeChartData();
   const chartConfig = {
     volume: { theme: { dark: '#9b87f5', light: '#9b87f5' } }
   };
+  
+  const hasData = Array.isArray(data) && data.length > 0;
 
   return (
     <div className="mt-6">
@@ -54,25 +55,39 @@ export const VolumeByExerciseChart: React.FC<VolumeByExerciseChartProps> = ({
       <Card className="bg-gray-800 border-gray-700">
         <CardContent className="p-3">
           <div className="h-40">
-            <ChartContainer
-              className="h-full w-full [&_.recharts-cartesian-axis-tick-value]:fill-gray-400 [&_.recharts-cartesian-axis-tick-value]:text-xs [&_.recharts-cartesian-axis-tick-value]:font-mono"
-              config={chartConfig}
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip 
-                    formatter={(value: number) => [`${value} ${weightUnit}`, 'Volume']}
-                    labelFormatter={(label: string) => `Exercise: ${label}`}
-                  />
-                  <Bar dataKey="volume" name="Volume" fill="var(--color-volume)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+            {!hasData ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No exercise volume data available
+              </div>
+            ) : (
+              <ChartContainer
+                className="h-full w-full [&_.recharts-cartesian-axis-tick-value]:fill-gray-400 [&_.recharts-cartesian-axis-tick-value]:text-xs [&_.recharts-cartesian-axis-tick-value]:font-mono"
+                config={chartConfig}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value} ${weightUnit}`, 'Volume']}
+                      labelFormatter={(label: string) => `Exercise: ${label}`}
+                    />
+                    <Bar 
+                      dataKey="volume" 
+                      name="Volume" 
+                      fill="var(--color-volume)" 
+                      radius={[4, 4, 0, 0]} 
+                      isAnimationActive={false} 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
   );
-};
+});
+
+VolumeByExerciseChart.displayName = 'VolumeByExerciseChart';

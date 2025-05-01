@@ -1,21 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Calendar, BarChart3, Target } from 'lucide-react';
 import { MetricCard } from "@/components/metrics/MetricCard";
 import { useBasicWorkoutStats } from "@/hooks/useBasicWorkoutStats";
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, endOfWeek, subWeeks, subDays, addDays } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRange } from 'react-day-picker';
+import { format } from "date-fns";
 import { useDateRange } from '@/context/DateRangeContext';
-
-type TimeRange = 'this-week' | 'previous-week' | 'last-30-days' | 'all-time';
 
 interface QuickStatsSectionProps {
   showDateRange?: boolean;
 }
 
-export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionProps) => {
+export const QuickStatsSection = React.memo(({ showDateRange = false }: QuickStatsSectionProps) => {
   // Get date range from context instead of managing our own
   const { dateRange } = useDateRange();
   
@@ -62,7 +58,6 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
       
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Quick Stats</h3>
-        {/* Remove the time period selector from here since we're using the global one */}
       </div>
       
       {/* Use glass/card-gradient for light/dark */}
@@ -102,4 +97,6 @@ export const QuickStatsSection = ({ showDateRange = false }: QuickStatsSectionPr
       </div>
     </div>
   );
-};
+});
+
+QuickStatsSection.displayName = 'QuickStatsSection';

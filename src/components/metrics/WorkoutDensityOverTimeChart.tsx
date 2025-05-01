@@ -69,7 +69,7 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div style={{ height: `${height}px`, minHeight: '200px' }} className="w-full">
+        <div style={{ height: `${height}px`, minHeight: '200px' }} className="w-full overflow-hidden">
           {!hasData ? (
             <div className="flex items-center justify-center h-full text-gray-400">
               No density data available for the selected period
@@ -127,7 +127,7 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
                   strokeWidth={2}
                   dot={{ r: 4, fill: "#9B87F5" }}
                   activeDot={{ r: 6 }}
-                  animationDuration={1000}
+                  isAnimationActive={false}
                 />
                 <Line
                   type="monotone"
@@ -136,7 +136,7 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
                   strokeWidth={2}
                   dot={{ r: 4, fill: "#0EA5E9" }}
                   activeDot={{ r: 6 }}
-                  animationDuration={1000}
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -162,4 +162,3 @@ export const WorkoutDensityOverTimeChart: React.FC<WorkoutDensityOverTimeChartPr
     </Card>
   );
 });
-

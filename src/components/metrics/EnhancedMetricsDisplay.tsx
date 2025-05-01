@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { 
   calculateMuscleFocus, 
@@ -21,17 +21,17 @@ interface EnhancedMetricsDisplayProps {
   className?: string;
 }
 
-export const EnhancedMetricsDisplay = ({ 
+export const EnhancedMetricsDisplay = React.memo(({ 
   exercises, 
   intensity, 
   efficiency,
   className = '' 
 }: EnhancedMetricsDisplayProps) => {
   // Calculate muscle focus
-  const muscleFocus = calculateMuscleFocus(exercises);
+  const muscleFocus = useMemo(() => calculateMuscleFocus(exercises), [exercises]);
   
   // Analyze workout composition
-  const composition = analyzeWorkoutComposition(exercises);
+  const composition = useMemo(() => analyzeWorkoutComposition(exercises), [exercises]);
   
   const exerciseCount = Object.keys(exercises).length;
   const totalSetCount = Object.values(exercises).reduce(
@@ -42,7 +42,16 @@ export const EnhancedMetricsDisplay = ({
     <div className={`space-y-4 ${className}`}>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8">
-          <MuscleFocusChart muscleGroups={muscleFocus} />
+          <Card className="bg-gray-900/90 border-gray-800 h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Muscle Focus</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-hidden">
+              <div className="h-64 overflow-hidden">
+                <MuscleFocusChart muscleGroups={muscleFocus} />
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
         <div className="lg:col-span-4 space-y-4">
@@ -156,4 +165,6 @@ export const EnhancedMetricsDisplay = ({
       </div>
     </div>
   );
-};
+});
+
+EnhancedMetricsDisplay.displayName = 'EnhancedMetricsDisplay';

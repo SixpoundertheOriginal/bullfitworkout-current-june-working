@@ -50,12 +50,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       {!noHeader && (
-        <>
+        <div className="fixed top-0 left-0 right-0 z-50">
           <PageHeader title={title}>
             {isFilterVisible && <DateRangeFilter />}
           </PageHeader>
           <WorkoutBanner />
-        </>
+        </div>
       )}
       
       <main className="flex-grow overflow-y-auto pt-16 pb-16 will-change-transform">
@@ -64,7 +64,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       </main>
       
-      {!noFooter && <BottomNav />}
+      {!noFooter && (
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <BottomNav />
+        </div>
+      )}
     </div>
   );
 };
