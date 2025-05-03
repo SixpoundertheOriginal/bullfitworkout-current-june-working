@@ -17,7 +17,7 @@ export const WorkoutSessionFooter: React.FC<WorkoutSessionFooterProps> = ({
   isSaving
 }) => {
   return (
-    <div className="fixed bottom-20 left-0 right-0 px-4 z-40">
+    <div className="fixed bottom-16 left-0 right-0 px-4 z-40 py-3 bg-gradient-to-t from-black to-transparent">
       <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto">
         <Button
           onClick={onAddExercise}

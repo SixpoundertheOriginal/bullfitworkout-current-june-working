@@ -15,6 +15,7 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
 import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
+import { BottomNav } from "@/components/navigation/BottomNav";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -97,7 +98,6 @@ const TrainingSessionPage = () => {
   }, [exercises, workoutStatus, isActive, setWorkoutStatus]);
 
   // Update last active route whenever we load this page
-  // THIS IS THE MAIN ISSUE - Need to add dependencies to prevent infinite loop
   useEffect(() => {
     // Only update route when actually needed - once on mount
     if (location.pathname === '/training-session') {
@@ -304,7 +304,7 @@ const TrainingSessionPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
       <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6">
+        <div className="mx-auto max-w-3xl px-4 py-6 pb-40"> {/* Increased bottom padding to avoid overlap */}
           <div className="mb-6 relative">
             <WorkoutSessionHeader
               elapsedTime={elapsedTime}
@@ -441,7 +441,7 @@ const TrainingSessionPage = () => {
         </div>
       </main>
 
-      {/* New unified footer component */}
+      {/* Bottom drawer component for Add Exercise and Finish Workout buttons */}
       <WorkoutSessionFooter
         onAddExercise={() => setIsAddExerciseSheetOpen(true)}
         onFinishWorkout={handleFinishWorkout}
@@ -455,7 +455,10 @@ const TrainingSessionPage = () => {
         onSelectExercise={handleAddExercise}
         trainingType={trainingConfig?.trainingType}
       />
-          </div>
+
+      {/* Include the BottomNav component to fix the error */}
+      <BottomNav />
+    </div>
   );
 };
 
