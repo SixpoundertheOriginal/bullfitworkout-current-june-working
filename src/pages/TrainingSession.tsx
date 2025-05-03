@@ -15,7 +15,6 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
 import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
-import { BottomNav } from "@/components/navigation/BottomNav";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -456,9 +455,7 @@ const TrainingSessionPage = () => {
         onSelectExercise={handleAddExercise}
         trainingType={trainingConfig?.trainingType}
       />
-      
-      <BottomNav />
-    </div>
+          </div>
   );
 };
 
