@@ -12,7 +12,6 @@ import { Loader2 } from "lucide-react";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
-import { BottomNav } from "@/components/navigation/BottomNav";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
 import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
 
