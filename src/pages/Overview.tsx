@@ -5,243 +5,154 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
-import { BarChart3, Dumbbell, Flame, User2, Users2, Activity } from "lucide-react";
+import { Users2, Flame, Activity } from "lucide-react";
 import { WorkoutTypeChart } from "@/components/metrics/WorkoutTypeChart";
 import { MuscleGroupChart } from "@/components/metrics/MuscleGroupChart";
 import { TimeOfDayChart } from "@/components/metrics/TimeOfDayChart";
 import { WorkoutDaysChart } from "@/components/metrics/WorkoutDaysChart";
 import { TopExercisesTable } from "@/components/metrics/TopExercisesTable";
-import { WorkoutDensityChart } from "@/components/metrics/WorkoutDensityChart";
 import { WorkoutVolumeOverTimeChart } from '@/components/metrics/WorkoutVolumeOverTimeChart';
 import { WorkoutDensityOverTimeChart } from '@/components/metrics/WorkoutDensityOverTimeChart';
-import { calculateTotalVolume } from "@/utils/exerciseUtils";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useDateRange } from '@/context/DateRangeContext';
-import { createBackwardCompatibleStats } from '@/utils/metricsTransition';
 import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
-import { DateRangeFilter } from "@/components/date-filters/DateRangeFilter";
-import { DateRangeBadge } from "@/components/date-filters/DateRangeBadge";
 
-const Overview = () => {
+const Overview: React.FC = () => {
   const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
   const { dateRange } = useDateRange();
   const [userWeight, setUserWeight] = useState<number | null>(null);
   const [userWeightUnit, setUserWeightUnit] = useState<string | null>(null);
 
-  const { stats, loading, refetch, workouts, ...metricsData } = useWorkoutStats();
-console.log("[Overview] raw stats:", stats);
-
-  useEffect(() => {
-    console.log("[Overview] 🏋️‍♀️ Fetched workouts:", workouts);
-  }, [workouts]);
-
-  const legacyStats = useMemo(
-    () => metricsData ? createBackwardCompatibleStats(metricsData) : null,
-    [metricsData]
-  );
-
+  // Fetch historical stats
+  const { stats, loading, refetch, workouts } = useWorkoutStats();
+  
+  // Process raw metrics
   const {
     volumeOverTimeData,
     densityOverTimeData,
     volumeStats,
     densityStats
   } = useProcessWorkoutMetrics(workouts, weightUnit);
-  useEffect(() => {
-    console.log("[Overview] 📊 Processed Metrics:");
-    console.log("  volumeOverTimeData:", volumeOverTimeData);
-    console.log("  densityOverTimeData:", densityOverTimeData);
-    console.log("  volumeStats:", volumeStats);
-    console.log("  densityStats:", densityStats);
-  }, [volumeOverTimeData, densityOverTimeData, volumeStats, densityStats]);
 
+  // Refetch on date range change
   useEffect(() => {
-    const storedWeight = localStorage.getItem('userWeight');
-    const storedUnit = localStorage.getItem('userWeightUnit');
-    if (storedWeight) setUserWeight(Number(storedWeight));
-    if (storedUnit) setUserWeightUnit(storedUnit);
-    if (dateRange && refetch) refetch();
+    if (dateRange) refetch();
   }, [dateRange, refetch]);
 
-  const timePatterns = useMemo(() => {
-    const defaultTimePatterns = {
-      daysFrequency: { monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0, saturday: 0, sunday: 0 },
-      durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
-    };
-    if (!stats?.timePatterns) return defaultTimePatterns;
-    return {
-      daysFrequency: stats.timePatterns.daysFrequency || defaultTimePatterns.daysFrequency,
-      durationByTimeOfDay: stats.timePatterns.durationByTimeOfDay || defaultTimePatterns.durationByTimeOfDay
-    };
-  }, [stats]);
+  // Load user weight prefs
+  useEffect(() => {
+    const sw = localStorage.getItem('userWeight');
+    const su = localStorage.getItem('userWeightUnit');
+    if (sw) setUserWeight(Number(sw));
+    if (su) setUserWeightUnit(su);
+  }, []);
 
-  const hasData = (value: any) => {
-    if (value == null) return false;
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') return Object.keys(value).length > 0;
-    return false;
-  };
+  // Simple data‐exists guard
+  const hasData = (v: any) => v != null && ((Array.isArray(v) && v.length > 0) || (typeof v === 'object' && Object.keys(v).length > 0));
 
-  const safeWorkoutTypes = useMemo(() => stats?.workoutTypes || [], [stats]);
-  const safeMuscleFocus = useMemo(() => stats?.muscleFocus || {}, [stats]);
-  const safeDensityMetrics = useMemo(() => {
-    const defaults = {
-      activeTime: 0,
-      restTime: 0,
-      totalVolume: 0,
-      setsPerMinute: 0,
-      volumePerMinute: 0,
-      overallDensity: 0,
-      activeOnlyDensity: 0
-    };
-    return metricsData?.densityMetrics
-      ? { ...defaults, ...metricsData.densityMetrics }
-      : defaults;
-  }, [metricsData]);
-  const safeExerciseVolumeHistory = useMemo(() => stats?.exerciseVolumeHistory || [], [stats]);
-
-  const chartConfigs = useMemo(() => [
+  // Chart configurations (excluding density gauge)
+  const chartConfigs = useMemo(() => ([
     {
       title: "Workout Types",
-      renderComponent: (data: any) => (
-        <WorkoutTypeChart
-          workoutTypes={data}
-          height={250}
-        />
-      ),
-      data: safeWorkoutTypes
+      renderComponent: (data: any) => <WorkoutTypeChart workoutTypes={data} height={250} />,
+      data: stats.workoutTypes || []
     },
     {
-      title: "Muscle Group Focus",
-      renderComponent: (data: any) => (
-        <MuscleGroupChart
-          muscleFocus={data}
-          height={250}
-        />
-      ),
-      data: safeMuscleFocus
+      title: "Muscle Focus",
+      renderComponent: (data: any) => <MuscleGroupChart muscleFocus={data} height={250} />,
+      data: stats.muscleFocus || {}
     },
     {
       title: "Workout Days",
-      renderComponent: (data: any) => (
-        <WorkoutDaysChart
-          daysFrequency={data}
-          height={250}
-        />
-      ),
-      data: timePatterns.daysFrequency
+      renderComponent: (data: any) => <WorkoutDaysChart daysFrequency={data} height={250} />,
+      data: stats.timePatterns?.daysFrequency || {}
     },
     {
       title: "Time of Day",
-      renderComponent: (data: any) => (
-        <TimeOfDayChart
-          durationByTimeOfDay={data}
-          height={250}
-        />
-      ),
-      data: timePatterns.durationByTimeOfDay
+      renderComponent: (data: any) => <TimeOfDayChart durationByTimeOfDay={data} height={250} />,
+      data: stats.timePatterns?.durationByTimeOfDay || {}
     },
     {
       title: "Top Exercises",
-      renderComponent: (data: any) => (
-        <TopExercisesTable exerciseVolumeHistory={data} />
-      ),
-      data: safeExerciseVolumeHistory
-    },
-    {
-      title: "Workout Density",
-      renderComponent: (data: any) => (
-        <WorkoutDensityChart
-          totalTime={legacyStats?.activeTime || 0}
-          activeTime={data.activeTime}
-          restTime={data.restTime}
-          totalVolume={volumeStats.total || 0}
-          weightUnit={weightUnit}
-          overallDensity={data.overallDensity}
-          activeOnlyDensity={data.activeOnlyDensity}
-          height={250}
-        />
-      ),
-      data: safeDensityMetrics
+      renderComponent: (data: any) => <TopExercisesTable exerciseVolumeHistory={data} />,
+      data: stats.exerciseVolumeHistory || []
     }
-  ], [
-    safeWorkoutTypes,
-    safeMuscleFocus,
-    timePatterns,
-    safeExerciseVolumeHistory,
-    safeDensityMetrics,
-    legacyStats,
-    volumeStats,
-    weightUnit
-  ]);
+  ]), [stats, weightUnit]);
 
   return (
-    <div className="container mx-auto py-6 px-4 overflow-x-hidden overflow-y-auto space-y-6">
+    <div className="container mx-auto py-6 px-4 space-y-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Workout Overview</h1>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div className="md:col-span-8">
-          <Card className="min-h-[300px] h-[300px] bg-card overflow-hidden">
-            {loading ? (
-              <Skeleton className="w-full h-full" />
-            ) : volumeOverTimeData?.length > 0 ? (
-              <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No volume data available
-              </div>
-            )}
-          </Card>
-        </div>
-        <div className="md:col-span-4 space-y-4">
-          {[
-            { icon: <Users2 className="mr-2 h-4 w-4" />, label: "Total Workouts", value: stats?.totalWorkouts || 0 },
-            { icon: <Flame className="mr-2 h-4 w-4" />, label: "Total Volume", value: Math.round(volumeStats.total || 0).toLocaleString() },
-            { icon: <Activity className="mr-2 h-4 w-4" />, label: "Avg Density", value: `${densityStats.avgOverallDensity?.toFixed(1) || 0} ${weightUnit}/min` }
-          ].map((stat, idx) => (
-            <Card key={idx} className="bg-gray-900 border-gray-800 min-h-[100px] overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  {stat.icon}{stat.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold">{stat.value}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
 
-      {chartConfigs.map(({ title, renderComponent, data }, idx) => (
-        <Card key={idx} className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{title}</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[250px] flex items-center justify-center">
-            {loading ? (
-              <Skeleton className="w-3/4 h-3/4 rounded-lg" />
-            ) : hasData(data) ? (
-              renderComponent(data)
-            ) : (
-              <div className="text-gray-500">No data available</div>
-            )}
+      {/* Volume over time */}
+      <Card className="bg-card min-h-[300px] overflow-hidden">
+        <CardHeader><CardTitle>Volume Over Time</CardTitle></CardHeader>
+        <CardContent className="h-[300px]">
+          {loading
+            ? <Skeleton className="w-full h-full" />
+            : hasData(volumeOverTimeData)
+              ? <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} />
+              : <div className="flex items-center justify-center h-full text-gray-500">No volume data available</div>
+          }
+        </CardContent>
+      </Card>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader><CardTitle>Total Workouts</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{stats.totalWorkouts || 0}</div>
           </CardContent>
         </Card>
-      ))}
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader><CardTitle>Total Volume</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">
+              {Math.round(volumeStats.total).toLocaleString()} {weightUnit}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader><CardTitle>Avg Volume Rate</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">
+              {densityStats.avgOverallDensity.toFixed(1)} {weightUnit}/min
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card className="min-h-[250px] h-[250px] mb-6 overflow-hidden w-full">
-        {loading ? (
-          <Skeleton className="w-full h-full" />
-        ) : densityOverTimeData?.length > 0 ? (
-          <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            No density data available
-          </div>
-        )}
+      {/* Other charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {chartConfigs.map(({ title, renderComponent, data }, idx) => (
+          <Card key={idx} className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
+            <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+            <CardContent className="h-[250px] flex items-center justify-center">
+              {loading
+                ? <Skeleton className="w-3/4 h-3/4 rounded-lg" />
+                : hasData(data)
+                  ? renderComponent(data)
+                  : <div className="text-gray-500">No data available</div>
+              }
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Density over time */}
+      <Card className="bg-card min-h-[250px] overflow-hidden">
+        <CardHeader><CardTitle>Volume Rate Over Time</CardTitle></CardHeader>
+        <CardContent className="h-[250px]">
+          {loading
+            ? <Skeleton className="w-full h-full" />
+            : hasData(densityOverTimeData)
+              ? <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />
+              : <div className="flex items-center justify-center h-full text-gray-500">No density data available</div>
+          }
+        </CardContent>
       </Card>
     </div>
   );
