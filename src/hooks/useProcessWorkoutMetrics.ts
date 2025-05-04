@@ -1,171 +1,171 @@
-
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { WeightUnit, convertWeight } from '@/utils/unitConversion';
 
 export interface VolumeDataPoint {
-  date: string;
-  volume: number;
-  originalDate: string;
-  formattedDate: string;
+  date: string;            // ISO string
+  originalDate: string;    // ISO string
+  formattedDate: string;   // e.g. "May 4"
+  volume: number;          // in user’s weightUnit
 }
 
 export interface DensityDataPoint {
   date: string;
   formattedDate: string;
-  overallDensity: number;
-  activeOnlyDensity: number;
+  overallDensity: number;    // volumeRate: unit/min
+  activeOnlyDensity: number; // activeVolumeRate: unit/min
+  totalTime: number;         // minutes
+  restTime: number;          // minutes
+  activeTime: number;        // minutes
 }
 
 interface WorkoutWithExercises {
-  start_time: string;
-  exercises?: Record<string, any[]>;
-  metrics?: {
-    densityMetrics?: {
-      overallDensity?: number;
-      activeOnlyDensity?: number;
-    }
-  };
+  start_time: string;                 // ISO
+  duration: number;                   // total session length in minutes
+  exercises?: Array<{
+    exercise_name: string;
+    completed?: boolean;
+    weight?: number;                  // in kg
+    reps?: number;
+    restTime?: number;                // in seconds
+  }> | Record<string, any[]>;         // support both shapes
+}
+
+function flattenExercises(
+  exercises: WorkoutWithExercises['exercises']
+) {
+  if (!exercises) return [];
+  if (Array.isArray(exercises)) return exercises;
+  // else it's already grouped by exerciseName
+  return Object.values(exercises).flat();
 }
 
 export function useProcessWorkoutMetrics(
   workouts: WorkoutWithExercises[] | null | undefined,
   weightUnit: WeightUnit
 ) {
-  // Process volume over time data
-  const volumeOverTimeData = useMemo(() => {
-    if (!Array.isArray(workouts) || workouts.length === 0) {
-      console.log("No workout data available for volume processing");
-      return [];
-    }
-    
-    console.log(`Processing volume data for ${workouts.length} workouts`);
-    
-    try {
-      const data = workouts.map(workout => {
-        // Calculate volume for each workout
-        let volume = 0;
-        
-        if (workout.exercises) {
-let exerciseMap: Record<string, any[]> = {};
+  // --- Volume over time ---
+  const volumeOverTimeData = useMemo<VolumeDataPoint[]>(() => {
+    if (!Array.isArray(workouts) || workouts.length === 0) return [];
 
-if (Array.isArray(workout.exercises)) {
-  workout.exercises.forEach(set => {
-    const name = set.exercise_name || 'Unknown';
-    if (!exerciseMap[name]) exerciseMap[name] = [];
-    exerciseMap[name].push(set);
-  });
-} else if (typeof workout.exercises === 'object') {
-  exerciseMap = workout.exercises;
-}
+    return workouts
+      .map((workout) => {
+        // flatten all sets
+        const allSets = flattenExercises(workout.exercises);
 
-          // Check if exercises is an object
-          if (typeof workout.exercises === 'object' && workout.exercises !== null) {
-            Object.entries(exerciseMap).forEach(([exerciseName, sets]) => {
-              // Make sure sets is an array before processing
-              if (Array.isArray(sets)) {
-console.log(`[Metrics] 🧩 ${exerciseName} →`, sets);
-
-               sets.forEach(set => {
-  if (set.completed && set.weight && set.reps) {
-    const setVolume = set.weight * set.reps;
-    console.log(`[Volume] ➕ ${set.exercise_name || 'Unknown'} → ${set.weight}kg x ${set.reps} = ${setVolume}`);
-    volume += setVolume;
-  }
-});
-
-              }
-            });
+        // sum raw volume in KG
+        const rawVolume = allSets.reduce((sum, set) => {
+          if (set.completed && set.weight && set.reps) {
+            return sum + set.weight * set.reps;
           }
-        }
-        
+          return sum;
+        }, 0);
+
+        // convert to user’s unit (e.g. lb)
+        const volume = convertWeight(rawVolume, 'kg', weightUnit);
+
         const formattedDate = format(new Date(workout.start_time), 'MMM d');
-        
+
         return {
           date: workout.start_time,
-          volume,
           originalDate: workout.start_time,
-          formattedDate
+          formattedDate,
+          volume
         };
-      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      
-      console.log(`Processed ${data.length} volume data points`);
-      return data;
-    } catch (error) {
-      console.error("Error processing volume over time data:", error);
-      return [];
-    }
-  }, [workouts]);
-  
-  // Process density over time data
-  const densityOverTimeData = useMemo(() => {
-    if (!Array.isArray(workouts) || workouts.length === 0) {
-      console.log("No workout data available for density processing");
-      return [];
-    }
-    
-    console.log(`Processing density data for ${workouts.length} workouts`);
-    
-    try {
-      const data = workouts.map(workout => {
-        const densityMetrics = workout.metrics?.densityMetrics || {};
-        const date = new Date(workout.start_time);
-        
+      })
+      // sort ascending by date
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [workouts, weightUnit]);
+
+  // --- Density over time ---
+  const densityOverTimeData = useMemo<DensityDataPoint[]>(() => {
+    if (!Array.isArray(workouts) || workouts.length === 0) return [];
+
+    return workouts
+      .map((workout) => {
+        const allSets = flattenExercises(workout.exercises);
+
+        // raw volume in KG
+        const rawVolume = allSets.reduce((sum, set) => {
+          if (set.completed && set.weight && set.reps) {
+            return sum + set.weight * set.reps;
+          }
+          return sum;
+        }, 0);
+
+        // convert volume
+        const volume = convertWeight(rawVolume, 'kg', weightUnit);
+
+        // total session time in minutes
+        const totalTime = workout.duration || 0;
+
+        // total rest in minutes
+        const restTimeSec = allSets.reduce(
+          (sum, set) => sum + (set.restTime || 0),
+          0
+        );
+        const restTime = restTimeSec / 60;
+
+        // active time in minutes
+        const activeTime = Math.max(0, totalTime - restTime);
+
+        // density metrics
+        const overallDensity =
+          totalTime > 0 ? volume / totalTime : 0;
+        const activeOnlyDensity =
+          activeTime > 0 ? volume / activeTime : 0;
+
+        const formattedDate = format(
+          new Date(workout.start_time),
+          'MMM d'
+        );
+
         return {
           date: workout.start_time,
-          formattedDate: format(date, 'MMM d'),
-          overallDensity: densityMetrics.overallDensity || 0,
-          activeOnlyDensity: densityMetrics.activeOnlyDensity || 0
+          formattedDate,
+          overallDensity,
+          activeOnlyDensity,
+          totalTime,
+          restTime,
+          activeTime
         };
-      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      
-      console.log(`Processed ${data.length} density data points`);
-      return data;
-    } catch (error) {
-      console.error("Error processing density over time data:", error);
-      return [];
-    }
-  }, [workouts]);
-  
-  // Calculate volume statistics
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [workouts, weightUnit]);
+
+  // --- Volume statistics ---
   const volumeStats = useMemo(() => {
     if (volumeOverTimeData.length === 0) {
       return { total: 0, average: 0 };
     }
-    
-    const total = volumeOverTimeData.reduce((sum, item) => sum + item.volume, 0);
-    const average = volumeOverTimeData.length > 0 ? total / volumeOverTimeData.length : 0;
-    
-    return {
-      total: convertWeight(total, 'kg', weightUnit),
-      average: convertWeight(average, 'kg', weightUnit)
-    };
-  }, [volumeOverTimeData, weightUnit]);
-  
-  // Calculate density statistics
+    const total = volumeOverTimeData.reduce((sum, pt) => sum + pt.volume, 0);
+    const average = total / volumeOverTimeData.length;
+    return { total, average };
+  }, [volumeOverTimeData]);
+
+  // --- Density statistics ---
   const densityStats = useMemo(() => {
     if (densityOverTimeData.length === 0) {
-      return { 
-        avgOverallDensity: 0, 
-        avgActiveOnlyDensity: 0, 
-        mostEfficientWorkout: null 
+      return {
+        avgOverallDensity: 0,
+        avgActiveOnlyDensity: 0,
+        mostEfficientWorkout: null as DensityDataPoint | null
       };
     }
-    
-    const avgOverallDensity = densityOverTimeData.reduce((sum, item) => sum + item.overallDensity, 0) / densityOverTimeData.length;
-    const avgActiveOnlyDensity = densityOverTimeData.reduce((sum, item) => sum + item.activeOnlyDensity, 0) / densityOverTimeData.length;
-    
-    // Find most efficient workout
-    const mostEfficientWorkout = [...densityOverTimeData]
-      .sort((a, b) => b.activeOnlyDensity - a.activeOnlyDensity)[0];
-    
-    return { 
-      avgOverallDensity, 
-      avgActiveOnlyDensity, 
-      mostEfficientWorkout 
-    };
+    const avgOverallDensity =
+      densityOverTimeData.reduce((sum, pt) => sum + pt.overallDensity, 0) /
+      densityOverTimeData.length;
+    const avgActiveOnlyDensity =
+      densityOverTimeData.reduce((sum, pt) => sum + pt.activeOnlyDensity, 0) /
+      densityOverTimeData.length;
+    const mostEfficientWorkout = densityOverTimeData.reduce(
+      (best, pt) =>
+        !best || pt.activeOnlyDensity > best.activeOnlyDensity ? pt : best,
+      null as DensityDataPoint | null
+    );
+    return { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout };
   }, [densityOverTimeData]);
-  
+
   return {
     volumeOverTimeData,
     densityOverTimeData,
