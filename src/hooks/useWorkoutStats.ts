@@ -1,4 +1,3 @@
-
 // src/hooks/useWorkoutStats.ts
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
@@ -45,7 +44,7 @@ export function useWorkoutStats(
     lastWorkoutDate: undefined
   });
 
-  // Backfill for individual workout metrics (used when you pass exercises+duration)
+  // Backfill for individual workout metrics - this should be the primary source for density metrics
   const workoutMetrics = useMemo<ProcessedWorkoutMetrics | null>(() => {
     if (exercises && duration !== undefined) {
       return processWorkoutMetrics(exercises, duration, weightUnit, userBodyInfo);
@@ -56,7 +55,6 @@ export function useWorkoutStats(
   // Fetch from Supabase when no specific exercises are passed
   const fetchWorkoutData = useCallback(async () => {
     setLoading(true);
-    console.log("[useWorkoutStats] Fetching workouts with dateRange:", dateRange);
 
     try {
       const now = new Date();
@@ -65,13 +63,6 @@ export function useWorkoutStats(
       const to   = dateRange?.to   || now;
       const adjustedTo = new Date(to);
       adjustedTo.setDate(adjustedTo.getDate() + 1);
-
-      console.log(
-        "[useWorkoutStats] Querying workouts between",
-        from.toISOString(),
-        "and",
-        adjustedTo.toISOString()
-      );
 
       // <---- include `duration` in the select ---->
       const { data: workoutData, error } = await supabase
@@ -83,7 +74,6 @@ export function useWorkoutStats(
 
       if (error) throw error;
       const sessions = workoutData || [];
-      console.log(`[useWorkoutStats] Fetched ${sessions.length} sessions`);
       setWorkouts(sessions);
 
       // Summaries
@@ -219,7 +209,7 @@ export function useWorkoutStats(
     if (!exercises) fetchWorkoutData();
   }, [exercises, fetchWorkoutData]);
 
-  // Return both processed & backward-compatible stats
+  // Return both processed & backward-compatible stats with workoutMetrics having priority
   return {
     ...(workoutMetrics || {} as ProcessedWorkoutMetrics),
     stats,

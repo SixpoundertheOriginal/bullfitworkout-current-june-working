@@ -27,7 +27,6 @@ const WorkoutDensityChartComponent: React.FC<WorkoutDensityChartProps> = ({
   totalTime = 0,
   activeTime = 0,
   restTime = 0,
-  totalVolume = 0,
   weightUnit = 'kg',
   overallDensity: propOverallDensity,
   activeOnlyDensity: propActiveOnlyDensity,
