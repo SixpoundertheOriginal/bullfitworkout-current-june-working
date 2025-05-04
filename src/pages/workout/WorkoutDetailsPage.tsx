@@ -291,17 +291,27 @@ const WorkoutDetailsPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Workout Composition Card */}
+            {/* Workout Composition Card - FIX HERE */}
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader><CardTitle>Workout Composition</CardTitle></CardHeader>
               <CardContent className="h-60">
                 <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(metricValues.composition || {}).filter(([key]) => key !== 'totalExercises').map(([type, data]) => (
-                    <div key={type} className="flex flex-col p-3 rounded-md bg-gray-800/50 border border-gray-700">
-                      <div className="text-sm text-gray-400 mb-1 capitalize">{type}</div>
-                      <div className="text-lg font-medium">{data.count} <span className="text-sm text-gray-400">({Math.round(data.percentage)}%)</span></div>
-                    </div>
-                  ))}
+                  {Object.entries(metricValues.composition || {})
+                    .filter(([key]) => key !== 'totalExercises')
+                    .map(([type, data]) => {
+                      // Check if data is an object with count and percentage properties
+                      const count = typeof data === 'object' && data !== null ? data.count || 0 : 0;
+                      const percentage = typeof data === 'object' && data !== null ? data.percentage || 0 : 0;
+                      
+                      return (
+                        <div key={type} className="flex flex-col p-3 rounded-md bg-gray-800/50 border border-gray-700">
+                          <div className="text-sm text-gray-400 mb-1 capitalize">{type}</div>
+                          <div className="text-lg font-medium">
+                            {count} <span className="text-sm text-gray-400">({Math.round(percentage)}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </CardContent>
             </Card>
