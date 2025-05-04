@@ -1,3 +1,4 @@
+
 // src/components/metrics/WorkoutDensityOverTimeChart.tsx
 
 import React, { useMemo } from 'react';
@@ -43,10 +44,7 @@ const WorkoutDensityOverTimeChartComponent: React.FC<WorkoutDensityOverTimeChart
     return data.map(item => ({
       date: format(new Date(item.date), 'MMM d'),
       overallDensity: Number(item.overallDensity.toFixed(1)),
-      activeOnlyDensity:
-        item.activeOnlyDensity !== undefined
-          ? Number(item.activeOnlyDensity.toFixed(1))
-          : undefined,
+      activeOnlyDensity: Number(item.activeOnlyDensity.toFixed(1)),
       originalDate: item.date
     }));
   }, [data, hasData]);
@@ -56,18 +54,10 @@ const WorkoutDensityOverTimeChartComponent: React.FC<WorkoutDensityOverTimeChart
     if (!hasData) return { overall: 0, activeOnly: 0 };
     const sumOverall = data.reduce((acc, item) => acc + item.overallDensity, 0);
     const overall = Number((sumOverall / data.length).toFixed(1));
-    const validActive = data.filter(item => item.activeOnlyDensity !== undefined);
-    const activeOnly =
-      validActive.length === 0
-        ? 0
-        : Number(
-            (
-              validActive.reduce(
-                (acc, item) => acc + (item.activeOnlyDensity || 0),
-                0
-              ) / validActive.length
-            ).toFixed(1)
-          );
+    
+    const sumActiveOnly = data.reduce((acc, item) => acc + item.activeOnlyDensity, 0);
+    const activeOnly = Number((sumActiveOnly / data.length).toFixed(1));
+    
     return { overall, activeOnly };
   }, [data, hasData]);
 
@@ -143,13 +133,11 @@ const WorkoutDensityOverTimeChartComponent: React.FC<WorkoutDensityOverTimeChart
                         <p className="text-purple-400 font-semibold">
                           Overall: {payload[0].value} {weightUnit}/min
                         </p>
-                        {payload[1] &&
-                          payload[1].value !== undefined && (
-                            <p className="text-blue-400 font-semibold">
-                              Active Only: {payload[1].value}{' '}
-                              {weightUnit}/min
-                            </p>
-                          )}
+                        {payload[1] && (
+                          <p className="text-blue-400 font-semibold">
+                            Active Only: {payload[1].value} {weightUnit}/min
+                          </p>
+                        )}
                       </div>
                     );
                   }

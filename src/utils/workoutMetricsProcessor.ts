@@ -20,8 +20,8 @@ export interface ProcessedWorkoutMetrics {
   densityMetrics: {
     setsPerMinute: number;
     volumePerMinute: number;
-    overallDensity: number;
-    activeOnlyDensity: number;
+    overallDensity: number;     // volume ÷ totalTime
+    activeOnlyDensity: number;  // volume ÷ activeTime
     formattedOverallDensity: string;
     formattedActiveOnlyDensity: string;
   };
@@ -33,18 +33,18 @@ export interface ProcessedWorkoutMetrics {
   muscleFocus: Record<string, number>;
   estimatedEnergyExpenditure: number;
   movementPatterns: Record<string, number>;
+  timeDistribution: {
+    activeTime: number;
+    restTime: number;
+    activeTimePercentage: number;
+    restTimePercentage: number;
+  };
   composition: {
     compound: { count: number; percentage: number };
     isolation: { count: number; percentage: number };
     bodyweight: { count: number; percentage: number };
     isometric: { count: number; percentage: number };
     totalExercises: number;
-  };
-  timeDistribution: {
-    activeTime: number;
-    restTime: number;
-    activeTimePercentage: number;
-    restTimePercentage: number;
   };
   durationByTimeOfDay: {
     morning: number;
@@ -277,38 +277,52 @@ export const processWorkoutMetrics = (
     ? (totalActiveTimeMinutes / duration) * 100 
     : 0;
 
-  // Calculate density metrics (volume per unit time)
+  // CENTRALIZED DENSITY CALCULATIONS
+  // Calculate all density metrics in one place
   if (duration > 0) {
-    // Use the correct density formulas
-    // volumePerMinute = total volume / total duration
-    metrics.densityMetrics.volumePerMinute = metrics.totalVolume / duration;
-    metrics.densityMetrics.overallDensity = metrics.totalVolume / duration;
+    // Overall density: total volume / total duration
+    const overallDensity = metrics.totalVolume / duration;
+    
+    // Active-only density: total volume / active time (excluding rest)
+    const activeOnlyDensity = totalActiveTimeMinutes > 0 
+      ? metrics.totalVolume / totalActiveTimeMinutes 
+      : 0;
 
-    // Density with active time only (excluding rest)
-    metrics.densityMetrics.activeOnlyDensity = totalActiveTimeMinutes > 0 ? 
-      metrics.totalVolume / totalActiveTimeMinutes : 0;
-      
-    // Sets per minute remains the same
-    metrics.densityMetrics.setsPerMinute = metrics.setCount.completed / duration;
+    // volumePerMinute is the same as overallDensity
+    const volumePerMinute = overallDensity;
+    
+    // Sets per minute
+    const setsPerMinute = metrics.setCount.completed / duration;
     
     // Legacy density calculation (keeping for backward compatibility)
-    metrics.density = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
-      
+    const legacyDensity = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
+    
     // Format for display
     const volumeUnit = weightUnit === 'kg' ? 'kg' : 'lb';
-    metrics.densityMetrics.formattedOverallDensity = 
-      `${metrics.densityMetrics.overallDensity.toFixed(1)} ${volumeUnit}/min`;
-    metrics.densityMetrics.formattedActiveOnlyDensity = 
-      `${metrics.densityMetrics.activeOnlyDensity.toFixed(1)} ${volumeUnit}/min`;
+    const formattedOverallDensity = `${overallDensity.toFixed(1)} ${volumeUnit}/min`;
+    const formattedActiveOnlyDensity = `${activeOnlyDensity.toFixed(1)} ${volumeUnit}/min`;
     
-    // Log the calculated density values for debugging
+    // Update all density metrics in one place
+    metrics.densityMetrics = {
+      volumePerMinute,
+      setsPerMinute,
+      overallDensity,
+      activeOnlyDensity,
+      formattedOverallDensity,
+      formattedActiveOnlyDensity
+    };
+    
+    // Legacy density field (keeping for backward compatibility)
+    metrics.density = legacyDensity;
+    
+    // For debugging
     console.log(`DEBUG - Density calculations:
       - Total Volume: ${metrics.totalVolume} ${weightUnit}
       - Duration: ${duration} minutes
       - Active Time: ${totalActiveTimeMinutes} minutes
       - Rest Time: ${totalRestTimeMinutes} minutes
-      - Overall Density: ${metrics.densityMetrics.overallDensity.toFixed(2)} ${weightUnit}/min
-      - Active-Only Density: ${metrics.densityMetrics.activeOnlyDensity.toFixed(2)} ${weightUnit}/min
+      - Overall Density: ${overallDensity.toFixed(2)} ${weightUnit}/min
+      - Active-Only Density: ${activeOnlyDensity.toFixed(2)} ${weightUnit}/min
     `);
   }
 

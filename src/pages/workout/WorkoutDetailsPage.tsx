@@ -84,7 +84,7 @@ const WorkoutDetailsPage: React.FC = () => {
     return map;
   }, [exerciseSets]);
 
-  // Calculate metrics safely - ensure this runs unconditionally
+  // Calculate metrics using the centralized processWorkoutMetrics function
   const metrics = useMemo(() => {
     if (!workoutDetails) {
       // Return default/empty metrics when workoutDetails isn't available
@@ -145,6 +145,7 @@ const WorkoutDetailsPage: React.FC = () => {
       duration: workoutDetails.duration || 0
     } : undefined;
 
+    // Use the centralized processor for all metric calculations
     return processWorkoutMetrics(
       groupedExercises,
       workoutDetails.duration || 0,
@@ -171,9 +172,8 @@ const WorkoutDetailsPage: React.FC = () => {
   const activeTime = metricValues.timeDistribution?.activeTime || 0;
   const restTime = metricValues.timeDistribution?.restTime || 0;
   
-  // These properties are in densityMetrics in ProcessedWorkoutMetrics
-  const overallDensity = metricValues.densityMetrics?.overallDensity || 0;
-  const activeOnlyDensity = metricValues.densityMetrics?.activeOnlyDensity || 0;
+  // Use the centralized density metrics directly
+  const { overallDensity, activeOnlyDensity } = metricValues.densityMetrics;
   
   // For time patterns chart - use the durationByTimeOfDay data from metrics
   const durationByTimeOfDay = metricValues.durationByTimeOfDay || {

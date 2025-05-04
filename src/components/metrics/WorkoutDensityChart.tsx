@@ -1,3 +1,4 @@
+
 // src/components/metrics/WorkoutDensityChart.tsx
 
 import React, { useMemo, useCallback } from 'react';
@@ -32,17 +33,9 @@ const WorkoutDensityChartComponent: React.FC<WorkoutDensityChartProps> = ({
   activeOnlyDensity: propActiveOnlyDensity,
   height = 250
 }) => {
-  // Compute densities, falling back if no prop provided
-  const overallDensity = useMemo(
-    () => propOverallDensity ?? (totalTime > 0 ? totalVolume / totalTime : 0),
-    [propOverallDensity, totalTime, totalVolume]
-  );
-  const activeOnlyDensity = useMemo(
-    () =>
-      propActiveOnlyDensity ??
-      (activeTime > 0 ? totalVolume / activeTime : 0),
-    [propActiveOnlyDensity, activeTime, totalVolume]
-  );
+  // Always use the density values provided by the processor
+  const overallDensity = propOverallDensity ?? 0;
+  const activeOnlyDensity = propActiveOnlyDensity ?? 0;
 
   // Format density for labels
   const formatDensity = useCallback((value: number) => {
