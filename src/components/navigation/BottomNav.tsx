@@ -15,6 +15,7 @@ export const BottomNav = () => {
     if (path === "/training-session" && location.pathname === "/training-session") return true;
     if (path === "/workouts" && location.pathname === "/workouts") return true;
     if (path === "/profile" && location.pathname === "/profile") return true;
+    if (path === "/all-exercises" && location.pathname === "/all-exercises") return true;
     return false;
   };
   
@@ -29,7 +30,7 @@ export const BottomNav = () => {
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10">
+    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10 safe-bottom">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Home" 
@@ -51,9 +52,9 @@ export const BottomNav = () => {
       />
       <NavButton 
         icon={<Dumbbell size={20} />} 
-        label="Workouts"
-        active={isActive('/workouts')}
-        onClick={() => confirmNavigation('/workouts')}
+        label="Exercises"
+        active={isActive('/all-exercises')}
+        onClick={() => confirmNavigation('/all-exercises')}
       />
       <NavButton 
         icon={<UserIcon size={20} />} 

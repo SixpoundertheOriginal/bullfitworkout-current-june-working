@@ -1,3 +1,4 @@
+
 import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
@@ -5,6 +6,7 @@ import { WorkoutBanner } from "@/components/training/WorkoutBanner";
 import { useLocation } from "react-router-dom";
 import { useLayout } from "@/context/LayoutContext";
 import { DateRangeFilter } from "@/components/date-filters/DateRangeFilter";
+import { MainMenu } from "@/components/navigation/MainMenu";
 
 // Function to get page title based on the current route
 const getPageTitle = (pathname: string): string => {
@@ -68,7 +70,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
       {!noHeader && (
         <div className="fixed top-0 left-0 right-0 z-50">
-          <PageHeader title={title}>
+          <PageHeader title={title} showBackButton={location.pathname !== '/' && location.pathname !== '/overview'}>
+            <MainMenu />
             {isFilterVisible && (
               <div className="h-[36px] overflow-hidden">
                 <DateRangeFilter />
