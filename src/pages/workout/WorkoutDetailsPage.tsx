@@ -1,3 +1,4 @@
+
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -65,35 +66,75 @@ const WorkoutDetailsPage: React.FC = () => {
     navigate
   });
 
-  if (loadingDetails || !workoutDetails) {
-    return <WorkoutDetailsLoading />;
-  }
-
-  //
-  // 1) Group raw sets into a name→array map so our metrics util can consume it
-  //
-  const groupedExercises = useMemo<Record<string, any[]>>(() => {
+  // Initialize metrics with safe defaults outside the conditional rendering
+  const groupedExercises = useMemo(() => {
     const map: Record<string, any[]> = {};
-    if (Array.isArray(exerciseSets)) {
-      exerciseSets.forEach(set => {
-        const name = set.exercise_name || "Unknown";
-        if (!map[name]) map[name] = [];
-        map[name].push(set);
-      });
-    } else if (typeof exerciseSets === "object" && exerciseSets !== null) {
-      Object.assign(map, exerciseSets);
+    if (workoutDetails && exerciseSets) {
+      if (Array.isArray(exerciseSets)) {
+        exerciseSets.forEach(set => {
+          const name = set.exercise_name || "Unknown";
+          if (!map[name]) map[name] = [];
+          map[name].push(set);
+        });
+      } else if (typeof exerciseSets === "object" && exerciseSets !== null) {
+        Object.assign(map, exerciseSets);
+      }
     }
     return map;
   }, [exerciseSets]);
 
-  //
-  // 2) Run our centralized metrics processor
-  //
-  const metrics = processWorkoutMetrics(
-    groupedExercises,
-    workoutDetails.duration || 0,
-    weightUnit
-  ) as ProcessedWorkoutMetrics;
+  // Calculate metrics safely - ensure this runs unconditionally
+  const metrics = useMemo(() => {
+    if (!workoutDetails) {
+      // Return default/empty metrics when workoutDetails isn't available
+      return {
+        totalVolume: 0,
+        totalTime: 0,
+        activeTime: 0,
+        restTime: 0,
+        overallDensity: 0,
+        activeOnlyDensity: 0,
+        timePatterns: { 
+          daysFrequency: {},
+          durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+        },
+        muscleFocus: {},
+        exerciseVolumeHistory: [],
+        exerciseCount: 0,
+        setCount: { total: 0, completed: 0 },
+        densityMetrics: {
+          formattedOverallDensity: "0.0 kg/min",
+          formattedActiveOnlyDensity: "0.0 kg/min"
+        },
+        timeDistribution: { activeTime: 0, restTime: 0 },
+        intensity: 0,
+        efficiency: 0,
+        composition: {
+          compound: { count: 0, percentage: 0 },
+          isolation: { count: 0, percentage: 0 },
+          bodyweight: { count: 0, percentage: 0 },
+          isometric: { count: 0, percentage: 0 },
+          totalExercises: 0
+        }
+      } as ProcessedWorkoutMetrics;
+    }
+
+    return processWorkoutMetrics(
+      groupedExercises,
+      workoutDetails.duration || 0,
+      weightUnit as WeightUnit
+    ) as ProcessedWorkoutMetrics;
+  }, [groupedExercises, workoutDetails, weightUnit]);
+
+  if (loadingDetails || !workoutDetails) {
+    return <WorkoutDetailsLoading />;
+  }
+
+  // Derive summary values
+  const exerciseCount = Object.keys(groupedExercises).length;
+  const setCount = Array.isArray(exerciseSets)
+    ? exerciseSets.length
+    : Object.values(groupedExercises).flat().length;
 
   // Destructure with safe defaults
   const {
@@ -103,16 +144,13 @@ const WorkoutDetailsPage: React.FC = () => {
     restTime = 0,
     overallDensity = 0,
     activeOnlyDensity = 0,
-    timePatterns = { daysFrequency: {}, durationByTimeOfDay: { morning:0, afternoon:0, evening:0, night:0 } },
+    timePatterns = { 
+      daysFrequency: {},
+      durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+    },
     muscleFocus = {},
     exerciseVolumeHistory = []
   } = metrics || {};
-
-  // Derived summary values
-  const exerciseCount = Object.keys(groupedExercises).length;
-  const setCount = Array.isArray(exerciseSets)
-    ? exerciseSets.length
-    : Object.values(groupedExercises).flat().length;
 
   return (
     <ErrorBoundary>
