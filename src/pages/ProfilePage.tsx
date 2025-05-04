@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileForm } from "@/components/UserProfileForm";
 import { UserStats } from "@/components/UserStats";
-import { ArrowLeft, User, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { StatsSection } from "@/components/profile/StatsSection";
+import { RecentWorkoutsSection } from "@/components/profile/RecentWorkoutsSection";
+import { SettingsSection } from "@/components/profile/SettingsSection";
+import { useLocation } from "react-router-dom";
 
 export type UserProfileData = {
   full_name: string | null;
@@ -25,9 +28,36 @@ export type UserProfileData = {
 const ProfilePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("stats");
+  const [recentWorkouts, setRecentWorkouts] = useState<any[]>([]);
+  const [statsData, setStatsData] = useState({
+    totalWorkouts: 0,
+    totalSets: 0,
+    averageDuration: 0,
+    totalDuration: 0
+  });
+  
+  // Get tab from URL query param or default to "stats"
+  const searchParams = new URLSearchParams(location.search);
+  const defaultTab = searchParams.get("tab") || "stats";
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  // Update URL when tab changes without full navigation
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+    const params = new URLSearchParams(location.search);
+    params.set("tab", value);
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+  }, [location.search, navigate, location.pathname]);
+
+  // Handle avatar update
+  const handleAvatarChange = (url: string | null) => {
+    if (!user) return;
+    // Update avatar URL in local state
+    // Note: The actual update to Supabase is handled in the ProfileHeader component
+  };
 
   useEffect(() => {
     if (!user) {
@@ -37,6 +67,7 @@ const ProfilePage = () => {
 
     const fetchUserProfile = async () => {
       try {
+        // Fetch user profile data
         const { data, error } = await supabase
           .from("user_profiles")
           .select("*")
@@ -67,6 +98,40 @@ const ProfilePage = () => {
             experience_level: null
           });
         }
+        
+        // Fetch recent workouts
+        const { data: workouts, error: workoutsError } = await supabase
+          .from("workout_sessions")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(5);
+        
+        if (workoutsError) {
+          console.error("Error fetching workouts", workoutsError);
+        } else {
+          setRecentWorkouts(workouts || []);
+        }
+        
+        // Calculate stats
+        if (workouts && workouts.length > 0) {
+          // Fetch total sets
+          const { data: totalSetsData } = await supabase
+            .from("exercise_sets")
+            .select("id")
+            .in("workout_id", workouts.map(w => w.id));
+          
+          const totalWorkouts = workouts.length;
+          const totalDuration = workouts.reduce((sum, w) => sum + (w.duration || 0), 0);
+          const averageDuration = totalWorkouts > 0 ? Math.round(totalDuration / totalWorkouts) : 0;
+          
+          setStatsData({
+            totalWorkouts,
+            totalSets: totalSetsData?.length || 0,
+            averageDuration,
+            totalDuration
+          });
+        }
       } catch (err) {
         console.error("Error in fetchUserProfile:", err);
       } finally {
@@ -93,6 +158,7 @@ const ProfilePage = () => {
         throw error;
       }
 
+      setProfileData(data);
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -107,52 +173,27 @@ const ProfilePage = () => {
     }
   };
 
-  const getInitials = () => {
-    if (profileData?.full_name) {
-      return profileData.full_name
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase();
-    }
-    
-    return user?.email?.substring(0, 2).toUpperCase() || 'U';
-  };
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <main className="max-w-4xl mx-auto p-6 mt-16">
+    <div className="min-h-screen bg-black text-white pb-16">
+      <main className="max-w-4xl mx-auto p-6 mt-16 space-y-6">
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
           </div>
         ) : (
           <>
-            <div className="mb-10 flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-purple-800 text-2xl">{getInitials()}</AvatarFallback>
-              </Avatar>
-              
-              <h2 className="text-2xl font-bold">
-                {profileData?.full_name || user?.email}
-              </h2>
-              
-              <div className="mt-1 text-gray-400">
-                {user?.email}
-              </div>
-              
-              {profileData?.fitness_goal && (
-                <div className="mt-4 inline-block px-3 py-1 bg-purple-900/50 rounded-full text-sm border border-purple-800">
-                  Goal: {profileData.fitness_goal.replace('_', ' ')}
-                </div>
-              )}
-            </div>
+            <ProfileHeader 
+              fullName={profileData?.full_name || user?.user_metadata?.full_name}
+              email={user?.email}
+              avatarUrl={user?.user_metadata?.avatar_url}
+              fitnessGoal={profileData?.fitness_goal}
+              onAvatarChange={handleAvatarChange}
+            />
             
             <Tabs 
               defaultValue="stats" 
               value={activeTab} 
-              onValueChange={setActiveTab} 
+              onValueChange={handleTabChange} 
               className="w-full"
             >
               <TabsList className="grid grid-cols-2 bg-gray-800 border-gray-700 mb-6">
@@ -164,13 +205,21 @@ const ProfilePage = () => {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="stats" className="mt-0">
-                <UserStats />
+              <TabsContent value="stats" className="mt-0 space-y-6">
+                <StatsSection 
+                  totalWorkouts={statsData.totalWorkouts}
+                  totalSets={statsData.totalSets}
+                  averageDuration={statsData.averageDuration}
+                  totalDuration={statsData.totalDuration}
+                />
+                
+                <RecentWorkoutsSection workouts={recentWorkouts} />
+                
+                <SettingsSection />
               </TabsContent>
               
               <TabsContent value="profile" className="mt-0">
                 <div className="max-w-lg mx-auto">
-                  <h2 className="text-2xl font-bold mb-6">Edit Profile</h2>
                   {profileData && (
                     <UserProfileForm 
                       initialData={profileData} 
