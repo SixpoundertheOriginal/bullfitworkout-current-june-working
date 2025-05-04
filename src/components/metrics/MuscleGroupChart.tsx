@@ -1,3 +1,4 @@
+
 // src/components/metrics/MuscleGroupChart.tsx
 
 import React, { useMemo } from 'react';
@@ -85,4 +86,5 @@ const MuscleGroupChartComponent: React.FC<MuscleGroupChartProps> = ({
   );
 };
 
+// Export the memoized component correctly
 export const MuscleGroupChart = React.memo(MuscleGroupChartComponent);

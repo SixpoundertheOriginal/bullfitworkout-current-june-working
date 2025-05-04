@@ -21,7 +21,7 @@ interface EnhancedMetricsDisplayProps {
   className?: string;
 }
 
-export const EnhancedMetricsDisplay = React.memo(({ 
+const EnhancedMetricsDisplayComponent = ({ 
   exercises, 
   intensity, 
   efficiency,
@@ -165,6 +165,7 @@ export const EnhancedMetricsDisplay = React.memo(({
       </div>
     </div>
   );
-});
+};
 
+export const EnhancedMetricsDisplay = React.memo(EnhancedMetricsDisplayComponent);
 EnhancedMetricsDisplay.displayName = 'EnhancedMetricsDisplay';

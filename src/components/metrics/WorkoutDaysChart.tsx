@@ -7,7 +7,10 @@ interface WorkoutDaysChartProps {
   height?: number;
 }
 
-export const WorkoutDaysChart: React.FC<WorkoutDaysChartProps> = ({ daysFrequency, height = 250 }) => {
+const WorkoutDaysChartComponent: React.FC<WorkoutDaysChartProps> = ({ 
+  daysFrequency, 
+  height = 250 
+}) => {
   // Order days correctly
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   
@@ -59,3 +62,5 @@ export const WorkoutDaysChart: React.FC<WorkoutDaysChartProps> = ({ daysFrequenc
     </div>
   );
 };
+
+export const WorkoutDaysChart = React.memo(WorkoutDaysChartComponent);

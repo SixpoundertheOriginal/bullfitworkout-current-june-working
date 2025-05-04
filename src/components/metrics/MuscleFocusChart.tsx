@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { ChartContainer } from "@/components/ui/chart";
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 import { cn } from '@/lib/utils';
 
@@ -9,7 +8,7 @@ interface MuscleFocusChartProps {
   className?: string;
 }
 
-export const MuscleFocusChart: React.FC<MuscleFocusChartProps> = ({
+const MuscleFocusChartComponent: React.FC<MuscleFocusChartProps> = ({
   muscleGroups,
   className
 }) => {
@@ -70,41 +69,41 @@ export const MuscleFocusChart: React.FC<MuscleFocusChartProps> = ({
     <div className={cn("w-full bg-gray-800/50 rounded-lg p-4", className)}>
       <h3 className="text-sm font-medium mb-2 text-gray-400">Muscle Group Focus</h3>
       <div className="h-64">
-        <ChartContainer config={chartConfig}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                fill="#8884d8"
-                paddingAngle={2}
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                labelLine={false}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => [`${value} sets`, 'Count']}
-                contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
-              />
-              <Legend 
-                layout="horizontal" 
-                verticalAlign="bottom" 
-                align="center"
-                formatter={(value) => (
-                  <span style={{ color: '#f9fafb' }}>{value}</span>
-                )}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              fill="#8884d8"
+              paddingAngle={2}
+              dataKey="value"
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              labelLine={false}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value) => [`${value} sets`, 'Count']}
+              contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f9fafb' }}
+            />
+            <Legend 
+              layout="horizontal" 
+              verticalAlign="bottom" 
+              align="center"
+              formatter={(value) => (
+                <span style={{ color: '#f9fafb' }}>{value}</span>
+              )}
+            />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
 };
+
+export const MuscleFocusChart = React.memo(MuscleFocusChartComponent);

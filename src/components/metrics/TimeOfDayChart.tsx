@@ -12,7 +12,10 @@ interface TimeOfDayChartProps {
   height?: number;
 }
 
-export const TimeOfDayChart: React.FC<TimeOfDayChartProps> = ({ durationByTimeOfDay, height = 250 }) => {
+const TimeOfDayChartComponent: React.FC<TimeOfDayChartProps> = ({ 
+  durationByTimeOfDay, 
+  height = 250 
+}) => {
   const chartData = [
     { name: 'Morning', value: durationByTimeOfDay.morning, color: '#84cc16' },
     { name: 'Afternoon', value: durationByTimeOfDay.afternoon, color: '#f59e0b' },
@@ -53,3 +56,5 @@ export const TimeOfDayChart: React.FC<TimeOfDayChartProps> = ({ durationByTimeOf
     </div>
   );
 };
+
+export const TimeOfDayChart = React.memo(TimeOfDayChartComponent);

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -164,7 +163,7 @@ export interface WorkoutStats {
   progressMetrics: ProgressMetrics;
 }
 
-export function UserStats() {
+const UserStatsComponent = () => {
   const { user } = useAuth();
   
   const { data: stats, isLoading } = useQuery({
@@ -313,4 +312,7 @@ export function UserStats() {
       )}
     </div>
   );
-}
+};
+
+// Export the component correctly
+export const UserStats = React.memo(UserStatsComponent);

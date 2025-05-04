@@ -12,7 +12,7 @@ interface StatsCardProps {
   className?: string;
 }
 
-export const EnhancedStatsCard = ({ 
+const EnhancedStatsCardComponent = ({ 
   title, 
   value, 
   icon, 
@@ -36,3 +36,5 @@ export const EnhancedStatsCard = ({
     </BaseCard>
   );
 };
+
+export const EnhancedStatsCard = React.memo(EnhancedStatsCardComponent);
