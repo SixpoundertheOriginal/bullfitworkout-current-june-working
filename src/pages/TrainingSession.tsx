@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -15,7 +14,6 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
 import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
-import { BottomNav } from "@/components/navigation/BottomNav";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -23,7 +21,6 @@ const TrainingSessionPage = () => {
   const { user } = useAuth();
   const { exercises: allExercises, isLoading: loadingExercises } = useExercises();
   
-  // Use the Zustand store
   const {
     exercises: storeExercises,
     setExercises: setStoreExercises,
@@ -38,7 +35,6 @@ const TrainingSessionPage = () => {
     handleCompleteSet,
     workoutStatus,
     markAsSaving,
-    markAsSaved,
     markAsFailed,
     workoutId,
     deleteExercise,
@@ -50,21 +46,16 @@ const TrainingSessionPage = () => {
     setWorkoutStatus
   } = useWorkoutStore();
   
-  // Adapt the store exercises to the expected format for exercise components
   const exercises = adaptExerciseSets(storeExercises);
-  
-  // Calculate completedSets and totalSets
   const [completedSets, totalSets] = Object.entries(exercises).reduce(
     ([completed, total], [_, sets]) => [
-      completed + sets.filter(set => set.completed).length,
+      completed + sets.filter(s => s.completed).length,
       total + sets.length
     ],
     [0, 0]
   );
-  
-  // Use workout timer hook for elapsed time tracking
-  useWorkoutTimer();
 
+  useWorkoutTimer();
   const { play: playBell } = useSound('/sounds/bell.mp3');
   const { play: playTick } = useSound('/sounds/tick.mp3');
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
@@ -76,218 +67,114 @@ const TrainingSessionPage = () => {
   const exerciseCount = Object.keys(exercises).length;
   const hasExercises = exerciseCount > 0;
   
-  // Mark page as loaded after initial render
-  useEffect(() => {
-    setPageLoaded(true);
-  }, []);
+  useEffect(() => { setPageLoaded(true); }, []);
 
-  // Reset saving state when returning to this page
-  // This is crucial for fixing the bug when returning from Workout Complete page
   useEffect(() => {
-    // Only execute this if there are exercises (meaning workout is still valid)
     if (Object.keys(exercises).length > 0 && workoutStatus === 'saving') {
-      console.log('Resetting saving state after returning to training session');
       setIsSaving(false);
-      
-      // If we're coming from the workout complete page but still have exercises,
-      // we need to ensure the workout is marked as active again
-      if (isActive) {
-        setWorkoutStatus('active');
-      }
+      if (isActive) setWorkoutStatus('active');
     }
   }, [exercises, workoutStatus, isActive, setWorkoutStatus]);
 
-  // Update last active route whenever we load this page
   useEffect(() => {
-    // Only update route when actually needed - once on mount
     if (location.pathname === '/training-session') {
       updateLastActiveRoute('/training-session');
     }
-    
-    // Debug logging
-    console.log('TrainingSession page loaded with state:', { 
-      isActive, 
-      exerciseCount: Object.keys(exercises).length,
-      elapsedTime,
-      workoutStatus,
-      isSaving
-    });
-    // Only run this effect once when component mounts
+    console.log('TrainingSession page state:', { isActive, exerciseCount, elapsedTime, workoutStatus, isSaving });
   }, []);
 
-  // Start a workout if not already started but we have exercises
   useEffect(() => {
-    if (pageLoaded && workoutStatus === 'idle' && Object.keys(exercises).length > 0) {
-      console.log('Auto-starting workout due to existing exercises');
+    if (pageLoaded && workoutStatus === 'idle' && hasExercises) {
       startWorkout();
     }
-  }, [pageLoaded, workoutStatus, exercises, startWorkout]);
+  }, [pageLoaded, workoutStatus, hasExercises, startWorkout]);
 
-  // Handle training config from navigation state
   useEffect(() => {
     if (location.state?.trainingConfig && !isActive) {
-      console.log('Setting training config from navigation state');
       setTrainingConfig(location.state.trainingConfig);
     }
-    
-    // Check if we're returning from discarding
     if (location.state?.fromDiscard) {
-      console.log('Returning from discard action, ensuring workout is active');
-      setIsSaving(false); // Ensure saving state is reset
+      setIsSaving(false);
     }
   }, [location.state, isActive, setTrainingConfig]);
 
-  // Handle reset parameter in URL
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const shouldReset = searchParams.get('reset') === 'true';
-    
-    if (shouldReset) {
+    const params = new URLSearchParams(location.search);
+    if (params.get('reset') === 'true') {
       resetSession();
       toast.info("Workout session reset");
-      
-      // Clean up URL parameter
       navigate('/training-session', { replace: true });
     }
   }, [location.search, resetSession, navigate]);
 
-  // Effect to handle workout completion status
   useEffect(() => {
     if (workoutStatus === 'saved') {
-      console.log('Workout saved successfully, cleaning up state');
+      console.log('Workout saved successfully');
     }
   }, [workoutStatus]);
 
-  const triggerRestTimerReset = () => {
-    setRestTimerResetSignal(prev => prev + 1);
-  };
+  const triggerRestTimerReset = () => setRestTimerResetSignal(x => x + 1);
 
   const handleAddExercise = (exercise: Exercise | string) => {
-    const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
-    
-    // Only show warning toast if exercise exists
-    if (storeExercises[exerciseName]) {
-      toast({
-        title: "Exercise already added",
-        description: `${exerciseName} is already in your workout`
-      });
+    const name = typeof exercise === 'string' ? exercise : exercise.name;
+    if (storeExercises[name]) {
+      toast({ title: "Exercise already added", description: `${name} is already in your workout` });
       return;
     }
-
-    setStoreExercises(prev => ({
-      ...prev,
-      [exerciseName]: [
-        { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }
-      ]
-    }));
-    
-    setActiveExercise(exerciseName);
-    
-    // Toast notification is now handled in AddExerciseSheet
-    
-    // Ensure workout is active
-    if (workoutStatus === 'idle') {
-      startWorkout();
-    }
-    
-    // Close the exercise sheet after adding
+    setStoreExercises(prev => ({ ...prev, [name]: [{ weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }] }));
+    setActiveExercise(name);
+    if (workoutStatus === 'idle') startWorkout();
     setIsAddExerciseSheetOpen(false);
   };
 
-  const handleShowRestTimer = () => {
-    setRestTimerActive(true);
-    setShowRestTimerModal(true);
-    playBell();
-  };
-
-  const handleRestTimerComplete = () => {
-    setRestTimerActive(false);
-    setShowRestTimerModal(false);
-    playBell();
-  };
+  const handleShowRestTimer = () => { setRestTimerActive(true); setShowRestTimerModal(true); playBell(); };
+  const handleRestTimerComplete = () => { setRestTimerActive(false); setShowRestTimerModal(false); playBell(); };
 
   const handleFinishWorkout = async () => {
     if (!hasExercises) {
-      toast.error("No exercises added - Please add at least one exercise before finishing your workout");
+      toast.error("Add at least one exercise before finishing your workout");
       return;
     }
-
     try {
       setIsSaving(true);
       markAsSaving();
-      
       const now = new Date();
-      const workoutStartTime = new Date(now.getTime() - elapsedTime * 1000);
-
-      const workoutMetadata = {
-        trainingConfig: trainingConfig || null,
-        performance: {
-          completedSets,
-          totalSets,
-          restTimers: {
-            defaultTime: currentRestTime,
-            wasUsed: restTimerActive
-          }
-        },
-        progression: {
-          timeOfDay: workoutStartTime.getHours() < 12 ? 'morning' : 
-                     workoutStartTime.getHours() < 17 ? 'afternoon' : 'evening',
-          totalVolume: Object.entries(storeExercises).reduce((acc, [exerciseName, sets]) => {
-            return acc + sets.reduce((setAcc, set) => {
-              return setAcc + (set.completed ? (set.weight * set.reps) : 0);
-            }, 0);
-          }, 0)
-        },
-        sessionDetails: {
-          exerciseCount: Object.keys(storeExercises).length,
-          averageRestTime: currentRestTime,
-          workoutDensity: completedSets / (elapsedTime / 60)
-        }
-      };
-
-      const normalizedExercises = {};
-      Object.entries(storeExercises).forEach(([exerciseName, sets]) => {
-        normalizedExercises[exerciseName] = sets.map(set => ({
-          ...set,
-          isEditing: set.isEditing || false
-        }));
-      });
-
-      // Note: We don't reset session here! We'll do it after the save is confirmed
+      const startTime = new Date(now.getTime() - elapsedTime * 1000);
       const workoutData = {
-        exercises: normalizedExercises,
+        exercises: Object.fromEntries(
+          Object.entries(storeExercises).map(([name, sets]) => [
+            name,
+            sets.map(s => ({ ...s, isEditing: s.isEditing || false }))
+          ])
+        ),
         duration: elapsedTime,
-        startTime: workoutStartTime,
+        startTime,
         endTime: now,
         trainingType: trainingConfig?.trainingType || "Strength",
         name: trainingConfig?.trainingType || "Workout",
         trainingConfig: trainingConfig || null,
         notes: "",
-        metrics: workoutMetadata
-      };
-
-      // Navigate to workout complete with workout data
-      navigate("/workout-complete", {
-        state: {
-          workoutData
+        metrics: {
+          trainingConfig: trainingConfig || null,
+          performance: { completedSets, totalSets, restTimers: { defaultTime: currentRestTime, wasUsed: restTimerActive } },
+          progression: {
+            timeOfDay: startTime.getHours() < 12 ? 'morning' :
+                       startTime.getHours() < 17 ? 'afternoon' : 'evening',
+            totalVolume: Object.values(storeExercises).flat().reduce((acc, s) => acc + (s.completed ? s.weight * s.reps : 0), 0)
+          },
+          sessionDetails: { exerciseCount, averageRestTime: currentRestTime, workoutDensity: completedSets / (elapsedTime / 60) }
         }
-      });
-      
-    } catch (error) {
-      console.error("Error preparing workout data:", error);
-      markAsFailed({
-        type: 'unknown',
-        message: error instanceof Error ? error.message : 'Failed to prepare workout data',
-        timestamp: new Date().toISOString(),
-        recoverable: true
-      });
+      };
+      navigate("/workout-complete", { state: { workoutData } });
+    } catch (err) {
+      console.error("Error preparing workout data:", err);
+      markAsFailed({ type: 'unknown', message: err instanceof Error ? err.message : 'Save failed', timestamp: new Date().toISOString(), recoverable: true });
       toast.error("Failed to complete workout");
       setIsSaving(false);
     }
   };
 
-  const attemptRecovery = async () => {
-    // This would be implemented to recover failed workout saves
+  const attemptRecovery = () => {
     console.log("Recovery attempt for workout:", workoutId);
     toast.info("Attempting to recover workout data...");
   };
@@ -304,7 +191,7 @@ const TrainingSessionPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
       <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6 pb-40"> {/* Increased bottom padding to avoid overlap */}
+        <div className="mx-auto max-w-3xl px-4 py-6 pb-40">
           <div className="mb-6 relative">
             <WorkoutSessionHeader
               elapsedTime={elapsedTime}
@@ -314,7 +201,7 @@ const TrainingSessionPage = () => {
               workoutStatus={workoutStatus}
               isRecoveryMode={!!workoutId}
               saveProgress={0}
-              onRetrySave={() => workoutId ? attemptRecovery() : null}
+              onRetrySave={() => workoutId && attemptRecovery()}
               onResetWorkout={resetSession}
               restTimerActive={restTimerActive}
               onRestTimerComplete={handleRestTimerComplete}
@@ -323,125 +210,79 @@ const TrainingSessionPage = () => {
               restTimerResetSignal={restTimerResetSignal}
               currentRestTime={currentRestTime}
             />
-            
             {showRestTimerModal && (
               <div className="absolute right-4 top-full z-50 mt-2 w-72">
-                <RestTimer 
+                <RestTimer
                   isVisible={showRestTimerModal}
-                  onClose={() => {
-                    setShowRestTimerModal(false);
-                    setRestTimerActive(false);
-                  }}
+                  onClose={() => { setShowRestTimerModal(false); setRestTimerActive(false); }}
                   onComplete={handleRestTimerComplete}
                   maxTime={currentRestTime || 60}
                 />
               </div>
             )}
           </div>
-
           <ExerciseList
             exercises={exercises}
             activeExercise={activeExercise}
-            onAddSet={(exerciseName) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = [
-                ...storeExercises[exerciseName],
-                { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }
-              ];
-              setStoreExercises(newStoreExercises);
+            onAddSet={name => {
+              setStoreExercises(prev => ({
+                ...prev,
+                [name]: [...prev[name], { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }]
+              }));
             }}
             onCompleteSet={handleCompleteSet}
-            onDeleteExercise={(exerciseName) => {
-              // Ensure the deleteExercise function is properly called
-              deleteExercise(exerciseName);
+            onDeleteExercise={deleteExercise}
+            onRemoveSet={(name, i) => {
+              setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));
             }}
-            onRemoveSet={(exerciseName, setIndex) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = storeExercises[exerciseName].filter((_, i) => i !== setIndex);
-              setStoreExercises(newStoreExercises);
+            onEditSet={(name, i) => {
+              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: true } : s) }));
             }}
-            onEditSet={(exerciseName, setIndex) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
-                i === setIndex ? { ...set, isEditing: true } : set
-              );
-              setStoreExercises(newStoreExercises);
+            onSaveSet={(name, i) => {
+              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: false } : s) }));
             }}
-            onSaveSet={(exerciseName, setIndex) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
-                i === setIndex ? { ...set, isEditing: false } : set
-              );
-              setStoreExercises(newStoreExercises);
+            onWeightChange={(name, i, v) => {
+              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: +v || 0 } : s) }));
             }}
-            onWeightChange={(exerciseName, setIndex, value) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
-                i === setIndex ? { ...set, weight: parseFloat(value) || 0 } : set
-              );
-              setStoreExercises(newStoreExercises);
+            onRepsChange={(name, i, v) => {
+              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: parseInt(v) || 0 } : s) }));
             }}
-            onRepsChange={(exerciseName, setIndex, value) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
-                i === setIndex ? { ...set, reps: parseInt(value) || 0 } : set
-              );
-              setStoreExercises(newStoreExercises);
+            onRestTimeChange={(name, i, v) => {
+              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: parseInt(v) || 60 } : s) }));
             }}
-            onRestTimeChange={(exerciseName, setIndex, value) => {
-              const newStoreExercises = {...storeExercises};
-              newStoreExercises[exerciseName] = storeExercises[exerciseName].map((set, i) => 
-                i === setIndex ? { ...set, restTime: parseInt(value) || 60 } : set
-              );
-              setStoreExercises(newStoreExercises);
+            onWeightIncrement={(name, i, inc) => {
+              setStoreExercises(prev => {
+                const set = prev[name][i];
+                return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: Math.max(0, (set.weight || 0) + inc) } : s) };
+              });
             }}
-            onWeightIncrement={(exerciseName, setIndex, increment) => {
-              const newStoreExercises = {...storeExercises};
-              const set = storeExercises[exerciseName][setIndex];
-              newStoreExercises[exerciseName][setIndex] = { 
-                ...set, 
-                weight: Math.max(0, (set.weight || 0) + increment)
-              };
-              setStoreExercises(newStoreExercises);
+            onRepsIncrement={(name, i, inc) => {
+              setStoreExercises(prev => {
+                const set = prev[name][i];
+                return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: Math.max(0, (set.reps || 0) + inc) } : s) };
+              });
             }}
-            onRepsIncrement={(exerciseName, setIndex, increment) => {
-              const newStoreExercises = {...storeExercises};
-              const set = storeExercises[exerciseName][setIndex];
-              newStoreExercises[exerciseName][setIndex] = { 
-                ...set, 
-                reps: Math.max(0, (set.reps || 0) + increment)
-              };
-              setStoreExercises(newStoreExercises);
-            }}
-            onRestTimeIncrement={(exerciseName, setIndex, increment) => {
-              const newStoreExercises = {...storeExercises};
-              const set = storeExercises[exerciseName][setIndex];
-              newStoreExercises[exerciseName][setIndex] = { 
-                ...set, 
-                restTime: Math.max(0, (set.restTime || 60) + increment)
-              };
-              setStoreExercises(newStoreExercises);
+            onRestTimeIncrement={(name, i, inc) => {
+              setStoreExercises(prev => {
+                const set = prev[name][i];
+                return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: Math.max(0, (set.restTime || 60) + inc) } : s) };
+              });
             }}
             onShowRestTimer={handleShowRestTimer}
             onResetRestTimer={triggerRestTimerReset}
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
-            setExercises={(newExercises) => {
-              // Convert adapted exercises back to store format before setting
-              if (typeof newExercises === 'function') {
-                setStoreExercises((prev) => {
-                  const adaptedPrev = adaptExerciseSets(prev);
-                  const result = newExercises(adaptedPrev);
-                  return adaptToStoreFormat(result);
-                });
+            setExercises={upd => {
+              if (typeof upd === 'function') {
+                setStoreExercises(prev => adaptToStoreFormat(upd(adaptExerciseSets(prev))));
               } else {
-                setStoreExercises(adaptToStoreFormat(newExercises));
+                setStoreExercises(adaptToStoreFormat(upd));
               }
             }}
           />
         </div>
       </main>
 
-      {/* Bottom drawer component for Add Exercise and Finish Workout buttons */}
+      {/* Bottom drawer for Add & Finish */}
       <WorkoutSessionFooter
         onAddExercise={() => setIsAddExerciseSheetOpen(true)}
         onFinishWorkout={handleFinishWorkout}
@@ -455,9 +296,6 @@ const TrainingSessionPage = () => {
         onSelectExercise={handleAddExercise}
         trainingType={trainingConfig?.trainingType}
       />
-
-      {/* Include the BottomNav component to fix the error */}
-      <BottomNav />
     </div>
   );
 };
