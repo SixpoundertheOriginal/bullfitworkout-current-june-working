@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { WeightUnit, convertWeight } from '@/utils/unitConversion';
@@ -39,6 +38,15 @@ function flattenExercises(
   if (Array.isArray(exercises)) return exercises;
   // else it's already grouped by exerciseName
   return Object.values(exercises).flat();
+}
+
+// Helper function to categorize time of day
+function categorizeTimeOfDay(date: Date): 'morning' | 'afternoon' | 'evening' | 'night' {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 22) return 'evening';
+  return 'night';
 }
 
 export function useProcessWorkoutMetrics(
@@ -134,6 +142,28 @@ export function useProcessWorkoutMetrics(
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [workouts, weightUnit]);
 
+  // --- Time of Day distribution ---
+  const durationByTimeOfDay = useMemo(() => {
+    const timeDistribution = {
+      morning: 0,
+      afternoon: 0,
+      evening: 0,
+      night: 0
+    };
+    
+    if (!Array.isArray(workouts) || workouts.length === 0) {
+      return timeDistribution;
+    }
+
+    workouts.forEach(workout => {
+      const workoutDate = new Date(workout.start_time);
+      const category = categorizeTimeOfDay(workoutDate);
+      timeDistribution[category] += workout.duration || 0;
+    });
+
+    return timeDistribution;
+  }, [workouts]);
+
   // --- Volume statistics ---
   const volumeStats = useMemo(() => {
     if (volumeOverTimeData.length === 0) {
@@ -172,7 +202,9 @@ export function useProcessWorkoutMetrics(
     densityOverTimeData,
     volumeStats,
     densityStats,
+    durationByTimeOfDay,
     hasVolumeData: volumeOverTimeData.length > 0,
-    hasDensityData: densityOverTimeData.length > 0
+    hasDensityData: densityOverTimeData.length > 0,
+    hasTimeOfDayData: Object.values(durationByTimeOfDay).some(value => value > 0)
   };
 }

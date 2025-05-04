@@ -46,6 +46,21 @@ export interface ProcessedWorkoutMetrics {
     activeTimePercentage: number;
     restTimePercentage: number;
   };
+  durationByTimeOfDay: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
+}
+
+// Helper function to categorize time of day
+function categorizeTimeOfDay(date: Date): 'morning' | 'afternoon' | 'evening' | 'night' {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 22) return 'evening';
+  return 'night';
 }
 
 // Main function to process workout metrics
@@ -97,6 +112,12 @@ export const processWorkoutMetrics = (
       restTime: 0,
       activeTimePercentage: 0,
       restTimePercentage: 0
+    },
+    durationByTimeOfDay: {
+      morning: 0,
+      afternoon: 0,
+      evening: 0,
+      night: 0
     }
   };
 
@@ -235,6 +256,20 @@ export const processWorkoutMetrics = (
     restTimePercentage: (totalRestTimeMinutes / duration) * 100
   };
 
+  // Calculate real intensity and efficiency
+  // Intensity = (totalVolume / totalSets) / userWeightKg if sets > 0
+  const averageVolumePerSet = metrics.setCount.total > 0 
+    ? metrics.totalVolume / metrics.setCount.total 
+    : 0;
+  metrics.intensity = userWeightKg > 0 
+    ? (averageVolumePerSet / userWeightKg) * 100 
+    : averageVolumePerSet;
+
+  // Efficiency = (activeTime / totalTime) * 100
+  metrics.efficiency = duration > 0 
+    ? (totalActiveTimeMinutes / duration) * 100 
+    : 0;
+
   // Calculate density metrics (volume per unit time)
   if (duration > 0) {
     // Use the correct density formulas
@@ -270,18 +305,25 @@ export const processWorkoutMetrics = (
     `);
   }
 
-  // Calculate intensity metrics
-  metrics.intensityMetrics.averageRpe = rpeCount > 0 ? totalRpe / rpeCount : 0;
-  metrics.intensityMetrics.peakLoad = peakLoad;
-  metrics.intensityMetrics.averageLoad = totalReps > 0 ? totalLoad / totalReps : 0;
-  metrics.intensity = metrics.intensityMetrics.averageRpe * (metrics.totalVolume / 1000) / duration;
-  
-  // Calculate efficiency (completed sets vs total sets)
-  metrics.efficiency = metrics.setCount.total > 0 
-    ? (metrics.setCount.completed / metrics.setCount.total) * 100 
-    : 0;
+  // Update time of day distribution for single workout
+  // For a single workout, we'll just put the full duration in the appropriate time bucket
+  if (exercises && Object.keys(exercises).length > 0) {
+    // Use the first set's timestamp as the workout time
+    // This is a fallback for the current page which only shows a single workout
+    const firstExerciseName = Object.keys(exercises)[0];
+    if (exercises[firstExerciseName]?.length > 0) {
+      const firstSet = exercises[firstExerciseName][0];
+      if (firstSet?.created_at) {
+        const timeOfDay = categorizeTimeOfDay(new Date(firstSet.created_at));
+        metrics.durationByTimeOfDay[timeOfDay] = duration;
+      } else {
+        // Default to evening if timestamp is missing
+        metrics.durationByTimeOfDay.evening = duration;
+      }
+    }
+  }
 
-  // Composition percentages
+  // Calculate composition percentages
   const totalExercises = compoundCount + isolationCount + bodyweightCount + isometricCount;
   
   metrics.composition = {

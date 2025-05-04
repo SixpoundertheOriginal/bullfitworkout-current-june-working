@@ -1,4 +1,3 @@
-
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -129,6 +128,12 @@ const WorkoutDetailsPage: React.FC = () => {
           bodyweight: { count: 0, percentage: 0 },
           isometric: { count: 0, percentage: 0 },
           totalExercises: 0
+        },
+        durationByTimeOfDay: {
+          morning: 0,
+          afternoon: 0,
+          evening: 0,
+          night: 0
         }
       } as ProcessedWorkoutMetrics;
     }
@@ -158,9 +163,8 @@ const WorkoutDetailsPage: React.FC = () => {
   const overallDensity = metricValues.densityMetrics?.overallDensity || 0;
   const activeOnlyDensity = metricValues.densityMetrics?.activeOnlyDensity || 0;
   
-  // Create compatible data structures for charts that expect different formats
-  // For time patterns chart
-  const durationByTimeOfDay = {
+  // For time patterns chart - use the durationByTimeOfDay data from metrics
+  const durationByTimeOfDay = metricValues.durationByTimeOfDay || {
     morning: 0,
     afternoon: 0,
     evening: 0,
@@ -234,7 +238,7 @@ const WorkoutDetailsPage: React.FC = () => {
             </Card>
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader><CardTitle>Time of Day</CardTitle></CardHeader>
-              <CardContent className="h-40">
+              <CardContent className="h-40" aria-label="Time of Day distribution chart">
                 <TimeOfDayChart
                   durationByTimeOfDay={durationByTimeOfDay}
                   height={200}
@@ -246,7 +250,7 @@ const WorkoutDetailsPage: React.FC = () => {
           {/* Muscle Focus */}
           <Card className="bg-gray-900 border-gray-800 mb-6">
             <CardHeader><CardTitle>Muscle Group Focus</CardTitle></CardHeader>
-            <CardContent className="h-60">
+            <CardContent className="h-60" aria-label="Muscle Group Focus chart">
               <MuscleGroupChart muscleFocus={metricValues.muscleFocus || {}} height={200} />
             </CardContent>
           </Card>

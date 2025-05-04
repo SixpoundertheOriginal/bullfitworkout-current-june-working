@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,6 +70,7 @@ export const WorkoutDetailsEnhanced = ({
           totalVolume={metrics.totalVolume}
           totalRestTime={metrics.timeDistribution.restTime}
           densityMetrics={metrics.densityMetrics}
+          durationByTimeOfDay={metrics.durationByTimeOfDay}
         />
       </div>
 

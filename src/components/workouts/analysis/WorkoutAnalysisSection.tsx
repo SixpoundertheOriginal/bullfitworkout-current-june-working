@@ -3,8 +3,9 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { WorkoutDensityChart } from '@/components/metrics/WorkoutDensityChart';
 import { MuscleFocusChart } from '@/components/metrics/MuscleFocusChart';
+import { TimeOfDayChart } from '@/components/metrics/TimeOfDayChart';
 import { useWeightUnit } from '@/context/WeightUnitContext';
-import { Activity } from 'lucide-react';
+import { Activity, Clock } from 'lucide-react';
 import { processWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 interface WorkoutAnalysisSectionProps {
@@ -28,6 +29,12 @@ interface WorkoutAnalysisSectionProps {
     formattedOverallDensity: string;
     formattedActiveOnlyDensity: string;
   };
+  durationByTimeOfDay?: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
 }
 
 export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
@@ -37,7 +44,8 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
   totalVolume,
   activeWorkoutTime,
   totalRestTime,
-  densityMetrics
+  densityMetrics,
+  durationByTimeOfDay
 }) => {
   const { weightUnit } = useWeightUnit();
   
@@ -59,8 +67,16 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
     - Active-Only Density: ${activeOnlyDensity.toFixed(2)} ${weightUnit}/min
   `);
     
-  // If metrics provides muscleFocus, use it, otherwise use the prop
-  const muscleGroups = muscleFocus;
+  // Default time of day data if not provided
+  const timeOfDayData = durationByTimeOfDay || {
+    morning: 0,
+    afternoon: 0,
+    evening: workout.duration, // Default to evening if no data
+    night: 0
+  };
+  
+  // Check if there's any actual time of day data
+  const hasTimeOfDayData = Object.values(timeOfDayData).some(value => value > 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -70,7 +86,7 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
             <Activity className="h-4 w-4 mr-2 text-purple-400" />
             Workout Density Analysis
           </h3>
-          <div className="h-48">
+          <div className="h-48" aria-label="Workout density analysis chart">
             <WorkoutDensityChart 
               totalTime={workout.duration}
               activeTime={activeWorkoutTime}
@@ -86,8 +102,16 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
 
       <Card className="bg-gray-900/80 border-gray-800">
         <div className="p-4">
-          <h3 className="text-sm mb-4">Muscle Focus Distribution</h3>
-          <MuscleFocusChart muscleGroups={muscleGroups} />
+          <h3 className="text-sm flex items-center mb-4">
+            <Clock className="h-4 w-4 mr-2 text-purple-400" />
+            Time of Day
+          </h3>
+          <div className="h-48" aria-label="Time of day distribution chart">
+            <TimeOfDayChart 
+              durationByTimeOfDay={timeOfDayData}
+              height={180}
+            />
+          </div>
         </div>
       </Card>
     </div>
