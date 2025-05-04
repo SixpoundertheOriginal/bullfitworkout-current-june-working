@@ -105,7 +105,11 @@ const WorkoutDetailsPage: React.FC = () => {
         muscleFocus: {},
         exerciseVolumeHistory: [],
         exerciseCount: 0,
-        setCount: { total: 0, completed: 0 },
+        setCount: { 
+          total: 0, 
+          completed: 0,
+          failed: 0 // Added this missing required field
+        },
         densityMetrics: {
           setsPerMinute: 0,
           volumePerMinute: 0,
@@ -151,21 +155,22 @@ const WorkoutDetailsPage: React.FC = () => {
     ? exerciseSets.length
     : Object.values(groupedExercises).flat().length;
 
+  // Use type assertion and add null checks for accessing properties
+  const metricValues = metrics as ProcessedWorkoutMetrics;
+  
   // Destructure with safe defaults
-  const {
-    totalVolume = 0,
-    totalTime = 0,
-    activeTime = 0,
-    restTime = 0,
-    overallDensity = 0,
-    activeOnlyDensity = 0,
-    timePatterns = { 
-      daysFrequency: {},
-      durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
-    },
-    muscleFocus = {},
-    exerciseVolumeHistory = []
-  } = metrics || {};
+  const totalVolume = metricValues.totalVolume || 0;
+  const totalTime = metricValues.totalTime || 0;
+  const activeTime = metricValues.activeTime || 0;
+  const restTime = metricValues.restTime || 0;
+  const overallDensity = metricValues.overallDensity || 0;
+  const activeOnlyDensity = metricValues.activeOnlyDensity || 0;
+  const timePatterns = metricValues.timePatterns || { 
+    daysFrequency: {},
+    durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+  };
+  const muscleFocus = metricValues.muscleFocus || {};
+  const exerciseVolumeHistory = metricValues.exerciseVolumeHistory || [];
 
   return (
     <ErrorBoundary>
