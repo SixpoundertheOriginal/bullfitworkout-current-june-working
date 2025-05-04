@@ -46,28 +46,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const { isFilterVisible } = useLayout();
   const title = getPageTitle(location.pathname);
   
-  // Prevent content shifts and flickering by disabling overflow during UI transitions
+  // Prevent layout shifts during route changes
   useLayoutEffect(() => {
     const mainContent = document.querySelector('.content-container');
     if (mainContent) {
       mainContent.classList.add('force-no-transition');
-      setTimeout(() => {
-        mainContent.classList.remove('force-no-transition');
-      }, 100);
+      setTimeout(() => mainContent.classList.remove('force-no-transition'), 100);
     }
     if (location.pathname === '/overview') {
       document.body.style.overflow = 'hidden';
-      setTimeout(() => {
-        document.body.style.overflow = '';
-      }, 50);
+      setTimeout(() => { document.body.style.overflow = '' }, 50);
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = '' };
   }, [location.pathname]);
-  
-  // Hide bottom nav on training session page
-  const hideNavOn = ['/training-session'];
+
+  // Hide global bottom nav only on training session route
+  const hideGlobalNavOn = ['/training-session'];
+  const shouldShowGlobalNav = !noFooter && !hideGlobalNavOn.some(route => location.pathname.startsWith(route));
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
@@ -90,7 +85,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       </main>
       
-      {!noFooter && !hideNavOn.includes(location.pathname) && (
+      {shouldShowGlobalNav && (
         <div className="fixed bottom-0 left-0 right-0 z-50">
           <BottomNav />
         </div>
@@ -102,7 +97,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           transition: none !important;
           animation: none !important;
         }
-        
         .content-container {
           min-height: calc(100vh - 48px);
         }
