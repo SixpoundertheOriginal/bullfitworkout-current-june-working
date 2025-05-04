@@ -308,19 +308,20 @@ export const processWorkoutMetrics = (
   // Update time of day distribution for single workout
   // For a single workout, we'll just put the full duration in the appropriate time bucket
   if (exercises && Object.keys(exercises).length > 0) {
-    // Use the first set's timestamp as the workout time
-    // This is a fallback for the current page which only shows a single workout
-    const firstExerciseName = Object.keys(exercises)[0];
-    if (exercises[firstExerciseName]?.length > 0) {
-      const firstSet = exercises[firstExerciseName][0];
-      if (firstSet?.created_at) {
-        const timeOfDay = categorizeTimeOfDay(new Date(firstSet.created_at));
-        metrics.durationByTimeOfDay[timeOfDay] = duration;
-      } else {
-        // Default to evening if timestamp is missing
-        metrics.durationByTimeOfDay.evening = duration;
-      }
-    }
+    // For workout-level distribution, we should use the workout's start time instead of
+    // trying to use the first set's creation timestamp, since ExerciseSet doesn't have created_at
+    
+    // Default to evening if we don't have a better timestamp to use
+    metrics.durationByTimeOfDay.evening = duration;
+    
+    // Note: If we had a workout object with start_time, we would use that instead:
+    // if (workout?.start_time) {
+    //   const timeOfDay = categorizeTimeOfDay(new Date(workout.start_time));
+    //   metrics.durationByTimeOfDay[timeOfDay] = duration;
+    // }
+    
+    // Log to help debugging
+    console.log("Setting time of day distribution to evening (default) for workout of duration:", duration);
   }
 
   // Calculate composition percentages
