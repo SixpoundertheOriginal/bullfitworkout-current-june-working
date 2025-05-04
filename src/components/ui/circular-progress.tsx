@@ -12,6 +12,8 @@ interface CircularProgressProps {
   className?: string;
   progressColor?: string;
   trackColor?: string;
+  children?: React.ReactNode;
+  animated?: boolean;
 }
 
 export const CircularProgress: React.FC<CircularProgressProps> = ({
@@ -24,6 +26,8 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
   className,
   progressColor = 'stroke-primary',
   trackColor = 'stroke-gray-200/20',
+  children,
+  animated = false,
 }) => {
   const normalizedValue = Math.min(Math.max(value, 0), max);
   const percentage = (normalizedValue / max) * 100;
@@ -33,7 +37,15 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
 
   return (
     <div className={cn('relative inline-flex items-center justify-center', className)}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
+      <svg 
+        width={size} 
+        height={size} 
+        viewBox={`0 0 ${size} ${size}`} 
+        className={cn(
+          "transform -rotate-90",
+          animated && "animate-pulse"
+        )}
+      >
         {/* Track Circle */}
         <circle
           cx={size / 2}
@@ -66,6 +78,12 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
           )}
         >
           {Math.round(percentage)}%
+        </div>
+      )}
+      
+      {children && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          {children}
         </div>
       )}
     </div>
