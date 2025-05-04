@@ -1,4 +1,3 @@
-
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -158,13 +157,18 @@ const WorkoutDetailsPage: React.FC = () => {
   // Use type assertion and add null checks for accessing properties
   const metricValues = metrics as ProcessedWorkoutMetrics;
   
-  // Destructure with safe defaults
+  // Destructure with safe defaults - updating property names to match ProcessedWorkoutMetrics
   const totalVolume = metricValues.totalVolume || 0;
-  const totalTime = metricValues.totalTime || 0;
-  const activeTime = metricValues.activeTime || 0;
-  const restTime = metricValues.restTime || 0;
-  const overallDensity = metricValues.overallDensity || 0;
-  const activeOnlyDensity = metricValues.activeOnlyDensity || 0;
+  
+  // These properties are in the timeDistribution object in ProcessedWorkoutMetrics
+  const activeTime = metricValues.timeDistribution?.activeTime || 0;
+  const restTime = metricValues.timeDistribution?.restTime || 0;
+  
+  // These properties are in densityMetrics in ProcessedWorkoutMetrics
+  const overallDensity = metricValues.densityMetrics?.overallDensity || 0;
+  const activeOnlyDensity = metricValues.densityMetrics?.activeOnlyDensity || 0;
+  
+  // Other properties
   const timePatterns = metricValues.timePatterns || { 
     daysFrequency: {},
     durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
@@ -218,7 +222,7 @@ const WorkoutDetailsPage: React.FC = () => {
               <CardHeader><CardTitle>Workout Density</CardTitle></CardHeader>
               <CardContent className="h-40">
                 <WorkoutDensityChart
-                  totalTime={totalTime}
+                  totalTime={metricValues.duration || 0}
                   activeTime={activeTime}
                   restTime={restTime}
                   totalVolume={totalVolume}
