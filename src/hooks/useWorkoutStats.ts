@@ -118,10 +118,14 @@ export function useWorkoutStats(
         else durationByTimeOfDay.night += w.duration || 0;
 
         // Metadata tags
-        if (w.metadata?.tags && Array.isArray(w.metadata.tags)) {
-          w.metadata.tags.forEach((tag: string) => {
-            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-          });
+        if (w.metadata && typeof w.metadata === 'object' && w.metadata !== null) {
+          // Safely check if tags exist and is an array
+          const metadataTags = w.metadata.tags;
+          if (Array.isArray(metadataTags)) {
+            metadataTags.forEach((tag: string) => {
+              tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+          }
         }
 
         // Exercises & sets

@@ -91,17 +91,43 @@ const WorkoutDetailsPage: React.FC = () => {
   const metrics = processWorkoutMetrics(
     exerciseSets || {},
     workoutDetails ? workoutDetails.duration : 0,
-    weightUnit
+    weightUnit as 'kg' | 'lb'
   );
 
-  // Add null checks and default values for metrics
-  const {
-    volumeStats = { exerciseCount: 0, setCount: 0, total: 0 },
-    densityStats = { activeTime: 0, overallDensity: 0, activeOnlyDensity: 0 },
-    muscleFocus = {},
-    timePatterns = { durationByTimeOfDay: {} },
-    exerciseVolumeHistory = []
-  } = metrics || {};
+  // Since metrics can be null, we need to provide default empty objects
+  // that match the expected structure from ProcessedWorkoutMetrics
+  const volumeStats = metrics?.totalVolume !== undefined ? {
+    exerciseCount: metrics.exerciseCount || 0,
+    setCount: metrics.setCount?.total || 0,
+    total: metrics.totalVolume || 0
+  } : { 
+    exerciseCount: 0, 
+    setCount: 0, 
+    total: 0 
+  };
+  
+  const densityStats = metrics?.densityMetrics ? {
+    activeTime: metrics.timeDistribution?.activeTime || 0,
+    overallDensity: metrics.densityMetrics.overallDensity || 0,
+    activeOnlyDensity: metrics.densityMetrics.activeOnlyDensity || 0
+  } : { 
+    activeTime: 0, 
+    overallDensity: 0, 
+    activeOnlyDensity: 0 
+  };
+  
+  const muscleFocus = metrics?.muscleFocus || {};
+  
+  const timePatterns = {
+    durationByTimeOfDay: metrics?.timeDistribution?.activeTime !== undefined ? {
+      morning: 0,
+      afternoon: 0, 
+      evening: 0, 
+      night: 0
+    } : {}
+  };
+  
+  const exerciseVolumeHistory = metrics?.exerciseCount ? [] : [];
 
   // Helper to format ISO date to "MMM d, yyyy"
   const formatDate = (iso: string) =>
@@ -158,20 +184,20 @@ const WorkoutDetailsPage: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="text-xs">Exercises</CardTitle>
                   </CardHeader>
-                  <CardContent>{volumeStats?.exerciseCount || 0}</CardContent>
+                  <CardContent>{volumeStats.exerciseCount}</CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800">
                   <CardHeader>
                     <CardTitle className="text-xs">Sets</CardTitle>
                   </CardHeader>
-                  <CardContent>{volumeStats?.setCount || 0}</CardContent>
+                  <CardContent>{volumeStats.setCount}</CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800">
                   <CardHeader>
                     <CardTitle className="text-xs">Volume</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {(volumeStats?.total || 0).toLocaleString()} {weightUnit}
+                    {volumeStats.total.toLocaleString()} {weightUnit}
                   </CardContent>
                 </Card>
               </div>
@@ -185,11 +211,11 @@ const WorkoutDetailsPage: React.FC = () => {
                   <CardContent className="h-48">
                     <WorkoutDensityChart
                       totalTime={workoutDetails.duration}
-                      activeTime={densityStats?.activeTime || 0}
-                      totalVolume={volumeStats?.total || 0}
+                      activeTime={densityStats.activeTime}
+                      totalVolume={volumeStats.total}
                       weightUnit={weightUnit}
-                      overallDensity={densityStats?.overallDensity || 0}
-                      activeOnlyDensity={densityStats?.activeOnlyDensity || 0}
+                      overallDensity={densityStats.overallDensity}
+                      activeOnlyDensity={densityStats.activeOnlyDensity}
                       height={160}
                     />
                   </CardContent>
@@ -201,7 +227,7 @@ const WorkoutDetailsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="h-48">
                     <TimeOfDayChart
-                      durationByTimeOfDay={timePatterns?.durationByTimeOfDay || {}}
+                      durationByTimeOfDay={timePatterns.durationByTimeOfDay}
                       height={160}
                     />
                   </CardContent>
@@ -215,7 +241,7 @@ const WorkoutDetailsPage: React.FC = () => {
                 </CardHeader>
                 <CardContent className="h-48">
                   <MuscleGroupChart
-                    muscleFocus={muscleFocus || {}}
+                    muscleFocus={muscleFocus}
                     height={160}
                   />
                 </CardContent>
@@ -228,7 +254,7 @@ const WorkoutDetailsPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <TopExercisesTable
-                    exerciseVolumeHistory={exerciseVolumeHistory || []}
+                    exerciseVolumeHistory={exerciseVolumeHistory}
                   />
                 </CardContent>
               </Card>
