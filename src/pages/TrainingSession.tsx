@@ -46,7 +46,9 @@ const TrainingSessionPage = () => {
     setWorkoutStatus
   } = useWorkoutStore();
   
+  // Convert store exercises to the format expected by components
   const exercises = adaptExerciseSets(storeExercises);
+  
   const [completedSets, totalSets] = Object.entries(exercises).reduce(
     ([completed, total], [_, sets]) => [
       completed + sets.filter(s => s.completed).length,
@@ -114,6 +116,14 @@ const TrainingSessionPage = () => {
   }, [workoutStatus]);
 
   const triggerRestTimerReset = () => setRestTimerResetSignal(x => x + 1);
+
+  // Define the onAddSet function to add a basic set to an exercise
+  const handleAddSet = (exerciseName: string) => {
+    setStoreExercises(prev => ({
+      ...prev,
+      [exerciseName]: [...prev[exerciseName], { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }]
+    }));
+  };
 
   const handleAddExercise = (exercise: Exercise | string) => {
     const name = typeof exercise === 'string' ? exercise : exercise.name;
@@ -188,6 +198,15 @@ const TrainingSessionPage = () => {
     );
   }
 
+  // Set up the adapter function to convert between the different exercise formats
+  const handleSetExercises = (updatedExercises) => {
+    if (typeof updatedExercises === 'function') {
+      setStoreExercises(prev => adaptToStoreFormat(updatedExercises(adaptExerciseSets(prev))));
+    } else {
+      setStoreExercises(adaptToStoreFormat(updatedExercises));
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
       <main className="flex-1 overflow-auto">
@@ -224,9 +243,7 @@ const TrainingSessionPage = () => {
           <ExerciseList
             exercises={exercises}
             activeExercise={activeExercise}
-            onAddSet={(name) => {
-              onAddSet(name);
-            }}
+            onAddSet={handleAddSet}
             onCompleteSet={handleCompleteSet}
             onDeleteExercise={deleteExercise}
             onRemoveSet={(name, i) => {
@@ -268,7 +285,7 @@ const TrainingSessionPage = () => {
             onShowRestTimer={handleShowRestTimer}
             onResetRestTimer={triggerRestTimerReset}
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
-            setExercises={setStoreExercises}
+            setExercises={handleSetExercises}
           />
         </div>
       </main>

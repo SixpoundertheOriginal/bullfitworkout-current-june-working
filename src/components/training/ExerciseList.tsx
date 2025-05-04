@@ -59,19 +59,34 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     const existingSets = exercises[exerciseName];
     const lastSet = existingSets.length > 0 ? existingSets[existingSets.length - 1] : null;
     
-    // Copy values from the last set or use defaults if no previous set
-    const newSetValues = {
-      weight: lastSet ? lastSet.weight : 0,
-      reps: lastSet ? lastSet.reps : 0,
-      restTime: lastSet && lastSet.restTime ? lastSet.restTime : 60,
-      completed: false,
-      isEditing: false
-    };
+    // Call the onAddSet function that was passed as prop
+    // This lets the parent component handle the actual set creation
+    onAddSet(exerciseName);
     
-    setExercises(prev => ({
-      ...prev,
-      [exerciseName]: [...prev[exerciseName], newSetValues]
-    }));
+    // If there's a last set, update the newly created set with its values
+    if (lastSet && existingSets.length > 0) {
+      // We need to access the new set that was just added
+      setTimeout(() => {
+        setExercises(prev => {
+          const updatedExercises = { ...prev };
+          const sets = [...updatedExercises[exerciseName]];
+          const newSetIndex = sets.length - 1;
+          
+          if (newSetIndex >= 0) {
+            // Clone the last set's values to the new set
+            sets[newSetIndex] = {
+              ...sets[newSetIndex],
+              weight: lastSet.weight,
+              reps: lastSet.reps,
+              restTime: lastSet.restTime || 60
+            };
+          }
+          
+          updatedExercises[exerciseName] = sets;
+          return updatedExercises;
+        });
+      }, 0);
+    }
   };
 
   return (
