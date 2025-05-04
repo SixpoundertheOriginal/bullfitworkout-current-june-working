@@ -18,13 +18,26 @@ interface WorkoutTypeData {
 }
 
 interface WorkoutTypeChartProps {
-  data: WorkoutTypeData[];
+  workoutTypes: WorkoutTypeData[];
+  height?: number;
 }
 
-export const WorkoutTypeChart: React.FC<WorkoutTypeChartProps> = ({ data }) => {
+export const WorkoutTypeChart: React.FC<WorkoutTypeChartProps> = ({ 
+  workoutTypes = [], 
+  height = 250 
+}) => {
   const COLORS = ['#8B5CF6', '#EC4899', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
   
-  const chartData = data.map((item, index) => ({
+  // Check if workoutTypes is undefined, null, or empty
+  if (!workoutTypes || workoutTypes.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        No workout type data available
+      </div>
+    );
+  }
+  
+  const chartData = workoutTypes.map((item, index) => ({
     name: item.type,
     value: item.count,
     color: COLORS[index % COLORS.length]
@@ -59,51 +72,42 @@ export const WorkoutTypeChart: React.FC<WorkoutTypeChartProps> = ({ data }) => {
     );
   };
   
-  if (chartData.length === 0) {
-    return <div className="flex items-center justify-center h-full text-gray-400">No data available</div>;
-  }
-  
   return (
-    <Card className="bg-gray-900 border-gray-800">
-      <CardContent className="p-4">
-        <h3 className="text-sm font-medium text-gray-400 mb-4">Workout Types</h3>
-        <div className="h-60">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={renderCustomizedLabel}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                stroke="#1A1F2C"
-                strokeWidth={2}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color} 
-                    opacity={0.8}
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value, name) => [`${value} workouts`, name]}
-                contentStyle={{ 
-                  backgroundColor: '#1A1F2C', 
-                  border: '1px solid #333',
-                  borderRadius: '4px',
-                  color: 'white'
-                }}
-                itemStyle={{ color: 'white' }}
+    <div className="h-full w-full">
+      <ResponsiveContainer width="100%" height={height}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+            stroke="#1A1F2C"
+            strokeWidth={2}
+          >
+            {chartData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={entry.color} 
+                opacity={0.8}
               />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value, name) => [`${value} workouts`, name]}
+            contentStyle={{ 
+              backgroundColor: '#1A1F2C', 
+              border: '1px solid #333',
+              borderRadius: '4px',
+              color: 'white'
+            }}
+            itemStyle={{ color: 'white' }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
