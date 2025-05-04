@@ -4,9 +4,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 
 interface MuscleGroupChartProps {
   muscleFocus: Record<string, number>;
+  height?: number;
 }
 
-export const MuscleGroupChart: React.FC<MuscleGroupChartProps> = ({ muscleFocus }) => {
+export const MuscleGroupChart: React.FC<MuscleGroupChartProps> = ({ muscleFocus, height = 250 }) => {
   const COLORS = {
     chest: '#f97316',
     back: '#0ea5e9',
@@ -29,7 +30,7 @@ export const MuscleGroupChart: React.FC<MuscleGroupChartProps> = ({ muscleFocus 
   
   return (
     <div className="h-60">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
             data={chartData}

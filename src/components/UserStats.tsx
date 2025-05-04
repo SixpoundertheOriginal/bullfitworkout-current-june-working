@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -281,8 +282,8 @@ export function UserStats() {
           
           {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Workout types distribution */}
-            <WorkoutTypeChart data={workoutTypeData} />
+            {/* Workout types distribution - Fix here: changing data to workoutTypes */}
+            <WorkoutTypeChart workoutTypes={workoutTypeData} />
             
             {/* Recent workouts */}
             <Card className="bg-gray-900 border-gray-800">

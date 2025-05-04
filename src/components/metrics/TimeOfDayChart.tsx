@@ -9,9 +9,10 @@ interface TimeOfDayChartProps {
     evening: number;
     night: number;
   };
+  height?: number;
 }
 
-export const TimeOfDayChart: React.FC<TimeOfDayChartProps> = ({ durationByTimeOfDay }) => {
+export const TimeOfDayChart: React.FC<TimeOfDayChartProps> = ({ durationByTimeOfDay, height = 250 }) => {
   const chartData = [
     { name: 'Morning', value: durationByTimeOfDay.morning, color: '#84cc16' },
     { name: 'Afternoon', value: durationByTimeOfDay.afternoon, color: '#f59e0b' },
@@ -21,7 +22,7 @@ export const TimeOfDayChart: React.FC<TimeOfDayChartProps> = ({ durationByTimeOf
   
   return (
     <div className="h-60">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={height}>
         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <XAxis 
             dataKey="name" 

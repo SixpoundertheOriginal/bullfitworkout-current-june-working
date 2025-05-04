@@ -4,9 +4,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 interface WorkoutDaysChartProps {
   daysFrequency: Record<string, number>;
+  height?: number;
 }
 
-export const WorkoutDaysChart: React.FC<WorkoutDaysChartProps> = ({ daysFrequency }) => {
+export const WorkoutDaysChart: React.FC<WorkoutDaysChartProps> = ({ daysFrequency, height = 250 }) => {
   // Order days correctly
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   
@@ -21,7 +22,7 @@ export const WorkoutDaysChart: React.FC<WorkoutDaysChartProps> = ({ daysFrequenc
   
   return (
     <div className="h-60">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={height}>
         <BarChart 
           data={chartData} 
           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}

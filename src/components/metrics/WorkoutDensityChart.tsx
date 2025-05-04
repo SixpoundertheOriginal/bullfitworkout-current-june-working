@@ -11,6 +11,7 @@ interface WorkoutDensityChartProps {
   weightUnit?: string;
   overallDensity?: number;
   activeOnlyDensity?: number;
+  height?: number;
 }
 
 export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.memo(({
@@ -20,7 +21,8 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.mem
   totalVolume = 0,
   weightUnit = 'kg',
   overallDensity: propOverallDensity,
-  activeOnlyDensity: propActiveOnlyDensity
+  activeOnlyDensity: propActiveOnlyDensity,
+  height = 250
 }) => {
   // Add more debug logging
   console.log("WorkoutDensityChart rendering with props:", { 
@@ -70,7 +72,7 @@ export const WorkoutDensityChart: React.FC<WorkoutDensityChartProps> = React.mem
   }, [activeTime, restTime, totalTime]);
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ height: height }}>
       <div className="h-28 min-h-[112px] overflow-hidden">
         <h3 className="text-xs text-center mb-1">Workout Density</h3>
         <ResponsiveContainer width="100%" height="100%">
