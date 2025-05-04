@@ -1,4 +1,3 @@
-
 @import "./colors.css";
 @tailwind base;
 @tailwind components;
@@ -71,5 +70,12 @@
 @layer base {
   body {
     @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Safe-area inset utility for bottom (home-indicator / gesture nav) */
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
