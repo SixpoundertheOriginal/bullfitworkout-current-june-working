@@ -25,6 +25,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { useDeleteOperation } from "@/hooks/useAsyncOperation";
 import { deleteWorkout } from "@/services/workoutService";
 import { Loader2 } from "lucide-react";
+import { WeightUnit } from "@/utils/unitConversion";
 
 const WorkoutDetailsPage: React.FC = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
@@ -88,12 +89,15 @@ const WorkoutDetailsPage: React.FC = () => {
     if (!workoutDetails) {
       // Return default/empty metrics when workoutDetails isn't available
       return {
+        duration: 0,
         totalVolume: 0,
         totalTime: 0,
         activeTime: 0,
         restTime: 0,
+        adjustedVolume: 0,
         overallDensity: 0,
         activeOnlyDensity: 0,
+        density: 0,
         timePatterns: { 
           daysFrequency: {},
           durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
@@ -103,10 +107,21 @@ const WorkoutDetailsPage: React.FC = () => {
         exerciseCount: 0,
         setCount: { total: 0, completed: 0 },
         densityMetrics: {
+          setsPerMinute: 0,
+          volumePerMinute: 0,
+          overallDensity: 0,
+          activeOnlyDensity: 0,
           formattedOverallDensity: "0.0 kg/min",
           formattedActiveOnlyDensity: "0.0 kg/min"
         },
-        timeDistribution: { activeTime: 0, restTime: 0 },
+        intensityMetrics: {
+          averageRpe: 0,
+          peakLoad: 0,
+          averageLoad: 0
+        },
+        estimatedEnergyExpenditure: 0,
+        movementPatterns: {},
+        timeDistribution: { activeTime: 0, restTime: 0, activeTimePercentage: 0, restTimePercentage: 0 },
         intensity: 0,
         efficiency: 0,
         composition: {
@@ -123,7 +138,7 @@ const WorkoutDetailsPage: React.FC = () => {
       groupedExercises,
       workoutDetails.duration || 0,
       weightUnit as WeightUnit
-    ) as ProcessedWorkoutMetrics;
+    );
   }, [groupedExercises, workoutDetails, weightUnit]);
 
   if (loadingDetails || !workoutDetails) {

@@ -1,3 +1,4 @@
+
 // src/hooks/useWorkoutStats.ts
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
@@ -8,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { WorkoutStats, WorkoutStatsResult } from '@/types/workout-metrics';
 import { useDateRange } from '@/context/DateRangeContext';
+import { getExerciseGroup } from '@/utils/exerciseUtils';
 
 export function useWorkoutStats(
   exercises?: Record<string, ExerciseSet[]>,
@@ -228,4 +230,46 @@ export function useWorkoutStats(
   } as WorkoutStatsResult;
 }
 
-// Helpers omitted for brevity (getExerciseMainMuscleGroup, calculateStreakDays)
+// Helper functions for the workout stats processing
+// Determine muscle group for an exercise
+function getExerciseMainMuscleGroup(exerciseName: string): string {
+  const muscleGroup = getExerciseGroup(exerciseName);
+  return muscleGroup || 'other';
+}
+
+// Calculate streak days from workouts
+function calculateStreakDays(sessions: any[]): number {
+  if (!sessions || sessions.length === 0) return 0;
+
+  // Sort sessions by date in ascending order
+  const sortedSessions = [...sessions].sort((a, b) => 
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  );
+  
+  let currentStreak = 1;
+  let maxStreak = 1;
+  
+  // Get unique dates (one workout per day counts)
+  const uniqueDates = sortedSessions.map(session => 
+    new Date(session.start_time).toISOString().split('T')[0]
+  ).filter((date, index, self) => 
+    self.indexOf(date) === index
+  );
+  
+  // Calculate streaks
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prevDate = new Date(uniqueDates[i-1]);
+    const currDate = new Date(uniqueDates[i]);
+    
+    // Check if dates are consecutive
+    prevDate.setDate(prevDate.getDate() + 1);
+    if (prevDate.toISOString().split('T')[0] === uniqueDates[i]) {
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
+    } else {
+      currentStreak = 1;
+    }
+  }
+  
+  return maxStreak;
+}
