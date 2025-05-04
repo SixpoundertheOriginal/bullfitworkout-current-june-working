@@ -86,20 +86,22 @@ const WorkoutDetailsPage: React.FC = () => {
     return <WorkoutDetailsLoading />;
   }
 
-  // Use our centralized metrics processor to get consistent metrics
+  // Use our centralized metrics processor to get consistent metrics with null checks
+  // Add fallback empty object for exerciseSets to prevent errors
   const metrics = processWorkoutMetrics(
-    exerciseSets,
+    exerciseSets || {},
     workoutDetails ? workoutDetails.duration : 0,
     weightUnit
   );
 
+  // Add null checks and default values for metrics
   const {
-    volumeStats,
-    densityStats,
-    muscleFocus,
-    timePatterns,
-    exerciseVolumeHistory
-  } = metrics;
+    volumeStats = { exerciseCount: 0, setCount: 0, total: 0 },
+    densityStats = { activeTime: 0, overallDensity: 0, activeOnlyDensity: 0 },
+    muscleFocus = {},
+    timePatterns = { durationByTimeOfDay: {} },
+    exerciseVolumeHistory = []
+  } = metrics || {};
 
   // Helper to format ISO date to "MMM d, yyyy"
   const formatDate = (iso: string) =>
@@ -150,26 +152,26 @@ const WorkoutDetailsPage: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="text-xs">Duration</CardTitle>
                   </CardHeader>
-                  <CardContent>{workoutDetails.duration} min</CardContent>
+                  <CardContent>{workoutDetails.duration} min</CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800">
                   <CardHeader>
                     <CardTitle className="text-xs">Exercises</CardTitle>
                   </CardHeader>
-                  <CardContent>{volumeStats.exerciseCount}</CardContent>
+                  <CardContent>{volumeStats?.exerciseCount || 0}</CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800">
                   <CardHeader>
                     <CardTitle className="text-xs">Sets</CardTitle>
                   </CardHeader>
-                  <CardContent>{volumeStats.setCount}</CardContent>
+                  <CardContent>{volumeStats?.setCount || 0}</CardContent>
                 </Card>
                 <Card className="bg-gray-900 border-gray-800">
                   <CardHeader>
                     <CardTitle className="text-xs">Volume</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {volumeStats.total.toLocaleString()} {weightUnit}
+                    {(volumeStats?.total || 0).toLocaleString()} {weightUnit}
                   </CardContent>
                 </Card>
               </div>
@@ -183,11 +185,11 @@ const WorkoutDetailsPage: React.FC = () => {
                   <CardContent className="h-48">
                     <WorkoutDensityChart
                       totalTime={workoutDetails.duration}
-                      activeTime={densityStats.activeTime}
-                      totalVolume={volumeStats.total}
+                      activeTime={densityStats?.activeTime || 0}
+                      totalVolume={volumeStats?.total || 0}
                       weightUnit={weightUnit}
-                      overallDensity={densityStats.overallDensity}
-                      activeOnlyDensity={densityStats.activeOnlyDensity}
+                      overallDensity={densityStats?.overallDensity || 0}
+                      activeOnlyDensity={densityStats?.activeOnlyDensity || 0}
                       height={160}
                     />
                   </CardContent>
@@ -199,7 +201,7 @@ const WorkoutDetailsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="h-48">
                     <TimeOfDayChart
-                      durationByTimeOfDay={timePatterns.durationByTimeOfDay}
+                      durationByTimeOfDay={timePatterns?.durationByTimeOfDay || {}}
                       height={160}
                     />
                   </CardContent>
@@ -213,7 +215,7 @@ const WorkoutDetailsPage: React.FC = () => {
                 </CardHeader>
                 <CardContent className="h-48">
                   <MuscleGroupChart
-                    muscleFocus={muscleFocus}
+                    muscleFocus={muscleFocus || {}}
                     height={160}
                   />
                 </CardContent>
@@ -226,12 +228,12 @@ const WorkoutDetailsPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <TopExercisesTable
-                    exerciseVolumeHistory={exerciseVolumeHistory}
+                    exerciseVolumeHistory={exerciseVolumeHistory || []}
                   />
                 </CardContent>
               </Card>
 
-              {/* Existing “Enhanced” section */}
+              {/* Existing "Enhanced" section */}
               <WorkoutDetailsEnhanced
                 workout={workoutDetails}
                 exercises={exerciseSets}
