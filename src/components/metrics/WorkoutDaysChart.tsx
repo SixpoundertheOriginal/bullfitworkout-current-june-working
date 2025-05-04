@@ -1,3 +1,4 @@
+
 // src/components/metrics/WorkoutDaysChart.tsx
 
 import React, { useMemo } from 'react';
@@ -16,6 +17,7 @@ interface WorkoutDaysChartProps {
   height?: number;
 }
 
+// Define as a proper function component
 const WorkoutDaysChartComponent: React.FC<WorkoutDaysChartProps> = ({
   daysFrequency = {},
   height = 250
@@ -101,4 +103,5 @@ const WorkoutDaysChartComponent: React.FC<WorkoutDaysChartProps> = ({
   );
 };
 
+// Export the memoized component correctly
 export const WorkoutDaysChart = React.memo(WorkoutDaysChartComponent);

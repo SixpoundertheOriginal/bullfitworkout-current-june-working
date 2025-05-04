@@ -1,3 +1,4 @@
+
 // src/components/metrics/TopExercisesTable.tsx
 
 import React, { useMemo } from 'react';
@@ -22,6 +23,7 @@ interface TopExercisesTableProps {
   exerciseVolumeHistory?: ExerciseVolumeHistory[];
 }
 
+// Define as a named function component
 const TopExercisesTableComponent: React.FC<TopExercisesTableProps> = ({
   exerciseVolumeHistory = []
 }) => {
@@ -87,4 +89,5 @@ const TopExercisesTableComponent: React.FC<TopExercisesTableProps> = ({
   );
 };
 
+// Export the memoized component correctly
 export const TopExercisesTable = React.memo(TopExercisesTableComponent);
