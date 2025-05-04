@@ -1,4 +1,3 @@
-
 import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
@@ -49,31 +48,27 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   
   // Prevent content shifts and flickering by disabling overflow during UI transitions
   useLayoutEffect(() => {
-    // Prevent layout shifts by disabling animations on initial render
     const mainContent = document.querySelector('.content-container');
     if (mainContent) {
-      // Temporarily disable transitions
       mainContent.classList.add('force-no-transition');
-      
-      // Re-enable transitions after a short delay
       setTimeout(() => {
         mainContent.classList.remove('force-no-transition');
       }, 100);
     }
-    
-    // Lock scroll momentarily when navigating to the overview page
     if (location.pathname === '/overview') {
       document.body.style.overflow = 'hidden';
       setTimeout(() => {
         document.body.style.overflow = '';
       }, 50);
     }
-    
     return () => {
       document.body.style.overflow = '';
     };
   }, [location.pathname]);
   
+  // Hide bottom nav on training session page
+  const hideNavOn = ['/training-session'];
+
   return (
     <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
       {!noHeader && (
@@ -95,7 +90,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       </main>
       
-      {!noFooter && (
+      {!noFooter && !hideNavOn.includes(location.pathname) && (
         <div className="fixed bottom-0 left-0 right-0 z-50">
           <BottomNav />
         </div>
