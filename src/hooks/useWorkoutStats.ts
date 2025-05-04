@@ -117,12 +117,12 @@ export function useWorkoutStats(
         else if (hr < 21) durationByTimeOfDay.evening   += w.duration || 0;
         else durationByTimeOfDay.night += w.duration || 0;
 
-        // Metadata tags
+        // Metadata tags - Fix the TypeScript issue here
         if (w.metadata && typeof w.metadata === 'object' && w.metadata !== null) {
-          // Safely check if tags exist and is an array
-          const metadataTags = w.metadata.tags;
-          if (Array.isArray(metadataTags)) {
-            metadataTags.forEach((tag: string) => {
+          // Check if metadata has a 'tags' property and it's an array
+          const metadataObj = w.metadata as { tags?: string[] };
+          if (metadataObj.tags && Array.isArray(metadataObj.tags)) {
+            metadataObj.tags.forEach((tag: string) => {
               tagCounts[tag] = (tagCounts[tag] || 0) + 1;
             });
           }
