@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { WeightUnit, convertWeight } from '@/utils/unitConversion';
@@ -6,7 +7,7 @@ export interface VolumeDataPoint {
   date: string;            // ISO string
   originalDate: string;    // ISO string
   formattedDate: string;   // e.g. "May 4"
-  volume: number;          // in user’s weightUnit
+  volume: number;          // in user's weightUnit
 }
 
 export interface DensityDataPoint {
@@ -61,7 +62,7 @@ export function useProcessWorkoutMetrics(
           return sum;
         }, 0);
 
-        // convert to user’s unit (e.g. lb)
+        // convert to user's unit (e.g. lb)
         const volume = convertWeight(rawVolume, 'kg', weightUnit);
 
         const formattedDate = format(new Date(workout.start_time), 'MMM d');
@@ -99,7 +100,7 @@ export function useProcessWorkoutMetrics(
         // total session time in minutes
         const totalTime = workout.duration || 0;
 
-        // total rest in minutes
+        // total rest in minutes (converting from seconds)
         const restTimeSec = allSets.reduce(
           (sum, set) => sum + (set.restTime || 0),
           0
@@ -109,11 +110,11 @@ export function useProcessWorkoutMetrics(
         // active time in minutes
         const activeTime = Math.max(0, totalTime - restTime);
 
-        // density metrics
-        const overallDensity =
-          totalTime > 0 ? volume / totalTime : 0;
-        const activeOnlyDensity =
-          activeTime > 0 ? volume / activeTime : 0;
+        // density metrics - CORRECTED FORMULA:
+        // overallDensity = volume / totalTime
+        // activeOnlyDensity = volume / activeTime (with safeguard for division by zero)
+        const overallDensity = totalTime > 0 ? volume / totalTime : 0;
+        const activeOnlyDensity = activeTime > 0 ? volume / activeTime : 0;
 
         const formattedDate = format(
           new Date(workout.start_time),

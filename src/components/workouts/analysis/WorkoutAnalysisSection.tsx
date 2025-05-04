@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { WorkoutDensityChart } from '@/components/metrics/WorkoutDensityChart';
@@ -40,12 +41,23 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
 }) => {
   const { weightUnit } = useWeightUnit();
   
-  // Use metrics if available, otherwise use individual props or calculate
-  const overallDensity = densityMetrics.overallDensity ?? 
+  // Calculate density metrics if not provided or fallback to zero
+  // This properly calculates volume / duration as requested
+  const overallDensity = densityMetrics?.overallDensity ?? 
     (workout.duration > 0 ? totalVolume / workout.duration : 0);
   
-  const activeOnlyDensity = densityMetrics.activeOnlyDensity ?? 
+  const activeOnlyDensity = densityMetrics?.activeOnlyDensity ?? 
     (activeWorkoutTime > 0 ? totalVolume / activeWorkoutTime : 0);
+    
+  // Log the density calculations for debugging
+  console.log(`WorkoutAnalysisSection - Density calculations:
+    - Total Volume: ${totalVolume} ${weightUnit}
+    - Duration: ${workout.duration} minutes
+    - Active Time: ${activeWorkoutTime} minutes
+    - Rest Time: ${totalRestTime} minutes
+    - Overall Density: ${overallDensity.toFixed(2)} ${weightUnit}/min
+    - Active-Only Density: ${activeOnlyDensity.toFixed(2)} ${weightUnit}/min
+  `);
     
   // If metrics provides muscleFocus, use it, otherwise use the prop
   const muscleGroups = muscleFocus;
@@ -62,7 +74,7 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
             <WorkoutDensityChart 
               totalTime={workout.duration}
               activeTime={activeWorkoutTime}
-              restTime={totalRestTime / 60}
+              restTime={totalRestTime}
               totalVolume={totalVolume}
               weightUnit={weightUnit}
               overallDensity={overallDensity}

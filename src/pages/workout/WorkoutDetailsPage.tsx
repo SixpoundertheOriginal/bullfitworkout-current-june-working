@@ -167,7 +167,7 @@ const WorkoutDetailsPage: React.FC = () => {
     night: 0
   };
   
-  // For exercise volume history chart
+  // For exercise volume history chart - create from muscle focus data
   const exerciseVolumeHistory = metricValues.muscleFocus ? 
     Object.entries(metricValues.muscleFocus).map(([name, value]) => ({
       exercise_name: name,

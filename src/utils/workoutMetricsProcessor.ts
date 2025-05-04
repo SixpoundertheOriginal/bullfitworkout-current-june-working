@@ -74,8 +74,8 @@ export const processWorkoutMetrics = (
       volumePerMinute: 0,
       overallDensity: 0,
       activeOnlyDensity: 0,
-      formattedOverallDensity: '0.0 sets/min',
-      formattedActiveOnlyDensity: '0.0 sets/min'
+      formattedOverallDensity: '0.0 kg/min',
+      formattedActiveOnlyDensity: '0.0 kg/min'
     },
     intensityMetrics: {
       averageRpe: 0,
@@ -226,30 +226,48 @@ export const processWorkoutMetrics = (
 
   // Calculate time distribution
   const totalRestTimeMinutes = totalRestTime / 60;
-  const totalActiveTimeMinutes = duration - totalRestTimeMinutes;
+  const totalActiveTimeMinutes = Math.max(0, duration - totalRestTimeMinutes);
   
   metrics.timeDistribution = {
-    activeTime: Math.max(totalActiveTimeMinutes, 0),
+    activeTime: totalActiveTimeMinutes,
     restTime: totalRestTimeMinutes,
     activeTimePercentage: (totalActiveTimeMinutes / duration) * 100,
     restTimePercentage: (totalRestTimeMinutes / duration) * 100
   };
 
-  // Calculate density metrics (work per unit time)
+  // Calculate density metrics (volume per unit time)
   if (duration > 0) {
-    metrics.densityMetrics.setsPerMinute = metrics.setCount.completed / duration;
+    // Use the correct density formulas
+    // volumePerMinute = total volume / total duration
     metrics.densityMetrics.volumePerMinute = metrics.totalVolume / duration;
-    metrics.density = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
-    
-    // Add enhanced density metrics
-    metrics.densityMetrics.overallDensity = metrics.setCount.completed / duration;
+    metrics.densityMetrics.overallDensity = metrics.totalVolume / duration;
+
+    // Density with active time only (excluding rest)
     metrics.densityMetrics.activeOnlyDensity = totalActiveTimeMinutes > 0 ? 
-      metrics.setCount.completed / totalActiveTimeMinutes : 0;
+      metrics.totalVolume / totalActiveTimeMinutes : 0;
       
+    // Sets per minute remains the same
+    metrics.densityMetrics.setsPerMinute = metrics.setCount.completed / duration;
+    
+    // Legacy density calculation (keeping for backward compatibility)
+    metrics.density = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
+      
+    // Format for display
+    const volumeUnit = weightUnit === 'kg' ? 'kg' : 'lb';
     metrics.densityMetrics.formattedOverallDensity = 
-      `${metrics.densityMetrics.overallDensity.toFixed(1)} sets/min`;
+      `${metrics.densityMetrics.overallDensity.toFixed(1)} ${volumeUnit}/min`;
     metrics.densityMetrics.formattedActiveOnlyDensity = 
-      `${metrics.densityMetrics.activeOnlyDensity.toFixed(1)} sets/min`;
+      `${metrics.densityMetrics.activeOnlyDensity.toFixed(1)} ${volumeUnit}/min`;
+    
+    // Log the calculated density values for debugging
+    console.log(`DEBUG - Density calculations:
+      - Total Volume: ${metrics.totalVolume} ${weightUnit}
+      - Duration: ${duration} minutes
+      - Active Time: ${totalActiveTimeMinutes} minutes
+      - Rest Time: ${totalRestTimeMinutes} minutes
+      - Overall Density: ${metrics.densityMetrics.overallDensity.toFixed(2)} ${weightUnit}/min
+      - Active-Only Density: ${metrics.densityMetrics.activeOnlyDensity.toFixed(2)} ${weightUnit}/min
+    `);
   }
 
   // Calculate intensity metrics
