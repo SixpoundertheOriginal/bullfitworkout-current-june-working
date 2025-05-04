@@ -1,3 +1,4 @@
+
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -90,24 +91,13 @@ const WorkoutDetailsPage: React.FC = () => {
       return {
         duration: 0,
         totalVolume: 0,
-        totalTime: 0,
-        activeTime: 0,
-        restTime: 0,
         adjustedVolume: 0,
-        overallDensity: 0,
-        activeOnlyDensity: 0,
         density: 0,
-        timePatterns: { 
-          daysFrequency: {},
-          durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
-        },
-        muscleFocus: {},
-        exerciseVolumeHistory: [],
         exerciseCount: 0,
         setCount: { 
           total: 0, 
           completed: 0,
-          failed: 0 // Added this missing required field
+          failed: 0
         },
         densityMetrics: {
           setsPerMinute: 0,
@@ -122,11 +112,17 @@ const WorkoutDetailsPage: React.FC = () => {
           peakLoad: 0,
           averageLoad: 0
         },
-        estimatedEnergyExpenditure: 0,
-        movementPatterns: {},
-        timeDistribution: { activeTime: 0, restTime: 0, activeTimePercentage: 0, restTimePercentage: 0 },
         intensity: 0,
         efficiency: 0,
+        muscleFocus: {},
+        estimatedEnergyExpenditure: 0,
+        movementPatterns: {},
+        timeDistribution: { 
+          activeTime: 0, 
+          restTime: 0, 
+          activeTimePercentage: 0, 
+          restTimePercentage: 0 
+        },
         composition: {
           compound: { count: 0, percentage: 0 },
           isolation: { count: 0, percentage: 0 },
@@ -148,12 +144,6 @@ const WorkoutDetailsPage: React.FC = () => {
     return <WorkoutDetailsLoading />;
   }
 
-  // Derive summary values
-  const exerciseCount = Object.keys(groupedExercises).length;
-  const setCount = Array.isArray(exerciseSets)
-    ? exerciseSets.length
-    : Object.values(groupedExercises).flat().length;
-
   // Use type assertion and add null checks for accessing properties
   const metricValues = metrics as ProcessedWorkoutMetrics;
   
@@ -168,13 +158,22 @@ const WorkoutDetailsPage: React.FC = () => {
   const overallDensity = metricValues.densityMetrics?.overallDensity || 0;
   const activeOnlyDensity = metricValues.densityMetrics?.activeOnlyDensity || 0;
   
-  // Other properties
-  const timePatterns = metricValues.timePatterns || { 
-    daysFrequency: {},
-    durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+  // Create compatible data structures for charts that expect different formats
+  // For time patterns chart
+  const durationByTimeOfDay = {
+    morning: 0,
+    afternoon: 0,
+    evening: 0,
+    night: 0
   };
-  const muscleFocus = metricValues.muscleFocus || {};
-  const exerciseVolumeHistory = metricValues.exerciseVolumeHistory || [];
+  
+  // For exercise volume history chart
+  const exerciseVolumeHistory = metricValues.muscleFocus ? 
+    Object.entries(metricValues.muscleFocus).map(([name, value]) => ({
+      exercise_name: name,
+      trend: 'stable' as 'increasing' | 'decreasing' | 'stable' | 'fluctuating',
+      percentChange: 0
+    })) : [];
 
   return (
     <ErrorBoundary>
@@ -237,7 +236,7 @@ const WorkoutDetailsPage: React.FC = () => {
               <CardHeader><CardTitle>Time of Day</CardTitle></CardHeader>
               <CardContent className="h-40">
                 <TimeOfDayChart
-                  durationByTimeOfDay={timePatterns.durationByTimeOfDay}
+                  durationByTimeOfDay={durationByTimeOfDay}
                   height={200}
                 />
               </CardContent>
@@ -248,7 +247,7 @@ const WorkoutDetailsPage: React.FC = () => {
           <Card className="bg-gray-900 border-gray-800 mb-6">
             <CardHeader><CardTitle>Muscle Group Focus</CardTitle></CardHeader>
             <CardContent className="h-60">
-              <MuscleGroupChart muscleFocus={muscleFocus} height={200} />
+              <MuscleGroupChart muscleFocus={metricValues.muscleFocus || {}} height={200} />
             </CardContent>
           </Card>
 
