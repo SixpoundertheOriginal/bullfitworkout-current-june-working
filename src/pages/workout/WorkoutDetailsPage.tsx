@@ -202,8 +202,8 @@ const WorkoutDetailsPage: React.FC = () => {
             {[
               { label: "Date", value: new Date(workoutDetails.start_time).toLocaleDateString() },
               { label: "Duration", value: `${workoutDetails.duration} min` },
-              { label: "Exercises", value: exerciseCount },
-              { label: "Sets", value: setCount },
+              { label: "Exercises", value: metricValues.exerciseCount },
+              { label: "Sets", value: metricValues.setCount.total },
               { label: "Volume", value: `${Math.round(totalVolume).toLocaleString()} ${weightUnit}` },
             ].map((item, idx) => (
               <Card key={idx} className="bg-gray-900 border-gray-800">
