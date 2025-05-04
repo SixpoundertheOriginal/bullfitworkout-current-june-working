@@ -1,4 +1,3 @@
-// src/components/metrics/WorkoutTypeChart.tsx
 
 import React, { useMemo, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
@@ -26,6 +25,9 @@ const WorkoutTypeChartComponent: React.FC<WorkoutTypeChartProps> = ({
   workoutTypes = [],
   height = 250
 }) => {
+  // Color palette
+  const COLORS = ['#8B5CF6', '#EC4899', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+
   // memoize mapping to avoid unnecessary recalculations
   const chartData = useMemo(
     () =>
@@ -70,9 +72,6 @@ const WorkoutTypeChartComponent: React.FC<WorkoutTypeChartProps> = ({
     []
   );
 
-  // color palette
-  const COLORS = ['#8B5CF6', '#EC4899', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
-
   return (
     <div className="h-full w-full">
       <ResponsiveContainer width="100%" height={height}>
@@ -112,5 +111,5 @@ const WorkoutTypeChartComponent: React.FC<WorkoutTypeChartProps> = ({
   );
 };
 
-// wrap in React.memo to prevent unnecessary re-renders
+// Export the component correctly
 export const WorkoutTypeChart = React.memo(WorkoutTypeChartComponent);

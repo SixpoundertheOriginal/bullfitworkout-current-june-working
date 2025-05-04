@@ -282,7 +282,7 @@ export function UserStats() {
           
           {/* Charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Workout types distribution - Fix here: changing data to workoutTypes */}
+            {/* Workout types distribution - Fixed: passing workoutTypes instead of data */}
             <WorkoutTypeChart workoutTypes={workoutTypeData} />
             
             {/* Recent workouts */}
