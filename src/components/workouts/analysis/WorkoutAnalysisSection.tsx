@@ -107,10 +107,16 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
             Time of Day
           </h3>
           <div className="h-48" aria-label="Time of day distribution chart">
-            <TimeOfDayChart 
-              durationByTimeOfDay={timeOfDayData}
-              height={180}
-            />
+            {hasTimeOfDayData ? (
+              <TimeOfDayChart 
+                durationByTimeOfDay={timeOfDayData}
+                height={180}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                No time-of-day data available
+              </div>
+            )}
           </div>
         </div>
       </Card>

@@ -1,3 +1,4 @@
+
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -138,10 +139,18 @@ const WorkoutDetailsPage: React.FC = () => {
       } as ProcessedWorkoutMetrics;
     }
 
+    // Pass optional workout object with start_time property to enable time-of-day feature 
+    const workoutWithTiming = workoutDetails ? {
+      start_time: workoutDetails.start_time,
+      duration: workoutDetails.duration || 0
+    } : undefined;
+
     return processWorkoutMetrics(
       groupedExercises,
       workoutDetails.duration || 0,
-      weightUnit as WeightUnit
+      weightUnit as WeightUnit,
+      undefined, // userBodyInfo
+      workoutWithTiming // Pass the workout timing data
     );
   }, [groupedExercises, workoutDetails, weightUnit]);
 
@@ -151,6 +160,9 @@ const WorkoutDetailsPage: React.FC = () => {
 
   // Use type assertion and add null checks for accessing properties
   const metricValues = metrics as ProcessedWorkoutMetrics;
+  
+  // Calculate max load and session max for new summary card
+  const sessionMax = metricValues.intensityMetrics?.peakLoad || 0;
   
   // Destructure with safe defaults - updating property names to match ProcessedWorkoutMetrics
   const totalVolume = metricValues.totalVolume || 0;
@@ -171,6 +183,10 @@ const WorkoutDetailsPage: React.FC = () => {
     night: 0
   };
   
+  // Get intensity and efficiency values for display
+  const intensity = metricValues.intensity || 0;
+  const efficiency = metricValues.timeDistribution?.activeTimePercentage || 0;
+  
   // For exercise volume history chart - create from muscle focus data
   const exerciseVolumeHistory = metricValues.muscleFocus ? 
     Object.entries(metricValues.muscleFocus).map(([name, value]) => ({
@@ -178,6 +194,9 @@ const WorkoutDetailsPage: React.FC = () => {
       trend: 'stable' as 'increasing' | 'decreasing' | 'stable' | 'fluctuating',
       percentChange: 0
     })) : [];
+
+  // Helper function to check if any time of day data is available
+  const hasTimeOfDayData = Object.values(durationByTimeOfDay).some(value => value > 0);
 
   return (
     <ErrorBoundary>
@@ -201,18 +220,19 @@ const WorkoutDetailsPage: React.FC = () => {
             onDeleteClick={() => setDeleteDialogOpen(true)}
           />
 
-          {/* Summary row */}
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+          {/* Summary row - Added Max Load card */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-6">
             {[
-              { label: "Date", value: new Date(workoutDetails.start_time).toLocaleDateString() },
-              { label: "Duration", value: `${workoutDetails.duration} min` },
-              { label: "Exercises", value: metricValues.exerciseCount },
-              { label: "Sets", value: metricValues.setCount.total },
-              { label: "Volume", value: `${Math.round(totalVolume).toLocaleString()} ${weightUnit}` },
+              { label: "Date", value: new Date(workoutDetails.start_time).toLocaleDateString(), colSpan: "md:col-span-1" },
+              { label: "Duration", value: `${workoutDetails.duration} min`, colSpan: "md:col-span-1" },
+              { label: "Exercises", value: metricValues.exerciseCount, colSpan: "md:col-span-1" },
+              { label: "Sets", value: metricValues.setCount.total, colSpan: "md:col-span-1" },
+              { label: "Volume", value: `${Math.round(totalVolume).toLocaleString()} ${weightUnit}`, colSpan: "md:col-span-1" },
+              { label: "Max Load", value: `${Math.round(sessionMax)} ${weightUnit}`, colSpan: "md:col-span-1" },
             ].map((item, idx) => (
-              <Card key={idx} className="bg-gray-900 border-gray-800">
-                <CardHeader><CardTitle className="text-sm">{item.label}</CardTitle></CardHeader>
-                <CardContent>
+              <Card key={idx} className={`bg-gray-900 border-gray-800 ${item.colSpan}`}>
+                <CardHeader className="py-3"><CardTitle className="text-sm">{item.label}</CardTitle></CardHeader>
+                <CardContent className="py-1">
                   <div className="text-lg">{item.value}</div>
                 </CardContent>
               </Card>
@@ -220,10 +240,10 @@ const WorkoutDetailsPage: React.FC = () => {
           </div>
 
           {/* Workout Density & Time Distribution */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader><CardTitle>Workout Density</CardTitle></CardHeader>
-              <CardContent className="h-40">
+          <Card className="bg-gray-900 border-gray-800 mb-6">
+            <CardHeader><CardTitle>Workout Density Analysis</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-60 mb-4" aria-label="Workout density analysis chart">
                 <WorkoutDensityChart
                   totalTime={metricValues.duration || 0}
                   activeTime={activeTime}
@@ -232,17 +252,57 @@ const WorkoutDetailsPage: React.FC = () => {
                   weightUnit={weightUnit}
                   overallDensity={overallDensity}
                   activeOnlyDensity={activeOnlyDensity}
-                  height={160}
+                  height={220}
                 />
-              </CardContent>
-            </Card>
+              </div>
+              
+              {/* Intensity & Efficiency metrics */}
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700">
+                  <div className="text-sm text-gray-400 mb-1">Intensity</div>
+                  <div className="text-lg font-medium">{intensity.toFixed(1)}%</div>
+                </div>
+                <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700">
+                  <div className="text-sm text-gray-400 mb-1">Efficiency</div>
+                  <div className="text-lg font-medium">{efficiency.toFixed(1)}%</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Time of Day and Workout Composition side by side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Time of Day Chart */}
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader><CardTitle>Time of Day</CardTitle></CardHeader>
-              <CardContent className="h-40" aria-label="Time of Day distribution chart">
-                <TimeOfDayChart
-                  durationByTimeOfDay={durationByTimeOfDay}
-                  height={200}
-                />
+              <CardContent className="h-60">
+                {hasTimeOfDayData ? (
+                  <div aria-label="Time of Day distribution chart">
+                    <TimeOfDayChart
+                      durationByTimeOfDay={durationByTimeOfDay}
+                      height={200}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No time-of-day data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Workout Composition Card */}
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader><CardTitle>Workout Composition</CardTitle></CardHeader>
+              <CardContent className="h-60">
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(metricValues.composition || {}).filter(([key]) => key !== 'totalExercises').map(([type, data]) => (
+                    <div key={type} className="flex flex-col p-3 rounded-md bg-gray-800/50 border border-gray-700">
+                      <div className="text-sm text-gray-400 mb-1 capitalize">{type}</div>
+                      <div className="text-lg font-medium">{data.count} <span className="text-sm text-gray-400">({Math.round(data.percentage)}%)</span></div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
