@@ -30,6 +30,8 @@ const Overview = () => {
   const [userWeightUnit, setUserWeightUnit] = useState<string | null>(null);
 
   const { stats, loading, refetch, workouts, ...metricsData } = useWorkoutStats();
+console.log("[Overview] raw stats:", stats);
+
   useEffect(() => {
     console.log("[Overview] 🏋️‍♀️ Fetched workouts:", workouts);
   }, [workouts]);
