@@ -124,6 +124,20 @@ const ExerciseCard = ({
   const exerciseGroup = previousSession?.exerciseGroup || "";
   const hasSameGroupData = exerciseGroup && previousVolume > 0;
 
+  // Handle add set with values from the previous set
+  const handleAddSet = () => {
+    // Get the last set values to use as defaults for the new set
+    const lastSet = sets.length > 0 ? sets[sets.length - 1] : null;
+    
+    // Use the previous set's values if available, otherwise use defaults
+    const defaultWeight = lastSet ? lastSet.weight : 0;
+    const defaultReps = lastSet ? lastSet.reps : 0;
+    const defaultRestTime = lastSet && lastSet.restTime ? lastSet.restTime : 60;
+    
+    // Call the onAddSet function that was passed as prop
+    onAddSet();
+  };
+
   return (
     <Card className={`relative overflow-hidden transition-all duration-300 ${
       isActive ? "ring-2 ring-purple-500/50" : "ring-1 ring-gray-800"
@@ -212,7 +226,7 @@ const ExerciseCard = ({
           </div>
 
           <Button
-            onClick={onAddSet}
+            onClick={handleAddSet}
             className="w-full mt-4 py-3 flex items-center justify-center text-sm 
               bg-gradient-to-r from-purple-600 to-pink-500 
               hover:from-purple-700 hover:to-pink-600 

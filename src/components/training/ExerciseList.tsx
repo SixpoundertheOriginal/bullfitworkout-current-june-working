@@ -54,6 +54,26 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     );
   }
 
+  // Function to handle adding a set that copies the previous set values
+  const handleAddSet = (exerciseName: string) => {
+    const existingSets = exercises[exerciseName];
+    const lastSet = existingSets.length > 0 ? existingSets[existingSets.length - 1] : null;
+    
+    // Copy values from the last set or use defaults if no previous set
+    const newSetValues = {
+      weight: lastSet ? lastSet.weight : 0,
+      reps: lastSet ? lastSet.reps : 0,
+      restTime: lastSet && lastSet.restTime ? lastSet.restTime : 60,
+      completed: false,
+      isEditing: false
+    };
+    
+    setExercises(prev => ({
+      ...prev,
+      [exerciseName]: [...prev[exerciseName], newSetValues]
+    }));
+  };
+
   return (
     <div className="space-y-6 mb-32">
       {exerciseList.map(exerciseName => (
@@ -62,7 +82,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           exercise={exerciseName}
           sets={exercises[exerciseName]}
           isActive={activeExercise === exerciseName}
-          onAddSet={() => onAddSet(exerciseName)}
+          onAddSet={() => handleAddSet(exerciseName)}
           onCompleteSet={(setIndex) => onCompleteSet(exerciseName, setIndex)}
           onDeleteExercise={() => onDeleteExercise(exerciseName)}
           onRemoveSet={(setIndex) => onRemoveSet(exerciseName, setIndex)}

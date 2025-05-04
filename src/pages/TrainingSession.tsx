@@ -224,11 +224,8 @@ const TrainingSessionPage = () => {
           <ExerciseList
             exercises={exercises}
             activeExercise={activeExercise}
-            onAddSet={name => {
-              setStoreExercises(prev => ({
-                ...prev,
-                [name]: [...prev[name], { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }]
-              }));
+            onAddSet={(name) => {
+              onAddSet(name);
             }}
             onCompleteSet={handleCompleteSet}
             onDeleteExercise={deleteExercise}
@@ -271,13 +268,7 @@ const TrainingSessionPage = () => {
             onShowRestTimer={handleShowRestTimer}
             onResetRestTimer={triggerRestTimerReset}
             onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
-            setExercises={upd => {
-              if (typeof upd === 'function') {
-                setStoreExercises(prev => adaptToStoreFormat(upd(adaptExerciseSets(prev))));
-              } else {
-                setStoreExercises(adaptToStoreFormat(upd));
-              }
-            }}
+            setExercises={setStoreExercises}
           />
         </div>
       </main>
