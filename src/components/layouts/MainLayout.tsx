@@ -60,8 +60,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return () => { document.body.style.overflow = '' };
   }, [location.pathname]);
 
-  // Hide global bottom nav only on training session route
-  const hideGlobalNavOn = ['/training-session'];
+  // Hide global bottom nav only on workout complete page
+  const hideGlobalNavOn = ['/workout-complete'];
   const shouldShowGlobalNav = !noFooter && !hideGlobalNavOn.some(route => location.pathname.startsWith(route));
 
   return (
