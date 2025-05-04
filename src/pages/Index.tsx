@@ -1,9 +1,9 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
-import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useWorkoutStats } from "@/hooks/useWorkoutStats";
 import { FeaturesSection } from "@/components/features/FeaturesSection";
 import { WorkoutLogSection } from "@/components/workouts/WorkoutLogSection";
@@ -22,10 +22,28 @@ const Index = () => {
   const { stats } = useWorkoutStats();
   const { isActive, lastActiveRoute } = useWorkoutState();
   
-  const { ref: sectionRef, isVisible: isSectionVisible } = useElementVisibility({
-    threshold: 0.5,
-    rootMargin: "-100px"
-  });
+  // Replace useElementVisibility with native IntersectionObserver
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [isSectionVisible, setIsSectionVisible] = useState(false);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSectionVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5, rootMargin: "-100px" }
+    );
+    
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+    
+    return () => {
+      if (sectionRef.current) {
+        observer.disconnect();
+      }
+    };
+  }, []);
   
   const [stableFabVisibility, setStableFabVisibility] = useState(true);
   const [showLevelUp, setShowLevelUp] = useState(false);
