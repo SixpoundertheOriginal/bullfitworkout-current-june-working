@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -126,15 +125,20 @@ const CommandGroup = React.forwardRef<
     commandItems?: React.ReactNode[];
   }
 >(({ className, heading, commandItems = [], children, ...props }, ref) => {
-  // Ensure children is always an array and properly handled
+  // Completely restructure how we handle children to avoid any Array.from issues
   const safeChildren = React.useMemo(() => {
-    // Handle all possible cases to ensure we never pass undefined to Array.from
-    if (children === undefined || children === null) {
-      return commandItems && Array.isArray(commandItems) ? commandItems : [];
+    // Simple case: if we have children, use them directly
+    if (children !== undefined && children !== null) {
+      return children;
     }
     
-    // Make sure children is properly handled
-    return children;
+    // Otherwise, ensure commandItems is an array and use that
+    if (Array.isArray(commandItems) && commandItems.length > 0) {
+      return commandItems;
+    }
+    
+    // If all else fails, return an empty array
+    return [];
   }, [children, commandItems]);
 
   return (
