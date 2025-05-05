@@ -74,32 +74,32 @@ export function ExerciseDialog({
   loading = false
 }: ExerciseDialogProps) {
   const isAdd = mode === "add";
-  const [persistedOpen, setPersistedOpen] = useSessionState<boolean>(
-    "addExerciseOpen",
-    false
-  );
-  const [activeTab, setActiveTab] = useSessionState<string>(
-    "addExerciseActiveTab",
-    "basic"
-  );
+
+  // Persisted state for "add" mode
+  const [persistedOpen, setPersistedOpen] = useSessionState<boolean>("addExerciseOpen", false);
+  const [activeTab, setActiveTab] = useSessionState<string>("addExerciseActiveTab", "basic");
   const {
     formState: exercise,
     setFormState: setExercise,
     resetForm
   } = useSessionForm("addExerciseForm", DEFAULT_EXERCISE);
+
   const [formError, setFormError] = useState("");
 
-  // sync parent ↔ session
+  // Sync parent ↔ sessionStorage for open state
   useEffect(() => {
-    if (isAdd) setPersistedOpen(open);
+    if (isAdd) {
+      setPersistedOpen(open);
+    }
   }, [open, isAdd, setPersistedOpen]);
+
   useEffect(() => {
     if (isAdd && persistedOpen !== open) {
       onOpenChange(persistedOpen);
     }
   }, [persistedOpen, open, onOpenChange, isAdd]);
 
-  // initialize / reset
+  // Initialize/reset form when mode or initialExercise changes
   useEffect(() => {
     if (initialExercise) {
       setExercise({ ...DEFAULT_EXERCISE, ...initialExercise });
@@ -110,13 +110,21 @@ export function ExerciseDialog({
   }, [initialExercise, mode, resetForm, setExercise]);
 
   const handleSubmit = () => {
-    if (!exercise.name) return setFormError("Name is required");
-    if (!exercise.primary_muscle_groups.length)
-      return setFormError("Pick at least one primary muscle group");
-    if (!exercise.equipment_type.length)
-      return setFormError("Pick at least one equipment type");
+    if (!exercise.name) {
+      setFormError("Name is required");
+      return;
+    }
+    if (!exercise.primary_muscle_groups.length) {
+      setFormError("Pick at least one primary muscle group");
+      return;
+    }
+    if (!exercise.equipment_type.length) {
+      setFormError("Pick at least one equipment type");
+      return;
+    }
 
     onSubmit(exercise);
+
     if (isAdd) {
       resetForm();
       setPersistedOpen(false);
@@ -145,10 +153,7 @@ export function ExerciseDialog({
           <DialogTitle id="exercise-dialog-title" className="text-xl">
             {mode === "add" ? "Add Exercise" : "Edit Exercise"}
           </DialogTitle>
-          <DialogDescription
-            id="exercise-dialog-description"
-            className="sr-only"
-          >
+          <DialogDescription id="exercise-dialog-description" className="sr-only">
             {mode === "add"
               ? "Fill in details to add a new exercise."
               : "Edit the exercise details."}
@@ -168,7 +173,7 @@ export function ExerciseDialog({
           </TabsList>
 
           <ScrollArea className="flex-1 overflow-auto">
-            {/* BASIC */}
+            {/* BASIC TAB */}
             <TabsContent value="basic" className="space-y-4 mt-2">
               <div>
                 <Label>Name*</Label>
@@ -191,14 +196,10 @@ export function ExerciseDialog({
                   className="min-h-[100px]"
                 />
               </div>
-
               <div>
                 <Label>Primary Muscle Groups*</Label>
                 <MultiSelect
-                  options={COMMON_MUSCLE_GROUPS.map((g) => ({
-                    label: g,
-                    value: g
-                  }))}
+                  options={COMMON_MUSCLE_GROUPS.map((g) => ({ label: g, value: g }))}
                   selected={exercise.primary_muscle_groups}
                   onChange={(sel) =>
                     setExercise({
@@ -209,14 +210,10 @@ export function ExerciseDialog({
                   placeholder="Select primary muscle groups"
                 />
               </div>
-
               <div>
                 <Label>Secondary Muscle Groups</Label>
                 <MultiSelect
-                  options={COMMON_MUSCLE_GROUPS.map((g) => ({
-                    label: g,
-                    value: g
-                  }))}
+                  options={COMMON_MUSCLE_GROUPS.map((g) => ({ label: g, value: g }))}
                   selected={exercise.secondary_muscle_groups}
                   onChange={(sel) =>
                     setExercise({
@@ -227,14 +224,10 @@ export function ExerciseDialog({
                   placeholder="Select secondary muscle groups"
                 />
               </div>
-
               <div>
                 <Label>Equipment Type*</Label>
                 <MultiSelect
-                  options={COMMON_EQUIPMENT.map((e) => ({
-                    label: e,
-                    value: e
-                  }))}
+                  options={COMMON_EQUIPMENT.map((e) => ({ label: e, value: e }))}
                   selected={exercise.equipment_type}
                   onChange={(sel) =>
                     setExercise({
@@ -247,7 +240,7 @@ export function ExerciseDialog({
               </div>
             </TabsContent>
 
-            {/* ADVANCED */}
+            {/* ADVANCED TAB */}
             <TabsContent value="advanced" className="space-y-4 mt-2">
               <div>
                 <Label>Difficulty</Label>
@@ -292,13 +285,68 @@ export function ExerciseDialog({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_compound"
+                  checked={exercise.is_compound}
+                  onCheckedChange={(c) =>
+                    setExercise({ ...exercise, is_compound: c as boolean })
+                  }
+                />
+                <Label htmlFor="is_compound">Compound exercise</Label>
+              </div>
             </TabsContent>
 
-            {/* METRICS & INSTRUCTIONS tabs unchanged… */}
+            {/* METRICS TAB */}
+            <TabsContent value="metrics" className="space-y-4 mt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_bodyweight"
+                  checked={exercise.is_bodyweight}
+                  onCheckedChange={(c) =>
+                    setExercise({ ...exercise, is_bodyweight: c as boolean })
+                  }
+                />
+                <Label htmlFor="is_bodyweight">Bodyweight exercise</Label>
+              </div>
+              {/* further metrics controls here… */}
+            </TabsContent>
+
+            {/* INSTRUCTIONS TAB */}
+            <TabsContent value="instructions" className="space-y-4 mt-2">
+              <div>
+                <Label>Instructions</Label>
+                <Textarea
+                  placeholder="Step-by-step instructions…"
+                  value={exercise.instructions.steps}
+                  onChange={(e) =>
+                    setExercise({
+                      ...exercise,
+                      instructions: { ...exercise.instructions, steps: e.target.value }
+                    })
+                  }
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div>
+                <Label>Form Cues</Label>
+                <Textarea
+                  placeholder="Form cues…"
+                  value={exercise.instructions.form}
+                  onChange={(e) =>
+                    setExercise({
+                      ...exercise,
+                      instructions: { ...exercise.instructions, form: e.target.value }
+                    })
+                  }
+                  className="min-h-[100px]"
+                />
+              </div>
+            </TabsContent>
           </ScrollArea>
         </Tabs>
 
-        {formError && <p className="text-red-500">{formError}</p>}
+        {formError && <p className="text-red-500 mt-2">{formError}</p>}
 
         <DialogFooter className="flex justify-end space-x-2">
           <Button variant="outline" onClick={handleClose}>
