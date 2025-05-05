@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -88,19 +87,6 @@ const CommandGroup = React.forwardRef<
     commandItems?: React.ReactNode[];
   }
 >(({ className, heading, commandItems, children, ...props }, ref) => {
-  // Safely handle children and commandItems to prevent "undefined is not iterable" error
-  const renderItems = () => {
-    if (children) {
-      return children;
-    }
-    
-    if (Array.isArray(commandItems) && commandItems.length > 0) {
-      return commandItems;
-    }
-    
-    return null;
-  };
-
   return (
     <CommandPrimitive.Group
       ref={ref}
@@ -111,7 +97,7 @@ const CommandGroup = React.forwardRef<
       )}
       {...props}
     >
-      {renderItems()}
+      {children || (Array.isArray(commandItems) ? commandItems : [])}
     </CommandPrimitive.Group>
   );
 })

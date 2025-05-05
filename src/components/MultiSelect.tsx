@@ -89,7 +89,7 @@ export function MultiSelect({
         <Command className="w-full">
           <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>No options found.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
+          <CommandGroup>
             {safeOptions.map((option) => {
               const isSelected = safeSelected.includes(option.value);
               return (
