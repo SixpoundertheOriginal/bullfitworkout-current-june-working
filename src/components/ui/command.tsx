@@ -11,7 +11,7 @@ const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
 >(({ className, children, ...props }, ref) => {
-  // Ensure children is always defined
+  // Ensure children is always defined and valid for iteration
   const safeChildren = React.useMemo(() => {
     return children || [];
   }, [children]);
@@ -72,21 +72,20 @@ CommandInput.displayName = CommandPrimitive.Input.displayName
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   // Ensure any children are safely passed
-  const safeProps = React.useMemo(() => {
-    return {
-      ...props,
-      children: props.children || []
-    };
-  }, [props]);
+  const safeChildren = React.useMemo(() => {
+    return children || [];
+  }, [children]);
 
   return (
     <CommandPrimitive.List
       ref={ref}
       className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
-      {...safeProps}
-    />
+      {...props}
+    >
+      {safeChildren}
+    </CommandPrimitive.List>
   );
 })
 
@@ -153,14 +152,11 @@ CommandSeparator.displayName = CommandPrimitive.Separator.displayName
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   // Ensure any children are safely passed
-  const safeProps = React.useMemo(() => {
-    return {
-      ...props,
-      children: props.children || []
-    };
-  }, [props]);
+  const safeChildren = React.useMemo(() => {
+    return children || [];
+  }, [children]);
 
   return (
     <CommandPrimitive.Item
@@ -169,8 +165,10 @@ const CommandItem = React.forwardRef<
         "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-gray-800 data-[selected=true]:text-white data-[disabled=true]:opacity-50",
         className
       )}
-      {...safeProps}
-    />
+      {...props}
+    >
+      {safeChildren}
+    </CommandPrimitive.Item>
   );
 })
 
