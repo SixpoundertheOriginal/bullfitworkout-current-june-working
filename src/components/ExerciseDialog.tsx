@@ -28,7 +28,6 @@ import {
   LoadingType,
   VariantCategory
 } from "@/types/exercise";
-import type { PointerDownOutsideEvent } from "@radix-ui/react-dialog";
 
 interface ExerciseDialogProps {
   open: boolean;
@@ -144,10 +143,12 @@ export function ExerciseDialog({
     onOpenChange(false);
   };
 
-  // Update the handler to use the correct event type
-  const onPointerDownOutside = (event: PointerDownOutsideEvent) => {
+  // Update to use a more generic type that will work with the component
+  const onPointerDownOutside = (event: React.MouseEvent | Event) => {
     // Prevent outside clicks from closing dialog when interacting with selects
-    event.preventDefault();
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
   };
 
   return (
