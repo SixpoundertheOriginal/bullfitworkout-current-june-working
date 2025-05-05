@@ -5,7 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter, X, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
-import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
+import { Exercise } from "@/types/exercise";
+import { 
+  MuscleGroup, 
+  EquipmentType, 
+  MovementPattern, 
+  Difficulty,
+  COMMON_MUSCLE_GROUPS,
+  COMMON_EQUIPMENT,
+  MOVEMENT_PATTERNS,
+  DIFFICULTY_LEVELS
+} from '@/constants/exerciseMetadata';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,7 +32,6 @@ import { Card } from "@/components/ui/card";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
-import { COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from "@/types/exercise";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { 
   Pagination, 

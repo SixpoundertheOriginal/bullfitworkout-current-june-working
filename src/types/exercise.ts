@@ -149,3 +149,25 @@ export const getSuggestedProgressionVariant = (
   // For now, return null as a placeholder
   return null;
 };
+
+// Re-export the types for backward compatibility
+export { 
+  MuscleGroup,
+  EquipmentType,
+  MovementPattern,
+  Difficulty,
+  LoadingType,
+  VariantCategory
+} from '@/constants/exerciseMetadata';
+
+// Re-export the constants for backward compatibility
+export {
+  MUSCLE_GROUPS,
+  EQUIPMENT_TYPES,
+  MOVEMENT_PATTERNS,
+  DIFFICULTY_LEVELS,
+  LOADING_TYPES,
+  VARIANT_CATEGORIES,
+  COMMON_MUSCLE_GROUPS,
+  COMMON_EQUIPMENT
+} from '@/constants/exerciseMetadata';

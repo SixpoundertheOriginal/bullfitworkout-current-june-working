@@ -14,19 +14,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { 
-  Exercise, 
-  MOVEMENT_PATTERNS, 
-  DIFFICULTY_LEVELS,
-  MovementPattern,
-  Difficulty
-} from "@/types/exercise";
+import { Exercise } from "@/types/exercise";
 
 import {
   MuscleGroup,
   EquipmentType,
+  MovementPattern,
+  Difficulty,
   MUSCLE_GROUPS,
   EQUIPMENT_TYPES,
+  MOVEMENT_PATTERNS,
+  DIFFICULTY_LEVELS,
   formatDisplayName
 } from "@/constants/exerciseMetadata";
 

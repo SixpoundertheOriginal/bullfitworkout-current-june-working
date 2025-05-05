@@ -6,14 +6,29 @@
  * This file is the single source of truth for these constants throughout the application.
  */
 
-import { 
-  MuscleGroup, 
-  EquipmentType, 
-  MovementPattern, 
-  Difficulty,
-  LoadingType,
-  VariantCategory
-} from '@/types/exercise';
+// Type definitions
+export type MuscleGroup = 
+  | 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core' | 'cardio' | 'full body'
+  | 'biceps' | 'triceps' | 'forearms' | 'traps' | 'lats' | 'glutes' | 'hamstrings'
+  | 'quads' | 'calves' | 'abs' | 'obliques' | 'lower back';
+
+export type EquipmentType = 
+  | 'barbell' | 'dumbbell' | 'kettlebell' | 'cable' | 'machine' | 'bodyweight'
+  | 'resistance band' | 'smith machine' | 'box' | 'bench' | 'other';
+
+export type MovementPattern = 
+  | 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'rotation' | 'carry' | 'isometric';
+
+export type Difficulty = 
+  | 'beginner' | 'intermediate' | 'advanced' | 'expert';
+
+export type LoadingType = 
+  | 'bodyweight' | 'barbell' | 'dumbbell' | 'kettlebell' | 'cable'
+  | 'machine' | 'resistance band' | 'smithMachine' | 'external';
+
+export type VariantCategory = 
+  | 'standard' | 'incline' | 'decline' | 'narrow' | 'wide' 
+  | 'assisted' | 'weighted' | 'unilateral' | 'explosive';
 
 // Muscle Groups - Canonical list with proper typing
 export const MUSCLE_GROUPS: MuscleGroup[] = [
@@ -22,10 +37,22 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
   'quads', 'calves', 'abs', 'obliques', 'lower back'
 ];
 
+// Common subset for UI dropdowns
+export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [
+  'chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'biceps', 
+  'triceps', 'glutes', 'hamstrings', 'quads', 'abs'
+];
+
 // Equipment Types - Canonical list with proper typing
 export const EQUIPMENT_TYPES: EquipmentType[] = [
   'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine', 'bodyweight',
   'resistance band', 'smith machine', 'box', 'bench', 'other'
+];
+
+// Common subset for UI dropdowns
+export const COMMON_EQUIPMENT: EquipmentType[] = [
+  'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine', 'bodyweight',
+  'resistance band'
 ];
 
 // Movement Patterns - Canonical list with proper typing
