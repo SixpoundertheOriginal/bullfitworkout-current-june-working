@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AllExercisesPage from "@/pages/AllExercisesPage";
+import { useSessionState } from '@/hooks/useSessionState';
 
 interface AddExerciseSheetProps {
   open: boolean;
@@ -27,12 +27,27 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   trainingType = ""
 }) => {
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<string>("suggested");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  // Use sessionStorage for state persistence
+  const [activeTab, setActiveTab] = useSessionState<string>("addExerciseSheetTab", "suggested");
+  const [searchQuery, setSearchQuery] = useSessionState<string>("addExerciseSheetQuery", "");
+  const [showAllExercises, setShowAllExercises] = useSessionState<boolean>("addExerciseSheetShowAll", false);
+  const [persistedOpen, setPersistedOpen] = useSessionState<boolean>("addExerciseSheetOpen", false);
+  
+  // Sync external open state with persisted state
+  useEffect(() => {
+    setPersistedOpen(open);
+  }, [open, setPersistedOpen]);
+
+  // Update component's open state from persisted state
+  useEffect(() => {
+    if (persistedOpen !== open) {
+      onOpenChange(persistedOpen);
+    }
+  }, [persistedOpen, open, onOpenChange]);
+  
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
   const { workouts } = useWorkoutHistory();
   const { exercises: allExercises } = useExercises();
-  const [showAllExercises, setShowAllExercises] = useState(false);
 
   // Extract recently used exercises from workout history
   const recentExercises = React.useMemo(() => {
@@ -83,7 +98,12 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     onSelectExercise(exercise);
     
     // Close the sheet immediately after selecting an exercise
+    // And clear persisted state
     onOpenChange(false);
+    setPersistedOpen(false);
+    sessionStorage.removeItem("addExerciseSheetQuery");
+    sessionStorage.removeItem("addExerciseSheetTab");
+    sessionStorage.removeItem("addExerciseSheetShowAll");
     
     // Show toast notification
     toast({
@@ -114,9 +134,21 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     );
   };
 
+  // Handle close
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      // Clear persisted state when closing
+      sessionStorage.removeItem("addExerciseSheetQuery");
+      sessionStorage.removeItem("addExerciseSheetTab");
+      sessionStorage.removeItem("addExerciseSheetShowAll");
+    }
+    onOpenChange(open);
+    setPersistedOpen(open);
+  };
+
   if (showAllExercises) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open} onOpenChange={handleClose}>
         <SheetContent 
           side="bottom" 
           className="h-[90vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"
@@ -132,7 +164,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
         side="bottom" 
         className="h-[80vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"

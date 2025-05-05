@@ -15,6 +15,7 @@ import { MuscleGroup, EquipmentType, MovementPattern, Difficulty,
          COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS,
          LOADING_TYPES, VARIANT_CATEGORIES, LoadingType, VariantCategory } from "@/types/exercise";
 import { MultiSelect } from "@/components/MultiSelect";
+import { useSessionState, useSessionForm } from "@/hooks/useSessionState";
 
 interface ExerciseDialogProps {
   open: boolean;
@@ -43,6 +44,29 @@ interface ExerciseDialogProps {
   loading?: boolean;
 }
 
+const DEFAULT_EXERCISE = {
+  name: "",
+  description: "",
+  primary_muscle_groups: [] as MuscleGroup[],
+  secondary_muscle_groups: [] as MuscleGroup[],
+  equipment_type: [] as EquipmentType[],
+  movement_pattern: "push" as MovementPattern,
+  difficulty: "beginner" as Difficulty,
+  instructions: {
+    steps: "",
+    form: ""
+  },
+  is_compound: false,
+  tips: [] as string[],
+  variations: [] as string[],
+  metadata: {},
+  loading_type: undefined as LoadingType | undefined,
+  estimated_load_percent: undefined as number | undefined,
+  variant_category: undefined as VariantCategory | undefined,
+  is_bodyweight: false,
+  energy_cost_factor: 1,
+};
+
 export function ExerciseDialog({
   open,
   onOpenChange,
@@ -51,33 +75,38 @@ export function ExerciseDialog({
   initialExercise,
   loading = false,
 }: ExerciseDialogProps) {
-  const [activeTab, setActiveTab] = useState("basic");
-  const [exercise, setExercise] = useState({
-    name: "",
-    description: "",
-    primary_muscle_groups: [] as MuscleGroup[],
-    secondary_muscle_groups: [] as MuscleGroup[],
-    equipment_type: [] as EquipmentType[],
-    movement_pattern: "push" as MovementPattern,
-    difficulty: "beginner" as Difficulty,
-    instructions: {
-      steps: "", // Initialize steps property
-      form: ""   // Initialize form property
-    },
-    is_compound: false,
-    tips: [] as string[],
-    variations: [] as string[],
-    metadata: {},
-    loading_type: undefined as LoadingType | undefined,
-    estimated_load_percent: undefined as number | undefined,
-    variant_category: undefined as VariantCategory | undefined,
-    is_bodyweight: false,
-    energy_cost_factor: 1,
-  });
+  // Use session storage for the dialog state (only for "add" mode)
+  const isAddMode = mode === "add";
+  const [persistedOpen, setPersistedOpen] = useSessionState<boolean>("addExerciseOpen", false);
+  const [activeTab, setActiveTab] = useSessionState<string>("addExerciseActiveTab", "basic");
+  
+  // Use session storage for form state when in "add" mode
+  const {
+    formState: exercise,
+    setFormState: setExercise,
+    resetForm: resetExerciseForm
+  } = useSessionForm(
+    "addExerciseForm", 
+    DEFAULT_EXERCISE
+  );
 
   const [newTip, setNewTip] = useState("");
   const [newVariation, setNewVariation] = useState("");
   const [formError, setFormError] = useState("");
+
+  // Sync external open state with persisted state (for "add" mode only)
+  useEffect(() => {
+    if (isAddMode) {
+      setPersistedOpen(open);
+    }
+  }, [open, isAddMode, setPersistedOpen]);
+
+  // Update component's open state from persisted state (for "add" mode only)
+  useEffect(() => {
+    if (isAddMode && persistedOpen !== open) {
+      onOpenChange(persistedOpen);
+    }
+  }, [persistedOpen, open, onOpenChange, isAddMode]);
 
   // Reset form when dialog opens/closes or when initialExercise changes
   useEffect(() => {
@@ -90,40 +119,20 @@ export function ExerciseDialog({
         is_bodyweight: initialExercise.is_bodyweight || false,
         energy_cost_factor: initialExercise.energy_cost_factor || 1,
       });
-    } else {
-      setExercise({
-        name: "",
-        description: "",
-        primary_muscle_groups: [],
-        secondary_muscle_groups: [],
-        equipment_type: [],
-        movement_pattern: "push",
-        difficulty: "beginner",
-        instructions: {
-          steps: "", // Initialize steps property
-          form: ""   // Initialize form property
-        },
-        is_compound: false,
-        tips: [],
-        variations: [],
-        metadata: {},
-        loading_type: undefined,
-        estimated_load_percent: undefined,
-        variant_category: undefined,
-        is_bodyweight: false,
-        energy_cost_factor: 1,
-      });
+    } else if (mode === "edit") {
+      setExercise(DEFAULT_EXERCISE);
     }
+    // Note: For "add" mode, we keep the form state from sessionStorage
+    
     setFormError("");
-    setActiveTab("basic");
-  }, [initialExercise, open]);
+  }, [initialExercise, open, setExercise, mode]);
 
   // Update whether the exercise is bodyweight based on equipment type
   useEffect(() => {
     if (exercise.equipment_type.includes('bodyweight')) {
       setExercise(prev => ({ ...prev, is_bodyweight: true }));
     }
-  }, [exercise.equipment_type]);
+  }, [exercise.equipment_type, setExercise]);
 
   // Add a tip to the exercise
   const addTip = () => {
@@ -189,10 +198,48 @@ export function ExerciseDialog({
 
     // Submit the exercise
     onSubmit(updatedExercise);
+    
+    // Clear form if in "add" mode
+    if (isAddMode) {
+      resetExerciseForm();
+      setPersistedOpen(false);
+      sessionStorage.removeItem("addExerciseActiveTab");
+    }
   };
 
+  // Handle dialog close
+  const handleClose = () => {
+    if (isAddMode) {
+      // Clear form data on cancel when in "add" mode
+      resetExerciseForm();
+      setPersistedOpen(false);
+      sessionStorage.removeItem("addExerciseActiveTab");
+    }
+    
+    onOpenChange(false);
+  };
+
+  // Setup beforeunload warning for unsaved changes
+  useEffect(() => {
+    // Only add warning if dialog is open and in "add" mode
+    if (open && isAddMode && (exercise.name || exercise.primary_muscle_groups.length > 0)) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        const message = "You have unsaved changes. Are you sure you want to leave?";
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, [open, exercise, isAddMode]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl">
@@ -577,7 +624,7 @@ export function ExerciseDialog({
         {formError && <p className="text-red-500 text-sm">{formError}</p>}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={handleClose}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>

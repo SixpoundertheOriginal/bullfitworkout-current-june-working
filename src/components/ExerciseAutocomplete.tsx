@@ -32,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useSessionState } from '@/hooks/useSessionState';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,11 +56,11 @@ interface ExerciseAutocompleteProps {
 export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useSessionState<boolean>("addExerciseOpen", false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   
-  const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id'>>({
+  const [newExercise, setNewExercise] = useSessionState<Omit<Exercise, 'id'>>("addExerciseForm", {
     name: "",
     created_at: new Date().toISOString(),
     user_id: user?.id || "",
@@ -83,7 +84,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
         user_id: user.id
       }));
     }
-  }, [user]);
+  }, [user, setNewExercise]);
   
   const [tempMuscleGroup, setTempMuscleGroup] = useState<MuscleGroup | "">("");
   const [tempEquipment, setTempEquipment] = useState<EquipmentType | "">("");
@@ -123,6 +124,10 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
         console.log("Exercise created successfully:", data);
         toast.success(`Exercise "${newExercise.name}" created successfully`);
         setDialogOpen(false);
+        
+        // Clear the session storage data on successful creation
+        sessionStorage.removeItem("addExerciseForm");
+        
         setNewExercise({
           name: "",
           created_at: new Date().toISOString(),
@@ -295,7 +300,13 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
         </PopoverContent>
       </Popover>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        // If closing and not submitting, clear the form data
+        if (!open) {
+          sessionStorage.removeItem("addExerciseForm");
+        }
+      }}>
         <DialogContent className="bg-gray-900 text-white border-gray-700 sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Exercise</DialogTitle>
@@ -498,7 +509,11 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setDialogOpen(false);
+              // Clear session storage data on cancel
+              sessionStorage.removeItem("addExerciseForm");
+            }}>
               Cancel
             </Button>
             <Button 

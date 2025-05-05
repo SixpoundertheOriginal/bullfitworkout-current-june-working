@@ -41,6 +41,18 @@ const DialogContent = React.forwardRef<
         "max-h-[90vh] overflow-y-auto",  // Added max height and overflow for better mobile experience
         className
       )}
+      // Add onInteractOutside handler to prevent unwanted closing on mobile devices
+      onInteractOutside={(event) => {
+        // If the form has persisted state, prevent accidental closings via outside clicks
+        if (sessionStorage.getItem("addExerciseForm") || 
+            sessionStorage.getItem("addExerciseOpen")) {
+          // Only prevent default if there's actual form data
+          const formData = sessionStorage.getItem("addExerciseForm");
+          if (formData && formData !== '{}' && formData !== '""') {
+            event.preventDefault();
+          }
+        }
+      }}
       {...props}
     >
       {children}
