@@ -88,7 +88,19 @@ const CommandGroup = React.forwardRef<
     commandItems?: React.ReactNode[];
   }
 >(({ className, heading, commandItems, children, ...props }, ref) => {
-  // Pass children directly without any Array.from transformation
+  // Safely handle children and commandItems to prevent "undefined is not iterable" error
+  const renderItems = () => {
+    if (children) {
+      return children;
+    }
+    
+    if (Array.isArray(commandItems) && commandItems.length > 0) {
+      return commandItems;
+    }
+    
+    return null;
+  };
+
   return (
     <CommandPrimitive.Group
       ref={ref}
@@ -99,7 +111,7 @@ const CommandGroup = React.forwardRef<
       )}
       {...props}
     >
-      {children || (Array.isArray(commandItems) ? commandItems : [])}
+      {renderItems()}
     </CommandPrimitive.Group>
   );
 })
