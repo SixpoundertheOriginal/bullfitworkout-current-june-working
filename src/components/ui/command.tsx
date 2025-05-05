@@ -11,9 +11,14 @@ const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
 >(({ className, children, ...props }, ref) => {
-  // Ensure children is always an array, even if undefined/null
+  // Create a safe version of children that's always an array
   const safeChildren = React.useMemo(() => {
-    return children ?? [];
+    // Handle undefined, null, or non-array children
+    if (children === undefined || children === null) {
+      return [];
+    }
+    // Children is already defined, return as is
+    return children;
   }, [children]);
 
   return (
@@ -34,9 +39,14 @@ Command.displayName = CommandPrimitive.displayName
 interface CommandDialogProps extends DialogProps {}
 
 const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
-  // Ensure children is always an array, even if undefined/null
+  // Create a safe version of children that's always an array
   const safeChildren = React.useMemo(() => {
-    return children ?? [];
+    // Handle undefined, null, or non-array children
+    if (children === undefined || children === null) {
+      return [];
+    }
+    // Children is already defined, return as is
+    return children;
   }, [children]);
 
   return (
@@ -73,9 +83,14 @@ const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
 >(({ className, children, ...props }, ref) => {
-  // Ensure children is always an array, even if undefined/null
+  // Create a safe version of children that's always an array
   const safeChildren = React.useMemo(() => {
-    return children ?? [];
+    // Handle undefined, null, or non-array children
+    if (children === undefined || children === null) {
+      return [];
+    }
+    // Children is already defined, return as is
+    return children;
   }, [children]);
 
   return (
@@ -153,9 +168,14 @@ const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
 >(({ className, children, ...props }, ref) => {
-  // Ensure children is always an array, even if undefined/null
+  // Create a safe version of children that's always an array
   const safeChildren = React.useMemo(() => {
-    return children ?? [];
+    // Handle undefined, null, or non-array children
+    if (children === undefined || children === null) {
+      return [];
+    }
+    // Children is already defined, return as is
+    return children;
   }, [children]);
 
   return (
