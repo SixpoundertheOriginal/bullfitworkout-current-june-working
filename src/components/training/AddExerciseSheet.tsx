@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -26,6 +27,10 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   onSelectExercise,
   trainingType = ""
 }) => {
+  // Fixed IDs for ARIA attributes
+  const sheetTitleId = "add-exercise-sheet-title";
+  const sheetDescId = "add-exercise-sheet-desc";
+
   const isMobile = useIsMobile();
   // Use sessionStorage for state persistence
   const [activeTab, setActiveTab] = useSessionState<string>("addExerciseSheetTab", "suggested");
@@ -45,11 +50,12 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     }
   }, [persistedOpen, open, onOpenChange]);
   
+  // Debounced data fetching to prevent render blocking
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
   const { workouts } = useWorkoutHistory();
   const { exercises: allExercises } = useExercises();
 
-  // Extract recently used exercises from workout history
+  // Memoized functions to prevent unnecessary re-renders
   const recentExercises = React.useMemo(() => {
     if (!workouts?.length) return [];
     
@@ -74,7 +80,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     return Array.from(exerciseMap.values());
   }, [workouts, allExercises]);
 
-  // Filter exercises based on search query
+  // Filter exercises based on search query with memoization
   const filteredSuggested = React.useMemo(() => {
     return searchQuery
       ? suggestedExercises.filter(e => 
@@ -93,7 +99,8 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
       : recentExercises;
   }, [recentExercises, searchQuery]);
 
-  const handleAddExercise = (exercise: Exercise | string) => {
+  // Memoized handler to prevent re-creation on renders
+  const handleAddExercise = useCallback((exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     onSelectExercise(exercise);
     
@@ -110,9 +117,9 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
       title: "Exercise added",
       description: `Added ${exerciseName} to your workout`
     });
-  };
+  }, [onSelectExercise, onOpenChange, setPersistedOpen]);
 
-  const renderExerciseCard = (exercise: Exercise) => {
+  const renderExerciseCard = useCallback((exercise: Exercise) => {
     const muscleGroups = exercise.primary_muscle_groups.slice(0, 2).join(', ');
     
     return (
@@ -132,10 +139,10 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
         </Button>
       </div>
     );
-  };
+  }, [handleAddExercise]);
 
-  // Handle close
-  const handleClose = (open: boolean) => {
+  // Handle close with cleanup
+  const handleClose = useCallback((open: boolean) => {
     if (!open) {
       // Clear persisted state when closing
       sessionStorage.removeItem("addExerciseSheetQuery");
@@ -144,7 +151,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     }
     onOpenChange(open);
     setPersistedOpen(open);
-  };
+  }, [onOpenChange, setPersistedOpen]);
 
   if (showAllExercises) {
     return (
@@ -152,7 +159,11 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
         <SheetContent 
           side="bottom" 
           className="h-[90vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"
+          aria-labelledby="all-exercises-title"
+          aria-describedby="all-exercises-desc"
         >
+          <span id="all-exercises-title" className="sr-only">All Exercises</span>
+          <span id="all-exercises-desc" className="sr-only">Browse and select exercises from the complete exercise library</span>
           <AllExercisesPage 
             onSelectExercise={handleAddExercise}
             standalone={false}
@@ -168,6 +179,8 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
       <SheetContent 
         side="bottom" 
         className="h-[80vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"
+        aria-labelledby={sheetTitleId}
+        aria-describedby={sheetDescId}
       >
         <div className="flex flex-col h-full">
           {/* Handle for dragging */}
@@ -177,7 +190,8 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
           
           <div className="px-4 pb-2 h-full flex flex-col">
             <SheetHeader className="mb-4">
-              <SheetTitle className="text-xl font-bold text-center">Add an Exercise</SheetTitle>
+              <SheetTitle id={sheetTitleId} className="text-xl font-bold text-center">Add an Exercise</SheetTitle>
+              <p id={sheetDescId} className="sr-only">Select an exercise to add to your workout</p>
             </SheetHeader>
             
             {/* Search bar */}

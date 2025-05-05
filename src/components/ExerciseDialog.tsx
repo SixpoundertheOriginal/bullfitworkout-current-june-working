@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,6 +76,10 @@ export function ExerciseDialog({
   initialExercise,
   loading = false,
 }: ExerciseDialogProps) {
+  // Fixed IDs for ARIA attributes
+  const dialogTitleId = "exercise-dialog-title";
+  const dialogDescId = "exercise-dialog-description";
+
   // Use session storage for the dialog state (only for "add" mode)
   const isAddMode = mode === "add";
   const [persistedOpen, setPersistedOpen] = useSessionState<boolean>("addExerciseOpen", false);
@@ -108,17 +113,22 @@ export function ExerciseDialog({
     }
   }, [persistedOpen, open, onOpenChange, isAddMode]);
 
-  // Reset form when dialog opens/closes or when initialExercise changes
+  // Reset form when dialog opens/closes or when initialExercise changes - use setTimeout to debounce
   useEffect(() => {
     if (initialExercise) {
-      setExercise({
-        ...initialExercise,
-        loading_type: initialExercise.loading_type || undefined,
-        estimated_load_percent: initialExercise.estimated_load_percent,
-        variant_category: initialExercise.variant_category || undefined,
-        is_bodyweight: initialExercise.is_bodyweight || false,
-        energy_cost_factor: initialExercise.energy_cost_factor || 1,
-      });
+      // Debounce setting form data to avoid blocking the initial render
+      const timeout = setTimeout(() => {
+        setExercise({
+          ...initialExercise,
+          loading_type: initialExercise.loading_type || undefined,
+          estimated_load_percent: initialExercise.estimated_load_percent,
+          variant_category: initialExercise.variant_category || undefined,
+          is_bodyweight: initialExercise.is_bodyweight || false,
+          energy_cost_factor: initialExercise.energy_cost_factor || 1,
+        });
+      }, 0);
+      
+      return () => clearTimeout(timeout);
     } else if (mode === "edit") {
       setExercise(DEFAULT_EXERCISE);
     }
@@ -240,11 +250,20 @@ export function ExerciseDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent 
+        className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col"
+        aria-labelledby={dialogTitleId}
+        aria-describedby={dialogDescId}
+      >
         <DialogHeader>
-          <DialogTitle className="text-xl">
+          <DialogTitle id={dialogTitleId} className="text-xl">
             {mode === "add" ? "Add Exercise" : "Edit Exercise"}
           </DialogTitle>
+          <DialogDescription id={dialogDescId} className="sr-only">
+            {mode === "add" 
+              ? "Fill in the exercise details to add a new exercise to your library." 
+              : "Edit the details of this exercise."}
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
