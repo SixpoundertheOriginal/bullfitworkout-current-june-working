@@ -87,19 +87,30 @@ const CommandGroup = React.forwardRef<
     heading?: React.ReactNode;
     commandItems?: React.ReactNode[];
   }
->(({ className, heading, commandItems = [], children, ...props }, ref) => (
-  <CommandPrimitive.Group
-    ref={ref}
-    heading={heading}
-    className={cn(
-      "overflow-hidden p-1 text-white [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-gray-400",
-      className
-    )}
-    {...props}
-  >
-    {children || []}
-  </CommandPrimitive.Group>
-))
+>(({ className, heading, commandItems = [], children, ...props }, ref) => {
+  // Ensure children is always a valid React node or array of nodes
+  const safeChildren = React.useMemo(() => {
+    // If children is undefined or null, use commandItems if available, otherwise empty array
+    if (children === undefined || children === null) {
+      return Array.isArray(commandItems) ? commandItems : [];
+    }
+    return children;
+  }, [children, commandItems]);
+
+  return (
+    <CommandPrimitive.Group
+      ref={ref}
+      heading={heading}
+      className={cn(
+        "overflow-hidden p-1 text-white [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-gray-400",
+        className
+      )}
+      {...props}
+    >
+      {safeChildren}
+    </CommandPrimitive.Group>
+  );
+})
 
 CommandGroup.displayName = CommandPrimitive.Group.displayName
 
