@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, ChevronsUpDown, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -55,11 +54,16 @@ interface ExerciseAutocompleteProps {
 }
 
 export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAutocompleteProps) {
+  // State hooks
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [dialogOpen, setDialogOpen] = useSessionState<boolean>("addExerciseOpen", false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
+  
+  // Generate unique IDs for ARIA attributes
+  const dialogTitleId = React.useId();
+  const dialogDescriptionId = React.useId();
   
   const [newExercise, setNewExercise] = useSessionState<Omit<Exercise, 'id'>>("addExerciseForm", {
     name: "",
@@ -92,7 +96,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
   const [tempSecondaryMuscle, setTempSecondaryMuscle] = useState<MuscleGroup | "">("");
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
-
+  
   // Ensure exercises is always an array, even when undefined or null
   const safeExercises = Array.isArray(exercises) ? exercises : [];
 
@@ -231,10 +235,6 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Generate unique IDs for ARIA attributes
-  const dialogTitleId = React.useId();
-  const dialogDescriptionId = React.useId();
-
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -256,7 +256,6 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
-          {/* Wrap Command in error boundaries or provide safe defaults */}
           <Command className="bg-gray-800 border-gray-700">
             <CommandInput 
               placeholder="Search exercises..." 

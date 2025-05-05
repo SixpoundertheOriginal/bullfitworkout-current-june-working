@@ -72,6 +72,10 @@ export function ExerciseDialog({
 }: ExerciseDialogProps) {
   const isAddMode = mode === "add";
 
+  // Generate unique IDs for ARIA attributes
+  const dialogTitleId = React.useId();
+  const dialogDescriptionId = React.useId();
+
   // single source of truth for open state:
   const [sessionOpen, setSessionOpen] = useSessionState<boolean>("addExerciseOpen", false);
   const isOpen = isAddMode ? sessionOpen : externalOpen;
@@ -88,10 +92,6 @@ export function ExerciseDialog({
   const [newVariation, setNewVariation] = useState("");
   const [formError, setFormError] = useState("");
 
-  // Generate unique IDs for ARIA attributes
-  const dialogTitleId = React.useId();
-  const dialogDescriptionId = React.useId();
-
   // Sync external open → session (only for add mode)
   useEffect(() => {
     if (isAddMode && externalOpen !== sessionOpen) {
@@ -102,21 +102,26 @@ export function ExerciseDialog({
   // Reset or hydrate form when opening
   useEffect(() => {
     if (initialExercise && mode === "edit") {
-      setExercise({
-        ...DEFAULT_EXERCISE,
-        ...initialExercise,
-        // Ensure these are never undefined by providing fallbacks
-        primary_muscle_groups: initialExercise.primary_muscle_groups || [],
-        secondary_muscle_groups: initialExercise.secondary_muscle_groups || [],
-        equipment_type: initialExercise.equipment_type || [],
-        tips: initialExercise.tips || [],
-        variations: initialExercise.variations || [],
-        loading_type: initialExercise.loading_type,
-        estimated_load_percent: initialExercise.estimated_load_percent,
-        variant_category: initialExercise.variant_category,
-        is_bodyweight: initialExercise.is_bodyweight,
-        energy_cost_factor: initialExercise.energy_cost_factor,
-      });
+      // Use setTimeout to debounce initialization to prevent blocking render
+      const timerId = setTimeout(() => {
+        setExercise({
+          ...DEFAULT_EXERCISE,
+          ...initialExercise,
+          // Ensure these are never undefined by providing fallbacks
+          primary_muscle_groups: initialExercise.primary_muscle_groups || [],
+          secondary_muscle_groups: initialExercise.secondary_muscle_groups || [],
+          equipment_type: initialExercise.equipment_type || [],
+          tips: initialExercise.tips || [],
+          variations: initialExercise.variations || [],
+          loading_type: initialExercise.loading_type,
+          estimated_load_percent: initialExercise.estimated_load_percent,
+          variant_category: initialExercise.variant_category,
+          is_bodyweight: initialExercise.is_bodyweight,
+          energy_cost_factor: initialExercise.energy_cost_factor,
+        });
+      }, 0);
+      
+      return () => clearTimeout(timerId);
     } else if (!isAddMode) {
       resetExerciseForm();
     }
@@ -355,7 +360,7 @@ export function ExerciseDialog({
               </div>
             </TabsContent>
 
-            {/* Metrics & Instructions tabs omitted for brevity; keep the same pattern */}
+            {/* Metrics & Instructions tabs */}
             <TabsContent value="metrics" className="p-4 space-y-4">
               
             </TabsContent>
