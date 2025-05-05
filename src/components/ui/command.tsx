@@ -126,12 +126,14 @@ const CommandGroup = React.forwardRef<
     commandItems?: React.ReactNode[];
   }
 >(({ className, heading, commandItems = [], children, ...props }, ref) => {
-  // Ensure children is always an array, even if undefined/null
+  // Ensure children is always an array and properly handled
   const safeChildren = React.useMemo(() => {
-    // If children is undefined or null, use commandItems if available, otherwise empty array
+    // Handle all possible cases to ensure we never pass undefined to Array.from
     if (children === undefined || children === null) {
-      return Array.isArray(commandItems) ? commandItems : [];
+      return commandItems && Array.isArray(commandItems) ? commandItems : [];
     }
+    
+    // Make sure children is properly handled
     return children;
   }, [children, commandItems]);
 
