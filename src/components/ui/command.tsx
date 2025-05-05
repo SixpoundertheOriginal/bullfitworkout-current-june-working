@@ -11,7 +11,7 @@ const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
 >(({ className, children, ...props }, ref) => {
-  // Always make sure children is an array, even if undefined/null
+  // Ensure children is always an array, even if undefined/null
   const safeChildren = React.useMemo(() => {
     return children ?? [];
   }, [children]);
@@ -34,7 +34,7 @@ Command.displayName = CommandPrimitive.displayName
 interface CommandDialogProps extends DialogProps {}
 
 const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
-  // Always make sure children is an array, even if undefined/null
+  // Ensure children is always an array, even if undefined/null
   const safeChildren = React.useMemo(() => {
     return children ?? [];
   }, [children]);
@@ -73,7 +73,7 @@ const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
 >(({ className, children, ...props }, ref) => {
-  // Always make sure children is an array, even if undefined/null
+  // Ensure children is always an array, even if undefined/null
   const safeChildren = React.useMemo(() => {
     return children ?? [];
   }, [children]);
@@ -111,7 +111,7 @@ const CommandGroup = React.forwardRef<
     commandItems?: React.ReactNode[];
   }
 >(({ className, heading, commandItems = [], children, ...props }, ref) => {
-  // Always make sure children is an array, even if undefined/null
+  // Ensure children is always an array, even if undefined/null
   const safeChildren = React.useMemo(() => {
     // If children is undefined or null, use commandItems if available, otherwise empty array
     if (children === undefined || children === null) {
@@ -153,7 +153,7 @@ const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
 >(({ className, children, ...props }, ref) => {
-  // Always make sure children is an array, even if undefined/null
+  // Ensure children is always an array, even if undefined/null
   const safeChildren = React.useMemo(() => {
     return children ?? [];
   }, [children]);
