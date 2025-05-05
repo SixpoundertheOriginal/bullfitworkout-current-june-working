@@ -150,15 +150,15 @@ export const getSuggestedProgressionVariant = (
   return null;
 };
 
-// Re-export the types for backward compatibility
-export { 
+// Re-export the types for backward compatibility - using export type for isolatedModules
+export type { 
   MuscleGroup,
   EquipmentType,
   MovementPattern,
   Difficulty,
   LoadingType,
   VariantCategory
-} from '@/constants/exerciseMetadata';
+};
 
 // Re-export the constants for backward compatibility
 export {

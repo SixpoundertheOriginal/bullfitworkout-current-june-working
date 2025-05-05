@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -16,16 +17,26 @@ import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AddCustomTrainingType } from "@/components/training/AddCustomTrainingType";
-import { MuscleGroup } from "@/constants/exerciseMetadata";
 import { getMuscleGroupOptions } from "@/constants/exerciseMetadata";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   training?: Training;
+  onStartTraining?: (config: {
+    trainingType: string;
+    tags: string[];
+    duration: number;
+    rankedExercises?: any[];
+  }) => void;
 }
 
-export function ConfigureTrainingDialog({ open, setOpen, training }: ConfigureTrainingDialogProps) {
+export function ConfigureTrainingDialog({ 
+  open, 
+  setOpen, 
+  training,
+  onStartTraining
+}: ConfigureTrainingDialogProps) {
   const {
     name,
     bodyFocus,
@@ -47,6 +58,7 @@ export function ConfigureTrainingDialog({ open, setOpen, training }: ConfigureTr
   const isMobile = useIsMobile();
   const muscleGroupOptions = getMuscleGroupOptions();
   const [newTrainingType, setNewTrainingType] = useState("");
+  const [duration, setDuration] = useState(45); // Default duration
 
   const handleClose = () => {
     reset();
@@ -63,10 +75,20 @@ export function ConfigureTrainingDialog({ open, setOpen, training }: ConfigureTr
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Training configured successfully!",
-    });
+    if (onStartTraining) {
+      onStartTraining({
+        trainingType: trainingType || "General",
+        tags: bodyFocus,
+        duration: duration,
+        rankedExercises: []
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Training configured successfully!",
+      });
+    }
+    
     setOpen(false);
   };
 
@@ -133,6 +155,18 @@ export function ConfigureTrainingDialog({ open, setOpen, training }: ConfigureTr
                     <AddCustomTrainingType />
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
+              
+              <div>
+                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min={5}
+                  max={180}
+                  value={duration}
+                  onChange={(e) => setDuration(parseInt(e.target.value) || 45)}
+                />
               </div>
               
               <div className="flex items-center space-x-2">
