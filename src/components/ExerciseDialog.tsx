@@ -15,7 +15,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -25,7 +24,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/MultiSelect";
-import { useSessionState, useSessionForm } from "@/hooks/useSessionState";
+import { useSessionForm } from "@/hooks/useSessionState";
 import {
   MuscleGroup,
   EquipmentType,
@@ -75,31 +74,17 @@ export function ExerciseDialog({
 }: ExerciseDialogProps) {
   const isAdd = mode === "add";
 
-  // Persisted state for "add" mode
-  const [persistedOpen, setPersistedOpen] = useSessionState<boolean>("addExerciseOpen", false);
-  const [activeTab, setActiveTab] = useSessionState<string>("addExerciseActiveTab", "basic");
+  // Persist form fields across reloads/tabs, but NOT the modal open-state
   const {
     formState: exercise,
     setFormState: setExercise,
     resetForm
   } = useSessionForm("addExerciseForm", DEFAULT_EXERCISE);
 
+  const [activeTab, setActiveTab] = useState<"basic"|"advanced"|"metrics"|"instructions">("basic");
   const [formError, setFormError] = useState("");
 
-  // Sync parent ↔ sessionStorage for open state
-  useEffect(() => {
-    if (isAdd) {
-      setPersistedOpen(open);
-    }
-  }, [open, isAdd, setPersistedOpen]);
-
-  useEffect(() => {
-    if (isAdd && persistedOpen !== open) {
-      onOpenChange(persistedOpen);
-    }
-  }, [persistedOpen, open, onOpenChange, isAdd]);
-
-  // Initialize/reset form when mode or initialExercise changes
+  // On mount or when initialExercise changes, seed or reset the form
   useEffect(() => {
     if (initialExercise) {
       setExercise({ ...DEFAULT_EXERCISE, ...initialExercise });
@@ -110,7 +95,7 @@ export function ExerciseDialog({
   }, [initialExercise, mode, resetForm, setExercise]);
 
   const handleSubmit = () => {
-    if (!exercise.name) {
+    if (!exercise.name.trim()) {
       setFormError("Name is required");
       return;
     }
@@ -127,16 +112,12 @@ export function ExerciseDialog({
 
     if (isAdd) {
       resetForm();
-      setPersistedOpen(false);
-      sessionStorage.removeItem("addExerciseActiveTab");
     }
   };
 
   const handleClose = () => {
     if (isAdd) {
       resetForm();
-      setPersistedOpen(false);
-      sessionStorage.removeItem("addExerciseActiveTab");
     }
     onOpenChange(false);
   };
@@ -147,13 +128,15 @@ export function ExerciseDialog({
         className="sm:max-w-[600px] max-h-[90vh] flex flex-col"
         aria-labelledby="exercise-dialog-title"
         aria-describedby="exercise-dialog-description"
-        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle id="exercise-dialog-title" className="text-xl">
             {mode === "add" ? "Add Exercise" : "Edit Exercise"}
           </DialogTitle>
-          <DialogDescription id="exercise-dialog-description" className="sr-only">
+          <DialogDescription
+            id="exercise-dialog-description"
+            className="sr-only"
+          >
             {mode === "add"
               ? "Fill in details to add a new exercise."
               : "Edit the exercise details."}
@@ -173,14 +156,14 @@ export function ExerciseDialog({
           </TabsList>
 
           <ScrollArea className="flex-1 overflow-auto">
-            {/* BASIC TAB */}
+            {/* BASIC */}
             <TabsContent value="basic" className="space-y-4 mt-2">
               <div>
                 <Label>Name*</Label>
                 <Input
                   placeholder="e.g. Bench Press"
                   value={exercise.name}
-                  onChange={(e) =>
+                  onChange={e =>
                     setExercise({ ...exercise, name: e.target.value })
                   }
                 />
@@ -190,7 +173,7 @@ export function ExerciseDialog({
                 <Textarea
                   placeholder="Brief description…"
                   value={exercise.description}
-                  onChange={(e) =>
+                  onChange={e =>
                     setExercise({ ...exercise, description: e.target.value })
                   }
                   className="min-h-[100px]"
@@ -199,9 +182,9 @@ export function ExerciseDialog({
               <div>
                 <Label>Primary Muscle Groups*</Label>
                 <MultiSelect
-                  options={COMMON_MUSCLE_GROUPS.map((g) => ({ label: g, value: g }))}
+                  options={COMMON_MUSCLE_GROUPS.map(g => ({ label: g, value: g }))}
                   selected={exercise.primary_muscle_groups}
-                  onChange={(sel) =>
+                  onChange={sel =>
                     setExercise({
                       ...exercise,
                       primary_muscle_groups: sel as MuscleGroup[]
@@ -213,9 +196,9 @@ export function ExerciseDialog({
               <div>
                 <Label>Secondary Muscle Groups</Label>
                 <MultiSelect
-                  options={COMMON_MUSCLE_GROUPS.map((g) => ({ label: g, value: g }))}
+                  options={COMMON_MUSCLE_GROUPS.map(g => ({ label: g, value: g }))}
                   selected={exercise.secondary_muscle_groups}
-                  onChange={(sel) =>
+                  onChange={sel =>
                     setExercise({
                       ...exercise,
                       secondary_muscle_groups: sel as MuscleGroup[]
@@ -227,9 +210,9 @@ export function ExerciseDialog({
               <div>
                 <Label>Equipment Type*</Label>
                 <MultiSelect
-                  options={COMMON_EQUIPMENT.map((e) => ({ label: e, value: e }))}
+                  options={COMMON_EQUIPMENT.map(e => ({ label: e, value: e }))}
                   selected={exercise.equipment_type}
-                  onChange={(sel) =>
+                  onChange={sel =>
                     setExercise({
                       ...exercise,
                       equipment_type: sel as EquipmentType[]
@@ -240,13 +223,13 @@ export function ExerciseDialog({
               </div>
             </TabsContent>
 
-            {/* ADVANCED TAB */}
+            {/* ADVANCED */}
             <TabsContent value="advanced" className="space-y-4 mt-2">
               <div>
                 <Label>Difficulty</Label>
                 <Select
                   value={exercise.difficulty}
-                  onValueChange={(v) =>
+                  onValueChange={v =>
                     setExercise({ ...exercise, difficulty: v as Difficulty })
                   }
                 >
@@ -254,7 +237,7 @@ export function ExerciseDialog({
                     <SelectValue placeholder="Select difficulty" />
                   </SelectTrigger>
                   <SelectContent portalled={false}>
-                    {DIFFICULTY_LEVELS.map((lvl) => (
+                    {DIFFICULTY_LEVELS.map(lvl => (
                       <SelectItem key={lvl} value={lvl}>
                         {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
                       </SelectItem>
@@ -266,7 +249,7 @@ export function ExerciseDialog({
                 <Label>Movement</Label>
                 <Select
                   value={exercise.movement_pattern}
-                  onValueChange={(v) =>
+                  onValueChange={v =>
                     setExercise({
                       ...exercise,
                       movement_pattern: v as MovementPattern
@@ -277,7 +260,7 @@ export function ExerciseDialog({
                     <SelectValue placeholder="Select movement" />
                   </SelectTrigger>
                   <SelectContent portalled={false}>
-                    {MOVEMENT_PATTERNS.map((m) => (
+                    {MOVEMENT_PATTERNS.map(m => (
                       <SelectItem key={m} value={m}>
                         {m.charAt(0).toUpperCase() + m.slice(1)}
                       </SelectItem>
@@ -287,39 +270,37 @@ export function ExerciseDialog({
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="is_compound"
                   checked={exercise.is_compound}
-                  onCheckedChange={(c) =>
+                  onCheckedChange={c =>
                     setExercise({ ...exercise, is_compound: c as boolean })
                   }
                 />
-                <Label htmlFor="is_compound">Compound exercise</Label>
+                <Label>Compound exercise</Label>
               </div>
             </TabsContent>
 
-            {/* METRICS TAB */}
+            {/* METRICS */}
             <TabsContent value="metrics" className="space-y-4 mt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id="is_bodyweight"
                   checked={exercise.is_bodyweight}
-                  onCheckedChange={(c) =>
+                  onCheckedChange={c =>
                     setExercise({ ...exercise, is_bodyweight: c as boolean })
                   }
                 />
-                <Label htmlFor="is_bodyweight">Bodyweight exercise</Label>
+                <Label>Bodyweight exercise</Label>
               </div>
-              {/* further metrics controls here… */}
+              {/* …additional metrics fields… */}
             </TabsContent>
 
-            {/* INSTRUCTIONS TAB */}
+            {/* INSTRUCTIONS */}
             <TabsContent value="instructions" className="space-y-4 mt-2">
               <div>
                 <Label>Instructions</Label>
                 <Textarea
                   placeholder="Step-by-step instructions…"
                   value={exercise.instructions.steps}
-                  onChange={(e) =>
+                  onChange={e =>
                     setExercise({
                       ...exercise,
                       instructions: { ...exercise.instructions, steps: e.target.value }
@@ -333,7 +314,7 @@ export function ExerciseDialog({
                 <Textarea
                   placeholder="Form cues…"
                   value={exercise.instructions.form}
-                  onChange={(e) =>
+                  onChange={e =>
                     setExercise({
                       ...exercise,
                       instructions: { ...exercise.instructions, form: e.target.value }
