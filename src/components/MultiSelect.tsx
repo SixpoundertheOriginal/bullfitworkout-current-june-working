@@ -20,35 +20,27 @@ interface MultiSelectProps {
 }
 
 export function MultiSelect({
-  options,
-  selected,
+  options = [],
+  selected = [],
   onChange,
   placeholder = "Select options",
   className,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
   
-  // Ensure options and selected are always arrays
-  const safeOptions = React.useMemo(() => 
-    Array.isArray(options) ? options : []
-  , [options]);
-  
-  const safeSelected = React.useMemo(() => 
-    Array.isArray(selected) ? selected : []
-  , [selected]);
-  
+  // No need for useMemo since we're setting default values in the props destructuring
   const handleSelect = (currentValue: string) => {
-    const isSelected = safeSelected.includes(currentValue);
+    const isSelected = selected.includes(currentValue);
     
     if (isSelected) {
-      onChange(safeSelected.filter((value) => value !== currentValue));
+      onChange(selected.filter((value) => value !== currentValue));
     } else {
-      onChange([...safeSelected, currentValue]);
+      onChange([...selected, currentValue]);
     }
   };
 
   const handleRemove = (currentValue: string) => {
-    onChange(safeSelected.filter((value) => value !== currentValue));
+    onChange(selected.filter((value) => value !== currentValue));
   };
 
   return (
@@ -63,9 +55,9 @@ export function MultiSelect({
           )}
         >
           <div className="flex gap-1 flex-wrap">
-            {safeSelected.length === 0 && <span className="text-muted-foreground">{placeholder}</span>}
-            {safeSelected.map((value) => {
-              const option = safeOptions.find((opt) => opt.value === value);
+            {selected.length === 0 && <span className="text-muted-foreground">{placeholder}</span>}
+            {selected.map((value) => {
+              const option = options.find((opt) => opt.value === value);
               return (
                 <Badge
                   key={value}
@@ -87,7 +79,7 @@ export function MultiSelect({
               );
             })}
           </div>
-          <div className="shrink-0 opacity-50">{safeSelected.length > 0 && `${safeSelected.length} selected`}</div>
+          <div className="shrink-0 opacity-50">{selected.length > 0 && `${selected.length} selected`}</div>
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
@@ -95,8 +87,8 @@ export function MultiSelect({
           <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>No options found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
-            {safeOptions.map((option) => {
-              const isSelected = safeSelected.includes(option.value);
+            {options.map((option) => {
+              const isSelected = selected.includes(option.value);
               return (
                 <CommandItem
                   key={option.value}

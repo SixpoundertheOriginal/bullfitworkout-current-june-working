@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -9,50 +10,26 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
->(({ className, children, ...props }, ref) => {
-  // Create a safe version of children that's always an array
-  const safeChildren = React.useMemo(() => {
-    // Handle undefined, null, or non-array children
-    if (children === undefined || children === null) {
-      return [];
-    }
-    // Children is already defined, return as is
-    return children;
-  }, [children]);
-
-  return (
-    <CommandPrimitive
-      ref={ref}
-      className={cn(
-        "flex h-full w-full flex-col overflow-hidden rounded-md bg-gray-900 text-white",
-        className
-      )}
-      {...props}
-    >
-      {safeChildren}
-    </CommandPrimitive>
-  );
-})
+>(({ className, ...props }, ref) => (
+  <CommandPrimitive
+    ref={ref}
+    className={cn(
+      "flex h-full w-full flex-col overflow-hidden rounded-md bg-gray-900 text-white",
+      className
+    )}
+    {...props}
+  />
+))
 Command.displayName = CommandPrimitive.displayName
 
 interface CommandDialogProps extends DialogProps {}
 
 const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
-  // Create a safe version of children that's always an array
-  const safeChildren = React.useMemo(() => {
-    // Handle undefined, null, or non-array children
-    if (children === undefined || children === null) {
-      return [];
-    }
-    // Children is already defined, return as is
-    return children;
-  }, [children]);
-
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0 shadow-lg bg-gray-900">
         <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
-          {safeChildren}
+          {children}
         </Command>
       </DialogContent>
     </Dialog>
@@ -81,27 +58,13 @@ CommandInput.displayName = CommandPrimitive.Input.displayName
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
->(({ className, children, ...props }, ref) => {
-  // Create a safe version of children that's always an array
-  const safeChildren = React.useMemo(() => {
-    // Handle undefined, null, or non-array children
-    if (children === undefined || children === null) {
-      return [];
-    }
-    // Children is already defined, return as is
-    return children;
-  }, [children]);
-
-  return (
-    <CommandPrimitive.List
-      ref={ref}
-      className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
-      {...props}
-    >
-      {safeChildren}
-    </CommandPrimitive.List>
-  );
-})
+>(({ className, ...props }, ref) => (
+  <CommandPrimitive.List
+    ref={ref}
+    className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
+    {...props}
+  />
+))
 
 CommandList.displayName = CommandPrimitive.List.displayName
 
@@ -124,23 +87,8 @@ const CommandGroup = React.forwardRef<
     heading?: React.ReactNode;
     commandItems?: React.ReactNode[];
   }
->(({ className, heading, commandItems = [], children, ...props }, ref) => {
-  // Completely restructure how we handle children to avoid any Array.from issues
-  const safeChildren = React.useMemo(() => {
-    // Simple case: if we have children, use them directly
-    if (children !== undefined && children !== null) {
-      return children;
-    }
-    
-    // Otherwise, ensure commandItems is an array and use that
-    if (Array.isArray(commandItems) && commandItems.length > 0) {
-      return commandItems;
-    }
-    
-    // If all else fails, return an empty array
-    return [];
-  }, [children, commandItems]);
-
+>(({ className, heading, commandItems, children, ...props }, ref) => {
+  // Pass children directly without any Array.from transformation
   return (
     <CommandPrimitive.Group
       ref={ref}
@@ -151,7 +99,7 @@ const CommandGroup = React.forwardRef<
       )}
       {...props}
     >
-      {safeChildren}
+      {children || (Array.isArray(commandItems) ? commandItems : [])}
     </CommandPrimitive.Group>
   );
 })
@@ -173,30 +121,16 @@ CommandSeparator.displayName = CommandPrimitive.Separator.displayName
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
->(({ className, children, ...props }, ref) => {
-  // Create a safe version of children that's always an array
-  const safeChildren = React.useMemo(() => {
-    // Handle undefined, null, or non-array children
-    if (children === undefined || children === null) {
-      return [];
-    }
-    // Children is already defined, return as is
-    return children;
-  }, [children]);
-
-  return (
-    <CommandPrimitive.Item
-      ref={ref}
-      className={cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-gray-800 data-[selected=true]:text-white data-[disabled=true]:opacity-50",
-        className
-      )}
-      {...props}
-    >
-      {safeChildren}
-    </CommandPrimitive.Item>
-  );
-})
+>(({ className, ...props }, ref) => (
+  <CommandPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-gray-800 data-[selected=true]:text-white data-[disabled=true]:opacity-50",
+      className
+    )}
+    {...props}
+  />
+))
 
 CommandItem.displayName = CommandPrimitive.Item.displayName
 
