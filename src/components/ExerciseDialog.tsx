@@ -125,17 +125,32 @@ export function ExerciseDialog({
 
   // Keep bodyweight flag in sync
   useEffect(() => {
-    if (exercise.equipment_type?.includes("bodyweight")) {
+    const equipmentTypes = exercise.equipment_type || [];
+    if (Array.isArray(equipmentTypes) && equipmentTypes.includes("bodyweight")) {
       setExercise(prev => ({ ...prev, is_bodyweight: true }));
     }
   }, [exercise.equipment_type, setExercise]);
 
   const handleSubmit = () => {
     if (!exercise.name) return setFormError("Exercise name is required");
-    if (!exercise.primary_muscle_groups?.length) return setFormError("Select at least one primary muscle group");
-    if (!exercise.equipment_type?.length) return setFormError("Select at least one equipment type");
+    
+    // Ensure we have arrays, not undefined values
+    const primaryMuscleGroups = Array.isArray(exercise.primary_muscle_groups) ? exercise.primary_muscle_groups : [];
+    if (!primaryMuscleGroups.length) return setFormError("Select at least one primary muscle group");
+    
+    const equipmentType = Array.isArray(exercise.equipment_type) ? exercise.equipment_type : [];
+    if (!equipmentType.length) return setFormError("Select at least one equipment type");
 
-    const toSubmit = { ...exercise };
+    const toSubmit = { 
+      ...exercise,
+      // Ensure all array properties are properly initialized
+      primary_muscle_groups: primaryMuscleGroups,
+      secondary_muscle_groups: Array.isArray(exercise.secondary_muscle_groups) ? exercise.secondary_muscle_groups : [],
+      equipment_type: equipmentType,
+      tips: Array.isArray(exercise.tips) ? exercise.tips : [],
+      variations: Array.isArray(exercise.variations) ? exercise.variations : [],
+    };
+    
     if (toSubmit.is_bodyweight && !toSubmit.loading_type) {
       toSubmit.loading_type = "bodyweight";
     }
@@ -162,7 +177,7 @@ export function ExerciseDialog({
 
   // Unsaved changes warning
   useEffect(() => {
-    if (isOpen && isAddMode && (exercise.name || exercise.primary_muscle_groups?.length)) {
+    if (isOpen && isAddMode && (exercise.name || (Array.isArray(exercise.primary_muscle_groups) && exercise.primary_muscle_groups.length > 0))) {
       const warn = (e: BeforeUnloadEvent) => {
         e.preventDefault();
         return (e.returnValue = "You have unsaved changes. Leave anyway?");
@@ -176,7 +191,12 @@ export function ExerciseDialog({
   useEffect(() => {
     // This effect is just for debouncing heavy operations on open
     if (isOpen) {
-      // Any heavy initialization can go here
+      // Use setTimeout to delay heavy operations
+      const timer = setTimeout(() => {
+        // Any heavy initialization can go here
+        console.log("Dialog fully initialized");
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -225,7 +245,7 @@ export function ExerciseDialog({
                 <Label>Primary Muscle Groups*</Label>
                 <MultiSelect
                   options={COMMON_MUSCLE_GROUPS.map(g => ({ label: g, value: g }))}
-                  selected={exercise.primary_muscle_groups || []}
+                  selected={Array.isArray(exercise.primary_muscle_groups) ? exercise.primary_muscle_groups : []}
                   onChange={sel => setExercise({ ...exercise, primary_muscle_groups: sel as MuscleGroup[] })}
                   placeholder="Select..."
                 />
@@ -234,7 +254,7 @@ export function ExerciseDialog({
                 <Label>Secondary Muscle Groups</Label>
                 <MultiSelect
                   options={COMMON_MUSCLE_GROUPS.map(g => ({ label: g, value: g }))}
-                  selected={exercise.secondary_muscle_groups || []}
+                  selected={Array.isArray(exercise.secondary_muscle_groups) ? exercise.secondary_muscle_groups : []}
                   onChange={sel => setExercise({ ...exercise, secondary_muscle_groups: sel as MuscleGroup[] })}
                   placeholder="Select..."
                 />
@@ -243,7 +263,7 @@ export function ExerciseDialog({
                 <Label>Equipment Type*</Label>
                 <MultiSelect
                   options={COMMON_EQUIPMENT.map(e => ({ label: e, value: e }))}
-                  selected={exercise.equipment_type || []}
+                  selected={Array.isArray(exercise.equipment_type) ? exercise.equipment_type : []}
                   onChange={sel => setExercise({ ...exercise, equipment_type: sel as EquipmentType[] })}
                   placeholder="Select..."
                 />
@@ -268,7 +288,7 @@ export function ExerciseDialog({
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  checked={exercise.is_compound}
+                  checked={exercise.is_compound || false}
                   onCheckedChange={c => setExercise({ ...exercise, is_compound: c as boolean })}
                 /><Label>Compound</Label>
               </div>
@@ -279,22 +299,26 @@ export function ExerciseDialog({
                   <Input placeholder="Add tip..." value={newTip} onChange={e => setNewTip(e.target.value)} />
                   <Button variant="outline" onClick={() => {
                     if (newTip.trim()) {
+                      const currentTips = Array.isArray(exercise.tips) ? exercise.tips : [];
                       setExercise({ 
                         ...exercise, 
-                        tips: [...(exercise.tips || []), newTip.trim()] 
+                        tips: [...currentTips, newTip.trim()] 
                       });
                       setNewTip("");
                     }
                   }}>Add</Button>
                 </div>
                 <div className="space-y-2 mt-2">
-                  {(exercise.tips || []).map((t, i) => (
+                  {(Array.isArray(exercise.tips) ? exercise.tips : []).map((t, i) => (
                     <div key={i} className="flex justify-between bg-muted p-2 rounded">
                       <span>{t}</span>
-                      <Button variant="ghost" size="sm" onClick={() => setExercise({
-                        ...exercise,
-                        tips: (exercise.tips || []).filter((_, idx) => idx !== i)
-                      })}>Remove</Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        const currentTips = Array.isArray(exercise.tips) ? exercise.tips : [];
+                        setExercise({
+                          ...exercise,
+                          tips: currentTips.filter((_, idx) => idx !== i)
+                        });
+                      }}>Remove</Button>
                     </div>
                   ))}
                 </div>
@@ -305,22 +329,26 @@ export function ExerciseDialog({
                   <Input placeholder="Add variation..." value={newVariation} onChange={e => setNewVariation(e.target.value)} />
                   <Button variant="outline" onClick={() => {
                     if (newVariation.trim()) {
+                      const currentVariations = Array.isArray(exercise.variations) ? exercise.variations : [];
                       setExercise({ 
                         ...exercise, 
-                        variations: [...(exercise.variations || []), newVariation.trim()] 
+                        variations: [...currentVariations, newVariation.trim()] 
                       });
                       setNewVariation("");
                     }
                   }}>Add</Button>
                 </div>
                 <div className="space-y-2 mt-2">
-                  {(exercise.variations || []).map((v, i) => (
+                  {(Array.isArray(exercise.variations) ? exercise.variations : []).map((v, i) => (
                     <div key={i} className="flex justify-between bg-muted p-2 rounded">
                       <span>{v}</span>
-                      <Button variant="ghost" size="sm" onClick={() => setExercise({
-                        ...exercise,
-                        variations: (exercise.variations || []).filter((_, idx) => idx !== i)
-                      })}>Remove</Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        const currentVariations = Array.isArray(exercise.variations) ? exercise.variations : [];
+                        setExercise({
+                          ...exercise,
+                          variations: currentVariations.filter((_, idx) => idx !== i)
+                        });
+                      }}>Remove</Button>
                     </div>
                   ))}
                 </div>

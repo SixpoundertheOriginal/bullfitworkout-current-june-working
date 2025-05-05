@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, ChevronsUpDown, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
   
   const { exercises, isLoading, createExercise, isPending, error, isError } = useExercises();
 
+  // Ensure exercises is always an array, even when undefined or null
   const safeExercises = Array.isArray(exercises) ? exercises : [];
 
   useEffect(() => {
@@ -115,6 +117,12 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     const exerciseToCreate = {
       ...newExercise,
       user_id: user?.id || "",
+      // Ensure all array properties are initialized properly
+      primary_muscle_groups: Array.isArray(newExercise.primary_muscle_groups) ? newExercise.primary_muscle_groups : [],
+      secondary_muscle_groups: Array.isArray(newExercise.secondary_muscle_groups) ? newExercise.secondary_muscle_groups : [],
+      equipment_type: Array.isArray(newExercise.equipment_type) ? newExercise.equipment_type : [],
+      tips: Array.isArray(newExercise.tips) ? newExercise.tips : [],
+      variations: Array.isArray(newExercise.variations) ? newExercise.variations : []
     };
     
     console.log("Creating exercise with data:", exerciseToCreate);
@@ -152,62 +160,80 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     });
   };
 
+  // Ensure we always have array values for these operations
   const addPrimaryMuscleGroup = (muscleGroup: MuscleGroup) => {
-    if (muscleGroup && !newExercise.primary_muscle_groups.includes(muscleGroup)) {
-      setNewExercise({
-        ...newExercise,
-        primary_muscle_groups: [...newExercise.primary_muscle_groups, muscleGroup],
-      });
+    if (muscleGroup) {
+      const currentGroups = Array.isArray(newExercise.primary_muscle_groups) ? newExercise.primary_muscle_groups : [];
+      if (!currentGroups.includes(muscleGroup)) {
+        setNewExercise({
+          ...newExercise,
+          primary_muscle_groups: [...currentGroups, muscleGroup],
+        });
+      }
       setTempMuscleGroup("");
     }
   };
   
   const addSecondaryMuscleGroup = (muscleGroup: MuscleGroup) => {
-    if (muscleGroup && !newExercise.secondary_muscle_groups.includes(muscleGroup)) {
-      setNewExercise({
-        ...newExercise,
-        secondary_muscle_groups: [...newExercise.secondary_muscle_groups, muscleGroup],
-      });
+    if (muscleGroup) {
+      const currentGroups = Array.isArray(newExercise.secondary_muscle_groups) ? newExercise.secondary_muscle_groups : [];
+      if (!currentGroups.includes(muscleGroup)) {
+        setNewExercise({
+          ...newExercise,
+          secondary_muscle_groups: [...currentGroups, muscleGroup],
+        });
+      }
       setTempSecondaryMuscle("");
     }
   };
 
   const addEquipment = (equipment: EquipmentType) => {
-    if (equipment && !newExercise.equipment_type.includes(equipment)) {
-      setNewExercise({
-        ...newExercise,
-        equipment_type: [...newExercise.equipment_type, equipment],
-      });
+    if (equipment) {
+      const currentEquipment = Array.isArray(newExercise.equipment_type) ? newExercise.equipment_type : [];
+      if (!currentEquipment.includes(equipment)) {
+        setNewExercise({
+          ...newExercise,
+          equipment_type: [...currentEquipment, equipment],
+        });
+      }
       setTempEquipment("");
     }
   };
 
   const removeMuscleGroup = (group: string) => {
+    const currentGroups = Array.isArray(newExercise.primary_muscle_groups) ? newExercise.primary_muscle_groups : [];
     setNewExercise({
       ...newExercise,
-      primary_muscle_groups: newExercise.primary_muscle_groups.filter(g => g !== group),
+      primary_muscle_groups: currentGroups.filter(g => g !== group),
     });
   };
   
   const removeSecondaryMuscle = (group: string) => {
+    const currentGroups = Array.isArray(newExercise.secondary_muscle_groups) ? newExercise.secondary_muscle_groups : [];
     setNewExercise({
       ...newExercise,
-      secondary_muscle_groups: newExercise.secondary_muscle_groups.filter(g => g !== group),
+      secondary_muscle_groups: currentGroups.filter(g => g !== group),
     });
   };
 
   const removeEquipment = (equipment: string) => {
+    const currentEquipment = Array.isArray(newExercise.equipment_type) ? newExercise.equipment_type : [];
     setNewExercise({
       ...newExercise,
-      equipment_type: newExercise.equipment_type.filter(e => e !== equipment),
+      equipment_type: currentEquipment.filter(e => e !== equipment),
     });
   };
 
+  // Filter exercises with safety checks for undefined values
   const filteredExercises = safeExercises
     .filter(exercise => 
-      exercise?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      exercise?.name?.toLowerCase().includes((searchTerm || "").toLowerCase())
     )
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Generate unique IDs for ARIA attributes
+  const dialogTitleId = React.useId();
+  const dialogDescriptionId = React.useId();
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -230,6 +256,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0 bg-gray-800 text-white border-gray-700">
+          {/* Wrap Command in error boundaries or provide safe defaults */}
           <Command className="bg-gray-800 border-gray-700">
             <CommandInput 
               placeholder="Search exercises..." 
@@ -307,9 +334,14 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
           sessionStorage.removeItem("addExerciseForm");
         }
       }}>
-        <DialogContent className="bg-gray-900 text-white border-gray-700 sm:max-w-[500px]">
+        <DialogContent 
+          className="bg-gray-900 text-white border-gray-700 sm:max-w-[500px]"
+          aria-labelledby={dialogTitleId}
+          aria-describedby={dialogDescriptionId}
+        >
           <DialogHeader>
-            <DialogTitle>Add New Exercise</DialogTitle>
+            <DialogTitle id={dialogTitleId}>Add New Exercise</DialogTitle>
+            <p id={dialogDescriptionId} className="sr-only">Fill in the details to add a new exercise to your library.</p>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -355,7 +387,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
               </DropdownMenu>
               
               <div className="flex flex-wrap gap-2 mt-2">
-                {newExercise.primary_muscle_groups.map((group) => (
+                {(Array.isArray(newExercise.primary_muscle_groups) ? newExercise.primary_muscle_groups : []).map((group) => (
                   <Badge 
                     key={group} 
                     variant="secondary"
@@ -397,7 +429,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
               </DropdownMenu>
               
               <div className="flex flex-wrap gap-2 mt-2">
-                {newExercise.secondary_muscle_groups.map((group) => (
+                {(Array.isArray(newExercise.secondary_muscle_groups) ? newExercise.secondary_muscle_groups : []).map((group) => (
                   <Badge 
                     key={group} 
                     variant="secondary"
@@ -439,7 +471,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
               </DropdownMenu>
               
               <div className="flex flex-wrap gap-2 mt-2">
-                {newExercise.equipment_type.map((equipment) => (
+                {(Array.isArray(newExercise.equipment_type) ? newExercise.equipment_type : []).map((equipment) => (
                   <Badge 
                     key={equipment} 
                     variant="secondary"
