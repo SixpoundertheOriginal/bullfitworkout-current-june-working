@@ -1,3 +1,4 @@
+
 // src/components/workouts/ExerciseDialog.tsx
 
 import React, { useState, useEffect } from "react";
@@ -27,6 +28,7 @@ import {
   LoadingType,
   VariantCategory
 } from "@/types/exercise";
+import type { PointerDownOutsideEvent } from "@radix-ui/react-dialog";
 
 interface ExerciseDialogProps {
   open: boolean;
@@ -142,10 +144,10 @@ export function ExerciseDialog({
     onOpenChange(false);
   };
 
-  // prevent outside clicks from closing dialog when interacting with selects
-  const onPointerDownOutside = (e: React.PointerEvent) => {
-    // you _could_ whitelist scrim clicks here, or just blanket-prevent:
-    e.preventDefault();
+  // Update the handler to use the correct event type
+  const onPointerDownOutside = (event: PointerDownOutsideEvent) => {
+    // Prevent outside clicks from closing dialog when interacting with selects
+    event.preventDefault();
   };
 
   return (
