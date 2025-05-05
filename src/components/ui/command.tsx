@@ -10,16 +10,25 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
->(({ className, ...props }, ref) => (
-  <CommandPrimitive
-    ref={ref}
-    className={cn(
-      "flex h-full w-full flex-col overflow-hidden rounded-md bg-gray-900 text-white",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, children, ...props }, ref) => {
+  // Ensure children is always defined
+  const safeChildren = React.useMemo(() => {
+    return children || [];
+  }, [children]);
+
+  return (
+    <CommandPrimitive
+      ref={ref}
+      className={cn(
+        "flex h-full w-full flex-col overflow-hidden rounded-md bg-gray-900 text-white",
+        className
+      )}
+      {...props}
+    >
+      {safeChildren}
+    </CommandPrimitive>
+  );
+})
 Command.displayName = CommandPrimitive.displayName
 
 interface CommandDialogProps extends DialogProps {}
