@@ -30,12 +30,17 @@ import {
   MuscleGroup,
   EquipmentType,
   MovementPattern,
-  Difficulty,
-  COMMON_MUSCLE_GROUPS,
-  COMMON_EQUIPMENT,
-  MOVEMENT_PATTERNS,
-  DIFFICULTY_LEVELS
+  Difficulty
 } from "@/types/exercise";
+import {
+  MUSCLE_GROUPS,
+  EQUIPMENT_TYPES,
+  MOVEMENT_PATTERNS,
+  DIFFICULTY_LEVELS,
+  getMuscleGroupOptions,
+  getEquipmentOptions,
+  formatDisplayName
+} from "@/constants/exerciseMetadata";
 
 const DEFAULT_EXERCISE = {
   name: "",
@@ -126,6 +131,10 @@ export function ExerciseDialog({
     onOpenChange(false);
   };
 
+  // Generate options for MultiSelect components
+  const muscleGroupOptions = getMuscleGroupOptions();
+  const equipmentOptions = getEquipmentOptions();
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
@@ -186,7 +195,7 @@ export function ExerciseDialog({
               <div>
                 <Label>Primary Muscle Groups*</Label>
                 <MultiSelect
-                  options={COMMON_MUSCLE_GROUPS.map(g => ({ label: g, value: g }))}
+                  options={muscleGroupOptions}
                   selected={exercise.primary_muscle_groups}
                   onChange={sel =>
                     setExercise({
@@ -200,7 +209,7 @@ export function ExerciseDialog({
               <div>
                 <Label>Secondary Muscle Groups</Label>
                 <MultiSelect
-                  options={COMMON_MUSCLE_GROUPS.map(g => ({ label: g, value: g }))}
+                  options={muscleGroupOptions}
                   selected={exercise.secondary_muscle_groups}
                   onChange={sel =>
                     setExercise({
@@ -214,7 +223,7 @@ export function ExerciseDialog({
               <div>
                 <Label>Equipment Type*</Label>
                 <MultiSelect
-                  options={COMMON_EQUIPMENT.map(e => ({ label: e, value: e }))}
+                  options={equipmentOptions}
                   selected={exercise.equipment_type}
                   onChange={sel =>
                     setExercise({
@@ -243,7 +252,7 @@ export function ExerciseDialog({
                   <SelectContent>
                     {DIFFICULTY_LEVELS.map(lvl => (
                       <SelectItem key={lvl} value={lvl}>
-                        {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                        {formatDisplayName(lvl)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -266,7 +275,7 @@ export function ExerciseDialog({
                   <SelectContent>
                     {MOVEMENT_PATTERNS.map(m => (
                       <SelectItem key={m} value={m}>
-                        {m.charAt(0).toUpperCase() + m.slice(1)}
+                        {formatDisplayName(m)}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -87,6 +88,13 @@ const CommandGroup = React.forwardRef<
     commandItems?: React.ReactNode[];
   }
 >(({ className, heading, commandItems, children, ...props }, ref) => {
+  // Safely handle children or commandItems
+  const content = React.useMemo(() => {
+    if (children) return children;
+    if (commandItems && Array.isArray(commandItems)) return commandItems;
+    return null;
+  }, [children, commandItems]);
+  
   return (
     <CommandPrimitive.Group
       ref={ref}
@@ -97,7 +105,7 @@ const CommandGroup = React.forwardRef<
       )}
       {...props}
     >
-      {children || (Array.isArray(commandItems) ? commandItems : [])}
+      {content}
     </CommandPrimitive.Group>
   );
 })
