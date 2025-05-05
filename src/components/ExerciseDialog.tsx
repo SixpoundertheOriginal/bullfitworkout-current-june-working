@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/MultiSelect";
 import { useSessionForm } from "@/hooks/useSessionState";
+
+// Import from canonical source
 import {
   MuscleGroup,
   EquipmentType,
   MovementPattern,
-  Difficulty
-} from "@/types/exercise";
-import {
+  Difficulty,
   MUSCLE_GROUPS,
   EQUIPMENT_TYPES,
   MOVEMENT_PATTERNS,

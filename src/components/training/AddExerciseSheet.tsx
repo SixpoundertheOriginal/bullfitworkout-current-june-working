@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, Plus } from "lucide-react";
@@ -14,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import { useSessionState } from '@/hooks/useSessionState';
 
+// Using canonical source for exercise metadata
 interface AddExerciseSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

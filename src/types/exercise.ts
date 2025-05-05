@@ -1,3 +1,13 @@
+
+import {
+  MuscleGroup,
+  EquipmentType,
+  MovementPattern,
+  Difficulty,
+  LoadingType,
+  VariantCategory
+} from '@/constants/exerciseMetadata';
+
 export interface ExerciseSet {
   id: string;
   weight: number;
@@ -12,30 +22,6 @@ export interface ExerciseSet {
   weightCalculation?: WeightCalculation;
   metadata?: Record<string, any>; // Add metadata property for RPE and other set-specific data
 }
-
-export type MuscleGroup = 
-  | 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core' | 'cardio' | 'full body'
-  | 'biceps' | 'triceps' | 'forearms' | 'traps' | 'lats' | 'glutes' | 'hamstrings' 
-  | 'quads' | 'calves' | 'abs' | 'obliques' | 'lower back';
-
-export type EquipmentType = 
-  | 'barbell' | 'dumbbell' | 'kettlebell' | 'cable' | 'machine' | 'bodyweight' 
-  | 'resistance band' | 'smith machine' | 'box' | 'bench' | 'other';
-
-export type MovementPattern = 
-  | 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'rotation' | 'carry' | 'isometric';
-
-export type Difficulty = 'beginner' | 'intermediate' | 'advanced' | 'expert';
-
-// Enhanced loading type for better metrics calculation
-export type LoadingType = 
-  | 'bodyweight' | 'barbell' | 'dumbbell' | 'kettlebell' | 'cable'
-  | 'machine' | 'resistance band' | 'smithMachine' | 'external';
-
-// Exercise variants for progression tracking
-export type VariantCategory = 
-  | 'standard' | 'incline' | 'decline' | 'narrow' | 'wide' 
-  | 'assisted' | 'weighted' | 'unilateral' | 'explosive';
 
 export interface Exercise {
   id: string;
@@ -63,35 +49,6 @@ export interface Exercise {
   is_bodyweight?: boolean; // Flag for bodyweight exercises
   energy_cost_factor?: number; // Relative energy expenditure factor
 }
-
-export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [
-  'chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'cardio', 'full body',
-  'biceps', 'triceps', 'forearms', 'traps', 'lats', 'glutes', 'hamstrings',
-  'quads', 'calves', 'abs', 'obliques', 'lower back'
-];
-
-export const COMMON_EQUIPMENT: EquipmentType[] = [
-  'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine', 'bodyweight',
-  'resistance band', 'smith machine', 'box', 'bench', 'other'
-];
-
-export const MOVEMENT_PATTERNS: MovementPattern[] = [
-  'push', 'pull', 'squat', 'hinge', 'lunge', 'rotation', 'carry', 'isometric'
-];
-
-export const DIFFICULTY_LEVELS: Difficulty[] = [
-  'beginner', 'intermediate', 'advanced', 'expert'
-];
-
-export const LOADING_TYPES: LoadingType[] = [
-  'bodyweight', 'barbell', 'dumbbell', 'kettlebell', 'cable',
-  'machine', 'resistance band', 'smithMachine', 'external'
-];
-
-export const VARIANT_CATEGORIES: VariantCategory[] = [
-  'standard', 'incline', 'decline', 'narrow', 'wide', 
-  'assisted', 'weighted', 'unilateral', 'explosive'
-];
 
 export interface LoadFactorMapping {
   name: string;

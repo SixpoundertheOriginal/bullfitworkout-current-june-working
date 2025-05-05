@@ -1,7 +1,11 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
+import { Exercise, Difficulty } from '@/types/exercise';
 import { 
+  MuscleGroup, 
+  EquipmentType, 
+  MovementPattern,
   sanitizeMuscleGroups, 
   sanitizeEquipmentTypes, 
   isMovementPattern, 

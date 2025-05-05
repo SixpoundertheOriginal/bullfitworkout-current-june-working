@@ -16,15 +16,20 @@ import {
 } from "@/components/ui/dialog";
 import { 
   Exercise, 
-  COMMON_MUSCLE_GROUPS, 
-  COMMON_EQUIPMENT, 
   MOVEMENT_PATTERNS, 
   DIFFICULTY_LEVELS,
-  MuscleGroup,
-  EquipmentType,
   MovementPattern,
   Difficulty
 } from "@/types/exercise";
+
+import {
+  MuscleGroup,
+  EquipmentType,
+  MUSCLE_GROUPS,
+  EQUIPMENT_TYPES,
+  formatDisplayName
+} from "@/constants/exerciseMetadata";
+
 import { useExercises } from "@/hooks/useExercises";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -373,7 +378,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
-                  {COMMON_MUSCLE_GROUPS.map((muscle) => (
+                  {MUSCLE_GROUPS.map((muscle) => (
                     <DropdownMenuItem 
                       key={muscle}
                       onClick={() => addPrimaryMuscleGroup(muscle)}
@@ -415,7 +420,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
-                  {COMMON_MUSCLE_GROUPS.map((muscle) => (
+                  {MUSCLE_GROUPS.map((muscle) => (
                     <DropdownMenuItem 
                       key={muscle}
                       onClick={() => addSecondaryMuscleGroup(muscle)}
@@ -457,7 +462,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
-                  {COMMON_EQUIPMENT.map((equipment) => (
+                  {EQUIPMENT_TYPES.map((equipment) => (
                     <DropdownMenuItem 
                       key={equipment}
                       onClick={() => addEquipment(equipment)}
@@ -500,7 +505,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   {MOVEMENT_PATTERNS.map((pattern) => (
-                    <SelectItem key={pattern} value={pattern}>{pattern.charAt(0).toUpperCase() + pattern.slice(1)}</SelectItem>
+                    <SelectItem key={pattern} value={pattern}>{formatDisplayName(pattern)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -517,7 +522,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700 text-white">
                   {DIFFICULTY_LEVELS.map((level) => (
-                    <SelectItem key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</SelectItem>
+                    <SelectItem key={level} value={level}>{formatDisplayName(level)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
