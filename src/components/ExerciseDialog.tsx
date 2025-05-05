@@ -1,3 +1,4 @@
+
 // src/components/workouts/ExerciseDialog.tsx
 
 import React, { useState, useEffect } from "react";
@@ -81,7 +82,10 @@ export function ExerciseDialog({
     resetForm
   } = useSessionForm("addExerciseForm", DEFAULT_EXERCISE);
 
-  const [activeTab, setActiveTab] = useState<"basic"|"advanced"|"metrics"|"instructions">("basic");
+  // Define the valid tab types to fix the type error
+  type TabType = "basic" | "advanced" | "metrics" | "instructions";
+  
+  const [activeTab, setActiveTab] = useState<TabType>("basic");
   const [formError, setFormError] = useState("");
 
   // On mount or when initialExercise changes, seed or reset the form
@@ -145,7 +149,7 @@ export function ExerciseDialog({
 
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(value: TabType) => setActiveTab(value)}
           className="flex-1 overflow-hidden flex flex-col"
         >
           <TabsList className="grid grid-cols-4">
@@ -236,7 +240,7 @@ export function ExerciseDialog({
                   <SelectTrigger>
                     <SelectValue placeholder="Select difficulty" />
                   </SelectTrigger>
-                  <SelectContent portalled={false}>
+                  <SelectContent>
                     {DIFFICULTY_LEVELS.map(lvl => (
                       <SelectItem key={lvl} value={lvl}>
                         {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
@@ -259,7 +263,7 @@ export function ExerciseDialog({
                   <SelectTrigger>
                     <SelectValue placeholder="Select movement" />
                   </SelectTrigger>
-                  <SelectContent portalled={false}>
+                  <SelectContent>
                     {MOVEMENT_PATTERNS.map(m => (
                       <SelectItem key={m} value={m}>
                         {m.charAt(0).toUpperCase() + m.slice(1)}
