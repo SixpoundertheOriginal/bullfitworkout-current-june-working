@@ -1,167 +1,215 @@
 
 /**
- * Canonical source for exercise metadata including muscle groups, equipment types,
- * and other standardized exercise data.
- * 
- * This file is the single source of truth for these constants throughout the application.
+ * Exercise metadata constants - canonical source for all exercise metadata types and values
+ * This file centralizes all muscle groups, equipment types, and related exercise metadata
  */
 
-// Type definitions
 export type MuscleGroup = 
-  | 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core' | 'cardio' | 'full body'
-  | 'biceps' | 'triceps' | 'forearms' | 'traps' | 'lats' | 'glutes' | 'hamstrings'
-  | 'quads' | 'calves' | 'abs' | 'obliques' | 'lower back';
+  | 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps' 
+  | 'forearms' | 'quadriceps' | 'hamstrings' | 'glutes' 
+  | 'calves' | 'abs' | 'lowerBack' | 'traps' | 'core' | 'fullBody';
 
 export type EquipmentType = 
-  | 'barbell' | 'dumbbell' | 'kettlebell' | 'cable' | 'machine' | 'bodyweight'
-  | 'resistance band' | 'smith machine' | 'box' | 'bench' | 'other';
+  | 'barbell' | 'dumbbell' | 'kettlebell' | 'machine' | 'cable' 
+  | 'smith' | 'bodyweight' | 'bands' | 'suspension' | 'cardio' | 'other';
 
 export type MovementPattern = 
-  | 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'rotation' | 'carry' | 'isometric';
+  | 'push' | 'pull' | 'hinge' | 'squat' | 'lunge' | 'rotation' 
+  | 'carry' | 'isometric' | 'plyometric' | 'compound' | 'isolation';
 
-export type Difficulty = 
-  | 'beginner' | 'intermediate' | 'advanced' | 'expert';
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced' | 'expert';
 
-export type LoadingType = 
-  | 'bodyweight' | 'barbell' | 'dumbbell' | 'kettlebell' | 'cable'
-  | 'machine' | 'resistance band' | 'smithMachine' | 'external';
+export type LoadingType = 'barbell' | 'dumbbell' | 'kettlebell' | 'machine' | 'bodyweight' | 'assisted' | 'mixed';
 
 export type VariantCategory = 
-  | 'standard' | 'incline' | 'decline' | 'narrow' | 'wide' 
-  | 'assisted' | 'weighted' | 'unilateral' | 'explosive';
+  | 'standard' | 'regression' | 'progression' | 'variation' | 'alternative' | 'modification';
 
-// Muscle Groups - Canonical list with proper typing
+// Type guard functions for runtime type checking
+export const isMuscleGroup = (value: any): value is MuscleGroup => {
+  return MUSCLE_GROUPS.includes(value as MuscleGroup);
+};
+
+export const isEquipmentType = (value: any): value is EquipmentType => {
+  return EQUIPMENT_TYPES.includes(value as EquipmentType);
+};
+
+export const isMovementPattern = (value: any): value is MovementPattern => {
+  return MOVEMENT_PATTERNS.includes(value as MovementPattern);
+};
+
+export const isDifficulty = (value: any): value is Difficulty => {
+  return DIFFICULTY_LEVELS.includes(value as Difficulty);
+};
+
+export const isLoadingType = (value: any): value is LoadingType => {
+  return LOADING_TYPES.includes(value as LoadingType);
+};
+
+export const isVariantCategory = (value: any): value is VariantCategory => {
+  return VARIANT_CATEGORIES.includes(value as VariantCategory);
+};
+
+// All muscle groups with display names and metadata
 export const MUSCLE_GROUPS: MuscleGroup[] = [
-  'chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'cardio', 'full body',
-  'biceps', 'triceps', 'forearms', 'traps', 'lats', 'glutes', 'hamstrings',
-  'quads', 'calves', 'abs', 'obliques', 'lower back'
+  'chest', 'back', 'shoulders', 'biceps', 'triceps', 'forearms', 
+  'quadriceps', 'hamstrings', 'glutes', 'calves', 'abs', 'lowerBack', 
+  'traps', 'core', 'fullBody'
 ];
 
-// Common subset for UI dropdowns
+// Common subset of muscle groups for filters and quick selections
 export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [
-  'chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'biceps', 
-  'triceps', 'glutes', 'hamstrings', 'quads', 'abs'
+  'chest', 'back', 'shoulders', 'biceps', 'triceps', 
+  'quadriceps', 'hamstrings', 'glutes', 'abs', 'core'
 ];
 
-// Equipment Types - Canonical list with proper typing
+// All equipment types
 export const EQUIPMENT_TYPES: EquipmentType[] = [
-  'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine', 'bodyweight',
-  'resistance band', 'smith machine', 'box', 'bench', 'other'
+  'barbell', 'dumbbell', 'kettlebell', 'machine', 'cable',
+  'smith', 'bodyweight', 'bands', 'suspension', 'cardio', 'other'
 ];
 
-// Common subset for UI dropdowns
+// Common subset of equipment for filters and quick selections
 export const COMMON_EQUIPMENT: EquipmentType[] = [
-  'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine', 'bodyweight',
-  'resistance band'
+  'barbell', 'dumbbell', 'machine', 'bodyweight', 'cable'
 ];
 
-// Movement Patterns - Canonical list with proper typing
+// All movement patterns
 export const MOVEMENT_PATTERNS: MovementPattern[] = [
-  'push', 'pull', 'squat', 'hinge', 'lunge', 'rotation', 'carry', 'isometric'
+  'push', 'pull', 'hinge', 'squat', 'lunge', 'rotation',
+  'carry', 'isometric', 'plyometric', 'compound', 'isolation'
 ];
 
-// Difficulty Levels - Canonical list with proper typing
+// All difficulty levels
 export const DIFFICULTY_LEVELS: Difficulty[] = [
   'beginner', 'intermediate', 'advanced', 'expert'
 ];
 
-// Loading Types - Canonical list with proper typing
+// All loading types
 export const LOADING_TYPES: LoadingType[] = [
-  'bodyweight', 'barbell', 'dumbbell', 'kettlebell', 'cable',
-  'machine', 'resistance band', 'smithMachine', 'external'
+  'barbell', 'dumbbell', 'kettlebell', 'machine', 'bodyweight', 'assisted', 'mixed'
 ];
 
-// Variant Categories - Canonical list with proper typing
+// All variant categories
 export const VARIANT_CATEGORIES: VariantCategory[] = [
-  'standard', 'incline', 'decline', 'narrow', 'wide', 
-  'assisted', 'weighted', 'unilateral', 'explosive'
+  'standard', 'regression', 'progression', 'variation', 'alternative', 'modification'
 ];
+
+// UI-friendly display names for dropdown options
+export const muscleGroupOptions = MUSCLE_GROUPS.map(group => ({
+  value: group,
+  label: formatDisplayName(group)
+}));
+
+export const equipmentOptions = EQUIPMENT_TYPES.map(type => ({
+  value: type,
+  label: formatDisplayName(type)
+}));
+
+export const movementPatternOptions = MOVEMENT_PATTERNS.map(pattern => ({
+  value: pattern,
+  label: formatDisplayName(pattern)
+}));
+
+export const difficultyLevelOptions = DIFFICULTY_LEVELS.map(level => ({
+  value: level,
+  label: formatDisplayName(level)
+}));
 
 /**
- * Helper for MultiSelect components - converts array to options format
+ * Helper function to format values for display
+ * Converts camelCase or snake_case to Title Case
  */
-export interface SelectOption {
-  label: string;
-  value: string;
+export function formatDisplayName(value: string): string {
+  // Handle special cases
+  if (value === 'abs') return 'Abs';
+  if (value === 'lowerBack') return 'Lower Back';
+  
+  // Convert camelCase to space-separated
+  const spaceSeparated = value
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase to space-separated
+    .replace(/_/g, ' '); // snake_case to space-separated
+  
+  // Capitalize first letter of each word
+  return spaceSeparated
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 /**
- * Converts muscle groups to MultiSelect options format
+ * Safe array casting functions that protect against undefined/null values
  */
-export const getMuscleGroupOptions = (): SelectOption[] => {
-  return MUSCLE_GROUPS.map(group => ({
-    label: formatDisplayName(group),
-    value: group
-  }));
-};
+export function ensureMuscleGroupArray(value: MuscleGroup[] | MuscleGroup | string[] | string | undefined | null): MuscleGroup[] {
+  if (!value) return [];
+  
+  // If it's a string, try to parse it as JSON if it looks like an array
+  if (typeof value === 'string') {
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) 
+          ? parsed.filter(item => isMuscleGroup(item))
+          : [];
+      } catch (e) {
+        return isMuscleGroup(value) ? [value] : [];
+      }
+    }
+    return isMuscleGroup(value) ? [value] : [];
+  }
+  
+  // If it's already an array, filter out invalid values
+  if (Array.isArray(value)) {
+    return value.filter(item => isMuscleGroup(item)) as MuscleGroup[];
+  }
+  
+  // If it's a single valid value
+  return isMuscleGroup(value) ? [value] : [];
+}
 
-/**
- * Converts equipment types to MultiSelect options format
- */
-export const getEquipmentOptions = (): SelectOption[] => {
-  return EQUIPMENT_TYPES.map(equipment => ({
-    label: formatDisplayName(equipment),
-    value: equipment
-  }));
-};
+export function ensureEquipmentTypeArray(value: EquipmentType[] | EquipmentType | string[] | string | undefined | null): EquipmentType[] {
+  if (!value) return [];
+  
+  if (typeof value === 'string') {
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) 
+          ? parsed.filter(item => isEquipmentType(item))
+          : [];
+      } catch (e) {
+        return isEquipmentType(value) ? [value] : [];
+      }
+    }
+    return isEquipmentType(value) ? [value] : [];
+  }
+  
+  if (Array.isArray(value)) {
+    return value.filter(item => isEquipmentType(item)) as EquipmentType[];
+  }
+  
+  return isEquipmentType(value) ? [value] : [];
+}
 
-/**
- * Converts movement patterns to MultiSelect options format
- */
-export const getMovementPatternOptions = (): SelectOption[] => {
-  return MOVEMENT_PATTERNS.map(pattern => ({
-    label: formatDisplayName(pattern),
-    value: pattern
-  }));
-};
-
-/**
- * Converts difficulty levels to MultiSelect options format
- */
-export const getDifficultyOptions = (): SelectOption[] => {
-  return DIFFICULTY_LEVELS.map(level => ({
-    label: formatDisplayName(level),
-    value: level
-  }));
-};
-
-/**
- * Formats a value for display by capitalizing the first letter of each word
- */
-export const formatDisplayName = (value: string): string => {
-  return value
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-/**
- * Type guards for validating data
- */
-export const isMuscleGroup = (value: string): value is MuscleGroup => {
-  return MUSCLE_GROUPS.includes(value as MuscleGroup);
-};
-
-export const isEquipmentType = (value: string): value is EquipmentType => {
-  return EQUIPMENT_TYPES.includes(value as EquipmentType);
-};
-
-export const isMovementPattern = (value: string): value is MovementPattern => {
-  return MOVEMENT_PATTERNS.includes(value as MovementPattern);
-};
-
-export const isDifficulty = (value: string): value is Difficulty => {
-  return DIFFICULTY_LEVELS.includes(value as Difficulty);
-};
-
-/**
- * Ensures an array of values conforms to a canonical type
- * Removes any invalid values
- */
-export const sanitizeMuscleGroups = (values: string[]): MuscleGroup[] => {
-  return values.filter(isMuscleGroup);
-};
-
-export const sanitizeEquipmentTypes = (values: string[]): EquipmentType[] => {
-  return values.filter(isEquipmentType);
-};
+export function ensureMovementPatternArray(value: MovementPattern[] | MovementPattern | string[] | string | undefined | null): MovementPattern[] {
+  if (!value) return [];
+  
+  if (typeof value === 'string') {
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) 
+          ? parsed.filter(item => isMovementPattern(item))
+          : [];
+      } catch (e) {
+        return isMovementPattern(value) ? [value] : [];
+      }
+    }
+    return isMovementPattern(value) ? [value] : [];
+  }
+  
+  if (Array.isArray(value)) {
+    return value.filter(item => isMovementPattern(item)) as MovementPattern[];
+  }
+  
+  return isMovementPattern(value) ? [value] : [];
+}

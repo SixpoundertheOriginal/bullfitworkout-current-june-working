@@ -51,6 +51,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
+import { 
+  MOVEMENT_PATTERNS, 
+  DIFFICULTY_LEVELS,
+  type MovementPattern,
+  type Difficulty,
+  type MuscleGroup,
+  type EquipmentType
+} from "@/constants/exerciseMetadata";
+
 interface ExerciseAutocompleteProps {
   onSelectExercise: (exercise: Exercise) => void;
   className?: string;

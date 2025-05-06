@@ -31,9 +31,9 @@ export function ExerciseSelector({
   difficulty,
   showStartButton = false
 }: ExerciseSelectorProps) {
-  const { suggestedExercises } = useExerciseSuggestions(trainingType);
-  const { workouts } = useWorkoutHistory();
-  const { exercises: allExercises } = useExercises();
+  const { suggestedExercises = [] } = useExerciseSuggestions(trainingType);
+  const { workouts = [] } = useWorkoutHistory();
+  const { exercises: allExercises = [] } = useExercises();
   const { isActive } = useWorkoutState();
   const timeOfDay = getCurrentTimeOfDay();
   
@@ -45,16 +45,25 @@ export function ExerciseSelector({
     
     // Get unique exercise names from recent workouts' exercise sets
     workouts.slice(0, 5).forEach(workout => {
+      if (!workout) return;
+      
       const exerciseNames = new Set<string>();
       
+      // Ensure workout.exerciseSets exists before iterating
+      const exerciseSets = workout.exerciseSets || [];
+      
       // Collect unique exercise names from the workout's exercise sets
-      workout.exerciseSets?.forEach(set => {
-        exerciseNames.add(set.exercise_name);
+      exerciseSets.forEach(set => {
+        if (set && set.exercise_name) {
+          exerciseNames.add(set.exercise_name);
+        }
       });
       
       // For each unique exercise name, find the matching exercise from allExercises
       exerciseNames.forEach(name => {
-        const exercise = allExercises.find(e => e.name === name);
+        if (!name) return;
+        
+        const exercise = allExercises.find(e => e && e.name === name);
         if (exercise && !exerciseMap.has(exercise.id)) {
           exerciseMap.set(exercise.id, exercise);
         }
@@ -67,11 +76,11 @@ export function ExerciseSelector({
   // Process and rank exercises based on user preferences
   const rankedExercises = React.useMemo(() => {
     // Combine recent and suggested exercises to be ranked
-    const combinedExercises = [...suggestedExercises];
+    const combinedExercises = [...(suggestedExercises || [])];
     
     // Add recent exercises that aren't already in the suggested list
-    recentExercises.forEach(exercise => {
-      if (!combinedExercises.some(e => e.id === exercise.id)) {
+    (recentExercises || []).forEach(exercise => {
+      if (exercise && !combinedExercises.some(e => e && e.id === exercise.id)) {
         combinedExercises.push(exercise);
       }
     });
@@ -105,10 +114,10 @@ export function ExerciseSelector({
     return (
       <ExerciseQuickSelect
         onSelectExercise={onSelectExercise}
-        suggestedExercises={rankedExercises.recommended}
-        recentExercises={recentExercises}
-        otherExercises={rankedExercises.other}
-        matchData={rankedExercises.matchData}
+        suggestedExercises={rankedExercises?.recommended || []}
+        recentExercises={recentExercises || []}
+        otherExercises={rankedExercises?.other || []}
+        matchData={rankedExercises?.matchData || {}}
         className={className}
       />
     );
@@ -117,10 +126,10 @@ export function ExerciseSelector({
   return (
     <MinimalisticExerciseSelect
       onSelectExercise={onSelectExercise}
-      suggestedExercises={rankedExercises.recommended}
-      recentExercises={recentExercises}
-      otherExercises={rankedExercises.other}
-      matchData={rankedExercises.matchData}
+      suggestedExercises={rankedExercises?.recommended || []}
+      recentExercises={recentExercises || []}
+      otherExercises={rankedExercises?.other || []}
+      matchData={rankedExercises?.matchData || {}}
       trainingType={trainingType}
       className={className}
     />

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -21,20 +20,20 @@ import { getMuscleGroupOptions } from "@/constants/exerciseMetadata";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
-  setOpen: (open: boolean) => void;
-  training?: Training;
-  onStartTraining?: (config: {
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onOpenChange?: (open: boolean) => void;
+  onStartTraining: (config: {
     trainingType: string;
-    tags: string[];
+    tags: any[];
     duration: number;
-    rankedExercises?: any[];
+    rankedExercises: any;
   }) => void;
 }
 
 export function ConfigureTrainingDialog({ 
   open, 
   setOpen, 
-  training,
+  onOpenChange,
   onStartTraining
 }: ConfigureTrainingDialogProps) {
   const {

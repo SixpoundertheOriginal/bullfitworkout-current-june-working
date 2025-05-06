@@ -1,48 +1,28 @@
-
-import React, { useState, useEffect } from "react";
-import { useExercises } from "@/hooks/useExercises";
-import { Button } from "@/components/ui/button";
-import { Plus, Search, Filter, X, ChevronLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { ExerciseDialog } from "@/components/ExerciseDialog";
-import { Exercise } from "@/types/exercise";
+import React, { useState, useMemo } from "react";
 import { 
-  MuscleGroup, 
-  EquipmentType, 
-  MovementPattern, 
-  Difficulty,
   COMMON_MUSCLE_GROUPS,
   COMMON_EQUIPMENT,
   MOVEMENT_PATTERNS,
-  DIFFICULTY_LEVELS
-} from '@/constants/exerciseMetadata';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { useIsMobile } from "@/hooks/use-mobile";
+  DIFFICULTY_LEVELS,
+  formatDisplayName,
+  ensureMuscleGroupArray,
+  ensureEquipmentTypeArray,
+  ensureMovementPatternArray,
+  type MuscleGroup,
+  type EquipmentType,
+  type MovementPattern,
+  type Difficulty
+} from "@/constants/exerciseMetadata";
+import { useExercises } from "@/hooks/useExercises";
+import { Exercise } from "@/types/exercise";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
-import { ExerciseFAB } from "@/components/ExerciseFAB";
+import { CommonExerciseCard } from "@/components/exercises/CommonExerciseCard";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
-import { CommonExerciseCard } from "@/components/exercises/CommonExerciseCard";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
