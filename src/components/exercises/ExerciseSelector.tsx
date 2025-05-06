@@ -76,10 +76,10 @@ export function ExerciseSelector({
   // Process and rank exercises based on user preferences
   const rankedExercises = React.useMemo(() => {
     // Combine recent and suggested exercises to be ranked
-    const combinedExercises = [...(suggestedExercises || [])];
+    const combinedExercises = [...(suggestedExercises || [])].filter(Boolean);
     
     // Add recent exercises that aren't already in the suggested list
-    (recentExercises || []).forEach(exercise => {
+    (recentExercises || []).filter(Boolean).forEach(exercise => {
       if (exercise && !combinedExercises.some(e => e && e.id === exercise.id)) {
         combinedExercises.push(exercise);
       }
@@ -88,8 +88,8 @@ export function ExerciseSelector({
     // Create ranking criteria from props
     const criteria: RankingCriteria = {
       trainingType,
-      bodyFocus: bodyFocus as any[],
-      movementPattern: movementPattern as any[],
+      bodyFocus: (bodyFocus || []) as any[],
+      movementPattern: (movementPattern || []) as any[],
       timeOfDay,
       difficulty: difficulty
     };
@@ -110,14 +110,21 @@ export function ExerciseSelector({
     );
   }
 
+  // Ensure we have valid objects before rendering
+  const safeRankedExercises = {
+    recommended: rankedExercises?.recommended || [],
+    other: rankedExercises?.other || [],
+    matchData: rankedExercises?.matchData || {}
+  };
+
   if (useLegacyDesign) {
     return (
       <ExerciseQuickSelect
         onSelectExercise={onSelectExercise}
-        suggestedExercises={rankedExercises?.recommended || []}
+        suggestedExercises={safeRankedExercises.recommended}
         recentExercises={recentExercises || []}
-        otherExercises={rankedExercises?.other || []}
-        matchData={rankedExercises?.matchData || {}}
+        otherExercises={safeRankedExercises.other}
+        matchData={safeRankedExercises.matchData}
         className={className}
       />
     );
@@ -126,10 +133,10 @@ export function ExerciseSelector({
   return (
     <MinimalisticExerciseSelect
       onSelectExercise={onSelectExercise}
-      suggestedExercises={rankedExercises?.recommended || []}
+      suggestedExercises={safeRankedExercises.recommended}
       recentExercises={recentExercises || []}
-      otherExercises={rankedExercises?.other || []}
-      matchData={rankedExercises?.matchData || {}}
+      otherExercises={safeRankedExercises.other}
+      matchData={safeRankedExercises.matchData}
       trainingType={trainingType}
       className={className}
     />

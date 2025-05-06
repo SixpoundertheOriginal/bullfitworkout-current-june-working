@@ -213,3 +213,33 @@ export function ensureMovementPatternArray(value: MovementPattern[] | MovementPa
   
   return isMovementPattern(value) ? [value] : [];
 }
+
+/**
+ * Helper functions for UI components to get formatted option arrays
+ */
+export function getMuscleGroupOptions() {
+  return muscleGroupOptions;
+}
+
+export function getEquipmentOptions() {
+  return equipmentOptions;
+}
+
+export function getMovementPatternOptions() {
+  return movementPatternOptions;
+}
+
+export function getDifficultyOptions() {
+  return difficultyLevelOptions;
+}
+
+/**
+ * Sanitization functions for API data
+ */
+export function sanitizeMuscleGroups(groups: string[] | string | null | undefined): MuscleGroup[] {
+  return ensureMuscleGroupArray(groups);
+}
+
+export function sanitizeEquipmentTypes(types: string[] | string | null | undefined): EquipmentType[] {
+  return ensureEquipmentTypeArray(types);
+}

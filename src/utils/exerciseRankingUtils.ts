@@ -1,5 +1,6 @@
+
 import { Exercise } from "@/types/exercise";
-import { MuscleGroup, MovementPattern } from "@/constants/exerciseMetadata";
+import { MuscleGroup, MovementPattern } from '@/constants/exerciseMetadata';
 
 export interface RankingCriteria {
   trainingType?: string;
