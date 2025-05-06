@@ -55,7 +55,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         reps: set.reps || 0,
         set_number: set.set_number,
         completed: set.completed,
-        rest_time: set.restTime // Map restTime to rest_time for API compatibility
+        rest_time: set.restTime || set.rest_time // Map restTime to rest_time for API compatibility
       }));
       
       const updated = await updateExerciseSets(workoutId, currentExercise, setsToUpdate as any);

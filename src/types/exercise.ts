@@ -101,7 +101,8 @@ export interface ExerciseSet {
   workout_id?: string;
   created_at?: string;
   updated_at?: string;
-  restTime?: number; // Added to fix type errors with rest time
+  restTime?: number; // Added for compatibility with existing code
+  rest_time?: number; // Added for API compatibility
 }
 
 // Exercise history item

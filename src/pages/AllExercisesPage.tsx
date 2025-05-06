@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   COMMON_MUSCLE_GROUPS,
   COMMON_EQUIPMENT,
@@ -23,6 +24,53 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile"; // Import the new hook
+import { ExerciseFAB } from "@/components/ExerciseFAB";
+import { ExerciseDialog } from "@/components/exercises/ExerciseDialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Card
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  ChevronLeft,
+  Plus,
+  Search,
+  X,
+  Filter,
+} from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;

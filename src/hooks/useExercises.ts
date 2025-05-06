@@ -71,7 +71,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
           : 'beginner' as Difficulty,
         instructions: (exercise.instructions || {}) as Record<string, any>,
         is_compound: exercise.is_compound || false,
-        is_bodyweight: exercise.is_bodyweight || false, // Set default to false if not provided
+        is_bodyweight: exercise.is_bodyweight || false, // Ensure is_bodyweight is always set
         tips: exercise.tips || [],
         variations: exercise.variations || [],
         metadata: exercise.metadata as ExerciseMetadata || {}
