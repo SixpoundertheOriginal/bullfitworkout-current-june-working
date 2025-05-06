@@ -21,17 +21,18 @@ export type ExerciseMetadata = {
   display_unit?: string;
 };
 
-type ExerciseInput = {
+export type ExerciseInput = {
   name: string;
   description: string;
   user_id: string;
   primary_muscle_groups: MuscleGroup[];
-  secondary_muscle_groups: MuscleGroup[];
-  equipment_type: EquipmentType[];
+  secondary_muscle_groups?: MuscleGroup[];
+  equipment_type?: EquipmentType[];
   movement_pattern: MovementPattern;
   difficulty: Difficulty;
   instructions?: Record<string, any>;
   is_compound?: boolean;
+  is_bodyweight?: boolean;
   tips?: string[];
   variations?: string[];
   metadata?: Record<string, any>;
@@ -70,6 +71,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
           : 'beginner' as Difficulty,
         instructions: (exercise.instructions || {}) as Record<string, any>,
         is_compound: exercise.is_compound || false,
+        is_bodyweight: exercise.is_bodyweight || false, // Set default to false if not provided
         tips: exercise.tips || [],
         variations: exercise.variations || [],
         metadata: exercise.metadata as ExerciseMetadata || {}
@@ -99,6 +101,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
           : 'beginner',
         instructions: newExercise.instructions || {}, // Default empty object if not provided
         is_compound: Boolean(newExercise.is_compound),
+        is_bodyweight: Boolean(newExercise.is_bodyweight),
         tips: newExercise.tips || [],
         variations: newExercise.variations || [],
         metadata: newExercise.metadata || {},

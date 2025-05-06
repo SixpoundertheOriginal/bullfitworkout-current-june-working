@@ -16,6 +16,23 @@ export type { Difficulty };
 export type { LoadingType };
 export type { VariantCategory };
 
+// Add WeightCalculation interface that was missing
+export interface WeightCalculation {
+  value: number;
+  isAuto: boolean;
+  source: 'default' | 'auto' | 'user';
+}
+
+// Load factors map for exercise weight calculations
+export const EXERCISE_LOAD_FACTORS: Record<string, { factor: number }> = {
+  "Squat": { factor: 1.0 },
+  "Deadlift": { factor: 1.0 },
+  "Bench Press": { factor: 0.8 },
+  "Pull-up": { factor: 0.9 },
+  "Push-up": { factor: 0.6 },
+  // Default factor is used in useExerciseWeight.ts if specific exercise not found
+};
+
 // Base Exercise interface
 export interface Exercise {
   id: string;
@@ -84,6 +101,7 @@ export interface ExerciseSet {
   workout_id?: string;
   created_at?: string;
   updated_at?: string;
+  restTime?: number; // Added to fix type errors with rest time
 }
 
 // Exercise history item

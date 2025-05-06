@@ -25,7 +25,8 @@ import {
   EQUIPMENT_TYPES,
   MOVEMENT_PATTERNS,
   DIFFICULTY_LEVELS,
-  formatDisplayName
+  formatDisplayName,
+  getMuscleGroupOptions
 } from "@/constants/exerciseMetadata";
 
 import { useExercises } from "@/hooks/useExercises";
@@ -89,6 +90,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     difficulty: "beginner",
     instructions: {},
     is_compound: false,
+    is_bodyweight: false, // Added missing required property
     tips: [],
     variations: [],
     metadata: {}
@@ -130,15 +132,18 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
       return;
     }
     
+    // Make sure the exercise has all required fields including is_bodyweight
     const exerciseToCreate = {
       ...newExercise,
+      description: newExercise.description || "", // Ensure description is not undefined
       user_id: user?.id || "",
       // Ensure all array properties are initialized properly
       primary_muscle_groups: Array.isArray(newExercise.primary_muscle_groups) ? newExercise.primary_muscle_groups : [],
       secondary_muscle_groups: Array.isArray(newExercise.secondary_muscle_groups) ? newExercise.secondary_muscle_groups : [],
       equipment_type: Array.isArray(newExercise.equipment_type) ? newExercise.equipment_type : [],
       tips: Array.isArray(newExercise.tips) ? newExercise.tips : [],
-      variations: Array.isArray(newExercise.variations) ? newExercise.variations : []
+      variations: Array.isArray(newExercise.variations) ? newExercise.variations : [],
+      is_bodyweight: newExercise.is_bodyweight || false
     };
     
     console.log("Creating exercise with data:", exerciseToCreate);
@@ -164,6 +169,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
           difficulty: "beginner",
           instructions: {},
           is_compound: false,
+          is_bodyweight: false, // Added missing required property
           tips: [],
           variations: [],
           metadata: {}

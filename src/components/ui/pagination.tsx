@@ -1,17 +1,15 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { ButtonProps, buttonVariants } from "@/components/ui/button";
 
 const Pagination = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex items-center gap-1", className)}
-    {...props}
-  />
+  <div ref={ref} className={cn("flex w-full items-center", className)} {...props} />
 ));
 Pagination.displayName = "Pagination";
 
@@ -21,7 +19,7 @@ const PaginationContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
-    className={cn("flex flex-row items-center gap-1", className)}
+    className={cn("flex flex-wrap items-center gap-1", className)}
     {...props}
   />
 ));
@@ -37,18 +35,18 @@ PaginationItem.displayName = "PaginationItem";
 
 type PaginationLinkProps = {
   isActive?: boolean;
-} & React.ComponentProps<"button">;
+} & Pick<ButtonProps, "size"> & React.ComponentProps<"a">;
 
-const PaginationLink = React.forwardRef<HTMLButtonElement, PaginationLinkProps>(
-  ({ className, isActive, ...props }, ref) => (
-    <button
+const PaginationLink = React.forwardRef<HTMLAnchorElement, PaginationLinkProps>(
+  ({ className, isActive, size = "icon", ...props }, ref) => (
+    <a
       ref={ref}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        {
-          "bg-accent text-accent-foreground": isActive,
-        },
+        buttonVariants({
+          variant: isActive ? "default" : "ghost",
+          size,
+        }),
         className
       )}
       {...props}
@@ -58,38 +56,36 @@ const PaginationLink = React.forwardRef<HTMLButtonElement, PaginationLinkProps>(
 PaginationLink.displayName = "PaginationLink";
 
 const PaginationPrevious = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button">
+  HTMLAnchorElement,
+  React.ComponentProps<typeof PaginationLink>
 >(({ className, ...props }, ref) => (
-  <button
+  <PaginationLink
     ref={ref}
-    className={cn(
-      "inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      className
-    )}
+    aria-label="Go to previous page"
+    size="default"
+    className={cn("gap-1 pl-2.5", className)}
     {...props}
   >
-    <ChevronLeft className="h-4 w-4 mr-1" />
+    <ChevronLeft className="h-4 w-4" />
     <span>Previous</span>
-  </button>
+  </PaginationLink>
 ));
 PaginationPrevious.displayName = "PaginationPrevious";
 
 const PaginationNext = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button">
+  HTMLAnchorElement,
+  React.ComponentProps<typeof PaginationLink>
 >(({ className, ...props }, ref) => (
-  <button
+  <PaginationLink
     ref={ref}
-    className={cn(
-      "inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      className
-    )}
+    aria-label="Go to next page"
+    size="default"
+    className={cn("gap-1 pr-2.5", className)}
     {...props}
   >
     <span>Next</span>
-    <ChevronRight className="h-4 w-4 ml-1" />
-  </button>
+    <ChevronRight className="h-4 w-4" />
+  </PaginationLink>
 ));
 PaginationNext.displayName = "PaginationNext";
 
@@ -98,6 +94,7 @@ const PaginationEllipsis = ({
   ...props
 }: React.ComponentProps<"span">) => (
   <span
+    aria-hidden
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     {...props}
   >
@@ -110,8 +107,8 @@ PaginationEllipsis.displayName = "PaginationEllipsis";
 export {
   Pagination,
   PaginationContent,
-  PaginationItem,
   PaginationLink,
+  PaginationItem,
   PaginationNext,
   PaginationPrevious,
   PaginationEllipsis,

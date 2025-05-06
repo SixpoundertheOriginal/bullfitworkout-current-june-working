@@ -17,7 +17,8 @@ export const useExerciseWeight = ({
     if (!exercise) return { value: defaultWeight, isAuto: false, source: 'default' };
 
     const isBodyweight = exercise.is_bodyweight || exercise.equipment_type.includes('bodyweight');
-    const loadFactor = exercise.load_factor || EXERCISE_LOAD_FACTORS[exercise.name]?.factor || 1.0;
+    const loadFactor = exercise.estimated_load_percent || 
+      EXERCISE_LOAD_FACTORS[exercise.name]?.factor || 1.0;
 
     if (isBodyweight && userWeight) {
       return {
