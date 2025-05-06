@@ -336,13 +336,15 @@ const WorkoutDetailsPage: React.FC = () => {
           <WorkoutDetailsEnhanced
             workout={workoutDetails}
             exercises={Object.entries(exerciseSets).reduce((acc, [name, sets]) => {
-              // Ensure sets are properly formatted with required fields
+              // Ensure sets are properly formatted with required fields and consistent with our interface
               acc[name] = sets.map(set => ({
                 ...set,
-                id: set.id || `temp-${name}-${set.set_number || 0}`, // Ensure ID is always present
+                id: set.id || `temp-${name}-${set.set_number || 0}`,
                 exercise_name: name,
                 set_number: set.set_number || 0,
-                completed: set.completed !== undefined ? set.completed : false
+                completed: set.completed !== undefined ? set.completed : false,
+                workout_id: set.workout_id || workoutId || 'temp', // Ensure workout_id is always provided
+                metadata: set.metadata || {}
               }));
               return acc;
             }, {} as Record<string, any[]>)}

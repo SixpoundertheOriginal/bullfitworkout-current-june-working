@@ -22,7 +22,7 @@ export const adaptExerciseSets = (
       isEditing: set.isEditing || false, // Handle isEditing property
       set_number: index + 1,
       exercise_name: exerciseName,
-      workout_id: 'temp',
+      workout_id: 'temp', // Provide a default value for workout_id
       metadata: {} // Add empty metadata object
     }));
   });

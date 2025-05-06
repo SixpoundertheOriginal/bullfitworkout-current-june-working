@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Dialog,
@@ -15,16 +14,7 @@ import { MinusCircle, PlusCircle, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface ExerciseSet {
-  id: string;
-  exercise_name: string;
-  workout_id: string;
-  weight: number;
-  reps: number;
-  set_number: number;
-  completed: boolean;
-}
+import { ExerciseSet } from "@/types/exercise";
 
 interface EditExerciseSetModalProps {
   sets: ExerciseSet[];

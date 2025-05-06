@@ -85,7 +85,7 @@ export interface ExerciseVariant {
 
 // Exercise set data
 export interface ExerciseSet {
-  id: string; // Made required to match API expectations
+  id: string; // Made required for consistency
   exercise_name: string;
   exercise_id?: string;
   set_number: number;
@@ -98,7 +98,7 @@ export interface ExerciseSet {
   perceived_exertion?: number; // RPE scale 1-10
   notes?: string;
   completed: boolean;
-  workout_id?: string; // Changed from required to optional to match implementation
+  workout_id?: string; // Keep optional as expected by EditExerciseSetModal
   created_at?: string;
   updated_at?: string;
   restTime?: number; // Added for compatibility with existing code
