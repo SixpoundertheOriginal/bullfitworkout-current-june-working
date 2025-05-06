@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { 
   COMMON_MUSCLE_GROUPS,
@@ -25,7 +24,7 @@ import { PageHeader } from "@/components/navigation/PageHeader";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile"; // Import the new hook
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { ExerciseDialog } from "@/components/exercises/ExerciseDialog";
 import { 

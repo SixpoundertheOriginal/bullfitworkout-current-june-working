@@ -1,4 +1,3 @@
-
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -336,7 +335,17 @@ const WorkoutDetailsPage: React.FC = () => {
           {/* Raw exercise list & editing */}
           <WorkoutDetailsEnhanced
             workout={workoutDetails}
-            exercises={exerciseSets}
+            exercises={Object.entries(exerciseSets).reduce((acc, [name, sets]) => {
+              // Ensure sets are properly formatted with required fields
+              acc[name] = sets.map(set => ({
+                ...set,
+                id: set.id || `temp-${name}-${set.set_number || 0}`, // Ensure ID is always present
+                exercise_name: name,
+                set_number: set.set_number || 0,
+                completed: set.completed !== undefined ? set.completed : false
+              }));
+              return acc;
+            }, {} as Record<string, any[]>)}
             onEditClick={() => setEditModalOpen(true)}
             onEditExercise={handleEditExercise}
           />

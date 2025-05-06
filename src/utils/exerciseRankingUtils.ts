@@ -199,8 +199,9 @@ export function estimateTimeOfDayScore(
   // Morning: Better for cardio, full body, lighter weights
   if (timeOfDay === 'morning') {
     if (
-      exercise.primary_muscle_groups.includes('cardio') ||
-      exercise.primary_muscle_groups.includes('full body') ||
+      exercise.primary_muscle_groups.some(muscle => 
+        muscle.toLowerCase() === 'cardio' || muscle.toLowerCase() === 'full body'
+      ) ||
       exercise.equipment_type.includes('bodyweight')
     ) {
       return 0.9;

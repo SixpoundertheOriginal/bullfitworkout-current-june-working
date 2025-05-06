@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise } from '@/types/exercise';
@@ -71,7 +70,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
           : 'beginner' as Difficulty,
         instructions: (exercise.instructions || {}) as Record<string, any>,
         is_compound: exercise.is_compound || false,
-        is_bodyweight: exercise.is_bodyweight || false, // Ensure is_bodyweight is always set
+        is_bodyweight: Boolean(exercise.is_custom) || false, // Default to false if not present
         tips: exercise.tips || [],
         variations: exercise.variations || [],
         metadata: exercise.metadata as ExerciseMetadata || {}

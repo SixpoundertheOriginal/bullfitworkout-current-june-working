@@ -85,7 +85,7 @@ export interface ExerciseVariant {
 
 // Exercise set data
 export interface ExerciseSet {
-  id?: string;
+  id: string; // Made required to match API expectations
   exercise_name: string;
   exercise_id?: string;
   set_number: number;
@@ -103,6 +103,9 @@ export interface ExerciseSet {
   updated_at?: string;
   restTime?: number; // Added for compatibility with existing code
   rest_time?: number; // Added for API compatibility
+  isEditing?: boolean; // Added for UI state management
+  weightCalculation?: WeightCalculation; // Added for weight calculation logic
+  metadata?: Record<string, any>; // Added for additional data
 }
 
 // Exercise history item
@@ -113,3 +116,26 @@ export interface ExerciseHistory {
   max_weight?: number;
   total_reps?: number;
 }
+
+// Add missing utility functions referenced in workoutMetricsProcessor.ts
+export const calculateEffectiveWeight = (exercise: Exercise, userWeight: number = 70): number => {
+  if (isBodyweightExercise(exercise)) {
+    const factor = getExerciseLoadFactor(exercise);
+    return userWeight * factor;
+  }
+  return 0;
+};
+
+export const getExerciseLoadFactor = (exercise: Exercise): number => {
+  if (exercise.estimated_load_percent) {
+    return exercise.estimated_load_percent / 100;
+  }
+  
+  return EXERCISE_LOAD_FACTORS[exercise.name]?.factor || 0.6;
+};
+
+export const isBodyweightExercise = (exercise: Exercise): boolean => {
+  return exercise.is_bodyweight || 
+    (Array.isArray(exercise.equipment_type) && 
+     exercise.equipment_type.includes('bodyweight' as EquipmentType));
+};

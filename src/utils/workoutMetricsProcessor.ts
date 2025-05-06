@@ -1,7 +1,12 @@
 // Keep existing code imports
 
 import { ExerciseSet } from '@/types/exercise';
-import { calculateEffectiveWeight, getExerciseLoadFactor, isBodyweightExercise } from '@/types/exercise';
+import { 
+  EXERCISE_LOAD_FACTORS, 
+  calculateEffectiveWeight, 
+  getExerciseLoadFactor, 
+  isBodyweightExercise 
+} from '@/types/exercise';
 
 // Enhanced ProcessedWorkoutMetrics with more detailed information
 export interface ProcessedWorkoutMetrics {
@@ -197,9 +202,9 @@ export const processWorkoutMetrics = (
         metrics.totalVolume += standardVolume;
 
         // Handle adjusted volume for bodyweight exercises if we have exercise data and user weight
-        if (set.weightCalculation?.isAuto && userBodyInfo) {
+        if (set.weightCalculation && userBodyInfo) {
           // This is a bodyweight exercise with auto-calculated weight
-          const effectiveWeight = set.weightCalculation.value;
+          const effectiveWeight = set.weightCalculation?.value || 0;
           const adjustedVolume = effectiveWeight * set.reps;
           metrics.adjustedVolume += adjustedVolume;
         } else {
@@ -208,7 +213,7 @@ export const processWorkoutMetrics = (
         }
         
         // Track RPE if available - ensure we check if metadata exists first
-        if (set.metadata && typeof set.metadata === 'object' && 'rpe' in set.metadata) {
+        if (set.metadata && typeof set.metadata === 'object' && set.metadata.rpe !== undefined) {
           const rpe = Number(set.metadata.rpe);
           if (!isNaN(rpe) && rpe > 0) {
             totalRpe += rpe;
