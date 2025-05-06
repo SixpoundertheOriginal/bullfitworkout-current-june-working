@@ -98,7 +98,7 @@ export interface ExerciseSet {
   perceived_exertion?: number; // RPE scale 1-10
   notes?: string;
   completed: boolean;
-  workout_id?: string;
+  workout_id?: string; // Changed from required to optional to match implementation
   created_at?: string;
   updated_at?: string;
   restTime?: number; // Added for compatibility with existing code
