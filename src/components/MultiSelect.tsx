@@ -91,6 +91,7 @@ function MultiSelectImpl({
         <div
           role="combobox"
           aria-expanded={open}
+          data-multiselect="true"
           className={cn(
             "flex min-h-10 w-full items-center justify-between rounded-md border border-input " +
             "bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring " +
@@ -131,7 +132,7 @@ function MultiSelectImpl({
       </PopoverTrigger>
 
       <PopoverContent className="w-full p-0" align="start">
-        <Command loop shouldFilter={true}>
+        <Command loop shouldFilter={true} shouldCloseOnSelect={false}>
           <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>No options found.</CommandEmpty>
           <CommandGroup>
@@ -141,11 +142,7 @@ function MultiSelectImpl({
                 <CommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={() => {
-                    handleSelect(option.value);
-                    // Prevent the default behavior which would close the popover
-                    return false;
-                  }}
+                  onSelect={handleSelectWithoutClose}
                   className="flex items-center justify-between"
                 >
                   <span>{option.label}</span>

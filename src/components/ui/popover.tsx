@@ -19,7 +19,8 @@ const PopoverContent = React.forwardRef<
       sideOffset={sideOffset}
       onOpenAutoFocus={(e) => {
         // For MultiSelect, we don't want auto-focus to steal focus from the trigger
-        const isMultiSelect = e.currentTarget.closest('[data-multiselect]');
+        const target = e.currentTarget as HTMLElement;
+        const isMultiSelect = target.closest('[data-multiselect]');
         if (isMultiSelect) {
           e.preventDefault();
         }

@@ -150,11 +150,13 @@ const CommandItem = React.forwardRef<
       if (!onSelect) return;
       
       // Call the original onSelect and capture its return value
-      const shouldClose = onSelect(value);
+      const result = onSelect(value);
       
       // If explicitly returned false, don't close
       // If using default context behavior and shouldCloseOnSelect is false, don't close
-      if (shouldClose === false || (!shouldCloseOnSelect && shouldClose === undefined)) {
+      const shouldClose = result === false ? false : shouldCloseOnSelect;
+      
+      if (!shouldClose) {
         // Prevent closing by stopping event propagation
         const event = new CustomEvent('cmdk-item-select', { bubbles: true, cancelable: true });
         event.stopPropagation();
