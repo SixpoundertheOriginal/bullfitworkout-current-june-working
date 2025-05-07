@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -150,14 +149,14 @@ const CommandItem = React.forwardRef<
       if (!onSelect) return;
       
       // Call the original onSelect handler
-      onSelect(value);
+      const result = onSelect(value);
       
-      // Determine if we should prevent the default closing behavior
-      // Using strict equality to avoid type comparison issues
-      const shouldPreventClose = shouldCloseOnSelect === false;
+      // Determine if we should prevent closing
+      // First check if onSelect explicitly returned false
+      // Then check if shouldCloseOnSelect from context is false
+      const preventClosing = result === false || shouldCloseOnSelect === false;
       
-      // If we should prevent closing, do so
-      if (shouldPreventClose) {
+      if (preventClosing) {
         // Prevent closing by stopping event propagation
         const event = new CustomEvent('cmdk-item-select', { bubbles: true, cancelable: true });
         event.stopPropagation();
