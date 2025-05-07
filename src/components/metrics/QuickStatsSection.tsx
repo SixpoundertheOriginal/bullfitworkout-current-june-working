@@ -97,6 +97,9 @@ export const QuickStatsSection = React.memo(({ showDateRange = false }: QuickSta
       </div>
     </div>
   );
+}, (prevProps, nextProps) => {
+  // Custom equality function to prevent unnecessary re-renders
+  return prevProps.showDateRange === nextProps.showDateRange;
 });
 
 QuickStatsSection.displayName = 'QuickStatsSection';

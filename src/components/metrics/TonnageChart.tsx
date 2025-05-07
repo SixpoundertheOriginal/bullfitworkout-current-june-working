@@ -18,7 +18,7 @@ interface TonnageChartProps {
   height?: number;
 }
 
-export const TonnageChart: React.FC<TonnageChartProps> = ({ 
+export const TonnageChart = React.memo<TonnageChartProps>(({ 
   data,
   className = '',
   height = 200 
@@ -119,4 +119,22 @@ export const TonnageChart: React.FC<TonnageChartProps> = ({
       </CardContent>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom equality function for deep comparison of data arrays
+  if (prevProps.className !== nextProps.className || prevProps.height !== nextProps.height) {
+    return false;
+  }
+  
+  // Compare data arrays
+  if (!prevProps.data && !nextProps.data) return true;
+  if (!prevProps.data || !nextProps.data) return false;
+  if (prevProps.data.length !== nextProps.data.length) return false;
+  
+  // Compare each item in data array
+  return prevProps.data.every((prevItem, index) => {
+    const nextItem = nextProps.data[index];
+    return prevItem.date === nextItem.date && prevItem.tonnage === nextItem.tonnage;
+  });
+});
+
+TonnageChart.displayName = 'TonnageChart';

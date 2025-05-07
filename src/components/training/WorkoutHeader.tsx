@@ -7,7 +7,7 @@ interface WorkoutHeaderProps {
   trainingType: TrainingTypeObj | undefined;
 }
 
-export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ trainingType }) => {
+export const WorkoutHeader = React.memo<WorkoutHeaderProps>(({ trainingType }) => {
   if (!trainingType) return null;
 
   return (
@@ -15,4 +15,12 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ trainingType }) =>
       <TrainingTypeTag type={trainingType.name as any} className="mb-2" />
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom equality check
+  if (!prevProps.trainingType && !nextProps.trainingType) return true;
+  if (!prevProps.trainingType || !nextProps.trainingType) return false;
+  
+  return prevProps.trainingType.name === nextProps.trainingType.name;
+});
+
+WorkoutHeader.displayName = 'WorkoutHeader';

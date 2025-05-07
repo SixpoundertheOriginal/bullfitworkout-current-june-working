@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -10,15 +10,24 @@ interface TimerProps {
   onTick?: () => void;
 }
 
-export const Timer: React.FC<TimerProps> = ({ duration, isRunning, onComplete, onTick }) => {
+export const Timer = React.memo<TimerProps>(({ duration, isRunning, onComplete, onTick }) => {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [progress, setProgress] = useState(100);
 
+  // Reset timer when duration changes
   useEffect(() => {
     setTimeLeft(duration);
     setProgress(100);
   }, [duration]);
 
+  // Format time helper
+  const formatTime = useCallback((seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
+  // Timer effect
   useEffect(() => {
     if (!isRunning) return;
 
@@ -44,18 +53,18 @@ export const Timer: React.FC<TimerProps> = ({ duration, isRunning, onComplete, o
     return () => clearInterval(interval);
   }, [isRunning, duration, timeLeft, onComplete, onTick]);
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Dynamically determine text color based on time left
+  const textColorClass = useMemo(() => 
+    timeLeft <= 10 ? "text-red-400" : "text-white", 
+    [timeLeft]
+  );
 
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="text-center mb-2">
         <span className={cn(
           "text-4xl font-mono tracking-widest transition-colors",
-          timeLeft <= 10 ? "text-red-400" : "text-white"
+          textColorClass
         )}>
           {formatTime(timeLeft)}
         </span>
@@ -67,4 +76,14 @@ export const Timer: React.FC<TimerProps> = ({ duration, isRunning, onComplete, o
       />
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom equality function to prevent unnecessary re-renders
+  return (
+    prevProps.duration === nextProps.duration &&
+    prevProps.isRunning === nextProps.isRunning &&
+    prevProps.onComplete === nextProps.onComplete &&
+    prevProps.onTick === nextProps.onTick
+  );
+});
+
+Timer.displayName = 'Timer';

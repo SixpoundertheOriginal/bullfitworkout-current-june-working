@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { CircularGradientButton } from '@/components/CircularGradientButton';
@@ -14,16 +14,16 @@ interface TrainingStartButtonProps {
   size?: number;
 }
 
-export const TrainingStartButton = ({
+export const TrainingStartButton = React.memo<TrainingStartButtonProps>(({
   onStartClick,
   className = '',
   label = 'Start Training',
   size = 120,
-}: TrainingStartButtonProps) => {
+}) => {
   const navigate = useNavigate();
   const { isActive, startWorkout, updateLastActiveRoute } = useWorkoutState();
   
-  const handleStartClick = () => {
+  const handleStartClick = useCallback(() => {
     if (onStartClick) {
       onStartClick();
       return;
@@ -39,7 +39,7 @@ export const TrainingStartButton = ({
     toast({
       title: "Workout started! Add exercises to begin"
     });
-  };
+  }, [onStartClick, startWorkout, updateLastActiveRoute, navigate]);
   
   if (isActive) {
     return null; // Don't render if workout is already active
@@ -55,4 +55,13 @@ export const TrainingStartButton = ({
       {label}
     </CircularGradientButton>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.label === nextProps.label &&
+    prevProps.size === nextProps.size &&
+    prevProps.className === nextProps.className &&
+    prevProps.onStartClick === nextProps.onStartClick
+  );
+});
+
+TrainingStartButton.displayName = 'TrainingStartButton';

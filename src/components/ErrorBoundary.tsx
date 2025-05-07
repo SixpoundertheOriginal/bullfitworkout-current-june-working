@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 
 interface Props {
   children: React.ReactNode;
+  fallbackComponent?: React.ReactNode;
 }
 
 interface State {
@@ -22,8 +23,17 @@ export class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // You can log the error to an error reporting service
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
   public render() {
     if (this.state.hasError) {
+      if (this.props.fallbackComponent) {
+        return this.props.fallbackComponent;
+      }
+      
       return (
         <Card className="p-6 bg-gray-900 border-gray-800">
           <div className="flex flex-col items-center justify-center space-y-4">

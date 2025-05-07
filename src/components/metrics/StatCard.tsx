@@ -11,7 +11,7 @@ interface StatCardProps {
   onClick?: () => void;
 }
 
-export function StatCard({ icon, label, value, className, onClick }: StatCardProps) {
+export const StatCard = React.memo<StatCardProps>(({ icon, label, value, className, onClick }: StatCardProps) => {
   const Component = onClick ? 'button' : 'div';
   
   return (
@@ -29,4 +29,6 @@ export function StatCard({ icon, label, value, className, onClick }: StatCardPro
       <div className="text-xs text-gray-400">{label}</div>
     </Component>
   );
-}
+});
+
+StatCard.displayName = 'StatCard';

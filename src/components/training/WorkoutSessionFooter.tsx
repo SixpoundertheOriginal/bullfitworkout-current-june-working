@@ -1,4 +1,3 @@
-// src/components/training/WorkoutSessionFooter.tsx
 
 import React from "react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ interface WorkoutSessionFooterProps {
   isSaving: boolean;
 }
 
-export const WorkoutSessionFooter: React.FC<WorkoutSessionFooterProps> = ({
+export const WorkoutSessionFooter = React.memo<WorkoutSessionFooterProps>(({
   onAddExercise,
   onFinishWorkout,
   hasExercises,
@@ -60,4 +59,13 @@ export const WorkoutSessionFooter: React.FC<WorkoutSessionFooterProps> = ({
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.hasExercises === nextProps.hasExercises &&
+    prevProps.isSaving === nextProps.isSaving &&
+    prevProps.onAddExercise === nextProps.onAddExercise &&
+    prevProps.onFinishWorkout === nextProps.onFinishWorkout
+  );
+});
+
+WorkoutSessionFooter.displayName = 'WorkoutSessionFooter';
