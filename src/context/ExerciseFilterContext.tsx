@@ -67,7 +67,8 @@ type ExerciseFilterContextType = {
 };
 
 // Use the createContext utility to create the context and hook
-export const [ExerciseFilterProvider, useExerciseFilterContext] = createContextUtil<ExerciseFilterContextType>("ExerciseFilterContext");
+// Fix: Remove the argument since createContextUtil doesn't expect one
+export const [ExerciseFilterProvider, useExerciseFilterContext] = createContextUtil<ExerciseFilterContextType>();
 
 // Create a wrapper provider component with useReducer
 interface ExerciseFilterProviderProps {
