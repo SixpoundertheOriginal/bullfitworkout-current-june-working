@@ -1,3 +1,4 @@
+
 // src/components/MultiSelect.tsx
 
 import * as React from "react";
@@ -68,8 +69,24 @@ function MultiSelectImpl({
     [safeSelected, onChange]
   );
 
+  // Prevent the Command item's default behavior of closing the popover
+  const handleSelectWithoutClose = React.useCallback(
+    (value: string) => {
+      // Stop propagation to prevent any parent handlers from closing
+      handleSelect(value);
+      // We need to explicitly prevent the default CommandItem behavior
+      // which would typically close the popover
+      return false;
+    },
+    [handleSelect]
+  );
+
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
+    <Popover 
+      open={open} 
+      onOpenChange={setOpen} 
+      modal={false}
+    >
       <PopoverTrigger asChild>
         <div
           role="combobox"
@@ -95,6 +112,7 @@ function MultiSelectImpl({
                   >
                     {opt?.label ?? value}
                     <button
+                      type="button"
                       onMouseDown={e => {e.preventDefault(); e.stopPropagation();}}
                       onClick={() => handleRemove(value)}
                       className="rounded-full focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -113,7 +131,7 @@ function MultiSelectImpl({
       </PopoverTrigger>
 
       <PopoverContent className="w-full p-0" align="start">
-        <Command loop>
+        <Command loop shouldFilter={true}>
           <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>No options found.</CommandEmpty>
           <CommandGroup>
@@ -122,7 +140,12 @@ function MultiSelectImpl({
               return (
                 <CommandItem
                   key={option.value}
-                  onSelect={() => handleSelect(option.value)}
+                  value={option.value}
+                  onSelect={() => {
+                    handleSelect(option.value);
+                    // Prevent the default behavior which would close the popover
+                    return false;
+                  }}
                   className="flex items-center justify-between"
                 >
                   <span>{option.label}</span>
@@ -137,5 +160,5 @@ function MultiSelectImpl({
   );
 }
 
-// Export a memoized wrapper so parent re-renders don’t tear it down
+// Export a memoized wrapper so parent re-renders don't tear it down
 export const MultiSelect = React.memo(MultiSelectImpl);

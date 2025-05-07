@@ -7,18 +7,31 @@ import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 
+// Create Context to store command state behavior overrides
+interface CommandContextValue {
+  shouldCloseOnSelect?: boolean;
+}
+
+const CommandContext = React.createContext<CommandContextValue>({ 
+  shouldCloseOnSelect: true 
+});
+
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive>
->(({ className, ...props }, ref) => (
-  <CommandPrimitive
-    ref={ref}
-    className={cn(
-      "flex h-full w-full flex-col overflow-hidden rounded-md bg-gray-900 text-white",
-      className
-    )}
-    {...props}
-  />
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive> & { 
+    shouldCloseOnSelect?: boolean 
+  }
+>(({ className, shouldCloseOnSelect = true, ...props }, ref) => (
+  <CommandContext.Provider value={{ shouldCloseOnSelect }}>
+    <CommandPrimitive
+      ref={ref}
+      className={cn(
+        "flex h-full w-full flex-col overflow-hidden rounded-md bg-gray-900 text-white",
+        className
+      )}
+      {...props}
+    />
+  </CommandContext.Provider>
 ))
 Command.displayName = CommandPrimitive.displayName
 
@@ -127,16 +140,42 @@ CommandSeparator.displayName = CommandPrimitive.Separator.displayName
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
->(({ className, ...props }, ref) => (
-  <CommandPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-gray-800 data-[selected=true]:text-white data-[disabled=true]:opacity-50",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, onSelect, ...props }, ref) => {
+  // Access the context to determine if items should auto-close
+  const { shouldCloseOnSelect } = React.useContext(CommandContext);
+  
+  // Wrap the onSelect handler if provided to allow overriding close behavior
+  const wrappedOnSelect = React.useCallback(
+    (value: string) => {
+      if (!onSelect) return;
+      
+      // Call the original onSelect and capture its return value
+      const shouldClose = onSelect(value);
+      
+      // If explicitly returned false, don't close
+      // If using default context behavior and shouldCloseOnSelect is false, don't close
+      if (shouldClose === false || (!shouldCloseOnSelect && shouldClose === undefined)) {
+        // Prevent closing by stopping event propagation
+        const event = new CustomEvent('cmdk-item-select', { bubbles: true, cancelable: true });
+        event.stopPropagation();
+        event.preventDefault();
+      }
+    },
+    [onSelect, shouldCloseOnSelect]
+  );
+
+  return (
+    <CommandPrimitive.Item
+      ref={ref}
+      onSelect={wrappedOnSelect}
+      className={cn(
+        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-gray-800 data-[selected=true]:text-white data-[disabled=true]:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  );
+})
 
 CommandItem.displayName = CommandPrimitive.Item.displayName
 
