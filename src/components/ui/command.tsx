@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -145,31 +144,23 @@ const CommandItem = React.forwardRef<
   const { shouldCloseOnSelect } = React.useContext(CommandContext);
   
   // Wrap the onSelect handler if provided to allow overriding close behavior
-  const wrappedOnSelect = React.useCallback(
+  const handleSelect = React.useCallback(
     (value: string) => {
       if (!onSelect) return;
       
       // Call the original onSelect handler
       const result = onSelect(value);
       
-      // Determine if we should prevent closing
-      // We need to be careful with the comparison to avoid TypeScript errors
-      // when comparing void with boolean
-      
-      // First check if shouldCloseOnSelect from context is false
-      let preventClosing = shouldCloseOnSelect === false;
-      
-      // Then check if onSelect explicitly returned false
-      // Only do this comparison if result is actually a boolean (not undefined/void)
-      if (typeof result === 'boolean' && result === false) {
-        preventClosing = true;
-      }
-      
-      if (preventClosing) {
-        // Prevent closing by stopping event propagation
-        const event = new CustomEvent('cmdk-item-select', { bubbles: true, cancelable: true });
-        event.stopPropagation();
-        event.preventDefault();
+      // If shouldCloseOnSelect is false OR onSelect explicitly returned false
+      // then prevent closing by stopping event propagation
+      if (shouldCloseOnSelect === false || result === false) {
+        // We need to manually prevent the command menu from closing
+        // by stopping the propagation of the select event
+        const event = window.event;
+        if (event) {
+          event.stopPropagation?.();
+          event.preventDefault?.();
+        }
       }
     },
     [onSelect, shouldCloseOnSelect]
@@ -178,7 +169,7 @@ const CommandItem = React.forwardRef<
   return (
     <CommandPrimitive.Item
       ref={ref}
-      onSelect={wrappedOnSelect}
+      onSelect={handleSelect}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-gray-800 data-[selected=true]:text-white data-[disabled=true]:opacity-50",
         className

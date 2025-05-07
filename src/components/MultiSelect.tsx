@@ -41,17 +41,18 @@ function MultiSelectImpl({
   // Local open state stays stable across parent updates
   const [open, setOpen] = React.useState(false);
 
-  // Memoize these to avoid re-creating arrays each render
+  // Memoize options and selected values to avoid re-creating arrays each render
   const safeOptions = React.useMemo(
     () => (Array.isArray(options) ? options : []),
     [options]
   );
+  
   const safeSelected = React.useMemo(
     () => (Array.isArray(selected) ? selected : []),
     [selected]
   );
 
-  // Stable handler references
+  // Stable handler references with proper memoization
   const handleSelect = React.useCallback(
     (value: string) => {
       const isSel = safeSelected.includes(value);
@@ -72,14 +73,58 @@ function MultiSelectImpl({
   // Prevent the Command item's default behavior of closing the popover
   const handleSelectWithoutClose = React.useCallback(
     (value: string) => {
-      // Stop propagation to prevent any parent handlers from closing
       handleSelect(value);
-      // We need to explicitly prevent the default CommandItem behavior
-      // which would typically close the popover
+      // Explicitly return false to signal that we want to prevent closing
       return false;
     },
     [handleSelect]
   );
+
+  // Memoize rendered options to prevent re-renders
+  const renderedOptions = React.useMemo(() => (
+    safeOptions.map(option => {
+      const isSel = safeSelected.includes(option.value);
+      return (
+        <CommandItem
+          key={option.value}
+          value={option.value}
+          onSelect={handleSelectWithoutClose}
+          className="flex items-center justify-between"
+        >
+          <span>{option.label}</span>
+          {isSel && <Check className="h-4 w-4" />}
+        </CommandItem>
+      );
+    })
+  ), [safeOptions, safeSelected, handleSelectWithoutClose]);
+
+  // Memoize rendered selected badges to prevent re-renders
+  const renderedSelectedBadges = React.useMemo(() => (
+    safeSelected.length === 0 ? (
+      <span className="text-muted-foreground">{placeholder}</span>
+    ) : (
+      safeSelected.map(value => {
+        const opt = safeOptions.find(o => o.value === value);
+        return (
+          <Badge
+            key={value}
+            variant="secondary"
+            className="flex items-center gap-1 mb-1"
+          >
+            {opt?.label ?? value}
+            <button
+              type="button"
+              onMouseDown={e => {e.preventDefault(); e.stopPropagation();}}
+              onClick={() => handleRemove(value)}
+              className="rounded-full focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        );
+      })
+    )
+  ), [safeSelected, safeOptions, placeholder, handleRemove]);
 
   return (
     <Popover 
@@ -100,30 +145,7 @@ function MultiSelectImpl({
           )}
         >
           <div className="flex flex-wrap gap-1">
-            {safeSelected.length === 0 ? (
-              <span className="text-muted-foreground">{placeholder}</span>
-            ) : (
-              safeSelected.map(value => {
-                const opt = safeOptions.find(o => o.value === value);
-                return (
-                  <Badge
-                    key={value}
-                    variant="secondary"
-                    className="flex items-center gap-1 mb-1"
-                  >
-                    {opt?.label ?? value}
-                    <button
-                      type="button"
-                      onMouseDown={e => {e.preventDefault(); e.stopPropagation();}}
-                      onClick={() => handleRemove(value)}
-                      className="rounded-full focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                );
-              })
-            )}
+            {renderedSelectedBadges}
           </div>
           <div className={safeSelected.length > 0 ? "opacity-100" : "opacity-50"}>
             {safeSelected.length > 0 && `${safeSelected.length} selected`}
@@ -136,20 +158,7 @@ function MultiSelectImpl({
           <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
           <CommandEmpty>No options found.</CommandEmpty>
           <CommandGroup>
-            {safeOptions.map(option => {
-              const isSel = safeSelected.includes(option.value);
-              return (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={handleSelectWithoutClose}
-                  className="flex items-center justify-between"
-                >
-                  <span>{option.label}</span>
-                  {isSel && <Check className="h-4 w-4" />}
-                </CommandItem>
-              );
-            })}
+            {renderedOptions}
           </CommandGroup>
         </Command>
       </PopoverContent>
