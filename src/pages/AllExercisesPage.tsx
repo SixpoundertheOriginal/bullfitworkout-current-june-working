@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Exercise } from "@/types/exercise";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
@@ -30,12 +28,11 @@ import {
 import {
   ChevronLeft,
   Plus,
-  Search,
-  X,
 } from "lucide-react";
 import { ExerciseFiltersProvider, useExerciseFilters } from "@/context/ExerciseFilterContext";
 import FilterPanel from "@/components/exercises/FilterPanel";
 import ExerciseListView from "@/components/exercises/ExerciseListView";
+import ExerciseSearchBar from "@/components/exercises/ExerciseSearchBar";
 import { useFilteredExercises } from "@/hooks/useFilteredExercises";
 
 interface AllExercisesPageProps {
@@ -62,12 +59,11 @@ function AllExercisesContent({
 
   // Use our filter context
   const { 
-    searchQuery,
+    searchQuery,  // Make sure we include searchQuery here
     selectedMuscleGroup,
     selectedEquipment,
     selectedDifficulty,
     selectedMovement,
-    setSearchQuery,
     currentPage,
     setPage,
     resetFilters
@@ -292,25 +288,7 @@ function AllExercisesContent({
         </div>
         
         {/* Search bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Search exercises..."
-            className="pl-9 bg-gray-800 border-gray-700"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="absolute right-2 top-1.5 h-7 w-7 p-0"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <ExerciseSearchBar className="mb-4" />
                 
         {/* Tabs for navigation */}
         <Tabs className="flex-1 overflow-hidden flex flex-col" value={activeTab} onValueChange={setActiveTab}>
