@@ -14,7 +14,7 @@ type AuthContextType = {
   loading: boolean;
 };
 
-const [AuthProvider, useAuth] = createContext<AuthContextType>();
+const [AuthProviderComponent, useAuth] = createContext<AuthContextType>();
 
 export { useAuth };
 
@@ -133,8 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }), [session, user, signIn, signUp, signOut, loading]);
 
   return (
-    <AuthProvider value={value}>
+    <AuthProviderComponent value={value}>
       {children}
-    </AuthProvider>
+    </AuthProviderComponent>
   );
 }

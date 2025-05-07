@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DateRange } from 'react-day-picker';
 import { startOfWeek, endOfWeek } from 'date-fns';
 import { createContext as createContextUtil } from '@/utils/createContext';
@@ -10,7 +10,7 @@ interface DateRangeContextType {
 }
 
 // Switch to the utility function pattern
-const [DateRangeProvider, useDateRange] = createContextUtil<DateRangeContextType>();
+const [DateRangeProviderComponent, useDateRange] = createContextUtil<DateRangeContextType>();
 
 export { useDateRange };
 
@@ -29,8 +29,8 @@ export function DateRangeProvider({ children }: { children: React.ReactNode }) {
   }), [dateRange]);
 
   return (
-    <DateRangeProvider value={contextValue}>
+    <DateRangeProviderComponent value={contextValue}>
       {children}
-    </DateRangeProvider>
+    </DateRangeProviderComponent>
   );
 }

@@ -11,7 +11,7 @@ interface LayoutContextProps {
   setFilterVisible: (visible: boolean) => void;
 }
 
-const [LayoutProvider, useLayout] = createContext<LayoutContextProps>();
+const [LayoutProviderComponent, useLayout] = createContext<LayoutContextProps>();
 
 export { useLayout };
 
@@ -38,5 +38,5 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setFilterVisible,
   }), [currentRoute, activeWorkoutId, isFilterVisible]);
   
-  return <LayoutProvider value={value}>{children}</LayoutProvider>;
+  return <LayoutProviderComponent value={value}>{children}</LayoutProviderComponent>;
 };
