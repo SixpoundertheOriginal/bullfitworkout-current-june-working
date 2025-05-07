@@ -1,7 +1,6 @@
-
 // src/components/workouts/ExerciseDialog.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +38,8 @@ import {
   DIFFICULTY_LEVELS,
   getMuscleGroupOptions,
   getEquipmentOptions,
+  ensureMuscleGroupArray,
+  ensureEquipmentTypeArray,
   formatDisplayName
 } from "@/constants/exerciseMetadata";
 
@@ -52,12 +53,12 @@ const DEFAULT_EXERCISE = {
   difficulty: "beginner" as Difficulty,
   instructions: { steps: "", form: "" },
   is_compound: false,
+  is_bodyweight: false,
   tips: [] as string[],
   variations: [] as string[],
   loading_type: undefined,
   estimated_load_percent: undefined,
   variant_category: undefined,
-  is_bodyweight: false,
   energy_cost_factor: 1
 };
 
@@ -80,60 +81,60 @@ export function ExerciseDialog({
 }: ExerciseDialogProps) {
   const isAdd = mode === "add";
 
-  // Persist form fields across reloads/tabs, but NOT the modal open-state
+  // Persist form fields (but not the open-state)
   const {
     formState: exercise,
     setFormState: setExercise,
     resetForm
   } = useSessionForm("addExerciseForm", DEFAULT_EXERCISE);
 
-  // Define the valid tab types to fix the type error
+  // Fix for Tabs type
   type TabType = "basic" | "advanced" | "metrics" | "instructions";
-  
   const [activeTab, setActiveTab] = useState<TabType>("basic");
   const [formError, setFormError] = useState("");
 
-  // On mount or when initialExercise changes, seed or reset the form
+  // Seed or reset form whenever initialExercise changes
   useEffect(() => {
     if (initialExercise) {
       setExercise({ ...DEFAULT_EXERCISE, ...initialExercise });
-    } else if (mode === "edit") {
+    } else if (!isAdd) {
       resetForm();
     }
     setFormError("");
-  }, [initialExercise, mode, resetForm, setExercise]);
+  }, [initialExercise, isAdd, resetForm, setExercise]);
 
+  // Memoize option arrays so dropdowns don't re-mount on every render
+  const muscleGroupOptions = useMemo(() => getMuscleGroupOptions(), []);
+  const equipmentOptions  = useMemo(() => getEquipmentOptions(), []);
+
+  // Safety-guarded arrays to avoid undefined iteration
+  const safePrimary   = ensureMuscleGroupArray(exercise.primary_muscle_groups);
+  const safeSecondary = ensureMuscleGroupArray(exercise.secondary_muscle_groups);
+  const safeEquip     = ensureEquipmentTypeArray(exercise.equipment_type);
+
+  // Form validation + submit
   const handleSubmit = () => {
     if (!exercise.name.trim()) {
       setFormError("Name is required");
       return;
     }
-    if (!exercise.primary_muscle_groups.length) {
+    if (!safePrimary.length) {
       setFormError("Pick at least one primary muscle group");
       return;
     }
-    if (!exercise.equipment_type.length) {
+    if (!safeEquip.length) {
       setFormError("Pick at least one equipment type");
       return;
     }
 
     onSubmit(exercise);
-
-    if (isAdd) {
-      resetForm();
-    }
+    if (isAdd) resetForm();
   };
 
   const handleClose = () => {
-    if (isAdd) {
-      resetForm();
-    }
+    if (isAdd) resetForm();
     onOpenChange(false);
   };
-
-  // Generate options for MultiSelect components
-  const muscleGroupOptions = getMuscleGroupOptions();
-  const equipmentOptions = getEquipmentOptions();
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -144,22 +145,22 @@ export function ExerciseDialog({
       >
         <DialogHeader>
           <DialogTitle id="exercise-dialog-title" className="text-xl">
-            {mode === "add" ? "Add Exercise" : "Edit Exercise"}
+            {isAdd ? "Add Exercise" : "Edit Exercise"}
           </DialogTitle>
           <DialogDescription
             id="exercise-dialog-description"
-            className="sr-only"
+            className="text-sm text-gray-500"
           >
-            {mode === "add"
+            {isAdd
               ? "Fill in details to add a new exercise."
-              : "Edit the exercise details."}
+              : "Edit the exercise details below."}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs
           value={activeTab}
-          onValueChange={(value: TabType) => setActiveTab(value)}
-          className="flex-1 overflow-hidden flex flex-col"
+          onValueChange={(v: string) => setActiveTab(v as TabType)}
+          className="flex-1 flex flex-col overflow-hidden"
         >
           <TabsList className="grid grid-cols-4">
             <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -168,9 +169,9 @@ export function ExerciseDialog({
             <TabsTrigger value="instructions">Instructions</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 overflow-auto">
+          <ScrollArea className="flex-1 overflow-auto mt-2 p-2 space-y-4">
             {/* BASIC */}
-            <TabsContent value="basic" className="space-y-4 mt-2">
+            <TabsContent value="basic">
               <div>
                 <Label>Name*</Label>
                 <Input
@@ -196,7 +197,7 @@ export function ExerciseDialog({
                 <Label>Primary Muscle Groups*</Label>
                 <MultiSelect
                   options={muscleGroupOptions}
-                  selected={exercise.primary_muscle_groups}
+                  selected={safePrimary}
                   onChange={sel =>
                     setExercise({
                       ...exercise,
@@ -210,7 +211,7 @@ export function ExerciseDialog({
                 <Label>Secondary Muscle Groups</Label>
                 <MultiSelect
                   options={muscleGroupOptions}
-                  selected={exercise.secondary_muscle_groups}
+                  selected={safeSecondary}
                   onChange={sel =>
                     setExercise({
                       ...exercise,
@@ -224,7 +225,7 @@ export function ExerciseDialog({
                 <Label>Equipment Type*</Label>
                 <MultiSelect
                   options={equipmentOptions}
-                  selected={exercise.equipment_type}
+                  selected={safeEquip}
                   onChange={sel =>
                     setExercise({
                       ...exercise,
@@ -237,7 +238,7 @@ export function ExerciseDialog({
             </TabsContent>
 
             {/* ADVANCED */}
-            <TabsContent value="advanced" className="space-y-4 mt-2">
+            <TabsContent value="advanced">
               <div>
                 <Label>Difficulty</Label>
                 <Select
@@ -259,7 +260,7 @@ export function ExerciseDialog({
                 </Select>
               </div>
               <div>
-                <Label>Movement</Label>
+                <Label>Movement Pattern</Label>
                 <Select
                   value={exercise.movement_pattern}
                   onValueChange={v =>
@@ -281,33 +282,33 @@ export function ExerciseDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center">
                 <Checkbox
                   checked={exercise.is_compound}
                   onCheckedChange={c =>
                     setExercise({ ...exercise, is_compound: c as boolean })
                   }
                 />
-                <Label>Compound exercise</Label>
+                <Label className="ml-2">Compound exercise</Label>
               </div>
             </TabsContent>
 
             {/* METRICS */}
-            <TabsContent value="metrics" className="space-y-4 mt-2">
-              <div className="flex items-center space-x-2">
+            <TabsContent value="metrics">
+              <div className="flex items-center">
                 <Checkbox
                   checked={exercise.is_bodyweight}
                   onCheckedChange={c =>
                     setExercise({ ...exercise, is_bodyweight: c as boolean })
                   }
                 />
-                <Label>Bodyweight exercise</Label>
+                <Label className="ml-2">Bodyweight exercise</Label>
               </div>
-              {/* …additional metrics fields… */}
+              {/* …you can add Sets/Reps/Rest inputs here… */}
             </TabsContent>
 
             {/* INSTRUCTIONS */}
-            <TabsContent value="instructions" className="space-y-4 mt-2">
+            <TabsContent value="instructions">
               <div>
                 <Label>Instructions</Label>
                 <Textarea
@@ -316,7 +317,10 @@ export function ExerciseDialog({
                   onChange={e =>
                     setExercise({
                       ...exercise,
-                      instructions: { ...exercise.instructions, steps: e.target.value }
+                      instructions: {
+                        ...exercise.instructions,
+                        steps: e.target.value
+                      }
                     })
                   }
                   className="min-h-[100px]"
@@ -330,7 +334,10 @@ export function ExerciseDialog({
                   onChange={e =>
                     setExercise({
                       ...exercise,
-                      instructions: { ...exercise.instructions, form: e.target.value }
+                      instructions: {
+                        ...exercise.instructions,
+                        form: e.target.value
+                      }
                     })
                   }
                   className="min-h-[100px]"
@@ -340,7 +347,9 @@ export function ExerciseDialog({
           </ScrollArea>
         </Tabs>
 
-        {formError && <p className="text-red-500 mt-2">{formError}</p>}
+        {formError && (
+          <p className="mt-2 text-sm text-red-600">{formError}</p>
+        )}
 
         <DialogFooter className="flex justify-end space-x-2">
           <Button variant="outline" onClick={handleClose}>
