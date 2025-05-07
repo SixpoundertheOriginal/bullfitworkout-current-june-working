@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -152,9 +153,17 @@ const CommandItem = React.forwardRef<
       const result = onSelect(value);
       
       // Determine if we should prevent closing
-      // First check if onSelect explicitly returned false
-      // Then check if shouldCloseOnSelect from context is false
-      const preventClosing = result === false || shouldCloseOnSelect === false;
+      // We need to be careful with the comparison to avoid TypeScript errors
+      // when comparing void with boolean
+      
+      // First check if shouldCloseOnSelect from context is false
+      let preventClosing = shouldCloseOnSelect === false;
+      
+      // Then check if onSelect explicitly returned false
+      // Only do this comparison if result is actually a boolean (not undefined/void)
+      if (typeof result === 'boolean' && result === false) {
+        preventClosing = true;
+      }
       
       if (preventClosing) {
         // Prevent closing by stopping event propagation
