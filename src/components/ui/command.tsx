@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
@@ -151,8 +152,8 @@ const CommandItem = React.forwardRef<
       // Call the original onSelect handler
       const result = onSelect(value);
       
-      // If shouldCloseOnSelect is false OR onSelect explicitly returned false
-      // then prevent closing by stopping event propagation
+      // Fix the type comparison issue - check if shouldCloseOnSelect is false
+      // or if result is explicitly false (using strict equality to avoid type issues)
       if (shouldCloseOnSelect === false || result === false) {
         // We need to manually prevent the command menu from closing
         // by stopping the propagation of the select event
