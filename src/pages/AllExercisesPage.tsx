@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { cn } from "@/lib/utils";
-import { toast, useToast } from "@/hooks/use-toast"; // Fixed import here
+import { toast, useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { ExerciseDialog } from "@/components/exercises/ExerciseDialog";
@@ -71,6 +71,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { ExerciseFiltersProvider, useExerciseFilters } from "@/context/ExerciseFilterContext";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -78,7 +79,11 @@ interface AllExercisesPageProps {
   onBack?: () => void;
 }
 
-export default function AllExercisesPage({ onSelectExercise, standalone = true, onBack }: AllExercisesPageProps) {
+function AllExercisesContent({
+  onSelectExercise,
+  standalone = true,
+  onBack
+}: AllExercisesPageProps) {
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
   const { workouts } = useWorkoutHistory();
   const { toast } = useToast();
@@ -90,24 +95,32 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
 
-  // Search and filter states
-  const [searchQuery, setSearchQuery] = useState("");
+  // Use our new filter context
+  const { 
+    searchQuery,
+    selectedMuscleGroup,
+    selectedEquipment,
+    selectedDifficulty,
+    selectedMovement,
+    currentPage,
+    setSearchQuery,
+    setMuscleGroup,
+    setEquipment,
+    setDifficulty,
+    setMovement,
+    setPage,
+    resetFilters
+  } = useExerciseFilters();
+  
+  // Show/hide filters state - kept local as it's UI-only state
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<MuscleGroup | "all">("all");
-  const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | "all">("all");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | "all">("all");
-  const [selectedMovement, setSelectedMovement] = useState<MovementPattern | "all">("all");
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const exercisesPerPage = 8;
 
   // For add/edit
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [exerciseToEdit, setExerciseToEdit] = useState<any | null>(null);
 
   // Extract recently used exercises from workout history
-  const recentExercises = React.useMemo(() => {
+  const recentExercises = useMemo(() => {
     if (!workouts?.length) return [];
     
     const exerciseMap = new Map<string, Exercise>();
@@ -161,26 +174,33 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     });
   };
 
-  const suggestedExercises = filterExercises(exercises.slice(0, 20)); // Limit suggested to top 20 for better performance
-  const filteredRecent = filterExercises(recentExercises);
-  const filteredAll = filterExercises(exercises);
+  const suggestedExercises = useMemo(() => 
+    filterExercises(exercises.slice(0, 20)), // Limit suggested to top 20 for better performance
+  [exercises, searchQuery, selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]); 
+  
+  const filteredRecent = useMemo(() => 
+    filterExercises(recentExercises),
+  [recentExercises, searchQuery, selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]);
+  
+  const filteredAll = useMemo(() => 
+    filterExercises(exercises),
+  [exercises, searchQuery, selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]);
 
   // Pagination logic
-  const indexOfLastExercise = currentPage * exercisesPerPage;
-  const indexOfFirstExercise = indexOfLastExercise - exercisesPerPage;
-  const currentExercises = filteredAll.slice(indexOfFirstExercise, indexOfLastExercise);
-  const totalPages = Math.ceil(filteredAll.length / exercisesPerPage);
+  const pageSize = 8;
+  const indexOfLastExercise = currentPage * pageSize;
+  const indexOfFirstExercise = indexOfLastExercise - pageSize;
+  const currentExercises = useMemo(() => 
+    filteredAll.slice(indexOfFirstExercise, indexOfLastExercise),
+  [filteredAll, indexOfFirstExercise, indexOfLastExercise]);
+  
+  const totalPages = Math.ceil(filteredAll.length / pageSize);
 
   const paginate = (pageNumber: number) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
+      setPage(pageNumber);
     }
   };
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]);
 
   const handleAdd = () => {
     setExerciseToEdit(null);
@@ -230,14 +250,6 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     if (onSelectExercise) {
       onSelectExercise(exercise);
     }
-  };
-
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedMuscleGroup("all");
-    setSelectedEquipment("all");
-    setSelectedDifficulty("all");
-    setSelectedMovement("all");
   };
 
   // Add/Edit handler
@@ -525,7 +537,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                   <label className="text-sm text-gray-300 mb-1 block">Muscle Group</label>
                   <Select 
                     value={selectedMuscleGroup} 
-                    onValueChange={(value) => setSelectedMuscleGroup(value as any)}
+                    onValueChange={(value) => setMuscleGroup(value as any)}
                   >
                     <SelectTrigger className="bg-gray-900 border-gray-700">
                       <SelectValue placeholder="Select muscle group" />
@@ -545,7 +557,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                   <label className="text-sm text-gray-300 mb-1 block">Equipment</label>
                   <Select 
                     value={selectedEquipment} 
-                    onValueChange={(value) => setSelectedEquipment(value as any)}
+                    onValueChange={(value) => setEquipment(value as any)}
                   >
                     <SelectTrigger className="bg-gray-900 border-gray-700">
                       <SelectValue placeholder="Select equipment" />
@@ -565,7 +577,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                   <label className="text-sm text-gray-300 mb-1 block">Difficulty</label>
                   <Select 
                     value={selectedDifficulty} 
-                    onValueChange={(value) => setSelectedDifficulty(value as any)}
+                    onValueChange={(value) => setDifficulty(value as any)}
                   >
                     <SelectTrigger className="bg-gray-900 border-gray-700">
                       <SelectValue placeholder="Select difficulty" />
@@ -585,7 +597,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                   <label className="text-sm text-gray-300 mb-1 block">Movement Pattern</label>
                   <Select 
                     value={selectedMovement} 
-                    onValueChange={(value) => setSelectedMovement(value as any)}
+                    onValueChange={(value) => setMovement(value as any)}
                   >
                     <SelectTrigger className="bg-gray-900 border-gray-700">
                       <SelectValue placeholder="Select pattern" />
@@ -610,7 +622,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 <Button
                   variant="link"
                   size="sm"
-                  onClick={clearFilters}
+                  onClick={resetFilters}
                   className="text-purple-400 hover:text-purple-300"
                 >
                   Clear all filters
@@ -651,7 +663,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                     <>
                       <h3 className="text-xl font-medium mb-2">No matching exercises</h3>
                       <p className="text-gray-400 mb-6">Try adjusting your filters or search query</p>
-                      <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
+                      <Button variant="outline" onClick={resetFilters}>Clear filters</Button>
                     </>
                   ) : (
                     <>
@@ -694,5 +706,13 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
         <ExerciseFAB onClick={handleAdd} />
       )}
     </div>
+  );
+}
+
+export default function AllExercisesPage(props: AllExercisesPageProps) {
+  return (
+    <ExerciseFiltersProvider>
+      <AllExercisesContent {...props} />
+    </ExerciseFiltersProvider>
   );
 }
