@@ -152,9 +152,9 @@ const CommandItem = React.forwardRef<
       // Call the original onSelect and capture its return value
       const result = onSelect(value);
       
-      // If explicitly returned false, don't close
-      // If using default context behavior and shouldCloseOnSelect is false, don't close
-      const shouldClose = result === false ? false : shouldCloseOnSelect;
+      // Fixed: Check explicitly if the result is false
+      // This prevents TypeScript errors with void vs boolean comparison
+      const shouldClose = result === false ? false : shouldCloseOnSelect !== false;
       
       if (!shouldClose) {
         // Prevent closing by stopping event propagation
