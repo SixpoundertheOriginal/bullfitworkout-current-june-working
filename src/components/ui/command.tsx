@@ -152,8 +152,9 @@ const CommandItem = React.forwardRef<
       // Call the original onSelect and capture its return value
       const result = onSelect(value);
       
-      // Fixed: Check explicitly if the result is false
-      // This prevents TypeScript errors with void vs boolean comparison
+      // Fixed: Use explicit type check to avoid TypeScript errors
+      // Check explicitly for false rather than doing a boolean comparison
+      // This allows void returns to work correctly
       const shouldClose = result === false ? false : shouldCloseOnSelect !== false;
       
       if (!shouldClose) {
@@ -208,3 +209,4 @@ export {
   CommandShortcut,
   CommandSeparator,
 }
+
