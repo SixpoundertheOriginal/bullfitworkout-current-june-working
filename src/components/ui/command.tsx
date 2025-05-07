@@ -152,11 +152,16 @@ const CommandItem = React.forwardRef<
       // Call the original onSelect and capture its return value
       const result = onSelect(value);
       
-      // Properly handle the result without comparing void to boolean
+      // Handle both cases without comparing void to boolean
       let shouldClose = true;
+      
+      // Explicitly check only for false - this avoids comparing void to boolean
       if (result === false) {
         shouldClose = false;
-      } else if (shouldCloseOnSelect === false) {
+      }
+      
+      // Check the context value separately
+      if (shouldCloseOnSelect === false) {
         shouldClose = false;
       }
       

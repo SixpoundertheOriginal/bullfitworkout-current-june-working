@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, ChevronsUpDown, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,10 +18,10 @@ import {
 import { Exercise } from "@/types/exercise";
 
 import {
-  MuscleGroup,
-  EquipmentType,
-  MovementPattern,
-  Difficulty,
+  type MuscleGroup,
+  type EquipmentType,
+  type MovementPattern,
+  type Difficulty,
   MUSCLE_GROUPS,
   EQUIPMENT_TYPES,
   MOVEMENT_PATTERNS,

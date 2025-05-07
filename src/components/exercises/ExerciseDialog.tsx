@@ -11,7 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Exercise } from "@/types/exercise";
-import { MuscleGroup, EquipmentType, MovementPattern, Difficulty } from "@/constants/exerciseMetadata";
+import { 
+  type MuscleGroup, 
+  type EquipmentType, 
+  type MovementPattern, 
+  type Difficulty 
+} from "@/constants/exerciseMetadata";
 
 interface ExerciseDialogProps {
   open: boolean;
