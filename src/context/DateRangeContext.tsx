@@ -1,14 +1,18 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 import { DateRange } from 'react-day-picker';
-import { subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { startOfWeek, endOfWeek } from 'date-fns';
+import { createContext as createContextUtil } from '@/utils/createContext';
 
 interface DateRangeContextType {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
 }
 
-const DateRangeContext = createContext<DateRangeContextType | undefined>(undefined);
+// Switch to the utility function pattern
+const [DateRangeProvider, useDateRange] = createContextUtil<DateRangeContextType>();
+
+export { useDateRange };
 
 export function DateRangeProvider({ children }: { children: React.ReactNode }) {
   // Initialize with the current week (Monday to Sunday)
@@ -17,18 +21,16 @@ export function DateRangeProvider({ children }: { children: React.ReactNode }) {
     from: startOfWeek(now, { weekStartsOn: 1 }), // Monday
     to: endOfWeek(now, { weekStartsOn: 1 }), // Sunday
   });
+  
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({ 
+    dateRange, 
+    setDateRange 
+  }), [dateRange]);
 
   return (
-    <DateRangeContext.Provider value={{ dateRange, setDateRange }}>
+    <DateRangeProvider value={contextValue}>
       {children}
-    </DateRangeContext.Provider>
+    </DateRangeProvider>
   );
-}
-
-export function useDateRange() {
-  const context = useContext(DateRangeContext);
-  if (!context) {
-    throw new Error('useDateRange must be used within a DateRangeProvider');
-  }
-  return context;
 }

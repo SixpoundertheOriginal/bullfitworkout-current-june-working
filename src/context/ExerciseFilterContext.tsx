@@ -1,5 +1,4 @@
-
-import React, { createContext, useReducer, ReactNode, Dispatch } from 'react';
+import React, { createContext, useReducer, ReactNode, Dispatch, useMemo } from 'react';
 import { createContext as createContextUtil } from '@/utils/createContext';
 import { type MuscleGroup, type EquipmentType, type MovementPattern, type Difficulty } from '@/constants/exerciseMetadata';
 
@@ -78,11 +77,11 @@ interface ExerciseFilterProviderProps {
 export function ExerciseFiltersProvider({ children }: ExerciseFilterProviderProps) {
   const [state, dispatch] = useReducer(filterReducer, initialFilterState);
 
-  // Create the context value object
-  const contextValue: ExerciseFilterContextType = {
+  // Create the context value object and memoize it
+  const contextValue = useMemo(() => ({
     state,
     dispatch
-  };
+  }), [state]);
 
   return (
     <ExerciseFilterProvider value={contextValue}>
@@ -95,42 +94,29 @@ export function ExerciseFiltersProvider({ children }: ExerciseFilterProviderProp
 export function useExerciseFilters() {
   const { state, dispatch } = useExerciseFilterContext();
   
-  const setSearchQuery = (query: string) => {
-    dispatch({ type: "SET_SEARCH_QUERY", payload: query });
-  };
-  
-  const setMuscleGroup = (muscleGroup: MuscleGroup | "all") => {
-    dispatch({ type: "SET_MUSCLE_GROUP", payload: muscleGroup });
-  };
-  
-  const setEquipment = (equipment: EquipmentType | "all") => {
-    dispatch({ type: "SET_EQUIPMENT", payload: equipment });
-  };
-  
-  const setDifficulty = (difficulty: Difficulty | "all") => {
-    dispatch({ type: "SET_DIFFICULTY", payload: difficulty });
-  };
-  
-  const setMovement = (movement: MovementPattern | "all") => {
-    dispatch({ type: "SET_MOVEMENT", payload: movement });
-  };
-  
-  const setPage = (page: number) => {
-    dispatch({ type: "SET_PAGE", payload: page });
-  };
-  
-  const resetFilters = () => {
-    dispatch({ type: "RESET_FILTERS" });
-  };
-  
-  return {
+  // Return memoized functions to prevent unnecessary re-renders
+  return useMemo(() => ({
     ...state,
-    setSearchQuery,
-    setMuscleGroup,
-    setEquipment,
-    setDifficulty,
-    setMovement,
-    setPage,
-    resetFilters
-  };
+    setSearchQuery: (query: string) => {
+      dispatch({ type: "SET_SEARCH_QUERY", payload: query });
+    },
+    setMuscleGroup: (muscleGroup: MuscleGroup | "all") => {
+      dispatch({ type: "SET_MUSCLE_GROUP", payload: muscleGroup });
+    },
+    setEquipment: (equipment: EquipmentType | "all") => {
+      dispatch({ type: "SET_EQUIPMENT", payload: equipment });
+    },
+    setDifficulty: (difficulty: Difficulty | "all") => {
+      dispatch({ type: "SET_DIFFICULTY", payload: difficulty });
+    },
+    setMovement: (movement: MovementPattern | "all") => {
+      dispatch({ type: "SET_MOVEMENT", payload: movement });
+    },
+    setPage: (page: number) => {
+      dispatch({ type: "SET_PAGE", payload: page });
+    },
+    resetFilters: () => {
+      dispatch({ type: "RESET_FILTERS" });
+    }
+  }), [state, dispatch]);
 }

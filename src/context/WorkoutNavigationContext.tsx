@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
@@ -63,7 +64,7 @@ export function WorkoutNavigationContextProvider({
     }
   }, [isVisible, isActive, persistWorkoutState]);
 
-  // Navigation confirmation logic
+  // Navigation confirmation logic - memoized to prevent unnecessary re-creation
   const confirmNavigation = useCallback((to: string) => {
     // Skip confirmation if navigating to the same page
     if (to === location.pathname) {
@@ -82,8 +83,11 @@ export function WorkoutNavigationContextProvider({
     }
   }, [isActive, isTrainingRoute, navigate, location.pathname, persistWorkoutState]);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({ confirmNavigation }), [confirmNavigation]);
+
   return (
-    <Provider value={{ confirmNavigation }}>
+    <Provider value={contextValue}>
       {children}
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
