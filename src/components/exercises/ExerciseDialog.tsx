@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -35,6 +34,7 @@ import {
   formatDisplayName
 } from "@/constants/exerciseMetadata";
 import { useMultiSelectField } from "@/hooks/useMultiSelectField";
+import { ExerciseDialogBasicTab } from "./ExerciseDialogBasicTab";
 
 interface ExerciseDialogProps {
   open: boolean;
@@ -67,8 +67,8 @@ function ExerciseDialogComponent({
     difficulty: Difficulty;
     is_compound: boolean;
     instructions: {
-      steps: string; // Non-optional now
-      form: string;  // Non-optional now
+      steps: string;
+      form: string;
     };
   }>({
     name: "",
@@ -80,8 +80,8 @@ function ExerciseDialogComponent({
     difficulty: "beginner",
     is_compound: false,
     instructions: {
-      steps: "", // Initialize with empty string instead of undefined
-      form: ""   // Initialize with empty string instead of undefined
+      steps: "",
+      form: ""
     }
   });
 
@@ -104,8 +104,8 @@ function ExerciseDialogComponent({
         difficulty: (initialExercise.difficulty as Difficulty) || "beginner",
         is_compound: initialExercise.is_compound || false,
         instructions: {
-          steps: initialExercise.instructions?.steps || "", // Ensure non-optional with default
-          form: initialExercise.instructions?.form || ""    // Ensure non-optional with default
+          steps: initialExercise.instructions?.steps || "",
+          form: initialExercise.instructions?.form || ""
         }
       });
     } else {
@@ -138,7 +138,7 @@ function ExerciseDialogComponent({
     label: formatDisplayName(type)
   }));
 
-  // Use the new hook for MultiSelect fields
+  // Use the new hook for MultiSelect fields - keeping for other tabs
   const primaryMuscleField = useMultiSelectField(
     exercise.primary_muscle_groups,
     sel => setExercise(prev => ({ ...prev, primary_muscle_groups: sel as MuscleGroup[] }))
@@ -195,59 +195,13 @@ function ExerciseDialogComponent({
           </TabsList>
           
           <ScrollArea className="flex-1 overflow-auto mt-4 px-1">
-            {/* Basic Info Tab */}
-            <TabsContent value="basic" className="space-y-4 mt-0">
-              <div className="space-y-2">
-                <Label htmlFor="name">Exercise Name*</Label>
-                <Input 
-                  id="name" 
-                  value={exercise.name}
-                  onChange={(e) => setExercise({...exercise, name: e.target.value})}
-                  placeholder="E.g., Bench Press" 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description"
-                  value={exercise.description}
-                  onChange={(e) => setExercise({...exercise, description: e.target.value})}
-                  placeholder="Brief description of the exercise"
-                  className="min-h-[80px]"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Primary Muscle Groups*</Label>
-                <MultiSelect
-                  options={muscleGroupOptions}
-                  selected={primaryMuscleField.selected}
-                  onChange={primaryMuscleField.onChange}
-                  placeholder="Select primary muscles"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Secondary Muscle Groups</Label>
-                <MultiSelect
-                  options={muscleGroupOptions}
-                  selected={secondaryMuscleField.selected}
-                  onChange={secondaryMuscleField.onChange}
-                  placeholder="Select secondary muscles"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Equipment Type*</Label>
-                <MultiSelect
-                  options={equipmentOptions}
-                  selected={equipmentField.selected}
-                  onChange={equipmentField.onChange}
-                  placeholder="Select equipment types"
-                />
-              </div>
-            </TabsContent>
+            {/* Basic Info Tab - Now using the extracted component */}
+            <ExerciseDialogBasicTab
+              exercise={exercise}
+              setExercise={setExercise}
+              muscleGroupOptions={muscleGroupOptions}
+              equipmentOptions={equipmentOptions}
+            />
             
             {/* Advanced Tab */}
             <TabsContent value="advanced" className="space-y-4 mt-0">
