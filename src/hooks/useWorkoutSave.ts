@@ -116,11 +116,14 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       
       console.log("Saving workout with data:", workoutData);
       
-      // Convert ExerciseSet to EnhancedExerciseSet by ensuring isEditing is always defined
+      // Convert ExerciseSet to EnhancedExerciseSet by ensuring all required properties are present and non-optional
       const enhancedExercises: Record<string, EnhancedExerciseSet[]> = {};
       Object.entries(exercises).forEach(([exerciseName, sets]) => {
         enhancedExercises[exerciseName] = sets.map(set => ({
-          ...set,
+          weight: set.weight || 0, // Ensure weight is always defined as required by EnhancedExerciseSet
+          reps: set.reps || 0, // Ensure reps is always defined
+          restTime: set.restTime || 60,
+          completed: set.completed || false,
           isEditing: set.isEditing === undefined ? false : set.isEditing
         }));
       });
