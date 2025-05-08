@@ -2,6 +2,15 @@
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useCallback, useMemo } from 'react';
 
+// Export the ExerciseSet interface so other components can use it
+export interface ExerciseSet {
+  weight: number;
+  reps: number;
+  restTime: number;
+  completed: boolean;
+  isEditing?: boolean;
+}
+
 /**
  * Custom hook for accessing workout state with memoized selectors
  * to prevent unnecessary re-renders
@@ -17,8 +26,25 @@ export function useWorkoutState() {
     restTimerActive,
     currentRestTime,
     activeExercise,
-    workoutStatus
+    workoutStatus,
+    lastActiveRoute,
+    workoutId
   } = store;
+
+  // Add persistWorkoutState functionality to sync state across tabs
+  const persistWorkoutState = useCallback(() => {
+    // This is a simple implementation - we use the localStorage to persist the state
+    // In a real app, this could also sync with a backend
+    try {
+      // Store only needs the lastTabActivity updated to trigger persistence
+      store.updateLastActiveRoute(store.lastActiveRoute || '/training-session');
+      
+      return true;
+    } catch (error) {
+      console.error("Error persisting workout state:", error);
+      return false;
+    }
+  }, [store]);
 
   // Memoize the actions from the store
   const actions = useMemo(() => ({
@@ -60,11 +86,16 @@ export function useWorkoutState() {
     currentRestTime,
     activeExercise,
     workoutStatus,
+    lastActiveRoute,
+    workoutId,
     
     // Computed
     isSaving,
     isSaved,
     exerciseCount,
+    
+    // Methods
+    persistWorkoutState,
     
     // Actions
     ...actions

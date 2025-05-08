@@ -59,8 +59,8 @@ export function WorkoutNavigationContextProvider({
 
   // When tab becomes visible again, ensure we persist state
   useEffect(() => {
-    if (isVisible && isActive) {
-      persistWorkoutState?.();
+    if (isVisible && isActive && persistWorkoutState) {
+      persistWorkoutState();
     }
   }, [isVisible, isActive, persistWorkoutState]);
 
