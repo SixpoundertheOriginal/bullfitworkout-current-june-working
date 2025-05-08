@@ -1,5 +1,5 @@
 
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useLayout } from "@/context/LayoutContext";
 import Header from "@/components/layouts/Header";
@@ -9,34 +9,54 @@ interface MainLayoutProps {
   children: React.ReactNode;
   noHeader?: boolean;
   noFooter?: boolean;
+  className?: string;
+  contentClassName?: string;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ 
+/**
+ * Main layout component that handles application structure and scroll behavior
+ */
+export const MainLayout = React.memo<MainLayoutProps>(({ 
   children, 
   noHeader = false, 
-  noFooter = false 
+  noFooter = false,
+  className = '',
+  contentClassName = ''
 }) => {
   const location = useLocation();
   
-  // Prevent layout shifts during route changes
+  // Handle layout transitions and scroll behavior
   useLayoutEffect(() => {
     const mainContent = document.querySelector('.content-container');
     if (mainContent) {
       mainContent.classList.add('force-no-transition');
       setTimeout(() => mainContent.classList.remove('force-no-transition'), 100);
     }
+    
+    // Special handling for overview page scrolling
     if (location.pathname === '/overview') {
       document.body.style.overflow = 'hidden';
       setTimeout(() => { document.body.style.overflow = '' }, 50);
     }
+    
+    // Cleanup function to reset overflow
     return () => { document.body.style.overflow = '' };
   }, [location.pathname]);
+  
+  // Build class names with proper memoization
+  const containerClasses = useMemo(() => 
+    `flex flex-col h-screen bg-gray-900 will-change-transform ${className}`,
+  [className]);
+  
+  const contentClasses = useMemo(() => 
+    `flex-grow overflow-y-auto pt-16 pb-16 will-change-transform ${contentClassName}`,
+  [contentClassName]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
+    <div className={containerClasses}>
       {!noHeader && <Header />}
       
-      <main className="flex-grow overflow-y-auto pt-16 pb-16 will-change-transform">
+      <main className={contentClasses}>
         <div className="content-container w-full">
           {children}
         </div>
@@ -57,4 +77,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </style>
     </div>
   );
-};
+});
+
+MainLayout.displayName = 'MainLayout';

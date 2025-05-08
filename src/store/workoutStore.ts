@@ -2,8 +2,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
-import { toast } from "@/hooks/use-toast";
 import React from 'react';
+import { createTimerSlice, TimerSlice } from './workoutStoreSlices/timerSlice';
+import { createExerciseSlice, ExerciseSlice } from './workoutStoreSlices/exerciseSlice';
+import { createSessionSlice, SessionSlice } from './workoutStoreSlices/sessionSlice';
+import { createConfigSlice, ConfigSlice } from './workoutStoreSlices/configSlice';
 
 export interface ExerciseSet {
   weight: number;
@@ -33,262 +36,21 @@ export interface WorkoutError {
   recoverable: boolean;
 }
 
-export interface WorkoutState {
-  // Core workout data
-  exercises: WorkoutExercises;
-  activeExercise: string | null;
-  elapsedTime: number;
-  workoutId: string | null;
-  startTime: string | null;
-  workoutStatus: WorkoutStatus;
-  
-  // Configuration
-  trainingConfig: TrainingConfig | null;
-  
-  // Rest timer state
-  restTimerActive: boolean;
-  currentRestTime: number;
-  
-  // Session tracking
-  isActive: boolean;
-  lastActiveRoute: string;
-  sessionId: string;
-  explicitlyEnded: boolean;
-  lastTabActivity: number;
-  
-  // Error handling
-  savingErrors: WorkoutError[];
-  
-  // Action functions
-  setExercises: (exercises: WorkoutExercises | ((prev: WorkoutExercises) => WorkoutExercises)) => void;
-  setActiveExercise: (exerciseName: string | null) => void;
-  setElapsedTime: (time: number | ((prev: number) => number)) => void;
-  setRestTimerActive: (active: boolean) => void;
-  setCurrentRestTime: (time: number) => void;
-  setTrainingConfig: (config: TrainingConfig | null) => void;
-  updateLastActiveRoute: (route: string) => void;
-  setWorkoutStatus: (status: WorkoutStatus) => void;
-  
-  // Workout lifecycle actions
-  startWorkout: () => void;
-  endWorkout: () => void;
-  resetSession: () => void;
-  
-  // Status management
-  markAsSaving: () => void;
-  markAsSaved: () => void;
-  markAsFailed: (error: WorkoutError) => void;
-  
-  // Exercise management
-  handleCompleteSet: (exerciseName: string, setIndex: number) => void;
-  deleteExercise: (exerciseName: string) => void;
-}
+// Combine all slices into a single state type
+export interface WorkoutState extends 
+  TimerSlice, 
+  ExerciseSlice, 
+  SessionSlice, 
+  ConfigSlice {}
 
-// Generate a unique session ID
-const generateSessionId = () => 
-  crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`;
-
-// Create the persistent store
+// Create the persistent store with all slices
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
-    (set, get) => ({
-      // Core workout data
-      exercises: {},
-      activeExercise: null,
-      elapsedTime: 0,
-      workoutId: null,
-      startTime: null,
-      workoutStatus: 'idle',
-      
-      // Configuration
-      trainingConfig: null,
-      
-      // Rest timer state
-      restTimerActive: false,
-      currentRestTime: 60,
-      
-      // Session tracking
-      isActive: false,
-      lastActiveRoute: '/training-session',
-      sessionId: generateSessionId(),
-      explicitlyEnded: false,
-      lastTabActivity: Date.now(),
-      
-      // Error handling
-      savingErrors: [],
-      
-      // Action setters
-      setExercises: (exercises) => set((state) => ({ 
-        exercises: typeof exercises === 'function' ? exercises(state.exercises) : exercises,
-        lastTabActivity: Date.now(),
-      })),
-      
-      setActiveExercise: (exerciseName) => set({ 
-        activeExercise: exerciseName,
-        lastTabActivity: Date.now(),
-      }),
-      
-      setElapsedTime: (time) => set((state) => ({ 
-        elapsedTime: typeof time === 'function' ? time(state.elapsedTime) : time,
-        lastTabActivity: Date.now(),
-      })),
-      
-      setRestTimerActive: (active) => set({ 
-        restTimerActive: active,
-        lastTabActivity: Date.now(),
-      }),
-      
-      setCurrentRestTime: (time) => set({ 
-        currentRestTime: time,
-        lastTabActivity: Date.now(),
-      }),
-      
-      setTrainingConfig: (config) => set({ 
-        trainingConfig: config,
-        lastTabActivity: Date.now(),
-      }),
-      
-      // Fixed: This function was causing infinite loops by updating on every call
-      // Now we check if the route is actually different before updating state
-      updateLastActiveRoute: (route) => set((state) => {
-        // Only update if the route has actually changed
-        if (state.lastActiveRoute !== route) {
-          return { 
-            lastActiveRoute: route,
-            lastTabActivity: Date.now(),
-          };
-        }
-        return {}; // Return empty object if no changes needed
-      }),
-      
-      // New action to directly modify workout status
-      setWorkoutStatus: (status) => set({ 
-        workoutStatus: status,
-        lastTabActivity: Date.now(),
-      }),
-      
-      // Workout lifecycle actions
-      startWorkout: () => {
-        const now = new Date();
-        set({ 
-          isActive: true,
-          explicitlyEnded: false,
-          workoutStatus: 'active',
-          startTime: now.toISOString(),
-          elapsedTime: 0,
-          sessionId: generateSessionId(),
-          lastTabActivity: Date.now(),
-        });
-        
-        // Show a toast notification
-        toast.success("Workout started", {
-          description: "Your workout session has begun"
-        });
-        
-        console.log("Workout started at:", now);
-      },
-      
-      endWorkout: () => {
-        set({ 
-          isActive: false,
-          explicitlyEnded: true,
-          workoutStatus: 'idle',
-          lastTabActivity: Date.now(),
-        });
-        console.log("Workout ended");
-      },
-      
-      resetSession: () => {
-        set({ 
-          exercises: {},
-          activeExercise: null,
-          elapsedTime: 0,
-          workoutId: null,
-          startTime: null,
-          workoutStatus: 'idle',
-          trainingConfig: null,
-          restTimerActive: false,
-          currentRestTime: 60,
-          isActive: false,
-          explicitlyEnded: true,
-          sessionId: generateSessionId(),
-          lastTabActivity: Date.now(),
-          savingErrors: [],
-        });
-        console.log("Workout session reset");
-      },
-      
-      // Status management
-      markAsSaving: () => set({ 
-        workoutStatus: 'saving',
-        lastTabActivity: Date.now(),
-      }),
-      
-      markAsSaved: () => {
-        set({ 
-          workoutStatus: 'saved',
-          isActive: false,
-          explicitlyEnded: true,
-          lastTabActivity: Date.now(),
-        });
-        
-        // Show success notification
-        toast.success("Workout saved successfully!");
-        
-        // Reset the session after a short delay
-        setTimeout(() => {
-          get().resetSession();
-        }, 500);
-      },
-      
-      markAsFailed: (error) => set((state) => ({ 
-        workoutStatus: 'failed',
-        savingErrors: [...state.savingErrors, error],
-        lastTabActivity: Date.now(),
-      })),
-      
-      // Exercise management
-      handleCompleteSet: (exerciseName, setIndex) => set((state) => {
-        const newExercises = { ...state.exercises };
-        newExercises[exerciseName] = state.exercises[exerciseName].map((set, i) => 
-          i === setIndex ? { ...set, completed: true } : set
-        );
-        
-        return { 
-          exercises: newExercises,
-          restTimerActive: true,
-          lastTabActivity: Date.now(),
-        };
-      }),
-      
-      deleteExercise: (exerciseName) => set((state) => {
-        const newExercises = { ...state.exercises };
-        delete newExercises[exerciseName];
-        
-        // Show notification
-        toast.success(`Removed ${exerciseName} from workout`);
-        
-        // Check if this was the last exercise, and if so, ask if user wants to end workout
-        setTimeout(() => {
-          const exerciseCount = Object.keys(newExercises).length;
-          if (exerciseCount === 0) {
-            toast.info("No exercises left. Add exercises or end your workout.", {
-              action: {
-                label: "End Workout",
-                onClick: () => {
-                  get().endWorkout();
-                  toast.success("Workout ended");
-                }
-              }
-            });
-          }
-        }, 500);
-        
-        return { 
-          exercises: newExercises,
-          lastTabActivity: Date.now(),
-        };
-      }),
+    (set, get, ...rest) => ({
+      ...createTimerSlice(set, get, ...rest),
+      ...createExerciseSlice(set, get, ...rest),
+      ...createSessionSlice(set, get, ...rest),
+      ...createConfigSlice(set, get, ...rest),
     }),
     {
       name: 'workout-storage',
@@ -337,6 +99,7 @@ export const useWorkoutStore = create<WorkoutState>()(
               
               // Show recovery notification
               setTimeout(() => {
+                const { toast } = require('@/hooks/use-toast');
                 toast.info("Workout session recovered");
               }, 1000);
             }
