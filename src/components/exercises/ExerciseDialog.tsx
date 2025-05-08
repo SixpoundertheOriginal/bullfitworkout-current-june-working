@@ -34,6 +34,7 @@ import {
   DIFFICULTY_LEVELS,
   formatDisplayName
 } from "@/constants/exerciseMetadata";
+import { useMultiSelectField } from "@/hooks/useMultiSelectField";
 
 interface ExerciseDialogProps {
   open: boolean;
@@ -44,7 +45,7 @@ interface ExerciseDialogProps {
   mode: "add" | "edit";
 }
 
-export function ExerciseDialog({
+function ExerciseDialogComponent({
   open,
   onOpenChange,
   onSubmit,
@@ -137,6 +138,22 @@ export function ExerciseDialog({
     label: formatDisplayName(type)
   }));
 
+  // Use the new hook for MultiSelect fields
+  const primaryMuscleField = useMultiSelectField(
+    exercise.primary_muscle_groups,
+    sel => setExercise(prev => ({ ...prev, primary_muscle_groups: sel as MuscleGroup[] }))
+  );
+
+  const secondaryMuscleField = useMultiSelectField(
+    exercise.secondary_muscle_groups,
+    sel => setExercise(prev => ({ ...prev, secondary_muscle_groups: sel as MuscleGroup[] }))
+  );
+
+  const equipmentField = useMultiSelectField(
+    exercise.equipment_type,
+    sel => setExercise(prev => ({ ...prev, equipment_type: sel as EquipmentType[] }))
+  );
+
   // Handle form submission
   const handleSubmit = () => {
     // Form validation
@@ -205,10 +222,8 @@ export function ExerciseDialog({
                 <Label>Primary Muscle Groups*</Label>
                 <MultiSelect
                   options={muscleGroupOptions}
-                  selected={exercise.primary_muscle_groups}
-                  onChange={(selected) => 
-                    setExercise({...exercise, primary_muscle_groups: selected as MuscleGroup[]})
-                  }
+                  selected={primaryMuscleField.selected}
+                  onChange={primaryMuscleField.onChange}
                   placeholder="Select primary muscles"
                 />
               </div>
@@ -217,10 +232,8 @@ export function ExerciseDialog({
                 <Label>Secondary Muscle Groups</Label>
                 <MultiSelect
                   options={muscleGroupOptions}
-                  selected={exercise.secondary_muscle_groups}
-                  onChange={(selected) => 
-                    setExercise({...exercise, secondary_muscle_groups: selected as MuscleGroup[]})
-                  }
+                  selected={secondaryMuscleField.selected}
+                  onChange={secondaryMuscleField.onChange}
                   placeholder="Select secondary muscles"
                 />
               </div>
@@ -229,10 +242,8 @@ export function ExerciseDialog({
                 <Label>Equipment Type*</Label>
                 <MultiSelect
                   options={equipmentOptions}
-                  selected={exercise.equipment_type}
-                  onChange={(selected) => 
-                    setExercise({...exercise, equipment_type: selected as EquipmentType[]})
-                  }
+                  selected={equipmentField.selected}
+                  onChange={equipmentField.onChange}
                   placeholder="Select equipment types"
                 />
               </div>
@@ -343,3 +354,6 @@ export function ExerciseDialog({
     </Dialog>
   );
 }
+
+// Wrap the component in React.memo to prevent unnecessary re-renders
+export const ExerciseDialog = React.memo(ExerciseDialogComponent);
