@@ -65,13 +65,10 @@ const ExerciseDialogBasicTabComponent: React.FC<BasicTabProps> = ({
         <Label>Primary Muscle Groups*</Label>
         <MultiSelect
           options={muscleGroupOptions}
-          selected={exercise.primary_muscle_groups.map(m => ({
-            value: m,
-            label: m.charAt(0).toUpperCase() + m.slice(1).replace(/_/g, ' ')
-          }))}
+          selected={exercise.primary_muscle_groups.map(m => m)}
           onChange={(selected) => setExercise({
             ...exercise, 
-            primary_muscle_groups: selected.map(s => s.value as MuscleGroup)
+            primary_muscle_groups: selected as MuscleGroup[]
           })}
           placeholder="Select primary muscles"
         />
@@ -81,13 +78,10 @@ const ExerciseDialogBasicTabComponent: React.FC<BasicTabProps> = ({
         <Label>Secondary Muscle Groups</Label>
         <MultiSelect
           options={muscleGroupOptions}
-          selected={exercise.secondary_muscle_groups.map(m => ({
-            value: m,
-            label: m.charAt(0).toUpperCase() + m.slice(1).replace(/_/g, ' ')
-          }))}
+          selected={exercise.secondary_muscle_groups.map(m => m)}
           onChange={(selected) => setExercise({
             ...exercise, 
-            secondary_muscle_groups: selected.map(s => s.value as MuscleGroup)
+            secondary_muscle_groups: selected as MuscleGroup[]
           })}
           placeholder="Select secondary muscles"
         />
@@ -97,13 +91,10 @@ const ExerciseDialogBasicTabComponent: React.FC<BasicTabProps> = ({
         <Label>Equipment Type*</Label>
         <MultiSelect
           options={equipmentOptions}
-          selected={exercise.equipment_type.map(e => ({
-            value: e,
-            label: e.charAt(0).toUpperCase() + e.slice(1).replace(/_/g, ' ')
-          }))}
+          selected={exercise.equipment_type.map(e => e)}
           onChange={(selected) => setExercise({
             ...exercise, 
-            equipment_type: selected.map(s => s.value as EquipmentType)
+            equipment_type: selected as EquipmentType[]
           })}
           placeholder="Select equipment types"
         />
