@@ -66,8 +66,8 @@ export function ExerciseDialog({
     difficulty: Difficulty;
     is_compound: boolean;
     instructions: {
-      steps: string;
-      form: string;
+      steps: string; // Non-optional now
+      form: string;  // Non-optional now
     };
   }>({
     name: "",
@@ -79,8 +79,8 @@ export function ExerciseDialog({
     difficulty: "beginner",
     is_compound: false,
     instructions: {
-      steps: "",
-      form: ""
+      steps: "", // Initialize with empty string instead of undefined
+      form: ""   // Initialize with empty string instead of undefined
     }
   });
 
@@ -102,7 +102,10 @@ export function ExerciseDialog({
         movement_pattern: (initialExercise.movement_pattern as MovementPattern) || "push",
         difficulty: (initialExercise.difficulty as Difficulty) || "beginner",
         is_compound: initialExercise.is_compound || false,
-        instructions: initialExercise.instructions || { steps: "", form: "" }
+        instructions: {
+          steps: initialExercise.instructions?.steps || "", // Ensure non-optional with default
+          form: initialExercise.instructions?.form || ""    // Ensure non-optional with default
+        }
       });
     } else {
       // Reset form for "add" mode
