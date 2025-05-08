@@ -31,6 +31,7 @@ describe('ExerciseDialog Component', () => {
     movement_pattern: 'push',
     difficulty: 'intermediate',
     is_compound: true,
+    is_bodyweight: false,
     instructions: {
       steps: 'Test steps',
       form: 'Test form'
@@ -104,10 +105,15 @@ describe('ExerciseDialog Component', () => {
         onOpenChange={mockOnOpenChange}
         onSubmit={mockOnSubmit}
         initialExercise={{
+          id: 'test-id',
           name: 'Test Exercise',
           primary_muscle_groups: ['chest'],
-          equipment_type: ['barbell']
-        }}
+          equipment_type: ['barbell'],
+          movement_pattern: 'push',
+          difficulty: 'beginner',
+          is_compound: false,
+          is_bodyweight: false
+        } as Exercise}
         mode="edit"
         loading={false}
       />

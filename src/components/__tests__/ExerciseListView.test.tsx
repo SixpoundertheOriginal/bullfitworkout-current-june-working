@@ -34,6 +34,8 @@ describe('ExerciseListView Component', () => {
       equipment_type: ['barbell'],
       movement_pattern: 'push',
       difficulty: 'intermediate',
+      is_compound: true,
+      is_bodyweight: false,
       instructions: { steps: 'Test steps', form: 'Test form' }
     },
     {
@@ -43,15 +45,19 @@ describe('ExerciseListView Component', () => {
       equipment_type: ['barbell'],
       movement_pattern: 'squat',
       difficulty: 'advanced',
+      is_compound: true,
+      is_bodyweight: false,
       instructions: { steps: 'Test steps', form: 'Test form' }
     },
     {
       id: '3',
       name: 'Deadlift',
-      primary_muscle_groups: ['lower_back'],
+      primary_muscle_groups: ['lowerBack'],
       equipment_type: ['barbell'],
       movement_pattern: 'hinge',
       difficulty: 'advanced',
+      is_compound: true,
+      is_bodyweight: false,
       instructions: { steps: 'Test steps', form: 'Test form' }
     }
   ];
