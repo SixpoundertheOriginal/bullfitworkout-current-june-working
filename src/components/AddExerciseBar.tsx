@@ -1,5 +1,6 @@
+// src/components/workouts/AddExerciseBar.tsx
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,35 +15,46 @@ interface AddExerciseBarProps {
   trainingType?: string;
 }
 
-export function AddExerciseBar({ 
-  onSelectExercise, 
+export const AddExerciseBar = React.memo(function AddExerciseBar({
+  onSelectExercise,
   onAddExercise,
-  trainingType = ""
+  trainingType = "",
 }: AddExerciseBarProps) {
   const isMobile = useIsMobile();
 
-  // Handle selection of exercise and extract name if it's an object
-  const handleSelectExercise = (exercise: string | Exercise) => {
-    if (typeof exercise === 'string') {
-      onSelectExercise(exercise);
-    } else if (exercise && typeof exercise === 'object' && 'name' in exercise) {
-      onSelectExercise(exercise.name);
-    }
-  };
+  // memoize the handler so its identity never changes
+  const handleSelectExercise = useCallback(
+    (exercise: string | Exercise) => {
+      if (typeof exercise === "string") {
+        onSelectExercise(exercise);
+      } else {
+        onSelectExercise(exercise.name);
+      }
+    },
+    [onSelectExercise]
+  );
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 via-gray-900/95 to-gray-900/0 z-40">
+    <div
+      className="fixed bottom-0 left-0 right-0 p-4 
+                 bg-gradient-to-t from-gray-900 via-gray-900/95 to-gray-900/0 
+                 z-40"
+    >
       <div className="space-y-4">
-        <div className={cn(
-          "flex gap-4",
-          isMobile ? "flex-col" : "flex-row"
-        )}>
-          <div className={cn(
-            "flex-1",
-            isMobile ? "order-2" : "order-1"
-          )}>
-            <ExerciseAutocomplete 
-              onSelectExercise={handleSelectExercise} 
+        <div
+          className={cn(
+            "flex gap-4",
+            isMobile ? "flex-col" : "flex-row"
+          )}
+        >
+          <div
+            className={cn(
+              "flex-1",
+              isMobile ? "order-2" : "order-1"
+            )}
+          >
+            <ExerciseAutocomplete
+              onSelectExercise={handleSelectExercise}
               className={cn(
                 "w-full bg-gray-800/50 border-gray-700/50",
                 typography.text.primary
@@ -50,7 +62,7 @@ export function AddExerciseBar({
             />
           </div>
           {onAddExercise && (
-            <Button 
+            <Button
               onClick={onAddExercise}
               className={cn(
                 "px-8 py-6 rounded-xl",
@@ -62,15 +74,21 @@ export function AddExerciseBar({
                 "border border-purple-500/20",
                 "text-white",
                 typography.text.primary,
-                isMobile ? "order-1 w-full flex justify-center items-center gap-2" : "order-2"
+                isMobile
+                  ? "order-1 w-full flex justify-center items-center gap-2"
+                  : "order-2"
               )}
             >
               <Plus className="w-5 h-5" />
-              {isMobile && <span className={typography.text.primary}>Add Exercise</span>}
+              {isMobile && (
+                <span className={typography.text.primary}>
+                  Add Exercise
+                </span>
+              )}
             </Button>
           )}
         </div>
       </div>
     </div>
   );
-}
+});
