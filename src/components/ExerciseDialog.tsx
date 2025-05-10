@@ -1,6 +1,6 @@
 // src/components/workouts/ExerciseDialog.tsx
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,21 +26,18 @@ import {
 import { MultiSelect } from "@/components/MultiSelect";
 import { useSessionForm } from "@/hooks/useSessionState";
 
-// Import from canonical source
 import {
   MuscleGroup,
   EquipmentType,
   MovementPattern,
   Difficulty,
-  MUSCLE_GROUPS,
-  EQUIPMENT_TYPES,
-  MOVEMENT_PATTERNS,
-  DIFFICULTY_LEVELS,
   getMuscleGroupOptions,
   getEquipmentOptions,
   ensureMuscleGroupArray,
   ensureEquipmentTypeArray,
-  formatDisplayName
+  formatDisplayName,
+  MOVEMENT_PATTERNS,
+  DIFFICULTY_LEVELS
 } from "@/constants/exerciseMetadata";
 
 const DEFAULT_EXERCISE = {
@@ -81,19 +78,16 @@ export function ExerciseDialog({
 }: ExerciseDialogProps) {
   const isAdd = mode === "add";
 
-  // Persist form fields (but not the open-state)
   const {
     formState: exercise,
     setFormState: setExercise,
     resetForm
   } = useSessionForm("addExerciseForm", DEFAULT_EXERCISE);
 
-  // Fix for Tabs type
   type TabType = "basic" | "advanced" | "metrics" | "instructions";
   const [activeTab, setActiveTab] = useState<TabType>("basic");
   const [formError, setFormError] = useState("");
 
-  // Seed or reset form whenever initialExercise changes
   useEffect(() => {
     if (initialExercise) {
       setExercise({ ...DEFAULT_EXERCISE, ...initialExercise });
@@ -103,16 +97,32 @@ export function ExerciseDialog({
     setFormError("");
   }, [initialExercise, isAdd, resetForm, setExercise]);
 
-  // Memoize option arrays so dropdowns don't re-mount on every render
   const muscleGroupOptions = useMemo(() => getMuscleGroupOptions(), []);
-  const equipmentOptions  = useMemo(() => getEquipmentOptions(), []);
+  const equipmentOptions = useMemo(() => getEquipmentOptions(), []);
 
-  // Safety-guarded arrays to avoid undefined iteration
-  const safePrimary   = ensureMuscleGroupArray(exercise.primary_muscle_groups);
+  const safePrimary = ensureMuscleGroupArray(exercise.primary_muscle_groups);
   const safeSecondary = ensureMuscleGroupArray(exercise.secondary_muscle_groups);
-  const safeEquip     = ensureEquipmentTypeArray(exercise.equipment_type);
+  const safeEquip = ensureEquipmentTypeArray(exercise.equipment_type);
 
-  // Form validation + submit
+  // Memoized handlers to keep MultiSelect props stable
+  const onPrimaryChange = useCallback(
+    (sel: MuscleGroup[]) =>
+      setExercise(prev => ({ ...prev, primary_muscle_groups: sel })),
+    [setExercise]
+  );
+
+  const onSecondaryChange = useCallback(
+    (sel: MuscleGroup[]) =>
+      setExercise(prev => ({ ...prev, secondary_muscle_groups: sel })),
+    [setExercise]
+  );
+
+  const onEquipmentChange = useCallback(
+    (sel: EquipmentType[]) =>
+      setExercise(prev => ({ ...prev, equipment_type: sel })),
+    [setExercise]
+  );
+
   const handleSubmit = () => {
     if (!exercise.name.trim()) {
       setFormError("Name is required");
@@ -126,7 +136,6 @@ export function ExerciseDialog({
       setFormError("Pick at least one equipment type");
       return;
     }
-
     onSubmit(exercise);
     if (isAdd) resetForm();
   };
@@ -178,7 +187,7 @@ export function ExerciseDialog({
                   placeholder="e.g. Bench Press"
                   value={exercise.name}
                   onChange={e =>
-                    setExercise({ ...exercise, name: e.target.value })
+                    setExercise(prev => ({ ...prev, name: e.target.value }))
                   }
                 />
               </div>
@@ -188,7 +197,7 @@ export function ExerciseDialog({
                   placeholder="Brief description…"
                   value={exercise.description}
                   onChange={e =>
-                    setExercise({ ...exercise, description: e.target.value })
+                    setExercise(prev => ({ ...prev, description: e.target.value }))
                   }
                   className="min-h-[100px]"
                 />
@@ -198,12 +207,7 @@ export function ExerciseDialog({
                 <MultiSelect
                   options={muscleGroupOptions}
                   selected={safePrimary}
-                  onChange={sel =>
-                    setExercise({
-                      ...exercise,
-                      primary_muscle_groups: sel as MuscleGroup[]
-                    })
-                  }
+                  onChange={onPrimaryChange}
                   placeholder="Select primary muscle groups"
                 />
               </div>
@@ -212,12 +216,7 @@ export function ExerciseDialog({
                 <MultiSelect
                   options={muscleGroupOptions}
                   selected={safeSecondary}
-                  onChange={sel =>
-                    setExercise({
-                      ...exercise,
-                      secondary_muscle_groups: sel as MuscleGroup[]
-                    })
-                  }
+                  onChange={onSecondaryChange}
                   placeholder="Select secondary muscle groups"
                 />
               </div>
@@ -226,12 +225,7 @@ export function ExerciseDialog({
                 <MultiSelect
                   options={equipmentOptions}
                   selected={safeEquip}
-                  onChange={sel =>
-                    setExercise({
-                      ...exercise,
-                      equipment_type: sel as EquipmentType[]
-                    })
-                  }
+                  onChange={onEquipmentChange}
                   placeholder="Select equipment types"
                 />
               </div>
@@ -244,7 +238,7 @@ export function ExerciseDialog({
                 <Select
                   value={exercise.difficulty}
                   onValueChange={v =>
-                    setExercise({ ...exercise, difficulty: v as Difficulty })
+                    setExercise(prev => ({ ...prev, difficulty: v as Difficulty }))
                   }
                 >
                   <SelectTrigger>
@@ -264,10 +258,7 @@ export function ExerciseDialog({
                 <Select
                   value={exercise.movement_pattern}
                   onValueChange={v =>
-                    setExercise({
-                      ...exercise,
-                      movement_pattern: v as MovementPattern
-                    })
+                    setExercise(prev => ({ ...prev, movement_pattern: v as MovementPattern }))
                   }
                 >
                   <SelectTrigger>
@@ -286,7 +277,7 @@ export function ExerciseDialog({
                 <Checkbox
                   checked={exercise.is_compound}
                   onCheckedChange={c =>
-                    setExercise({ ...exercise, is_compound: c as boolean })
+                    setExercise(prev => ({ ...prev, is_compound: c as boolean }))
                   }
                 />
                 <Label className="ml-2">Compound exercise</Label>
@@ -299,7 +290,7 @@ export function ExerciseDialog({
                 <Checkbox
                   checked={exercise.is_bodyweight}
                   onCheckedChange={c =>
-                    setExercise({ ...exercise, is_bodyweight: c as boolean })
+                    setExercise(prev => ({ ...prev, is_bodyweight: c as boolean }))
                   }
                 />
                 <Label className="ml-2">Bodyweight exercise</Label>
@@ -315,13 +306,13 @@ export function ExerciseDialog({
                   placeholder="Step-by-step instructions…"
                   value={exercise.instructions.steps}
                   onChange={e =>
-                    setExercise({
-                      ...exercise,
+                    setExercise(prev => ({
+                      ...prev,
                       instructions: {
-                        ...exercise.instructions,
+                        ...prev.instructions,
                         steps: e.target.value
                       }
-                    })
+                    }))
                   }
                   className="min-h-[100px]"
                 />
@@ -332,13 +323,13 @@ export function ExerciseDialog({
                   placeholder="Form cues…"
                   value={exercise.instructions.form}
                   onChange={e =>
-                    setExercise({
-                      ...exercise,
+                    setExercise(prev => ({
+                      ...prev,
                       instructions: {
-                        ...exercise.instructions,
+                        ...prev.instructions,
                         form: e.target.value
                       }
-                    })
+                    }))
                   }
                   className="min-h-[100px]"
                 />
