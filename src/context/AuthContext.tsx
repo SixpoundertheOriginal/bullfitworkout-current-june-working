@@ -1,9 +1,8 @@
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
-import { createContext } from "@/utils/createContext";
 
 type AuthContextType = {
   session: Session | null;
@@ -14,9 +13,7 @@ type AuthContextType = {
   loading: boolean;
 };
 
-const [AuthProviderComponent, useAuth] = createContext<AuthContextType>();
-
-export { useAuth };
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,15 +21,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Helper function to show toasts
-  const showToast = useMemo(() => (
-    (title: string, description: string, variant?: "default" | "destructive") => {
-      toast({
-        title,
-        description,
-        variant,
-      });
-    }
-  ), []);
+  const showToast = (title: string, description: string, variant?: "default" | "destructive") => {
+    toast({
+      title,
+      description,
+      variant,
+    });
+  };
 
   useEffect(() => {
     // Set up the auth state listener first
@@ -63,78 +58,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [showToast]); 
+  }, []); 
 
-  // Memoize auth methods to prevent unnecessary re-renders
-  const signIn = useMemo(() => 
-    async (email: string, password: string) => {
-      try {
-        setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) throw error;
-      } catch (error: any) {
-        showToast("Error signing in", error.message, "destructive");
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    }, [showToast]);
+      if (error) throw error;
+    } catch (error: any) {
+      showToast("Error signing in", error.message, "destructive");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const signUp = useMemo(() =>
-    async (email: string, password: string, fullName: string) => {
-      try {
-        setLoading(true);
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-            },
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
           },
-        });
+        },
+      });
 
-        if (error) throw error;
-        
-        showToast("Account created", "Please check your email to confirm your account.");
-      } catch (error: any) {
-        showToast("Error signing up", error.message, "destructive");
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    }, [showToast]);
+      if (error) throw error;
+      
+      showToast("Account created", "Please check your email to confirm your account.");
+    } catch (error: any) {
+      showToast("Error signing up", error.message, "destructive");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const signOut = useMemo(() => 
-    async () => {
-      try {
-        setLoading(true);
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-      } catch (error: any) {
-        showToast("Error signing out", error.message, "destructive");
-      } finally {
-        setLoading(false);
-      }
-    }, [showToast]);
+  const signOut = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error: any) {
+      showToast("Error signing out", error.message, "destructive");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Memoize the context value to prevent unnecessary re-renders
-  const value = useMemo(() => ({
+  const value = {
     session,
     user,
     signIn,
     signUp,
     signOut,
     loading
-  }), [session, user, signIn, signUp, signOut, loading]);
+  };
 
   return (
-    <AuthProviderComponent value={value}>
+    <AuthContext.Provider value={value}>
       {children}
-    </AuthProviderComponent>
+    </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }

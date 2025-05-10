@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React from "react";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { Switch } from "@/components/ui/switch";
 import { Weight } from "lucide-react";
@@ -13,16 +13,16 @@ interface WeightUnitToggleProps {
   showLabel?: boolean;
 }
 
-export const WeightUnitToggle = React.memo<WeightUnitToggleProps>(({
+export const WeightUnitToggle: React.FC<WeightUnitToggleProps> = ({
   variant = "switch",
   className = "",
   showLabel = true
 }) => {
   const { weightUnit, setWeightUnit, isDefaultUnit } = useWeightUnit();
 
-  const toggleWeightUnit = useCallback(() => {
+  const toggleWeightUnit = () => {
     setWeightUnit(weightUnit === "kg" ? "lb" : "kg");
-  }, [weightUnit, setWeightUnit]);
+  };
 
   if (variant === "badge") {
     return (
@@ -60,11 +60,9 @@ export const WeightUnitToggle = React.memo<WeightUnitToggleProps>(({
       {showLabel && <span className="text-sm text-gray-400">KG</span>}
       <Switch
         checked={weightUnit === "lb"}
-        onCheckedChange={toggleWeightUnit}
+        onCheckedChange={() => toggleWeightUnit()}
       />
       {showLabel && <span className="text-sm text-gray-400">LB</span>}
     </div>
   );
-});
-
-WeightUnitToggle.displayName = 'WeightUnitToggle';
+};

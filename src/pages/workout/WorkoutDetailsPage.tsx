@@ -1,3 +1,4 @@
+
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -83,7 +84,7 @@ const WorkoutDetailsPage: React.FC = () => {
     return map;
   }, [exerciseSets]);
 
-  // Calculate metrics using the centralized processWorkoutMetrics function
+  // Calculate metrics safely - ensure this runs unconditionally
   const metrics = useMemo(() => {
     if (!workoutDetails) {
       // Return default/empty metrics when workoutDetails isn't available
@@ -144,7 +145,6 @@ const WorkoutDetailsPage: React.FC = () => {
       duration: workoutDetails.duration || 0
     } : undefined;
 
-    // Use the centralized processor for all metric calculations
     return processWorkoutMetrics(
       groupedExercises,
       workoutDetails.duration || 0,
@@ -171,8 +171,9 @@ const WorkoutDetailsPage: React.FC = () => {
   const activeTime = metricValues.timeDistribution?.activeTime || 0;
   const restTime = metricValues.timeDistribution?.restTime || 0;
   
-  // Use the centralized density metrics directly
-  const { overallDensity, activeOnlyDensity } = metricValues.densityMetrics;
+  // These properties are in densityMetrics in ProcessedWorkoutMetrics
+  const overallDensity = metricValues.densityMetrics?.overallDensity || 0;
+  const activeOnlyDensity = metricValues.densityMetrics?.activeOnlyDensity || 0;
   
   // For time patterns chart - use the durationByTimeOfDay data from metrics
   const durationByTimeOfDay = metricValues.durationByTimeOfDay || {
@@ -335,19 +336,7 @@ const WorkoutDetailsPage: React.FC = () => {
           {/* Raw exercise list & editing */}
           <WorkoutDetailsEnhanced
             workout={workoutDetails}
-            exercises={Object.entries(exerciseSets).reduce((acc, [name, sets]) => {
-              // Ensure sets are properly formatted with required fields and consistent with our interface
-              acc[name] = sets.map(set => ({
-                ...set,
-                id: set.id || `temp-${name}-${set.set_number || 0}`,
-                exercise_name: name,
-                set_number: set.set_number || 0,
-                completed: set.completed !== undefined ? set.completed : false,
-                workout_id: set.workout_id || workoutId || 'temp', // Ensure workout_id is always provided
-                metadata: set.metadata || {}
-              }));
-              return acc;
-            }, {} as Record<string, any[]>)}
+            exercises={exerciseSets}
             onEditClick={() => setEditModalOpen(true)}
             onEditExercise={handleEditExercise}
           />

@@ -1,12 +1,7 @@
 // Keep existing code imports
 
 import { ExerciseSet } from '@/types/exercise';
-import { 
-  EXERCISE_LOAD_FACTORS, 
-  calculateEffectiveWeight, 
-  getExerciseLoadFactor, 
-  isBodyweightExercise 
-} from '@/types/exercise';
+import { calculateEffectiveWeight, getExerciseLoadFactor, isBodyweightExercise } from '@/types/exercise';
 
 // Enhanced ProcessedWorkoutMetrics with more detailed information
 export interface ProcessedWorkoutMetrics {
@@ -25,8 +20,8 @@ export interface ProcessedWorkoutMetrics {
   densityMetrics: {
     setsPerMinute: number;
     volumePerMinute: number;
-    overallDensity: number;     // volume ÷ totalTime
-    activeOnlyDensity: number;  // volume ÷ activeTime
+    overallDensity: number;
+    activeOnlyDensity: number;
     formattedOverallDensity: string;
     formattedActiveOnlyDensity: string;
   };
@@ -38,18 +33,18 @@ export interface ProcessedWorkoutMetrics {
   muscleFocus: Record<string, number>;
   estimatedEnergyExpenditure: number;
   movementPatterns: Record<string, number>;
-  timeDistribution: {
-    activeTime: number;
-    restTime: number;
-    activeTimePercentage: number;
-    restTimePercentage: number;
-  };
   composition: {
     compound: { count: number; percentage: number };
     isolation: { count: number; percentage: number };
     bodyweight: { count: number; percentage: number };
     isometric: { count: number; percentage: number };
     totalExercises: number;
+  };
+  timeDistribution: {
+    activeTime: number;
+    restTime: number;
+    activeTimePercentage: number;
+    restTimePercentage: number;
   };
   durationByTimeOfDay: {
     morning: number;
@@ -202,9 +197,9 @@ export const processWorkoutMetrics = (
         metrics.totalVolume += standardVolume;
 
         // Handle adjusted volume for bodyweight exercises if we have exercise data and user weight
-        if (set.weightCalculation && userBodyInfo) {
+        if (set.weightCalculation?.isAuto && userBodyInfo) {
           // This is a bodyweight exercise with auto-calculated weight
-          const effectiveWeight = set.weightCalculation?.value || 0;
+          const effectiveWeight = set.weightCalculation.value;
           const adjustedVolume = effectiveWeight * set.reps;
           metrics.adjustedVolume += adjustedVolume;
         } else {
@@ -213,7 +208,7 @@ export const processWorkoutMetrics = (
         }
         
         // Track RPE if available - ensure we check if metadata exists first
-        if (set.metadata && typeof set.metadata === 'object' && set.metadata.rpe !== undefined) {
+        if (set.metadata && typeof set.metadata === 'object' && 'rpe' in set.metadata) {
           const rpe = Number(set.metadata.rpe);
           if (!isNaN(rpe) && rpe > 0) {
             totalRpe += rpe;
@@ -282,52 +277,38 @@ export const processWorkoutMetrics = (
     ? (totalActiveTimeMinutes / duration) * 100 
     : 0;
 
-  // CENTRALIZED DENSITY CALCULATIONS
-  // Calculate all density metrics in one place
+  // Calculate density metrics (volume per unit time)
   if (duration > 0) {
-    // Overall density: total volume / total duration
-    const overallDensity = metrics.totalVolume / duration;
-    
-    // Active-only density: total volume / active time (excluding rest)
-    const activeOnlyDensity = totalActiveTimeMinutes > 0 
-      ? metrics.totalVolume / totalActiveTimeMinutes 
-      : 0;
+    // Use the correct density formulas
+    // volumePerMinute = total volume / total duration
+    metrics.densityMetrics.volumePerMinute = metrics.totalVolume / duration;
+    metrics.densityMetrics.overallDensity = metrics.totalVolume / duration;
 
-    // volumePerMinute is the same as overallDensity
-    const volumePerMinute = overallDensity;
-    
-    // Sets per minute
-    const setsPerMinute = metrics.setCount.completed / duration;
+    // Density with active time only (excluding rest)
+    metrics.densityMetrics.activeOnlyDensity = totalActiveTimeMinutes > 0 ? 
+      metrics.totalVolume / totalActiveTimeMinutes : 0;
+      
+    // Sets per minute remains the same
+    metrics.densityMetrics.setsPerMinute = metrics.setCount.completed / duration;
     
     // Legacy density calculation (keeping for backward compatibility)
-    const legacyDensity = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
-    
+    metrics.density = (metrics.setCount.completed / duration) * (metrics.totalVolume / 1000);
+      
     // Format for display
     const volumeUnit = weightUnit === 'kg' ? 'kg' : 'lb';
-    const formattedOverallDensity = `${overallDensity.toFixed(1)} ${volumeUnit}/min`;
-    const formattedActiveOnlyDensity = `${activeOnlyDensity.toFixed(1)} ${volumeUnit}/min`;
+    metrics.densityMetrics.formattedOverallDensity = 
+      `${metrics.densityMetrics.overallDensity.toFixed(1)} ${volumeUnit}/min`;
+    metrics.densityMetrics.formattedActiveOnlyDensity = 
+      `${metrics.densityMetrics.activeOnlyDensity.toFixed(1)} ${volumeUnit}/min`;
     
-    // Update all density metrics in one place
-    metrics.densityMetrics = {
-      volumePerMinute,
-      setsPerMinute,
-      overallDensity,
-      activeOnlyDensity,
-      formattedOverallDensity,
-      formattedActiveOnlyDensity
-    };
-    
-    // Legacy density field (keeping for backward compatibility)
-    metrics.density = legacyDensity;
-    
-    // For debugging
+    // Log the calculated density values for debugging
     console.log(`DEBUG - Density calculations:
       - Total Volume: ${metrics.totalVolume} ${weightUnit}
       - Duration: ${duration} minutes
       - Active Time: ${totalActiveTimeMinutes} minutes
       - Rest Time: ${totalRestTimeMinutes} minutes
-      - Overall Density: ${overallDensity.toFixed(2)} ${weightUnit}/min
-      - Active-Only Density: ${activeOnlyDensity.toFixed(2)} ${weightUnit}/min
+      - Overall Density: ${metrics.densityMetrics.overallDensity.toFixed(2)} ${weightUnit}/min
+      - Active-Only Density: ${metrics.densityMetrics.activeOnlyDensity.toFixed(2)} ${weightUnit}/min
     `);
   }
 

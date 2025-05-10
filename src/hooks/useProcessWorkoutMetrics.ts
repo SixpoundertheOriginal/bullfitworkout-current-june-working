@@ -1,8 +1,6 @@
-
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { WeightUnit, convertWeight } from '@/utils/unitConversion';
-import { processWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
 
 export interface VolumeDataPoint {
   date: string;            // ISO string
@@ -89,41 +87,42 @@ export function useProcessWorkoutMetrics(
   }, [workouts, weightUnit]);
 
   // --- Density over time ---
-  // Use the centralized density logic from processWorkoutMetrics
   const densityOverTimeData = useMemo<DensityDataPoint[]>(() => {
     if (!Array.isArray(workouts) || workouts.length === 0) return [];
 
     return workouts
       .map((workout) => {
         const allSets = flattenExercises(workout.exercises);
-        
-        // Use the same processWorkoutMetrics function to calculate density
-        const exercisesByName: Record<string, any[]> = {};
-        if (Array.isArray(allSets)) {
-          allSets.forEach(set => {
-            const name = set.exercise_name || "Unknown";
-            if (!exercisesByName[name]) exercisesByName[name] = [];
-            exercisesByName[name].push(set);
-          });
-        }
-        
-        // Process this single workout's metrics using our centralized function
-        const metrics = processWorkoutMetrics(
-          exercisesByName, 
-          workout.duration || 0,
-          'kg', // raw calculation is always in kg, we'll convert later
-          undefined,
-          { start_time: workout.start_time, duration: workout.duration || 0 }
+
+        // raw volume in KG
+        const rawVolume = allSets.reduce((sum, set) => {
+          if (set.completed && set.weight && set.reps) {
+            return sum + set.weight * set.reps;
+          }
+          return sum;
+        }, 0);
+
+        // convert volume
+        const volume = convertWeight(rawVolume, 'kg', weightUnit);
+
+        // total session time in minutes
+        const totalTime = workout.duration || 0;
+
+        // total rest in minutes (converting from seconds)
+        const restTimeSec = allSets.reduce(
+          (sum, set) => sum + (set.restTime || 0),
+          0
         );
-        
-        // Pull the density values directly from the metrics
-        const { overallDensity, activeOnlyDensity } = metrics.densityMetrics;
-        
-        // Convert to user's unit if needed
-        const convertedOverallDensity = weightUnit === 'kg' ? 
-          overallDensity : overallDensity * 2.20462;
-        const convertedActiveOnlyDensity = weightUnit === 'kg' ? 
-          activeOnlyDensity : activeOnlyDensity * 2.20462;
+        const restTime = restTimeSec / 60;
+
+        // active time in minutes
+        const activeTime = Math.max(0, totalTime - restTime);
+
+        // density metrics - CORRECTED FORMULA:
+        // overallDensity = volume / totalTime
+        // activeOnlyDensity = volume / activeTime (with safeguard for division by zero)
+        const overallDensity = totalTime > 0 ? volume / totalTime : 0;
+        const activeOnlyDensity = activeTime > 0 ? volume / activeTime : 0;
 
         const formattedDate = format(
           new Date(workout.start_time),
@@ -133,11 +132,11 @@ export function useProcessWorkoutMetrics(
         return {
           date: workout.start_time,
           formattedDate,
-          overallDensity: convertedOverallDensity,
-          activeOnlyDensity: convertedActiveOnlyDensity,
-          totalTime: metrics.duration,
-          restTime: metrics.timeDistribution.restTime,
-          activeTime: metrics.timeDistribution.activeTime
+          overallDensity,
+          activeOnlyDensity,
+          totalTime,
+          restTime,
+          activeTime
         };
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -184,23 +183,17 @@ export function useProcessWorkoutMetrics(
         mostEfficientWorkout: null as DensityDataPoint | null
       };
     }
-    
-    // Calculate averages directly from the density metrics from our processor
     const avgOverallDensity =
       densityOverTimeData.reduce((sum, pt) => sum + pt.overallDensity, 0) /
       densityOverTimeData.length;
-      
     const avgActiveOnlyDensity =
       densityOverTimeData.reduce((sum, pt) => sum + pt.activeOnlyDensity, 0) /
       densityOverTimeData.length;
-      
-    // Find the most efficient workout based on activeOnlyDensity
     const mostEfficientWorkout = densityOverTimeData.reduce(
       (best, pt) =>
         !best || pt.activeOnlyDensity > best.activeOnlyDensity ? pt : best,
       null as DensityDataPoint | null
     );
-    
     return { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout };
   }, [densityOverTimeData]);
 

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { Exercise } from '@/types/exercise';
-import { formatDisplayName } from '@/constants/exerciseMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,7 +41,7 @@ export const CommonExerciseCard: React.FC<CommonExerciseCardProps> = ({
             <h3 className="font-medium text-lg">{exercise.name}</h3>
             {exercise.difficulty && (
               <Badge variant="outline" className="bg-gray-800">
-                {formatDisplayName(exercise.difficulty)}
+                {exercise.difficulty}
               </Badge>
             )}
           </div>
@@ -51,7 +50,7 @@ export const CommonExerciseCard: React.FC<CommonExerciseCardProps> = ({
             <div className="flex gap-1.5 flex-wrap">
               {exercise.primary_muscle_groups.map((muscle) => (
                 <Badge key={muscle} variant="secondary" className="text-xs">
-                  {formatDisplayName(muscle)}
+                  {muscle}
                 </Badge>
               ))}
             </div>
@@ -59,7 +58,7 @@ export const CommonExerciseCard: React.FC<CommonExerciseCardProps> = ({
           
           {exercise.equipment_type && exercise.equipment_type.length > 0 && (
             <div className="text-sm text-gray-400">
-              Equipment: {exercise.equipment_type.map(e => formatDisplayName(e)).join(', ')}
+              Equipment: {exercise.equipment_type.join(', ')}
             </div>
           )}
           

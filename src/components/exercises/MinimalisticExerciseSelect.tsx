@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MuscleGroup } from "@/constants/exerciseMetadata";
 
 interface MinimalisticExerciseSelectProps {
   onSelectExercise: (exercise: string | Exercise) => void;
@@ -128,30 +127,11 @@ function ExerciseItem({
   matchData
 }: ExerciseItemProps) {
   // Determine main muscle group for badge
-  const primaryMuscle = (exercise.primary_muscle_groups?.[0] || "general") as MuscleGroup | "general";
+  const primaryMuscle = exercise.primary_muscle_groups?.[0] || "general";
   
   // Determine score display (if available)
   const hasScore = matchData && matchData.score > 0;
   const scorePercentage = hasScore ? Math.min(100, Math.round(matchData.score * 1.25)) : 0;
-
-  // Helper function to get the color class based on muscle group
-  const getMuscleGroupColorClass = (muscle: MuscleGroup | "general") => {
-    switch(muscle) {
-      case "chest": return "text-red-300 border-red-800/50";
-      case "back": return "text-blue-300 border-blue-800/50";
-      case "quadriceps":
-      case "hamstrings":
-      case "glutes":
-      case "calves": return "text-green-300 border-green-800/50";
-      case "shoulders": return "text-yellow-300 border-yellow-800/50";
-      case "biceps":
-      case "triceps":
-      case "forearms": return "text-purple-300 border-purple-800/50";
-      case "abs":
-      case "core": return "text-orange-300 border-orange-800/50";
-      default: return "text-gray-300 border-gray-700";
-    }
-  };
   
   return (
     <Card 
@@ -196,7 +176,13 @@ function ExerciseItem({
                   variant="outline" 
                   className={cn(
                     "text-xs py-0 px-2 h-5 capitalize",
-                    getMuscleGroupColorClass(primaryMuscle)
+                    primaryMuscle === "chest" ? "text-red-300 border-red-800/50" :
+                    primaryMuscle === "back" ? "text-blue-300 border-blue-800/50" :
+                    primaryMuscle === "legs" ? "text-green-300 border-green-800/50" :
+                    primaryMuscle === "shoulders" ? "text-yellow-300 border-yellow-800/50" :
+                    primaryMuscle === "arms" ? "text-purple-300 border-purple-800/50" :
+                    primaryMuscle === "core" ? "text-orange-300 border-orange-800/50" :
+                    "text-gray-300 border-gray-700"
                   )}
                 >
                   {primaryMuscle}
@@ -208,7 +194,7 @@ function ExerciseItem({
                 )}
 
                 {/* Match reasons tooltip */}
-                {hasScore && matchData?.reasons?.length > 0 && (
+                {hasScore && matchData.reasons.length > 0 && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

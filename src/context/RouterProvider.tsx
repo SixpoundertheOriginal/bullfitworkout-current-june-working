@@ -1,5 +1,4 @@
 
-import React, { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { WorkoutNavigationContextProvider } from "@/context/WorkoutNavigationContext";
@@ -14,62 +13,24 @@ import Auth from "@/pages/Auth";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import Overview from "@/pages/Overview";
 import { WorkoutManagementPage } from "@/pages/WorkoutManagementPage";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// Create a separate component for protected routes to avoid circular dependencies
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        Loading...
-      </div>
-    );
+    return <div className="flex items-center justify-center h-screen bg-black text-white">Loading...</div>;
   }
   
   if (!user) {
     return <Navigate to="/auth" />;
   }
   
-  return (
-    <ErrorBoundary>
-      {children}
-    </ErrorBoundary>
-  );
+  return <>{children}</>;
 };
 
-// Create a wrapper for main layout pages to reduce duplication
-const ProtectedPage: React.FC<{ 
-  element: React.ReactNode,
-  noHeader?: boolean,
-  noFooter?: boolean
-}> = ({ element, noHeader, noFooter }) => {
-  return (
-    <ProtectedRoute>
-      <MainLayout noHeader={noHeader} noFooter={noFooter}>
-        {element}
-      </MainLayout>
-    </ProtectedRoute>
-  );
-};
-
-export const RouterProvider: React.FC = () => {
+export const RouterProvider = () => {
   const location = useLocation();
   const isAuthPage = location.pathname === "/auth";
-  
-  // Improve route organization with a more consistent pattern
-  const routes = [
-    { path: "/", element: <Index /> },
-    { path: "/overview", element: <Overview /> },
-    { path: "/workouts", element: <WorkoutManagementPage /> },
-    { path: "/training-session", element: <TrainingSessionPage /> },
-    { path: "/workout-complete", element: <WorkoutComplete /> },
-    { path: "/workout-details", element: <WorkoutDetailsPage /> },
-    { path: "/workout-details/:workoutId", element: <WorkoutDetailsPage /> },
-    { path: "/profile", element: <ProfilePage /> },
-    { path: "/all-exercises", element: <AllExercisesPage /> },
-  ];
 
   return (
     <WorkoutNavigationContextProvider>
@@ -81,13 +42,69 @@ export const RouterProvider: React.FC = () => {
           </Routes>
         ) : (
           <Routes>
-            {routes.map(route => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={<ProtectedPage element={route.element} />}
-              />
-            ))}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Index />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/overview" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Overview />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workouts" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutManagementPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/training-session" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <TrainingSessionPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-complete" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutComplete />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-details" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutDetailsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-details/:workoutId" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WorkoutDetailsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ProfilePage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/all-exercises" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <AllExercisesPage />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         )}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -11,9 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AllExercisesPage from "@/pages/AllExercisesPage";
-import { useSessionState } from '@/hooks/useSessionState';
 
-// Using canonical source for exercise metadata
 interface AddExerciseSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,35 +26,15 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   onSelectExercise,
   trainingType = ""
 }) => {
-  // Fixed IDs for ARIA attributes
-  const sheetTitleId = "add-exercise-sheet-title";
-  const sheetDescId = "add-exercise-sheet-desc";
-
   const isMobile = useIsMobile();
-  // Use sessionStorage for state persistence
-  const [activeTab, setActiveTab] = useSessionState<string>("addExerciseSheetTab", "suggested");
-  const [searchQuery, setSearchQuery] = useSessionState<string>("addExerciseSheetQuery", "");
-  const [showAllExercises, setShowAllExercises] = useSessionState<boolean>("addExerciseSheetShowAll", false);
-  const [persistedOpen, setPersistedOpen] = useSessionState<boolean>("addExerciseSheetOpen", false);
-  
-  // Sync external open state with persisted state
-  useEffect(() => {
-    setPersistedOpen(open);
-  }, [open, setPersistedOpen]);
-
-  // Update component's open state from persisted state
-  useEffect(() => {
-    if (persistedOpen !== open) {
-      onOpenChange(persistedOpen);
-    }
-  }, [persistedOpen, open, onOpenChange]);
-  
-  // Debounced data fetching to prevent render blocking
+  const [activeTab, setActiveTab] = useState<string>("suggested");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
   const { workouts } = useWorkoutHistory();
   const { exercises: allExercises } = useExercises();
+  const [showAllExercises, setShowAllExercises] = useState(false);
 
-  // Memoized functions to prevent unnecessary re-renders
+  // Extract recently used exercises from workout history
   const recentExercises = React.useMemo(() => {
     if (!workouts?.length) return [];
     
@@ -80,7 +59,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     return Array.from(exerciseMap.values());
   }, [workouts, allExercises]);
 
-  // Filter exercises based on search query with memoization
+  // Filter exercises based on search query
   const filteredSuggested = React.useMemo(() => {
     return searchQuery
       ? suggestedExercises.filter(e => 
@@ -99,27 +78,21 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
       : recentExercises;
   }, [recentExercises, searchQuery]);
 
-  // Memoized handler to prevent re-creation on renders
-  const handleAddExercise = useCallback((exercise: Exercise | string) => {
+  const handleAddExercise = (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     onSelectExercise(exercise);
     
     // Close the sheet immediately after selecting an exercise
-    // And clear persisted state
     onOpenChange(false);
-    setPersistedOpen(false);
-    sessionStorage.removeItem("addExerciseSheetQuery");
-    sessionStorage.removeItem("addExerciseSheetTab");
-    sessionStorage.removeItem("addExerciseSheetShowAll");
     
     // Show toast notification
     toast({
       title: "Exercise added",
       description: `Added ${exerciseName} to your workout`
     });
-  }, [onSelectExercise, onOpenChange, setPersistedOpen]);
+  };
 
-  const renderExerciseCard = useCallback((exercise: Exercise) => {
+  const renderExerciseCard = (exercise: Exercise) => {
     const muscleGroups = exercise.primary_muscle_groups.slice(0, 2).join(', ');
     
     return (
@@ -139,31 +112,15 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
         </Button>
       </div>
     );
-  }, [handleAddExercise]);
-
-  // Handle close with cleanup
-  const handleClose = useCallback((open: boolean) => {
-    if (!open) {
-      // Clear persisted state when closing
-      sessionStorage.removeItem("addExerciseSheetQuery");
-      sessionStorage.removeItem("addExerciseSheetTab");
-      sessionStorage.removeItem("addExerciseSheetShowAll");
-    }
-    onOpenChange(open);
-    setPersistedOpen(open);
-  }, [onOpenChange, setPersistedOpen]);
+  };
 
   if (showAllExercises) {
     return (
-      <Sheet open={open} onOpenChange={handleClose}>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent 
           side="bottom" 
           className="h-[90vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"
-          aria-labelledby="all-exercises-title"
-          aria-describedby="all-exercises-desc"
         >
-          <span id="all-exercises-title" className="sr-only">All Exercises</span>
-          <span id="all-exercises-desc" className="sr-only">Browse and select exercises from the complete exercise library</span>
           <AllExercisesPage 
             onSelectExercise={handleAddExercise}
             standalone={false}
@@ -175,12 +132,10 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleClose}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
         className="h-[80vh] rounded-t-xl border-t border-gray-700 bg-gray-900 p-0"
-        aria-labelledby={sheetTitleId}
-        aria-describedby={sheetDescId}
       >
         <div className="flex flex-col h-full">
           {/* Handle for dragging */}
@@ -190,8 +145,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
           
           <div className="px-4 pb-2 h-full flex flex-col">
             <SheetHeader className="mb-4">
-              <SheetTitle id={sheetTitleId} className="text-xl font-bold text-center">Add an Exercise</SheetTitle>
-              <p id={sheetDescId} className="sr-only">Select an exercise to add to your workout</p>
+              <SheetTitle className="text-xl font-bold text-center">Add an Exercise</SheetTitle>
             </SheetHeader>
             
             {/* Search bar */}

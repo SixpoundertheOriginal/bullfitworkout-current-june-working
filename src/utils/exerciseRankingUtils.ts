@@ -1,6 +1,5 @@
 
-import { Exercise } from "@/types/exercise";
-import { MuscleGroup, MovementPattern } from '@/constants/exerciseMetadata';
+import { Exercise, MuscleGroup, MovementPattern } from "@/types/exercise";
 
 export interface RankingCriteria {
   trainingType?: string;
@@ -199,9 +198,8 @@ export function estimateTimeOfDayScore(
   // Morning: Better for cardio, full body, lighter weights
   if (timeOfDay === 'morning') {
     if (
-      exercise.primary_muscle_groups.some(muscle => 
-        muscle.toLowerCase() === 'cardio' || muscle.toLowerCase() === 'full body'
-      ) ||
+      exercise.primary_muscle_groups.includes('cardio') ||
+      exercise.primary_muscle_groups.includes('full body') ||
       exercise.equipment_type.includes('bodyweight')
     ) {
       return 0.9;

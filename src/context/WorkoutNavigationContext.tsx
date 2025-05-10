@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
@@ -59,12 +58,12 @@ export function WorkoutNavigationContextProvider({
 
   // When tab becomes visible again, ensure we persist state
   useEffect(() => {
-    if (isVisible && isActive && persistWorkoutState) {
-      persistWorkoutState();
+    if (isVisible && isActive) {
+      persistWorkoutState?.();
     }
   }, [isVisible, isActive, persistWorkoutState]);
 
-  // Navigation confirmation logic - memoized to prevent unnecessary re-creation
+  // Navigation confirmation logic
   const confirmNavigation = useCallback((to: string) => {
     // Skip confirmation if navigating to the same page
     if (to === location.pathname) {
@@ -83,11 +82,8 @@ export function WorkoutNavigationContextProvider({
     }
   }, [isActive, isTrainingRoute, navigate, location.pathname, persistWorkoutState]);
 
-  // Memoize context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => ({ confirmNavigation }), [confirmNavigation]);
-
   return (
-    <Provider value={contextValue}>
+    <Provider value={{ confirmNavigation }}>
       {children}
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>

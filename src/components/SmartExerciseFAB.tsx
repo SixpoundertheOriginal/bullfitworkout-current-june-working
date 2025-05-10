@@ -37,7 +37,7 @@ export const SmartExerciseFAB = ({
         score += 3;
       } else if (
         trainingType.toLowerCase().includes("cardio") &&
-        (exercise.primary_muscle_groups.includes("fullBody") ||  // Changed from 'cardio' to 'fullBody'
+        (exercise.primary_muscle_groups.includes("cardio") ||
           exercise.equipment_type.includes("bodyweight"))
       ) {
         score += 3;

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
@@ -226,7 +227,7 @@ const Index = () => {
 
       <ConfigureTrainingDialog 
         open={dialogOpen} 
-        setOpen={setDialogOpen} 
+        onOpenChange={setDialogOpen} 
         onStartTraining={handleStartTraining} 
       />
       

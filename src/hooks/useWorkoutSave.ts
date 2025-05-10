@@ -1,9 +1,10 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
 import { WorkoutError, EnhancedExerciseSet } from "@/types/workout";
-import { ExerciseSet } from '@/types/exercise';
+import { ExerciseSet } from '@/hooks/useWorkoutState';
 
 export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
   const [saveStatus, setSaveStatus] = useState<{
@@ -116,14 +117,11 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       
       console.log("Saving workout with data:", workoutData);
       
-      // Convert ExerciseSet to EnhancedExerciseSet by ensuring all required properties are present and non-optional
+      // Convert ExerciseSet to EnhancedExerciseSet by ensuring isEditing is always defined
       const enhancedExercises: Record<string, EnhancedExerciseSet[]> = {};
       Object.entries(exercises).forEach(([exerciseName, sets]) => {
         enhancedExercises[exerciseName] = sets.map(set => ({
-          weight: set.weight || 0, // Ensure weight is always defined as required by EnhancedExerciseSet
-          reps: set.reps || 0, // Ensure reps is always defined
-          restTime: set.restTime || 60,
-          completed: set.completed || false,
+          ...set,
           isEditing: set.isEditing === undefined ? false : set.isEditing
         }));
       });

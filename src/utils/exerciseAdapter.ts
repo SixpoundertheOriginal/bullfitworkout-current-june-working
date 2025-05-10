@@ -17,13 +17,11 @@ export const adaptExerciseSets = (
       reps: set.reps,
       duration: undefined,
       restTime: set.restTime,
-      rest_time: set.restTime, // Add for API compatibility
       completed: set.completed,
-      isEditing: set.isEditing || false, // Handle isEditing property
+      isEditing: set.isEditing,
       set_number: index + 1,
       exercise_name: exerciseName,
-      workout_id: 'temp', // Provide a default value for workout_id
-      metadata: {} // Add empty metadata object
+      workout_id: 'temp'
     }));
   });
   

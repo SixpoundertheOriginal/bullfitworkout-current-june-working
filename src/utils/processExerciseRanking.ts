@@ -1,9 +1,5 @@
 
-import { Exercise } from "@/types/exercise";
-import { 
-  MuscleGroup, 
-  MovementPattern 
-} from '@/constants/exerciseMetadata';
+import { Exercise, MuscleGroup, MovementPattern } from "@/types/exercise";
 import { RankingCriteria, rankExercises } from "@/utils/exerciseRankingUtils";
 
 /**

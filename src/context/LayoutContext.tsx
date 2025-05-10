@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { createContext } from '@/utils/createContext';
+import { DateRange } from 'react-day-picker';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface LayoutContextProps {
   currentRoute: string;
@@ -11,9 +12,7 @@ interface LayoutContextProps {
   setFilterVisible: (visible: boolean) => void;
 }
 
-const [LayoutProviderComponent, useLayout] = createContext<LayoutContextProps>();
-
-export { useLayout };
+const LayoutContext = createContext<LayoutContextProps | undefined>(undefined);
 
 export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -29,14 +28,23 @@ export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setFilterVisible(location.pathname === '/overview');
   }, [location.pathname]);
   
-  // Memoize the context value to prevent unnecessary re-renders
-  const value = useMemo(() => ({
+  const value = {
     currentRoute,
     activeWorkoutId,
     setActiveWorkoutId,
     isFilterVisible,
     setFilterVisible,
-  }), [currentRoute, activeWorkoutId, isFilterVisible]);
+  };
   
-  return <LayoutProviderComponent value={value}>{children}</LayoutProviderComponent>;
+  return <LayoutContext.Provider value={value}>{children}</LayoutContext.Provider>;
+};
+
+export const useLayout = (): LayoutContextProps => {
+  const context = useContext(LayoutContext);
+  
+  if (context === undefined) {
+    throw new Error('useLayout must be used within a LayoutProvider');
+  }
+  
+  return context;
 };

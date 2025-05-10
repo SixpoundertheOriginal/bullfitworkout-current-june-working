@@ -46,19 +46,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
     if (!workoutId || !currentExercise) return;
     
     try {
-      // Ensure all required fields are present before sending to API
-      const setsToUpdate = updatedSets.map(set => ({
-        id: set.id || '',
-        exercise_name: set.exercise_name,
-        workout_id: set.workout_id || workoutId,
-        weight: set.weight || 0,
-        reps: set.reps || 0,
-        set_number: set.set_number,
-        completed: set.completed,
-        rest_time: set.restTime || set.rest_time // Map restTime to rest_time for API compatibility
-      }));
-      
-      const updated = await updateExerciseSets(workoutId, currentExercise, setsToUpdate as any);
+      const updated = await updateExerciseSets(workoutId, currentExercise, updatedSets);
       toast({
         title: "Exercise sets updated"
       });
@@ -66,10 +54,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
       // Create a new object first, then pass it to onUpdate
       onUpdate((prev: Record<string, ExerciseSet[]>) => {
         const newSets = { ...prev };
-        newSets[currentExercise] = updated.map(set => ({
-          ...set,
-          restTime: set.rest_time // Map rest_time back to restTime for consistency
-        })) as ExerciseSet[];
+        newSets[currentExercise] = updated;
         return newSets;
       });
       
