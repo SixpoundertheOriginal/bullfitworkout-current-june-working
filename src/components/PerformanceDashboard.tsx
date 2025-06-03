@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { performanceMonitor } from '@/services/performanceMonitor';
-import { Activity, Database, Memory, Zap } from 'lucide-react';
+import { Activity, Database, HardDrive, Zap } from 'lucide-react';
 
 export function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<any>(null);
@@ -140,7 +140,7 @@ export function PerformanceDashboard() {
             <Card className="bg-gray-800 border-gray-700">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center">
-                  <Memory className="h-4 w-4 mr-2 text-red-400" />
+                  <HardDrive className="h-4 w-4 mr-2 text-red-400" />
                   Memory Usage
                 </CardTitle>
               </CardHeader>

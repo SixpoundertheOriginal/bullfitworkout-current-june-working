@@ -1,5 +1,5 @@
 
-import { getCLS, getFCP, getFID, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFCP, onFID, onLCP, onTTFB } from 'web-vitals';
 
 interface PerformanceMetrics {
   coreWebVitals: {
@@ -26,6 +26,14 @@ interface PerformanceMetrics {
     renderDuration: number[];
     unnecessaryRenders: number;
   };
+}
+
+interface PerformanceNavigationTimingEntry extends PerformanceEntry {
+  domContentLoadedEventEnd: number;
+  domContentLoadedEventStart: number;
+  loadEventEnd: number;
+  loadEventStart: number;
+  fetchStart: number;
 }
 
 class PerformanceMonitor {
@@ -66,27 +74,27 @@ class PerformanceMonitor {
   }
 
   private initializeCoreWebVitals() {
-    getCLS((metric) => {
+    onCLS((metric) => {
       this.metrics.coreWebVitals.cls = metric.value;
       this.logMetric('CLS', metric.value, metric.value > 0.1 ? 'poor' : metric.value > 0.05 ? 'needs-improvement' : 'good');
     });
 
-    getFCP((metric) => {
+    onFCP((metric) => {
       this.metrics.coreWebVitals.fcp = metric.value;
       this.logMetric('FCP', metric.value, metric.value > 3000 ? 'poor' : metric.value > 1800 ? 'needs-improvement' : 'good');
     });
 
-    getFID((metric) => {
+    onFID((metric) => {
       this.metrics.coreWebVitals.fid = metric.value;
       this.logMetric('FID', metric.value, metric.value > 300 ? 'poor' : metric.value > 100 ? 'needs-improvement' : 'good');
     });
 
-    getLCP((metric) => {
+    onLCP((metric) => {
       this.metrics.coreWebVitals.lcp = metric.value;
       this.logMetric('LCP', metric.value, metric.value > 4000 ? 'poor' : metric.value > 2500 ? 'needs-improvement' : 'good');
     });
 
-    getTTFB((metric) => {
+    onTTFB((metric) => {
       this.metrics.coreWebVitals.ttfb = metric.value;
       this.logMetric('TTFB', metric.value, metric.value > 800 ? 'poor' : metric.value > 200 ? 'needs-improvement' : 'good');
     });
@@ -98,10 +106,11 @@ class PerformanceMonitor {
       const navigationObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'navigation') {
+            const navEntry = entry as PerformanceNavigationTimingEntry;
             console.log('[PerformanceMonitor] Navigation timing:', {
-              domContentLoaded: entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart,
-              loadComplete: entry.loadEventEnd - entry.loadEventStart,
-              totalTime: entry.loadEventEnd - entry.fetchStart
+              domContentLoaded: navEntry.domContentLoadedEventEnd - navEntry.domContentLoadedEventStart,
+              loadComplete: navEntry.loadEventEnd - navEntry.loadEventStart,
+              totalTime: navEntry.loadEventEnd - navEntry.fetchStart
             });
           }
         }
