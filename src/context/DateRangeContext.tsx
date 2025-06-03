@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useMemo, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { DateRange } from 'react-day-picker';
-import { subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface DateRangeContextType {
   dateRange: DateRange | undefined;
@@ -14,33 +14,76 @@ const DateRangeContext = createContext<DateRangeContextType | undefined>(undefin
 let renderCount = 0;
 let contextValueCreations = 0;
 
-export function DateRangeProvider({ children }: { children: React.ReactNode }) {
-  // Track renders in development
-  renderCount++;
-  console.log(`[DateRangeProvider] Render #${renderCount}`);
+// Custom hook to debug dependency changes
+function useDependencyDebugger(deps: any[], name: string) {
+  const prevDeps = useRef<any[]>();
   
-  // Initialize with the current week (Monday to Sunday)
-  const now = new Date();
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfWeek(now, { weekStartsOn: 1 }), // Monday
-    to: endOfWeek(now, { weekStartsOn: 1 }), // Sunday
-  });
-
-  // Track when setDateRange function is recreated
-  const setDateRangeRef = useRef(setDateRange);
   useEffect(() => {
-    if (setDateRangeRef.current !== setDateRange) {
-      console.log('[DateRangeProvider] setDateRange function recreated');
-      setDateRangeRef.current = setDateRange;
+    if (prevDeps.current) {
+      const changes = deps.map((dep, index) => {
+        const prevDep = prevDeps.current![index];
+        const hasChanged = dep !== prevDep;
+        
+        if (hasChanged) {
+          console.log(`[${name}] Dependency ${index} changed:`, {
+            previous: prevDep,
+            current: dep,
+            type: typeof dep,
+            isObject: typeof dep === 'object' && dep !== null,
+            isFunction: typeof dep === 'function'
+          });
+        }
+        
+        return hasChanged;
+      });
+      
+      if (changes.some(Boolean)) {
+        console.log(`[${name}] Dependencies that changed: ${changes.map((changed, i) => changed ? i : null).filter(x => x !== null).join(', ')}`);
+      }
     }
+    
+    prevDeps.current = deps;
+  });
+}
+
+export function DateRangeProvider({ children }: { children: React.ReactNode }) {
+  // Use lazy initialization to prevent Date object recreation on every render
+  const [dateRange, setDateRangeState] = useState<DateRange>(() => {
+    const now = new Date();
+    const initialRange = {
+      from: startOfWeek(now, { weekStartsOn: 1 }), // Monday
+      to: endOfWeek(now, { weekStartsOn: 1 }), // Sunday
+    };
+    
+    console.log('[DateRangeProvider] Initial range created:', {
+      from: initialRange.from.toISOString(),
+      to: initialRange.to.toISOString()
+    });
+    
+    return initialRange;
   });
 
-  // CRITICAL FIX: Memoize the context value to prevent unnecessary re-renders
-  // This is the key optimization that prevents infinite loops
+  // Memoize the setDateRange function to ensure stable reference
+  const setDateRange = useCallback((range: DateRange | undefined) => {
+    console.log('[DateRangeProvider] setDateRange called with:', {
+      from: range?.from?.toISOString(),
+      to: range?.to?.toISOString()
+    });
+    setDateRangeState(range);
+  }, []); // Empty dependency array - function never changes
+
+  // Debug what's causing the context value to recreate
+  useDependencyDebugger([dateRange, setDateRange], 'DateRangeProvider context value');
+
+  // CRITICAL FIX: Memoize the context value with stable dependencies
   const contextValue = useMemo(() => {
     contextValueCreations++;
+    
+    // Only log context value creation, not on every render
     console.log(`[DateRangeProvider] Context value created #${contextValueCreations}`, {
-      dateRange,
+      dateRangeFrom: dateRange?.from?.toISOString(),
+      dateRangeTo: dateRange?.to?.toISOString(),
+      setDateRangeRef: typeof setDateRange,
       renderCount,
       contextValueCreations
     });
@@ -49,17 +92,28 @@ export function DateRangeProvider({ children }: { children: React.ReactNode }) {
       dateRange,
       setDateRange,
     };
-  }, [dateRange]); // Only recreate when dateRange actually changes
+  }, [dateRange, setDateRange]); // setDateRange is now stable thanks to useCallback
 
-  // Log performance metrics
+  // Performance tracking in useEffect to avoid render side effects
   useEffect(() => {
+    renderCount++;
+    console.log(`[DateRangeProvider] Render #${renderCount}`);
+  });
+
+  // Log performance metrics periodically, not on every render
+  useEffect(() => {
+    const efficiency = contextValueCreations > 0 ? ((contextValueCreations / renderCount) * 100).toFixed(1) : '0.0';
+    
     console.log(`[DateRangeProvider] Performance Metrics:`, {
       totalRenders: renderCount,
       contextValueCreations,
-      efficiency: `${((contextValueCreations / renderCount) * 100).toFixed(1)}%`,
+      efficiency: `${efficiency}%`,
       explanation: contextValueCreations < renderCount ? 
         'OPTIMIZED: Context value memoized successfully' : 
-        'ISSUE: Context value recreating on every render'
+        'ISSUE: Context value recreating on every render',
+      optimization: contextValueCreations === 1 ? 'PERFECT: Context value created only once' : 
+                   contextValueCreations < renderCount ? 'GOOD: Some optimization working' :
+                   'BAD: No optimization - context recreates every render'
     });
   });
 
@@ -76,11 +130,18 @@ export function useDateRange() {
     throw new Error('useDateRange must be used within a DateRangeProvider');
   }
   
-  // Track hook usage for performance monitoring
-  console.log('[useDateRange] Hook called, context value:', {
-    hasDateRange: !!context.dateRange,
-    dateRangeFrom: context.dateRange?.from?.toISOString(),
-    dateRangeTo: context.dateRange?.to?.toISOString()
+  // Reduce logging frequency - only log when context actually changes
+  const prevContextRef = useRef(context);
+  useEffect(() => {
+    if (prevContextRef.current !== context) {
+      console.log('[useDateRange] Context changed:', {
+        hasDateRange: !!context.dateRange,
+        dateRangeFrom: context.dateRange?.from?.toISOString(),
+        dateRangeTo: context.dateRange?.to?.toISOString(),
+        setDateRangeType: typeof context.setDateRange
+      });
+      prevContextRef.current = context;
+    }
   });
   
   return context;
