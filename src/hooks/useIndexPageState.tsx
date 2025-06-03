@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
@@ -48,16 +48,10 @@ export function useIndexPageState() {
 
   // Stable callback functions
   const handleStartTraining = useCallback(({ trainingType, tags, duration, rankedExercises }) => {
+    const xpReward = Math.round(duration * 2);
     toast({
       title: "Quest Started!",
-      description: 
-        <div className="flex flex-col">
-          <span>{`${trainingType} adventure for ${duration} minutes`}</span>
-          <div className="flex items-center mt-1 text-xs">
-            <div className="h-1.5 w-1.5 bg-yellow-400 rounded-full mr-1.5"></div>
-            <span className="text-yellow-400">+{Math.round(duration * 2)} XP will be awarded on completion</span>
-          </div>
-        </div>,
+      description: `${trainingType} adventure for ${duration} minutes. +${xpReward} XP will be awarded on completion`,
     });
     
     const isFirstWorkoutToday = !stats?.lastWorkoutDate || 
