@@ -1,7 +1,8 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
-import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
+import { WorkoutFunnelModal } from "@/components/training/WorkoutFunnelModal";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { FeaturesSection } from "@/components/features/FeaturesSection";
@@ -17,7 +18,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 const Index = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [funnelOpen, setFunnelOpen] = useState(false);
   const { stats } = useWorkoutStatsContext();
   const { isActive, lastActiveRoute } = useWorkoutState();
   
@@ -182,7 +183,7 @@ const Index = () => {
           
           <div style={{ height: "12rem" }} className="relative">
             <ExerciseFAB 
-              onClick={() => setDialogOpen(true)}
+              onClick={() => setFunnelOpen(true)}
               visible={stableFabVisibility}
               className="!bottom-20"
             />
@@ -199,7 +200,7 @@ const Index = () => {
                     label="Resume"
                   />
                   <button 
-                    onClick={() => setDialogOpen(true)}
+                    onClick={() => setFunnelOpen(true)}
                     className="text-sm text-white/70 hover:text-white/90 underline"
                   >
                     Start a new workout
@@ -207,7 +208,7 @@ const Index = () => {
                 </div>
               ) : (
                 <StartTrainingButton
-                  onClick={() => setDialogOpen(true)}
+                  onClick={() => setFunnelOpen(true)}
                   trainingType={recommendedWorkoutType}
                   label="Start"
                 />
@@ -224,9 +225,9 @@ const Index = () => {
         <FeaturesSection onNavigate={navigate} />
       </main>
 
-      <ConfigureTrainingDialog 
-        open={dialogOpen} 
-        onOpenChange={setDialogOpen} 
+      <WorkoutFunnelModal 
+        open={funnelOpen} 
+        onOpenChange={setFunnelOpen} 
         onStartTraining={handleStartTraining} 
       />
       
