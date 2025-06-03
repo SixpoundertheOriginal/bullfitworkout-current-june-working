@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuickStatsSection } from "@/components/metrics/QuickStatsSection";
 import { ConfigureTrainingDialog } from "@/components/ConfigureTrainingDialog";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
-import { useWorkoutStats } from "@/hooks/useWorkoutStats";
+import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { FeaturesSection } from "@/components/features/FeaturesSection";
 import { WorkoutLogSection } from "@/components/workouts/WorkoutLogSection";
 import { toast } from "@/hooks/use-toast";
@@ -19,7 +18,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [showWorkouts, setShowWorkouts] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { stats } = useWorkoutStats();
+  const { stats } = useWorkoutStatsContext();
   const { isActive, lastActiveRoute } = useWorkoutState();
   
   // Replace useElementVisibility with native IntersectionObserver

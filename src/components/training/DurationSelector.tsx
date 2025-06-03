@@ -1,8 +1,8 @@
-
 import React from "react";
 import { Slider } from "@/components/ui/slider";
-import { useWorkoutStats } from "@/hooks/useWorkoutStats";
-import { Clock } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
+import { Timer } from "lucide-react";
 
 interface DurationSelectorProps {
   value: number;
@@ -10,7 +10,7 @@ interface DurationSelectorProps {
 }
 
 export function DurationSelector({ value, onChange }: DurationSelectorProps) {
-  const { stats } = useWorkoutStats();
+  const { stats } = useWorkoutStatsContext();
   const avgDuration = Math.round(stats.avgDuration || 30);
 
   const getDurationFeedbackColor = (duration: number) => {
@@ -28,7 +28,7 @@ export function DurationSelector({ value, onChange }: DurationSelectorProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="text-purple-400" size={20} />
+          <Timer className="text-purple-400" size={20} />
           <span className="text-base font-medium">Duration</span>
         </div>
         <div className={`text-lg font-mono ${getDurationFeedbackColor(value)}`}>
@@ -51,7 +51,7 @@ export function DurationSelector({ value, onChange }: DurationSelectorProps) {
           <div className="flex justify-between mt-2 text-xs text-gray-400">
             <span>Quick (5m)</span>
             <div className="flex items-center gap-1">
-              <Clock size={12} />
+              <Timer size={12} />
               <span>Avg: {avgDuration}m</span>
             </div>
             <span>Long (120m)</span>

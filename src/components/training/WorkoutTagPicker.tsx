@@ -1,8 +1,8 @@
-
 import React from "react";
-import { cn } from "@/lib/utils";
-import { useWorkoutStats } from "@/hooks/useWorkoutStats";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
+import { Hash } from "lucide-react";
 
 interface WorkoutTagPickerProps {
   selectedTags: string[];
@@ -186,7 +186,7 @@ const tagCategories = {
 };
 
 export function WorkoutTagPicker({ selectedTags, onToggleTag, trainingType }: WorkoutTagPickerProps) {
-  const { stats } = useWorkoutStats();
+  const { stats } = useWorkoutStatsContext();
   const currentHour = new Date().getHours();
 
   const getTagCategory = (tag: string) => {

@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon,
-  Dumbbell,
-  Clock,
-  BarChart2
-} from 'lucide-react';
-import { format, isToday, parseISO } from 'date-fns';
-import { ExerciseSet } from '@/types/exercise';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from 'date-fns';
+import { Dumbbell, Calendar as CalendarIcon, Activity, Timer, Target, TrendingUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useWorkoutStats } from '@/hooks/useWorkoutStats';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { WeeklyTrainingPatterns } from '@/components/workouts/WeeklyTrainingPatterns';
+import { WorkoutMetricsSummary } from '@/components/workouts/WorkoutMetricsSummary';
+import { WorkoutSummaryCard } from '@/components/workouts/WorkoutSummaryCard';
+import { useWorkoutStatsContext } from '@/context/WorkoutStatsProvider';
 
 export function WorkoutCalendarTab() {
   const { user } = useAuth();

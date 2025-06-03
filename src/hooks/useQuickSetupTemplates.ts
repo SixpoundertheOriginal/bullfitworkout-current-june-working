@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useWorkoutStats } from "./useWorkoutStats";
+import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { toast } from "@/hooks/use-toast";
 
 interface QuickSetupTemplate {
@@ -20,7 +20,7 @@ interface QuickSetupTemplate {
 export function useQuickSetupTemplates() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { stats } = useWorkoutStats();
+  const { stats } = useWorkoutStatsContext();
   
   const fetchTemplates = async () => {
     if (!user) return [];
