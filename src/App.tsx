@@ -10,9 +10,20 @@ import { RouterProvider } from "./context/RouterProvider";
 import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationContext";
 import { LayoutProvider } from "./context/LayoutContext";
+import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
 
-// Create the query client outside of the component
-const queryClient = new QueryClient();
+// Create the query client with optimized settings for enterprise performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true
+    }
+  }
+});
 
 function App() {
   return (
@@ -22,14 +33,16 @@ function App() {
           <AuthProvider>
             <WeightUnitContextProvider>
               <DateRangeProvider>
-                <WorkoutNavigationContextProvider>
-                  <LayoutProvider>
-                    <TooltipProvider>
-                      <Toaster />
-                      <RouterProvider />
-                    </TooltipProvider>
-                  </LayoutProvider>
-                </WorkoutNavigationContextProvider>
+                <WorkoutStatsProvider>
+                  <WorkoutNavigationContextProvider>
+                    <LayoutProvider>
+                      <TooltipProvider>
+                        <Toaster />
+                        <RouterProvider />
+                      </TooltipProvider>
+                    </LayoutProvider>
+                  </WorkoutNavigationContextProvider>
+                </WorkoutStatsProvider>
               </DateRangeProvider>
             </WeightUnitContextProvider>
           </AuthProvider>

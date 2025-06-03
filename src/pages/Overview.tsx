@@ -1,11 +1,9 @@
 // src/pages/Overview.tsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/context/AuthContext";
-import { useWorkoutStats } from "@/hooks/useWorkoutStats";
-import { Users2, Flame, Activity } from "lucide-react";
+import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { WorkoutTypeChart } from "@/components/metrics/WorkoutTypeChart";
 import { MuscleGroupChart } from "@/components/metrics/MuscleGroupChart";
 import { TimeOfDayChart } from "@/components/metrics/TimeOfDayChart";
@@ -14,44 +12,25 @@ import { TopExercisesTable } from "@/components/metrics/TopExercisesTable";
 import { WorkoutVolumeOverTimeChart } from '@/components/metrics/WorkoutVolumeOverTimeChart';
 import { WorkoutDensityOverTimeChart } from '@/components/metrics/WorkoutDensityOverTimeChart';
 import { useWeightUnit } from "@/context/WeightUnitContext";
-import { useDateRange } from '@/context/DateRangeContext';
 import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
+import { LazyLoadWrapper } from '@/components/common/LazyLoadWrapper';
 
 const Overview: React.FC = () => {
-  const { user } = useAuth();
   const { weightUnit } = useWeightUnit();
-  const { dateRange } = useDateRange();
-  const [userWeight, setUserWeight] = useState<number | null>(null);
-  const [userWeightUnit, setUserWeightUnit] = useState<string | null>(null);
-
-  // Fetch historical stats
-  const { stats, loading, refetch, workouts } = useWorkoutStats();
+  const { stats, loading } = useWorkoutStatsContext();
   
-  // Process raw metrics
+  // Process raw metrics using the centralized data
   const {
     volumeOverTimeData,
     densityOverTimeData,
     volumeStats,
     densityStats
-  } = useProcessWorkoutMetrics(workouts, weightUnit);
-
-  // Refetch on date range change
-  useEffect(() => {
-    if (dateRange) refetch();
-  }, [dateRange, refetch]);
-
-  // Load user weight prefs
-  useEffect(() => {
-    const sw = localStorage.getItem('userWeight');
-    const su = localStorage.getItem('userWeightUnit');
-    if (sw) setUserWeight(Number(sw));
-    if (su) setUserWeightUnit(su);
-  }, []);
+  } = useProcessWorkoutMetrics(stats.workouts, weightUnit);
 
   // Simple data‐exists guard
   const hasData = (v: any) => v != null && ((Array.isArray(v) && v.length > 0) || (typeof v === 'object' && Object.keys(v).length > 0));
 
-  // Chart configurations (excluding density gauge)
+  // Chart configurations - memoized for performance
   const chartConfigs = useMemo(() => ([
     {
       title: "Workout Types",
@@ -86,18 +65,20 @@ const Overview: React.FC = () => {
         <h1 className="text-2xl font-bold">Workout Overview</h1>
       </div>
 
-      {/* Volume over time */}
-      <Card className="bg-card min-h-[300px] overflow-hidden">
-        <CardHeader><CardTitle>Volume Over Time</CardTitle></CardHeader>
-        <CardContent className="h-[300px]">
-          {loading
-            ? <Skeleton className="w-full h-full" />
-            : hasData(volumeOverTimeData)
-              ? <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} />
-              : <div className="flex items-center justify-center h-full text-gray-500">No volume data available</div>
-          }
-        </CardContent>
-      </Card>
+      {/* Volume over time with lazy loading */}
+      <LazyLoadWrapper>
+        <Card className="bg-card min-h-[300px] overflow-hidden">
+          <CardHeader><CardTitle>Volume Over Time</CardTitle></CardHeader>
+          <CardContent className="h-[300px]">
+            {loading
+              ? <Skeleton className="w-full h-full" />
+              : hasData(volumeOverTimeData)
+                ? <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} />
+                : <div className="flex items-center justify-center h-full text-gray-500">No volume data available</div>
+            }
+          </CardContent>
+        </Card>
+      </LazyLoadWrapper>
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -125,35 +106,39 @@ const Overview: React.FC = () => {
         </Card>
       </div>
 
-      {/* Other charts */}
+      {/* Other charts with lazy loading */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {chartConfigs.map(({ title, renderComponent, data }, idx) => (
-          <Card key={idx} className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
-            <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
-            <CardContent className="h-[250px] flex items-center justify-center">
-              {loading
-                ? <Skeleton className="w-3/4 h-3/4 rounded-lg" />
-                : hasData(data)
-                  ? renderComponent(data)
-                  : <div className="text-gray-500">No data available</div>
-              }
-            </CardContent>
-          </Card>
+          <LazyLoadWrapper key={idx}>
+            <Card className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
+              <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+              <CardContent className="h-[250px] flex items-center justify-center">
+                {loading
+                  ? <Skeleton className="w-3/4 h-3/4 rounded-lg" />
+                  : hasData(data)
+                    ? renderComponent(data)
+                    : <div className="text-gray-500">No data available</div>
+                }
+              </CardContent>
+            </Card>
+          </LazyLoadWrapper>
         ))}
       </div>
 
-      {/* Density over time */}
-      <Card className="bg-card min-h-[250px] overflow-hidden">
-        <CardHeader><CardTitle>Volume Rate Over Time</CardTitle></CardHeader>
-        <CardContent className="h-[250px]">
-          {loading
-            ? <Skeleton className="w-full h-full" />
-            : hasData(densityOverTimeData)
-              ? <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />
-              : <div className="flex items-center justify-center h-full text-gray-500">No density data available</div>
-          }
-        </CardContent>
-      </Card>
+      {/* Density over time with lazy loading */}
+      <LazyLoadWrapper>
+        <Card className="bg-card min-h-[250px] overflow-hidden">
+          <CardHeader><CardTitle>Volume Rate Over Time</CardTitle></CardHeader>
+          <CardContent className="h-[250px]">
+            {loading
+              ? <Skeleton className="w-full h-full" />
+              : hasData(densityOverTimeData)
+                ? <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />
+                : <div className="flex items-center justify-center h-full text-gray-500">No density data available</div>
+            }
+          </CardContent>
+        </Card>
+      </LazyLoadWrapper>
     </div>
   );
 };

@@ -4,11 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { formatWeightWithUnit } from '@/utils/unitConversion';
 import { WorkoutDensityTrendChart } from '@/components/metrics/WorkoutDensityTrendChart';
-import { Activity, BarChart3, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
-import { ProcessedWorkoutMetrics } from '@/utils/workoutMetricsProcessor';
+import { Activity, BarChart3 } from 'lucide-react';
+import { useWorkoutStatsContext } from '@/context/WorkoutStatsProvider';
 
 interface WorkoutStatsOverviewProps {
-  recentWorkouts: any[];
   allTimeStats?: {
     totalWorkouts: number;
     totalVolume: number;
@@ -19,21 +18,21 @@ interface WorkoutStatsOverviewProps {
 }
 
 export const WorkoutStatsOverview = React.memo(({ 
-  recentWorkouts,
   allTimeStats,
   className = ''
 }: WorkoutStatsOverviewProps) => {
   const { weightUnit } = useWeightUnit();
+  const { stats } = useWorkoutStatsContext();
   
   // Process workout data for density chart - memoized to prevent recalculation
   const densityTrendData = useMemo(() => {
-    console.log("Processing density trend data from workouts:", recentWorkouts?.length || 0);
+    console.log("Processing density trend data from workouts:", stats.workouts?.length || 0);
     
-    if (!Array.isArray(recentWorkouts) || recentWorkouts.length === 0) {
+    if (!Array.isArray(stats.workouts) || stats.workouts.length === 0) {
       return [];
     }
     
-    return recentWorkouts.map(workout => {
+    return stats.workouts.map(workout => {
       const date = new Date(workout.start_time);
       return {
         date: workout.start_time,
@@ -42,7 +41,7 @@ export const WorkoutStatsOverview = React.memo(({
         activeOnlyDensity: workout.metrics?.densityMetrics?.activeOnlyDensity || 0,
       };
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [recentWorkouts]);
+  }, [stats.workouts]);
   
   // Calculate average density and find most efficient workout - memoized
   const densityStats = useMemo(() => {
@@ -62,7 +61,6 @@ export const WorkoutStatsOverview = React.memo(({
   }, [densityTrendData]);
   
   const { avgOverallDensity, avgActiveOnlyDensity, mostEfficientWorkout } = densityStats;
-  const hasData = Array.isArray(densityTrendData) && densityTrendData.length > 0;
   
   return (
     <div className={`space-y-4 ${className}`}>
