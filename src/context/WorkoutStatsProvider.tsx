@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,7 +32,6 @@ const fetchWorkoutStats = async (
   weightUnit: string
 ): Promise<WorkoutStats> => {
   const queryStartTime = performance.now();
-  console.log('[WorkoutStatsProvider] Fetching workout stats for:', { userId, dateRange, weightUnit });
   
   const now = new Date();
   const defaultFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -55,7 +55,6 @@ const fetchWorkoutStats = async (
   
   // Track query performance
   performanceMonitor.trackQuery('workout-stats', queryDuration, false);
-  console.log(`[WorkoutStatsProvider] Fetched ${sessions.length} sessions in ${queryDuration.toFixed(2)}ms`);
 
   // Process workout data into stats
   const totalWorkouts = sessions.length;
@@ -183,14 +182,14 @@ export function WorkoutStatsProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  // Track background refresh
+  // Optimized background refresh - reduce frequency and logging
   React.useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         performanceMonitor.trackBackgroundRefresh();
         queryClient.invalidateQueries({ queryKey });
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 10 * 60 * 1000); // Increased to 10 minutes to reduce frequency
 
     return () => clearInterval(interval);
   }, [queryClient, queryKey]);

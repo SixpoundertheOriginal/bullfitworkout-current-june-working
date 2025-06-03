@@ -14,7 +14,6 @@ export function usePerformanceTracking({
   trackMemory = false 
 }: UsePerformanceTrackingOptions) {
   const renderStartTime = useRef<number>(0);
-  const previousPropsRef = useRef<any>(null);
   const renderCount = useRef<number>(0);
 
   useEffect(() => {
@@ -28,9 +27,8 @@ export function usePerformanceTracking({
       const renderDuration = performance.now() - renderStartTime.current;
       renderCount.current++;
       
-      // Determine if render was necessary (simplified heuristic)
-      const wasNecessary = renderCount.current === 1 || 
-        JSON.stringify(previousPropsRef.current) !== JSON.stringify(arguments);
+      // Determine if render was necessary (simplified - assume first render is necessary)
+      const wasNecessary = renderCount.current === 1;
       
       performanceMonitor.trackComponentRender(componentName, renderDuration, wasNecessary);
       renderStartTime.current = 0;

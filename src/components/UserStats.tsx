@@ -40,7 +40,7 @@ const UserStatsComponent = () => {
   const workoutTypeData = stats?.workoutTypes?.map(type => ({
     type: type.type,
     count: type.count,
-    totalDuration: 0, // Will be calculated from workouts
+    totalDuration: 0,
     percentage: type.percentage,
     timeOfDay: {
       morning: 0,
@@ -126,5 +126,4 @@ const UserStatsComponent = () => {
   );
 };
 
-// Export the component correctly
 export const UserStats = React.memo(UserStatsComponent);
