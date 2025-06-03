@@ -96,7 +96,7 @@ export const EnhancedWorkoutActionCenter = React.memo(({
                 ))}
               </div>
               
-              {/* Custom Workout Option */}
+              {/* Custom Workout Option with Card Navigation */}
               <div className="text-center pt-2">
                 <SmartWorkoutCard
                   title="Custom Workout"

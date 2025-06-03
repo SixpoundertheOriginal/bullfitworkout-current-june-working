@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { WorkoutNavigationContextProvider } from "@/context/WorkoutNavigationContext";
@@ -13,6 +12,7 @@ import Auth from "@/pages/Auth";
 import AllExercisesPage from "@/pages/AllExercisesPage";
 import Overview from "@/pages/Overview";
 import { WorkoutManagementPage } from "@/pages/WorkoutManagementPage";
+import { WorkoutSetup } from "@/pages/WorkoutSetup";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();

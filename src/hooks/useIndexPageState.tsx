@@ -93,8 +93,9 @@ export function useIndexPageState() {
   }, []);
 
   const handleOpenFunnel = useCallback(() => {
-    setFunnelOpen(true);
-  }, []);
+    // Navigate to the new card-based setup flow
+    navigate('/workout-setup');
+  }, [navigate]);
 
   const handleCloseFunnel = useCallback((open: boolean) => {
     setFunnelOpen(open);
