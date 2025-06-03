@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +6,7 @@ import { useDateRange } from '@/context/DateRangeContext';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { getExerciseGroup } from '@/utils/exerciseUtils';
 import { WorkoutStats } from '@/types/workout-metrics';
+import { performanceMonitor } from '@/services/performanceMonitor';
 
 interface WorkoutStatsContextType {
   stats: WorkoutStats;
@@ -30,6 +30,7 @@ const fetchWorkoutStats = async (
   dateRange: any,
   weightUnit: string
 ): Promise<WorkoutStats> => {
+  const queryStartTime = performance.now();
   console.log('[WorkoutStatsProvider] Fetching workout stats for:', { userId, dateRange, weightUnit });
   
   const now = new Date();
@@ -50,7 +51,11 @@ const fetchWorkoutStats = async (
   if (error) throw error;
   
   const sessions = workoutData || [];
-  console.log(`[WorkoutStatsProvider] Fetched ${sessions.length} sessions`);
+  const queryDuration = performance.now() - queryStartTime;
+  
+  // Track query performance
+  performanceMonitor.trackQuery('workout-stats', queryDuration, false);
+  console.log(`[WorkoutStatsProvider] Fetched ${sessions.length} sessions in ${queryDuration.toFixed(2)}ms`);
 
   // Process workout data into stats
   const totalWorkouts = sessions.length;
@@ -168,8 +173,27 @@ export function WorkoutStatsProvider({ children }: { children: ReactNode }) {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    select: (data) => {
+      // Track cache hit for subsequent renders
+      if (data) {
+        performanceMonitor.trackQuery('workout-stats-cached', 0, true);
+      }
+      return data;
+    }
   });
+
+  // Track background refresh
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        performanceMonitor.trackBackgroundRefresh();
+        queryClient.invalidateQueries({ queryKey });
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [queryClient, queryKey]);
 
   const contextValue: WorkoutStatsContextType = {
     stats: stats || {

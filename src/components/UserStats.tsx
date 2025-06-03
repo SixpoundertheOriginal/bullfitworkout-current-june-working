@@ -11,9 +11,17 @@ import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { WorkoutTypeChart } from "@/components/metrics/WorkoutTypeChart";
 import { StatCard } from "@/components/metrics/StatCard";
 import StatsLoadingSkeleton from "@/components/metrics/StatsLoadingSkeleton";
+import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 
 const UserStatsComponent = () => {
   const { stats, loading } = useWorkoutStatsContext();
+  
+  // Track component performance
+  usePerformanceTracking({ 
+    componentName: 'UserStats',
+    trackRenders: true,
+    trackMemory: true 
+  });
   
   // Format time (seconds) to mm:ss
   const formatTime = (seconds: number) => {

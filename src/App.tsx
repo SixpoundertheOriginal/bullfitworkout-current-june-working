@@ -11,6 +11,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationContext";
 import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
+import { PerformanceDashboard } from "@/components/PerformanceDashboard";
 
 // Create the query client with optimized settings for enterprise performance
 const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ function App() {
                       <TooltipProvider>
                         <Toaster />
                         <RouterProvider />
+                        <PerformanceDashboard />
                       </TooltipProvider>
                     </LayoutProvider>
                   </WorkoutNavigationContextProvider>
