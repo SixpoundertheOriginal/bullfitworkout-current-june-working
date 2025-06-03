@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutState } from '@/hooks/useWorkoutState';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
@@ -63,27 +63,29 @@ export function WorkoutNavigationContextProvider({
     }
   }, [isVisible, isActive, persistWorkoutState]);
 
-  // Navigation confirmation logic
-  const confirmNavigation = useCallback((to: string) => {
-    // Skip confirmation if navigating to the same page
-    if (to === location.pathname) {
-      return;
-    }
-    
-    if (isActive && isTrainingRoute) {
-      setShowDialog(true);
-      setPendingNavigation(to);
-      console.log('Confirming navigation from workout to:', to);
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    confirmNavigation: (to: string) => {
+      // Skip confirmation if navigating to the same page
+      if (to === location.pathname) {
+        return;
+      }
       
-      // Make sure state is persisted before potential navigation
-      persistWorkoutState?.();
-    } else {
-      navigate(to);
+      if (isActive && isTrainingRoute) {
+        setShowDialog(true);
+        setPendingNavigation(to);
+        console.log('Confirming navigation from workout to:', to);
+        
+        // Make sure state is persisted before potential navigation
+        persistWorkoutState?.();
+      } else {
+        navigate(to);
+      }
     }
-  }, [isActive, isTrainingRoute, navigate, location.pathname, persistWorkoutState]);
+  }), [isActive, isTrainingRoute, navigate, location.pathname, persistWorkoutState]);
 
   return (
-    <Provider value={{ confirmNavigation }}>
+    <Provider value={contextValue}>
       {children}
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>

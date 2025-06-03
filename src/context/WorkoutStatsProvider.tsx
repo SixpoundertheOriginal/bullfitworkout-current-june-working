@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,8 +52,10 @@ const fetchWorkoutStats = async (
   const sessions = workoutData || [];
   const queryDuration = performance.now() - queryStartTime;
   
-  // Track query performance
-  performanceMonitor.trackQuery('workout-stats', queryDuration, false);
+  // Track query performance (reduced logging)
+  if (queryDuration > 500) { // Only log slow queries
+    performanceMonitor.trackQuery('workout-stats', queryDuration, false);
+  }
 
   // Process workout data into stats
   const totalWorkouts = sessions.length;
@@ -169,32 +170,25 @@ export function WorkoutStatsProvider({ children }: { children: ReactNode }) {
     queryKey,
     queryFn: () => fetchWorkoutStats(user!.id, dateRange, weightUnit),
     enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // Increased: 5 minutes
+    gcTime: 10 * 60 * 1000, // Increased: 10 minutes
     retry: 1,
     refetchOnWindowFocus: false,
-    select: (data) => {
-      // Track cache hit for subsequent renders
-      if (data) {
-        performanceMonitor.trackQuery('workout-stats-cached', 0, true);
-      }
-      return data;
-    }
+    refetchOnMount: false, // Prevent redundant queries on mount
   });
 
-  // Optimized background refresh - reduce frequency and logging
+  // Optimized background refresh - significantly reduced frequency
   React.useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        performanceMonitor.trackBackgroundRefresh();
         queryClient.invalidateQueries({ queryKey });
       }
-    }, 10 * 60 * 1000); // Increased to 10 minutes to reduce frequency
+    }, 30 * 60 * 1000); // Increased to 30 minutes
 
     return () => clearInterval(interval);
   }, [queryClient, queryKey]);
 
-  const contextValue: WorkoutStatsContextType = {
+  const contextValue: WorkoutStatsContextType = React.useMemo(() => ({
     stats: stats || {
       totalWorkouts: 0,
       totalExercises: 0,
@@ -220,7 +214,7 @@ export function WorkoutStatsProvider({ children }: { children: ReactNode }) {
     loading,
     error: error as Error | null,
     refetch: () => refetch()
-  };
+  }), [stats, loading, error, refetch]);
 
   return (
     <WorkoutStatsContext.Provider value={contextValue}>

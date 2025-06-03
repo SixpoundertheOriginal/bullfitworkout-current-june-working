@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
@@ -88,6 +87,23 @@ export interface WorkoutState {
 const generateSessionId = () => 
   crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`;
 
+// Validate elapsed time to prevent corruption
+const validateElapsedTime = (time: number): number => {
+  const MAX_WORKOUT_HOURS = 24;
+  const MAX_SECONDS = MAX_WORKOUT_HOURS * 60 * 60; // 86400 seconds
+  
+  if (typeof time !== 'number' || isNaN(time) || time < 0) {
+    return 0;
+  }
+  
+  if (time > MAX_SECONDS) {
+    console.warn('[WorkoutStore] Timer reset due to excessive value:', time);
+    return 0;
+  }
+  
+  return time;
+};
+
 // Create the persistent store
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
@@ -128,10 +144,15 @@ export const useWorkoutStore = create<WorkoutState>()(
         lastTabActivity: Date.now(),
       }),
       
-      setElapsedTime: (time) => set((state) => ({ 
-        elapsedTime: typeof time === 'function' ? time(state.elapsedTime) : time,
-        lastTabActivity: Date.now(),
-      })),
+      setElapsedTime: (time) => set((state) => {
+        const newTime = typeof time === 'function' ? time(state.elapsedTime) : time;
+        const validatedTime = validateElapsedTime(newTime);
+        
+        return {
+          elapsedTime: validatedTime,
+          lastTabActivity: Date.now(),
+        };
+      }),
       
       setRestTimerActive: (active) => set({ 
         restTimerActive: active,
@@ -297,7 +318,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         // Only persist these specific parts of the state
         exercises: state.exercises,
         activeExercise: state.activeExercise,
-        elapsedTime: state.elapsedTime,
+        elapsedTime: validateElapsedTime(state.elapsedTime), // Validate before persisting
         workoutId: state.workoutId,
         startTime: state.startTime,
         workoutStatus: state.workoutStatus,
@@ -315,8 +336,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           }
           
           if (rehydratedState && rehydratedState.isActive) {
-            console.log('Rehydrated workout state:', rehydratedState);
-            
             // Update elapsed time based on stored start time for active workouts
             if (rehydratedState.isActive && rehydratedState.startTime) {
               const storedStartTime = new Date(rehydratedState.startTime);
@@ -325,17 +344,19 @@ export const useWorkoutStore = create<WorkoutState>()(
                 (currentTime.getTime() - storedStartTime.getTime()) / 1000
               );
               
-              // Only update if calculated time is greater than stored time
-              if (calculatedElapsedTime > (rehydratedState.elapsedTime || 0)) {
+              // Validate calculated time before using it
+              const validatedTime = validateElapsedTime(calculatedElapsedTime);
+              const storedTime = validateElapsedTime(rehydratedState.elapsedTime || 0);
+              
+              // Only update if calculated time is greater and valid
+              if (validatedTime > storedTime) {
                 setTimeout(() => {
-                  // Using the Zustand store's set function through the get() method
                   const store = useWorkoutStore.getState();
-                  store.setElapsedTime(calculatedElapsedTime);
-                  console.log(`Restored elapsed time: ${calculatedElapsedTime}s`);
+                  store.setElapsedTime(validatedTime);
                 }, 100);
               }
               
-              // Show recovery notification
+              // Show recovery notification (reduced frequency)
               setTimeout(() => {
                 toast.info("Workout session recovered");
               }, 1000);
@@ -347,7 +368,7 @@ export const useWorkoutStore = create<WorkoutState>()(
   )
 );
 
-// Create a hook for handling page visibility changes
+// Create a hook for handling page visibility changes (optimized)
 export const useWorkoutPageVisibility = () => {
   const { isActive, setElapsedTime, startTime } = useWorkoutStore();
   
@@ -356,7 +377,7 @@ export const useWorkoutPageVisibility = () => {
     
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isActive) {
-        // When tab becomes visible again, update elapsed time
+        // When tab becomes visible again, update elapsed time with validation
         if (startTime) {
           const storedStartTime = new Date(startTime);
           const currentTime = new Date();
@@ -364,8 +385,8 @@ export const useWorkoutPageVisibility = () => {
             (currentTime.getTime() - storedStartTime.getTime()) / 1000
           );
           
-          setElapsedTime(calculatedElapsedTime);
-          console.log(`Updated elapsed time after tab switch: ${calculatedElapsedTime}s`);
+          const validatedTime = validateElapsedTime(calculatedElapsedTime);
+          setElapsedTime(validatedTime);
         }
       }
     };

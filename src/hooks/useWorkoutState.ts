@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Storage } from '@/utils/storage';
 import { WorkoutStatus, WorkoutError } from '@/types/workout';
 import { TrainingConfig } from './useTrainingSetupPersistence';
@@ -19,11 +19,10 @@ export interface WorkoutExercises {
 // Storage key for workout session
 const WORKOUT_STORAGE_KEY = 'workout_in_progress';
 
-// Create a global variable to track if storage was already initialized
-// This prevents double initialization on component mounts
-let storageInitialized = false;
-
 export function useWorkoutState() {
+  // Use ref instead of global variable to prevent cross-component interference
+  const isInitializedRef = useRef(false);
+  
   // Core workout state
   const [exercises, setExercises] = useState<WorkoutExercises>({});
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
@@ -53,29 +52,47 @@ export function useWorkoutState() {
   const [lastTabActivity, setLastTabActivity] = useState<number>(Date.now());
   const [explicitlyEnded, setExplicitlyEnded] = useState<boolean>(false);
   
-  // Debug helper
+  // Debug helper - reduced logging
   const logDebug = (message: string, data?: any) => {
-    console.log(`[WorkoutState] ${message}`, data || '');
+    // Only log essential debug info, not spam
+    if (message.includes('error') || message.includes('corruption')) {
+      console.log(`[WorkoutState] ${message}`, data || '');
+    }
+  };
+
+  // Validate and sanitize elapsed time to prevent corruption
+  const validateElapsedTime = (time: number): number => {
+    const MAX_WORKOUT_HOURS = 24;
+    const MAX_SECONDS = MAX_WORKOUT_HOURS * 60 * 60; // 86400 seconds
+    
+    if (typeof time !== 'number' || isNaN(time) || time < 0) {
+      logDebug('Timer corruption detected: invalid time value', time);
+      return 0;
+    }
+    
+    if (time > MAX_SECONDS) {
+      logDebug('Timer corruption detected: excessive time value', `${time}s (${Math.round(time/3600)}h)`);
+      return 0;
+    }
+    
+    return time;
   };
 
   // Load workout state from local storage on component mount
   useEffect(() => {
-    if (storageInitialized) {
-      logDebug("Storage already initialized, skipping");
-      return;
+    if (isInitializedRef.current) {
+      return; // Already initialized for this component instance
     }
     
     const savedState = Storage.get(WORKOUT_STORAGE_KEY);
     if (savedState) {
       try {
         const parsedState = JSON.parse(savedState);
-        logDebug('Loading workout state from storage:', parsedState);
         
         // Step 1: Check if we have an explicitly ended workout
         if (parsedState.explicitlyEnded) {
-          logDebug('Workout was explicitly ended, clearing storage');
           Storage.remove(WORKOUT_STORAGE_KEY);
-          storageInitialized = true;
+          isInitializedRef.current = true;
           return;
         }
 
@@ -106,37 +123,41 @@ export function useWorkoutState() {
         if (parsedState.lastPersistedTime) setLastPersistedTime(parsedState.lastPersistedTime);
         if (parsedState.lastTabActivity) setLastTabActivity(parsedState.lastTabActivity);
         
-        // Step 5: Handle time tracking with start time
+        // Step 5: Handle time tracking with validation
         if (parsedState.startTime) {
           const storedStartTime = new Date(parsedState.startTime);
           setStartTime(storedStartTime);
           
-          // Calculate elapsed time based on stored start time if workout is active
+          // Calculate elapsed time with corruption protection
           if (parsedState.isActive && !parsedState.explicitlyEnded) {
-            const storedElapsedTime = parsedState.elapsedTime || 0;
-            const timeSinceLastActive = Math.floor((Date.now() - parsedState.lastTabActivity) / 1000);
+            const storedElapsedTime = validateElapsedTime(parsedState.elapsedTime || 0);
+            const currentTime = Date.now();
+            const lastActivity = parsedState.lastTabActivity || currentTime;
             
-            const calculatedElapsedTime = storedElapsedTime + timeSinceLastActive;
-            logDebug(`Restored elapsed time: ${calculatedElapsedTime}s (stored: ${storedElapsedTime}s, added: ${timeSinceLastActive}s)`);
-            setElapsedTime(calculatedElapsedTime);
+            // Validate time difference to prevent corruption
+            const timeDiff = Math.floor((currentTime - lastActivity) / 1000);
+            const validatedTimeDiff = validateElapsedTime(timeDiff);
+            
+            const calculatedElapsedTime = storedElapsedTime + validatedTimeDiff;
+            const finalElapsedTime = validateElapsedTime(calculatedElapsedTime);
+            
+            setElapsedTime(finalElapsedTime);
           } else {
-            setElapsedTime(parsedState.elapsedTime || 0);
+            const validatedTime = validateElapsedTime(parsedState.elapsedTime || 0);
+            setElapsedTime(validatedTime);
           }
         } else if (parsedState.elapsedTime !== undefined) {
-          setElapsedTime(parsedState.elapsedTime);
+          const validatedTime = validateElapsedTime(parsedState.elapsedTime);
+          setElapsedTime(validatedTime);
         }
         
-        // Step 6: Determine if workout should be active based on multiple indicators
+        // Step 6: Determine if workout should be active
         const hasExercises = parsedState.exercises && Object.keys(parsedState.exercises).length > 0;
         const wasActive = parsedState.isActive === true;
         const notSaved = parsedState.workoutStatus !== 'saved';
         const notExplicitlyEnded = !parsedState.explicitlyEnded;
         
-        // Only set a workout as active if all conditions are met
         const shouldBeActive = hasExercises && notSaved && wasActive && notExplicitlyEnded;
-        
-        logDebug(`Determining workout active state: hasExercises=${hasExercises}, wasActive=${wasActive}, `+
-                `notSaved=${notSaved}, notExplicitlyEnded=${notExplicitlyEnded}, shouldBeActive=${shouldBeActive}`);
         
         if (shouldBeActive !== isActive) {
           setIsActive(shouldBeActive);
@@ -144,7 +165,6 @@ export function useWorkoutState() {
         
         // If workout was recovered and is active, show a toast
         if (shouldBeActive && wasActive) {
-          // Slight delay to ensure UI is rendered
           setTimeout(() => {
             toast.info("Workout session recovered");
           }, 1000);
@@ -152,52 +172,44 @@ export function useWorkoutState() {
         
       } catch (error) {
         logDebug('Error parsing saved workout state:', error);
-        // Don't clear storage here - let the user try to recover
+        // Clear corrupted storage
+        Storage.remove(WORKOUT_STORAGE_KEY);
       }
     }
     
-    storageInitialized = true;
+    isInitializedRef.current = true;
   }, []);
 
-  // Set up page visibility event listener for tab switching
+  // Set up page visibility event listener for tab switching (optimized)
   useEffect(() => {
     if (!document) return;
     
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        logDebug('Tab became visible, checking for state updates');
-        
+      if (document.visibilityState === 'visible' && isActive) {
         // Reload from storage in case another tab modified the state
         const savedState = Storage.get(WORKOUT_STORAGE_KEY);
-        if (savedState && isActive) {
+        if (savedState) {
           try {
             const parsedState = JSON.parse(savedState);
             
             // Only update if it's the same session ID to prevent conflicts
-            if (parsedState.sessionId === sessionId) {
-              logDebug('Refreshing state from storage after tab switch');
+            if (parsedState.sessionId === sessionId && parsedState.isActive && parsedState.elapsedTime) {
+              const storedTime = validateElapsedTime(parsedState.elapsedTime);
+              const currentTime = Date.now();
+              const lastActivity = parsedState.lastTabActivity || currentTime;
+              const timeSinceStorage = Math.floor((currentTime - lastActivity) / 1000);
+              const validatedTimeDiff = validateElapsedTime(timeSinceStorage);
+              const newElapsedTime = validateElapsedTime(storedTime + validatedTimeDiff);
               
-              // Update elapsed time for active workouts
-              if (parsedState.isActive && parsedState.elapsedTime) {
-                const storedTime = parsedState.elapsedTime;
-                const timeSinceStorage = Math.floor((Date.now() - parsedState.lastTabActivity) / 1000);
-                const newElapsedTime = storedTime + (isActive ? timeSinceStorage : 0);
-                
-                logDebug(`Updating elapsed time after tab switch: ${storedTime} + ${timeSinceStorage} = ${newElapsedTime}`);
-                setElapsedTime(newElapsedTime);
-              }
+              setElapsedTime(newElapsedTime);
             }
           } catch (error) {
             logDebug('Error parsing state after tab switch:', error);
           }
         }
         
-        // Update last activity time
         setLastTabActivity(Date.now());
       } else if (document.visibilityState === 'hidden' && isActive) {
-        logDebug('Tab hidden, persisting current state');
-        
-        // Force a state persistence when the tab becomes hidden
         persistWorkoutState();
       }
     };
@@ -213,7 +225,6 @@ export function useWorkoutState() {
     // Check if we should persist based on activity state
     if (workoutStatus === 'saved' || explicitlyEnded) {
       Storage.remove(WORKOUT_STORAGE_KEY);
-      logDebug('Workout data cleared from storage (saved or explicitly ended)');
       return;
     }
     
@@ -222,7 +233,7 @@ export function useWorkoutState() {
       const stateToSave = {
         exercises,
         activeExercise,
-        elapsedTime,
+        elapsedTime: validateElapsedTime(elapsedTime), // Validate before saving
         workoutId,
         startTime,
         workoutStatus,
@@ -240,25 +251,26 @@ export function useWorkoutState() {
       Storage.set(WORKOUT_STORAGE_KEY, JSON.stringify(stateToSave));
       setLastPersistedTime(currentTime);
       setLastTabActivity(currentTime);
-      logDebug('Workout state persisted to storage');
     }
   };
 
   // Persist workout state whenever relevant state changes
   useEffect(() => {
-    persistWorkoutState();
+    if (isInitializedRef.current) {
+      persistWorkoutState();
+    }
   }, [
     exercises, activeExercise, elapsedTime, workoutId, 
     workoutStatus, trainingConfig, isActive, lastActiveRoute,
     restTimerActive, currentRestTime, startTime, explicitlyEnded
   ]);
 
-  // Update time periodically for persistence during active workouts
+  // Update time periodically for persistence during active workouts (reduced frequency)
   useEffect(() => {
-    if (isActive) {
+    if (isActive && isInitializedRef.current) {
       const persistInterval = setInterval(() => {
         persistWorkoutState();
-      }, 5000); // Update persistence more frequently (every 5 seconds)
+      }, 10000); // Reduced frequency: every 10 seconds instead of 5
       
       return () => clearInterval(persistInterval);
     }
@@ -273,7 +285,6 @@ export function useWorkoutState() {
     setStartTime(now);
     setElapsedTime(0);
     setSessionId(crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`);
-    logDebug("Workout explicitly started at", now);
     persistWorkoutState();
   };
 
@@ -281,7 +292,6 @@ export function useWorkoutState() {
     setIsActive(false);
     setExplicitlyEnded(true);
     setWorkoutStatus('idle');
-    logDebug("Workout explicitly ended");
     persistWorkoutState();
     
     // Remove from storage with small delay to ensure state is updated
@@ -312,13 +322,11 @@ export function useWorkoutState() {
     setSessionId(crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`);
     
     Storage.remove(WORKOUT_STORAGE_KEY);
-    logDebug("Workout session reset completely");
   };
 
   // Update the last active route for better navigation state
   const updateLastActiveRoute = (route: string) => {
     setLastActiveRoute(route);
-    logDebug("Last active route updated:", route);
     persistWorkoutState();
   };
 
@@ -354,8 +362,6 @@ export function useWorkoutState() {
     // Show success notification
     toast.success("Workout saved successfully!");
     
-    logDebug("Workout marked as saved and storage cleared");
-    
     // Reset the session state after a short delay
     setTimeout(() => {
       resetSession();
@@ -365,7 +371,6 @@ export function useWorkoutState() {
   // Recovery features
   const attemptRecovery = async () => {
     if (recoveryAttempted) {
-      logDebug('Recovery already attempted');
       return;
     }
     
@@ -373,9 +378,6 @@ export function useWorkoutState() {
     setWorkoutStatus('saving');
     setSaveProgress(5);
     persistWorkoutState();
-    
-    // Simplified recovery logic for now
-    logDebug('Attempting to recover workout', workoutId);
     
     setTimeout(() => {
       setWorkoutStatus('saved');
