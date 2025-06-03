@@ -1,11 +1,11 @@
 
-import { onCLS, onFCP, onFID, onLCP, onTTFB } from 'web-vitals';
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
 interface PerformanceMetrics {
   coreWebVitals: {
     cls: number | null;
     fcp: number | null;
-    fid: number | null;
+    inp: number | null;
     lcp: number | null;
     ttfb: number | null;
   };
@@ -46,7 +46,7 @@ class PerformanceMonitor {
       coreWebVitals: {
         cls: null,
         fcp: null,
-        fid: null,
+        inp: null,
         lcp: null,
         ttfb: null
       },
@@ -84,9 +84,9 @@ class PerformanceMonitor {
       this.logMetric('FCP', metric.value, metric.value > 3000 ? 'poor' : metric.value > 1800 ? 'needs-improvement' : 'good');
     });
 
-    onFID((metric) => {
-      this.metrics.coreWebVitals.fid = metric.value;
-      this.logMetric('FID', metric.value, metric.value > 300 ? 'poor' : metric.value > 100 ? 'needs-improvement' : 'good');
+    onINP((metric) => {
+      this.metrics.coreWebVitals.inp = metric.value;
+      this.logMetric('INP', metric.value, metric.value > 500 ? 'poor' : metric.value > 200 ? 'needs-improvement' : 'good');
     });
 
     onLCP((metric) => {

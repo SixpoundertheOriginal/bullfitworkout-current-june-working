@@ -99,6 +99,14 @@ export function PerformanceDashboard() {
                     </span>
                   </div>
                 )}
+                {metrics.coreWebVitals.inp && (
+                  <div className="flex justify-between">
+                    <span className="text-xs text-gray-400">INP</span>
+                    <span className={`text-xs ${getPerformanceRating(metrics.coreWebVitals.inp, [200, 500]).color}`}>
+                      {metrics.coreWebVitals.inp.toFixed(0)}ms
+                    </span>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
