@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { Hash } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface WorkoutTagPickerProps {
   selectedTags: string[];

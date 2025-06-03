@@ -1,11 +1,13 @@
+
 import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from 'date-fns';
-import { Dumbbell, Calendar as CalendarIcon, Activity, Timer, Target, TrendingUp } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay, parseISO } from 'date-fns';
+import { Dumbbell, Calendar as CalendarIcon, Activity, Timer, Target, TrendingUp, Clock, BarChart2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Select,
   SelectContent,
@@ -16,8 +18,21 @@ import {
 import { cn } from '@/lib/utils';
 import { WeeklyTrainingPatterns } from '@/components/workouts/WeeklyTrainingPatterns';
 import { WorkoutMetricsSummary } from '@/components/workouts/WorkoutMetricsSummary';
-import { WorkoutSummaryCard } from '@/components/workouts/WorkoutSummaryCard';
+import WorkoutSummaryCard from '@/components/workouts/WorkoutSummaryCard';
 import { useWorkoutStatsContext } from '@/context/WorkoutStatsProvider';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+interface ExerciseSet {
+  id: string;
+  workout_id: string;
+  exercise_name: string;
+  weight: number;
+  reps: number;
+  set_number: number;
+}
 
 export function WorkoutCalendarTab() {
   const { user } = useAuth();
@@ -210,7 +225,11 @@ export function WorkoutCalendarTab() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={handlePreviousMonth}
+                  onClick={() => {
+                    const previousMonth = new Date(month);
+                    previousMonth.setMonth(previousMonth.getMonth() - 1);
+                    setMonth(previousMonth);
+                  }}
                   className="h-7 w-7 text-gray-400"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -221,7 +240,11 @@ export function WorkoutCalendarTab() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={handleNextMonth}
+                  onClick={() => {
+                    const nextMonth = new Date(month);
+                    nextMonth.setMonth(nextMonth.getMonth() + 1);
+                    setMonth(nextMonth);
+                  }}
                   className="h-7 w-7 text-gray-400"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -280,7 +303,54 @@ export function WorkoutCalendarTab() {
                     ))
                   ) : selectedDayWorkouts && selectedDayWorkouts.length > 0 ? (
                     <div>
-                      {selectedDayWorkouts.map(workout => renderWorkoutDetails(workout))}
+                      {selectedDayWorkouts.map(workout => {
+                        const workoutSets = exerciseSets?.[workout.id] || [];
+                        const exerciseCount = new Set(workoutSets.map(set => set.exercise_name)).size;
+                        const totalSets = workoutSets.length;
+                        
+                        const startTime = new Date(workout.start_time);
+                        
+                        return (
+                          <Card className="mb-3 bg-gray-800/30 border-gray-700/50" key={workout.id}>
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <h3 className="text-base font-medium">{workout.name || `${workout.training_type} Workout`}</h3>
+                                  <p className="text-xs text-gray-400">{format(startTime, 'h:mm a')}</p>
+                                </div>
+                                <span className="bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded text-xs">
+                                  {workout.training_type}
+                                </span>
+                              </div>
+                              
+                              <div className="grid grid-cols-3 gap-2 mt-4">
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className="text-gray-400 h-4 w-4" />
+                                  <span className="text-sm">{workout.duration} min</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Dumbbell className="text-gray-400 h-4 w-4" />
+                                  <span className="text-sm">{exerciseCount} exercises</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <BarChart2 className="text-gray-400 h-4 w-4" />
+                                  <span className="text-sm">{totalSets} sets</span>
+                                </div>
+                              </div>
+                              
+                              <div className="mt-3">
+                                <Button 
+                                  variant="outline" 
+                                  className="w-full text-xs h-8 border-gray-600 bg-gray-800/50 hover:bg-gray-700"
+                                  onClick={() => navigate(`/workout/${workout.id}`)}
+                                >
+                                  View Workout Details
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-400">

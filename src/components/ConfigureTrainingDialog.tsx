@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { WorkoutTagPicker } from "@/components/training/WorkoutTagPicker";
 import { DurationSelector } from "@/components/training/DurationSelector";
 import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
 import { QuickSetupTemplates } from "@/components/training/QuickSetupTemplates";
-import { processExerciseRanking } from "@/utils/processExerciseRanking";
 import { motion } from "framer-motion";
 
 interface ConfigureTrainingDialogProps {
@@ -24,18 +24,26 @@ export const ConfigureTrainingDialog: React.FC<ConfigureTrainingDialogProps> = (
   const [tags, setTags] = useState<string[]>([]);
   const [duration, setDuration] = useState<number>(30);
   const { stats } = useWorkoutStatsContext();
-  const [rankedExercises, setRankedExercises] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (stats && stats.workouts) {
-      const processedExercises = processExerciseRanking(stats.workouts);
-      setRankedExercises(processedExercises);
-    }
-  }, [stats]);
 
   const handleStart = () => {
-    onStartTraining({ trainingType, tags, duration, rankedExercises });
+    onStartTraining({ trainingType, tags, duration });
     onOpenChange(false);
+  };
+
+  const handleQuickSetupSelect = (config: { trainingType: string; tags: string[]; duration: number }) => {
+    setTrainingType(config.trainingType);
+    setTags(config.tags);
+    setDuration(config.duration);
+    onStartTraining(config);
+    onOpenChange(false);
+  };
+
+  const handleToggleTag = (tag: string) => {
+    setTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
 
   return (
@@ -45,12 +53,12 @@ export const ConfigureTrainingDialog: React.FC<ConfigureTrainingDialogProps> = (
           <DialogTitle>Configure Training</DialogTitle>
         </DialogHeader>
 
-        <QuickSetupTemplates onStartTraining={onStartTraining} onClose={() => onOpenChange(false)} />
+        <QuickSetupTemplates onSelect={handleQuickSetupSelect} />
 
         <div className="grid gap-4 py-4">
-          <TrainingTypeSelector value={trainingType} onValueChange={setTrainingType} />
-          <WorkoutTagPicker tags={tags} onTagsChange={setTags} />
-          <DurationSelector duration={duration} onDurationChange={setDuration} />
+          <TrainingTypeSelector selectedType={trainingType} onSelect={setTrainingType} />
+          <WorkoutTagPicker selectedTags={tags} onToggleTag={handleToggleTag} trainingType={trainingType} />
+          <DurationSelector value={duration} onChange={setDuration} />
         </div>
 
         <motion.div
