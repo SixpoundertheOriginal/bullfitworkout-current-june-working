@@ -6,7 +6,7 @@ import { FeaturesSection } from "@/components/features/FeaturesSection";
 import { WorkoutLogSection } from "@/components/workouts/WorkoutLogSection";
 import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WelcomeHeader } from "@/components/home/WelcomeHeader";
-import { WorkoutActionCenter } from "@/components/home/WorkoutActionCenter";
+import { EnhancedWorkoutActionCenter } from "@/components/home/EnhancedWorkoutActionCenter";
 import { AnimatedLevelUp } from "@/components/home/AnimatedLevelUp";
 import { useIndexPageState } from "@/hooks/useIndexPageState";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +30,7 @@ const Index = () => {
     // Derived values
     isActive,
     recommendedWorkoutType,
+    recommendedDuration,
     stats,
     
     // Actions
@@ -40,6 +41,18 @@ const Index = () => {
     handleCloseFunnel
   } = useIndexPageState();
 
+  // Enhanced quick start handler for preset workouts
+  const handleQuickStart = (duration: number, type: string) => {
+    const quickTrainingConfig = {
+      trainingType: type,
+      tags: [], // Could be enhanced with smart tag selection based on type
+      duration,
+      rankedExercises: undefined
+    };
+    
+    handleStartTraining(quickTrainingConfig);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95">
       <main className="flex-1 overflow-auto px-4 py-6 space-y-6 mt-20 pb-20">
@@ -49,14 +62,16 @@ const Index = () => {
           <MemoizedQuickStatsSection />
         </DateRangeProvider>
 
-        <section ref={sectionRef} className="mb-10 text-center">
-          <WorkoutActionCenter
+        <section ref={sectionRef} className="mb-10">
+          <EnhancedWorkoutActionCenter
             isActive={isActive}
             fabVisible={stableFabVisibility}
             isSectionVisible={isSectionVisible}
             recommendedWorkoutType={recommendedWorkoutType}
+            recommendedDuration={recommendedDuration}
             onStartWorkout={handleOpenFunnel}
             onContinueWorkout={handleContinueWorkout}
+            onQuickStart={handleQuickStart}
           />
         </section>
 
@@ -71,7 +86,9 @@ const Index = () => {
       <WorkoutFunnelModal 
         open={funnelOpen} 
         onOpenChange={handleCloseFunnel} 
-        onStartTraining={handleStartTraining} 
+        onStartTraining={handleStartTraining}
+        initialDuration={recommendedDuration}
+        initialType={recommendedWorkoutType}
       />
       
       <AnimatedLevelUp show={showLevelUp} />
