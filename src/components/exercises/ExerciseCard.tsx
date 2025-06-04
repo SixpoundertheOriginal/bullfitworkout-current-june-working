@@ -35,7 +35,6 @@ const ExerciseCard = React.memo<ExerciseCardProps>(({
   const {
     previousSession,
     previousSessionWeight,
-    weightProgress,
     currentVolume,
     previousVolume,
     volumeProgress,
