@@ -14,6 +14,9 @@ import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
 import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
+import { ReadyWorkoutState } from "@/components/training/ReadyWorkoutState";
+import { WorkoutMotivation } from "@/components/training/WorkoutMotivation";
+import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -137,6 +140,28 @@ const TrainingSessionPage = () => {
     setIsAddExerciseSheetOpen(false);
   };
 
+  const handleAutoPopulateWorkout = () => {
+    if (!workoutTemplate) return;
+    
+    const autoExercises = convertTemplateToStoreFormat(workoutTemplate);
+    setStoreExercises(autoExercises);
+    
+    // Set the first exercise as active
+    const firstExercise = Object.keys(autoExercises)[0];
+    if (firstExercise) {
+      setActiveExercise(firstExercise);
+    }
+    
+    // Start the workout
+    startWorkout();
+    setShowReadyState(false);
+    
+    toast({
+      title: "Workout loaded!",
+      description: `${Object.keys(autoExercises).length} exercises ready to go`
+    });
+  };
+
   const handleShowRestTimer = () => { setRestTimerActive(true); setShowRestTimerModal(true); playBell(); };
   const handleRestTimerComplete = () => { setRestTimerActive(false); setShowRestTimerModal(false); playBell(); };
 
@@ -189,6 +214,21 @@ const TrainingSessionPage = () => {
     toast.info("Attempting to recover workout data...");
   };
 
+  // Auto-populate workout logic
+  const [workoutTemplate, setWorkoutTemplate] = useState(null);
+  const [showReadyState, setShowReadyState] = useState(false);
+  
+  useEffect(() => {
+    // Show ready state if we have training config but no exercises
+    if (trainingConfig && !hasExercises && workoutStatus === 'idle') {
+      const template = generateWorkoutTemplate(trainingConfig);
+      setWorkoutTemplate(template);
+      setShowReadyState(true);
+    } else {
+      setShowReadyState(false);
+    }
+  }, [trainingConfig, hasExercises, workoutStatus]);
+  
   if (loadingExercises) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
@@ -211,92 +251,126 @@ const TrainingSessionPage = () => {
     <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-4 py-6 pb-40">
-          <div className="mb-6 relative">
-            <WorkoutSessionHeader
-              elapsedTime={elapsedTime}
-              exerciseCount={exerciseCount}
-              completedSets={completedSets}
-              totalSets={totalSets}
-              workoutStatus={workoutStatus}
-              isRecoveryMode={!!workoutId}
-              saveProgress={0}
-              onRetrySave={() => workoutId && attemptRecovery()}
-              onResetWorkout={resetSession}
-              restTimerActive={restTimerActive}
-              onRestTimerComplete={handleRestTimerComplete}
-              onShowRestTimer={handleShowRestTimer}
-              onRestTimerReset={triggerRestTimerReset}
-              restTimerResetSignal={restTimerResetSignal}
-              currentRestTime={currentRestTime}
-            />
-            {showRestTimerModal && (
-              <div className="absolute right-4 top-full z-50 mt-2 w-72">
-                <RestTimer
-                  isVisible={showRestTimerModal}
-                  onClose={() => { setShowRestTimerModal(false); setRestTimerActive(false); }}
-                  onComplete={handleRestTimerComplete}
-                  maxTime={currentRestTime || 60}
-                />
+          
+          {/* Show Ready State for Auto-Populated Workouts */}
+          {showReadyState && workoutTemplate && (
+            <div className="space-y-6">
+              <ReadyWorkoutState
+                template={workoutTemplate}
+                onStartWorkout={handleAutoPopulateWorkout}
+                trainingType={trainingConfig?.trainingType || "Strength"}
+              />
+              
+              <WorkoutMotivation
+                xpReward={workoutTemplate.xpReward}
+                trainingType={trainingConfig?.trainingType || "Strength"}
+              />
+              
+              {/* Manual option */}
+              <div className="text-center pt-4">
+                <button
+                  onClick={() => setShowReadyState(false)}
+                  className="text-white/60 hover:text-white text-sm underline"
+                >
+                  Prefer to build your own workout?
+                </button>
               </div>
-            )}
-          </div>
-          <ExerciseList
-            exercises={exercises}
-            activeExercise={activeExercise}
-            onAddSet={handleAddSet}
-            onCompleteSet={handleCompleteSet}
-            onDeleteExercise={deleteExercise}
-            onRemoveSet={(name, i) => {
-              setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));
-            }}
-            onEditSet={(name, i) => {
-              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: true } : s) }));
-            }}
-            onSaveSet={(name, i) => {
-              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: false } : s) }));
-            }}
-            onWeightChange={(name, i, v) => {
-              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: +v || 0 } : s) }));
-            }}
-            onRepsChange={(name, i, v) => {
-              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: parseInt(v) || 0 } : s) }));
-            }}
-            onRestTimeChange={(name, i, v) => {
-              setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: parseInt(v) || 60 } : s) }));
-            }}
-            onWeightIncrement={(name, i, inc) => {
-              setStoreExercises(prev => {
-                const set = prev[name][i];
-                return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: Math.max(0, (set.weight || 0) + inc) } : s) };
-              });
-            }}
-            onRepsIncrement={(name, i, inc) => {
-              setStoreExercises(prev => {
-                const set = prev[name][i];
-                return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: Math.max(0, (set.reps || 0) + inc) } : s) };
-              });
-            }}
-            onRestTimeIncrement={(name, i, inc) => {
-              setStoreExercises(prev => {
-                const set = prev[name][i];
-                return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: Math.max(0, (set.restTime || 60) + inc) } : s) };
-              });
-            }}
-            onShowRestTimer={handleShowRestTimer}
-            onResetRestTimer={triggerRestTimerReset}
-            onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
-            setExercises={handleSetExercises}
-          />
+            </div>
+          )}
+
+          {/* Standard workout session UI */}
+          {!showReadyState && (
+            <>
+              <div className="mb-6 relative">
+                <WorkoutSessionHeader
+                  elapsedTime={elapsedTime}
+                  exerciseCount={exerciseCount}
+                  completedSets={completedSets}
+                  totalSets={totalSets}
+                  workoutStatus={workoutStatus}
+                  isRecoveryMode={!!workoutId}
+                  saveProgress={0}
+                  onRetrySave={() => workoutId && attemptRecovery()}
+                  onResetWorkout={resetSession}
+                  restTimerActive={restTimerActive}
+                  onRestTimerComplete={handleRestTimerComplete}
+                  onShowRestTimer={handleShowRestTimer}
+                  onRestTimerReset={triggerRestTimerReset}
+                  restTimerResetSignal={restTimerResetSignal}
+                  currentRestTime={currentRestTime}
+                />
+                {showRestTimerModal && (
+                  <div className="absolute right-4 top-full z-50 mt-2 w-72">
+                    <RestTimer
+                      isVisible={showRestTimerModal}
+                      onClose={() => { setShowRestTimerModal(false); setRestTimerActive(false); }}
+                      onComplete={handleRestTimerComplete}
+                      maxTime={currentRestTime || 60}
+                    />
+                  </div>
+                )}
+              </div>
+              <ExerciseList
+                exercises={exercises}
+                activeExercise={activeExercise}
+                onAddSet={handleAddSet}
+                onCompleteSet={handleCompleteSet}
+                onDeleteExercise={deleteExercise}
+                onRemoveSet={(name, i) => {
+                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));
+                }}
+                onEditSet={(name, i) => {
+                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: true } : s) }));
+                }}
+                onSaveSet={(name, i) => {
+                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: false } : s) }));
+                }}
+                onWeightChange={(name, i, v) => {
+                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: +v || 0 } : s) }));
+                }}
+                onRepsChange={(name, i, v) => {
+                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: parseInt(v) || 0 } : s) }));
+                }}
+                onRestTimeChange={(name, i, v) => {
+                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: parseInt(v) || 60 } : s) }));
+                }}
+                onWeightIncrement={(name, i, inc) => {
+                  setStoreExercises(prev => {
+                    const set = prev[name][i];
+                    return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: Math.max(0, (set.weight || 0) + inc) } : s) };
+                  });
+                }}
+                onRepsIncrement={(name, i, inc) => {
+                  setStoreExercises(prev => {
+                    const set = prev[name][i];
+                    return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: Math.max(0, (set.reps || 0) + inc) } : s) };
+                  });
+                }}
+                onRestTimeIncrement={(name, i, inc) => {
+                  setStoreExercises(prev => {
+                    const set = prev[name][i];
+                    return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: Math.max(0, (set.restTime || 60) + inc) } : s) };
+                  });
+                }}
+                onShowRestTimer={handleShowRestTimer}
+                onResetRestTimer={triggerRestTimerReset}
+                onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
+                setExercises={handleSetExercises}
+              />
+            </>
+          )}
         </div>
       </main>
 
-      {/* Bottom drawer for Add & Finish */}
-      <WorkoutSessionFooter
-        onAddExercise={() => setIsAddExerciseSheetOpen(true)}
-        onFinishWorkout={handleFinishWorkout}
-        hasExercises={hasExercises}
-        isSaving={isSaving}
-      />
+      {/* Bottom drawer for Add & Finish - only show when not in ready state */}
+      {!showReadyState && (
+        <WorkoutSessionFooter
+          onAddExercise={() => setIsAddExerciseSheetOpen(true)}
+          onFinishWorkout={handleFinishWorkout}
+          hasExercises={hasExercises}
+          isSaving={isSaving}
+        />
+      )}
 
       <AddExerciseSheet
         open={isAddExerciseSheetOpen}
