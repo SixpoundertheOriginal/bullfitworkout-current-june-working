@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Timer, Dumbbell, Clock, Play } from "lucide-react";
+import { Timer, Dumbbell, Clock, Play, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { MetricCard } from "./metrics/MetricCard";
@@ -95,90 +95,113 @@ export const WorkoutMetrics = ({
 
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
+  // Mock functions for card interactions - you can connect these to actual detail views
+  const handleTimeCardClick = () => {
+    console.log('Time card clicked - could show workout timeline');
+  };
+
+  const handleExerciseCardClick = () => {
+    console.log('Exercise card clicked - could show exercise list');
+  };
+
+  const handleSetsCardClick = () => {
+    console.log('Sets card clicked - could show detailed progress');
+  };
+
   return (
     <div className={cn("relative w-full", className)}>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5">
-        {/* Time Card */}
-        <MetricCard
-          icon={Clock}
-          value={formatTime(time)}
-          label="Time"
-          tooltip={`Tracked since ${formattedStartTime}`}
-          gradientClass="from-sky-600/10 via-black/5 to-sky-900/10 hover:from-sky-600/20 hover:to-sky-900/20"
-          valueClass="text-sky-300 font-semibold bg-gradient-to-br from-sky-200 to-sky-400 bg-clip-text text-transparent text-lg sm:text-xl"
-          labelClass={typography.sections.label}
-          className="p-2 sm:p-3"
-        />
+      {/* Horizontal scroll container for mobile */}
+      <div className="overflow-x-auto pb-2 sm:pb-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5 min-w-[320px]">
+          {/* Time Card with enhanced styling */}
+          <MetricCard
+            icon={Clock}
+            value={formatTime(time)}
+            label="Duration"
+            tooltip={`Workout started at ${formattedStartTime}. Track your session duration and stay consistent with your training schedule.`}
+            onClick={handleTimeCardClick}
+            variant="time"
+            className="touch-target"
+          />
 
-        {/* Exercise Count Card */}
-        <MetricCard
-          icon={Dumbbell}
-          value={exerciseCount}
-          label="Exercises"
-          tooltip="Active exercises in your workout"
-          gradientClass="from-emerald-600/10 via-black/5 to-emerald-900/10 hover:from-emerald-600/20 hover:to-emerald-900/20"
-          valueClass="text-emerald-300 font-semibold bg-gradient-to-br from-emerald-200 to-emerald-400 bg-clip-text text-transparent text-lg sm:text-xl"
-          labelClass={typography.sections.label}
-          className="p-2 sm:p-3"
-        />
+          {/* Exercise Count Card */}
+          <MetricCard
+            icon={Dumbbell}
+            value={exerciseCount}
+            label="Exercises"
+            tooltip="Number of different exercises in your current workout. Variety helps target different muscle groups effectively."
+            onClick={handleExerciseCardClick}
+            variant="exercises"
+            className="touch-target"
+          />
 
-        {/* Sets Card */}
-        <MetricCard
-          icon={Timer}
-          value={`${completedSets}/${totalSets}`}
-          label="Sets"
-          tooltip={`${Math.round(completionPercentage)}% sets completed`}
-          progressValue={completionPercentage}
-          gradientClass="from-violet-600/10 via-black/5 to-violet-900/10 hover:from-violet-600/20 hover:to-violet-900/20"
-          valueClass="text-violet-300 font-semibold bg-gradient-to-br from-violet-200 to-violet-400 bg-clip-text text-transparent text-lg sm:text-xl"
-          labelClass={typography.sections.label}
-          className="p-2 sm:p-3"
-        />
+          {/* Sets Card with progress */}
+          <MetricCard
+            icon={TrendingUp}
+            value={`${completedSets}/${totalSets}`}
+            label="Sets"
+            tooltip={`${Math.round(completionPercentage)}% of your workout completed. Keep pushing to reach your goals!`}
+            progressValue={completionPercentage}
+            onClick={handleSetsCardClick}
+            variant="sets"
+            className="touch-target"
+          />
 
-        {/* Rest Timer Card */}
-        <div className={cn(
-          "relative flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border border-white/10 backdrop-blur-xl transition-all duration-300",
-          "bg-gradient-to-br from-gray-900/80 via-gray-800/40 to-gray-900/90 hover:from-orange-600/20 hover:to-orange-900/20",
-          "hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/10",
-          "min-w-[80px] w-full",
-          "relative overflow-hidden"
-        )}>
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="relative mb-1 sm:mb-2 rounded-full bg-white/8 shadow-inner flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center">
-              <CircularProgress
-                value={showRestTimer ? 100 : 0}
-                size={32}
-                className="text-orange-500/20"
-              >
-                <Timer
-                  size={16}
-                  className={cn(
-                    "text-orange-300 absolute inset-0 m-auto",
-                    showRestTimer && "animate-pulse"
-                  )}
-                />
-              </CircularProgress>
+          {/* Enhanced Rest Timer Card */}
+          <div className={cn(
+            "group relative flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border border-white/10 backdrop-blur-xl transition-all duration-300",
+            "bg-gradient-to-br from-orange-600/20 via-orange-800/10 to-orange-900/20 hover:from-orange-600/30 hover:to-orange-900/30",
+            "hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/20",
+            "min-w-[80px] w-full touch-target",
+            "relative overflow-hidden"
+          )}>
+            {/* Background glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/5 opacity-80" />
+            
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="relative mb-1 sm:mb-2 rounded-full bg-orange-500/20 shadow-inner flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center transition-all duration-300 group-hover:scale-110">
+                <CircularProgress
+                  value={showRestTimer ? 100 : 0}
+                  size={32}
+                  className="text-orange-500/30"
+                >
+                  <Timer
+                    size={16}
+                    className={cn(
+                      "text-orange-300 absolute inset-0 m-auto transition-all duration-300",
+                      showRestTimer && "animate-pulse",
+                      "group-hover:drop-shadow-lg"
+                    )}
+                  />
+                </CircularProgress>
+              </div>
+              
+              <TopRestTimer
+                isActive={showRestTimer}
+                onComplete={onRestTimerComplete}
+                resetSignal={resetCounter}
+                onTimeUpdate={onRestTimeUpdate}
+                onManualStart={onManualRestStart}
+                currentRestTime={currentRestTime}
+                className="scale-90 sm:scale-100"
+              />
+
+              {!showRestTimer && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onManualRestStart}
+                  className="mt-1 sm:mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300 transition-all duration-300 text-xs font-medium scale-90 sm:scale-100 hover:scale-100 sm:hover:scale-105"
+                >
+                  <Play size={12} className="mr-1" /> Start Timer
+                </Button>
+              )}
             </div>
-            <TopRestTimer
-              isActive={showRestTimer}
-              onComplete={onRestTimerComplete}
-              resetSignal={resetCounter}
-              onTimeUpdate={onRestTimeUpdate}
-              onManualStart={onManualRestStart}
-              currentRestTime={currentRestTime}
-              className="scale-90 sm:scale-100"
-            />
 
-            {!showRestTimer && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onManualRestStart}
-                className="mt-1 sm:mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300 transition-all duration-300 text-xs font-medium scale-90 sm:scale-100"
-              >
-                <Play size={12} className="mr-1" /> Start Timer
-              </Button>
-            )}
+            {/* Interactive indicator */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="w-2 h-2 bg-orange-300/50 rounded-full animate-pulse" />
+            </div>
           </div>
         </div>
       </div>
