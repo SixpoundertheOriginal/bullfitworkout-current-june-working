@@ -43,6 +43,7 @@ npm run dev
 - Click the "Edit" button (pencil icon) at the top right of the file view.
 - Make your changes and commit the changes.
 
+
 **Use GitHub Codespaces**
 
 - Navigate to the main page of your repository.
@@ -50,6 +51,18 @@ npm run dev
 - Select the "Codespaces" tab.
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## Environment variables
+
+Create a `.env` file based on the provided `.env.example` and add your Supabase credentials:
+
+```bash
+cp .env.example .env
+# Edit the file and set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+# Optionally set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY when running edge functions locally
+```
+
+This file is ignored by Git to keep secrets out of version control.
 
 ## What technologies are used for this project?
 
