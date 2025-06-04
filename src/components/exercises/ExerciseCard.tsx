@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
@@ -142,49 +143,47 @@ const ExerciseCard = ({
         relative overflow-hidden transition-all duration-300 transform-gpu
         ${isActive 
           ? "ring-2 ring-purple-500/50 shadow-xl shadow-purple-500/10 bg-gradient-to-br from-gray-900 via-gray-900 to-purple-900/20" 
-          : "ring-1 ring-gray-800 hover:ring-gray-700 bg-gray-900/80 backdrop-blur-sm"
+          : "ring-1 ring-muted shadow-sm hover:shadow-md transition-shadow bg-gray-900/80 backdrop-blur-sm"
         }
-        hover:shadow-2xl hover:shadow-black/20
-        border-0
+        border-0 rounded-2xl
       `}>
-        <CardContent className="p-0">
+        <CardContent className="p-4 md:p-5">
           {/* Enhanced Exercise Header */}
           <div className="relative">
-            <ExerciseHeader
-              exerciseName={exercise}
-              lastSession={{
-                weight: previousSessionWeight,
-                reps: previousSession.reps,
-                sets: previousSession.sets
-              }}
-              weightUnit={weightUnit}
-            />
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-white mb-1">{exercise}</h3>
+                <p className="text-sm text-muted-foreground">
+                  Last: {previousSessionWeight} {weightUnit} × {previousSession.reps} ({previousSession.date})
+                </p>
+              </div>
 
-            {/* Enhanced Action Buttons */}
-            <div className="absolute right-2 top-2 flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800/50 transition-all duration-200"
-                onClick={() => setIsExpanded(!isExpanded)}
-                aria-label={isExpanded ? "Collapse exercise" : "Expand exercise"}
-              >
-                <motion.div
-                  animate={{ rotate: isExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
+              {/* Enhanced Action Buttons */}
+              <div className="flex gap-1 ml-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 bg-muted/60 hover:bg-muted rounded-md text-gray-400 hover:text-white hover:scale-105 transition-all duration-200"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  aria-label={isExpanded ? "Collapse exercise" : "Expand exercise"}
                 >
-                  <ChevronDown size={16} />
-                </motion.div>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-900/20 transition-all duration-200"
-                onClick={onDeleteExercise}
-                aria-label="Delete exercise"
-              >
-                <Trash2 size={16} />
-              </Button>
+                  <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={16} />
+                  </motion.div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 bg-muted/60 hover:bg-muted rounded-md text-gray-400 hover:text-red-400 hover:scale-105 transition-all duration-200"
+                  onClick={onDeleteExercise}
+                  aria-label="Delete exercise"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
             </div>
 
             {/* Active Exercise Indicator */}
@@ -207,7 +206,7 @@ const ExerciseCard = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="px-4 pb-4 space-y-4">
+                <div className="space-y-4">
                   {/* Enhanced Progress Bar */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-gray-400">
@@ -235,6 +234,7 @@ const ExerciseCard = ({
                             delay: index * 0.05,
                             layout: { duration: 0.2 }
                           }}
+                          className="animate-fade-in"
                         >
                           <SetRow 
                             setNumber={index + 1}
@@ -306,11 +306,11 @@ const ExerciseCard = ({
                     <Button
                       onClick={onAddSet}
                       className="
-                        w-full py-3 flex items-center justify-center gap-3 mt-4
+                        w-full py-3 px-5 flex items-center justify-center gap-3 mt-4
                         bg-gradient-to-r from-purple-600/80 to-pink-600/80 
                         hover:from-purple-600 hover:to-pink-600 
                         text-white font-medium rounded-xl 
-                        transition-all duration-300 ease-out
+                        transition-all duration-300 ease-out active:scale-95
                         shadow-lg hover:shadow-xl hover:shadow-purple-500/20
                         border border-purple-500/20 hover:border-purple-400/30
                         group backdrop-blur-sm

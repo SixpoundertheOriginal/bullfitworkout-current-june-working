@@ -116,19 +116,19 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   };
 
   return (
-    <div className="space-y-4 pb-6">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6 pb-6">
+      {/* Enhanced Section Header */}
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-xl font-bold text-white">Active Exercises</h2>
-          <p className="text-sm text-gray-400 mt-1">
-            {exerciseList.length} exercise{exerciseList.length !== 1 ? 's' : ''} in progress
+          <p className="text-sm text-muted-foreground mt-1">
+            Track your sets below
           </p>
         </div>
       </div>
 
-      {/* Exercise Cards with Staggered Animation */}
-      <div className="space-y-6">
+      {/* Exercise Cards with Enhanced Spacing */}
+      <div className="space-y-6 mt-4">
         <AnimatePresence mode="popLayout">
           {exerciseList.map((exerciseName, index) => (
             <motion.div

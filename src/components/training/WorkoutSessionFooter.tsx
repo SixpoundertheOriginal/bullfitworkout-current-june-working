@@ -20,17 +20,17 @@ export const WorkoutSessionFooter: React.FC<WorkoutSessionFooterProps> = ({
   return (
     <div className="sticky bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-t border-gray-800/50">
       <div className="px-4 py-4 pb-6 safe-bottom">
-        <div className="flex flex-col sm:flex-row gap-3 max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row gap-3 max-w-4xl mx-auto mb-16 sm:mb-0">
           <Button
             onClick={onAddExercise}
             className="
-              group relative w-full py-4 flex items-center justify-center gap-3
+              group relative w-full py-3 px-5 flex items-center justify-center gap-3
               bg-gradient-to-r from-indigo-600 to-purple-600
               hover:from-indigo-700 hover:to-purple-700
               text-white font-semibold rounded-xl
               shadow-lg hover:shadow-xl 
-              transition-all duration-300 ease-out
-              transform hover:scale-[1.02] active:scale-[0.98]
+              transition-all duration-300 ease-out active:scale-95
+              transform hover:scale-[1.02]
               border border-indigo-500/20 hover:border-indigo-400/30
             "
           >
@@ -62,14 +62,14 @@ export const WorkoutSessionFooter: React.FC<WorkoutSessionFooterProps> = ({
                 onClick={onFinishWorkout}
                 disabled={isSaving}
                 className="
-                  group relative w-full py-4 flex items-center justify-center gap-3
+                  group relative w-full py-3 px-5 flex items-center justify-center gap-3
                   bg-gradient-to-r from-emerald-600 to-green-600
                   hover:from-emerald-700 hover:to-green-700
                   disabled:from-emerald-600/60 disabled:to-green-600/60
                   text-white font-semibold rounded-xl
                   shadow-lg hover:shadow-xl 
-                  transition-all duration-300 ease-out
-                  transform hover:scale-[1.02] active:scale-[0.98]
+                  transition-all duration-300 ease-out active:scale-95
+                  transform hover:scale-[1.02]
                   border border-emerald-500/20 hover:border-emerald-400/30
                   disabled:cursor-not-allowed disabled:transform-none
                 "
