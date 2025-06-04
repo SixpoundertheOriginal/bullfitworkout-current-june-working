@@ -52,17 +52,18 @@ export function useSmartWorkoutRecommendations(): WorkoutRecommendation[] {
   };
 
   const getHistoryBasedRecommendation = (): Partial<WorkoutRecommendation> => {
-    const lastType = stats?.lastWorkoutType || "Strength";
+    // Get the most recent workout type from workouts array
+    const lastWorkoutType = stats?.workouts?.[0]?.training_type || stats?.workoutTypes?.[0]?.type || "Strength";
     const avgDuration = stats?.avgDuration || 30;
     
     // Suggest variety or continuation based on patterns
-    if (lastType === "Strength") {
+    if (lastWorkoutType === "Strength") {
       return {
         type: "Cardio",
         reason: "Balance your strength gains",
         duration: Math.round(avgDuration * 0.8)
       };
-    } else if (lastType === "Cardio") {
+    } else if (lastWorkoutType === "Cardio") {
       return {
         type: "Strength",
         reason: "Build on your cardio base",
@@ -89,7 +90,7 @@ export function useSmartWorkoutRecommendations(): WorkoutRecommendation[] {
       xpReward: (timeRec.duration || 30) * 2,
       socialProof: `${Math.floor(Math.random() * 3000 + 1500)} completed today`,
       trending: timeRec.trending || false,
-      streakContinuation: stats?.currentStreak ? stats.currentStreak > 0 : false
+      streakContinuation: stats?.streakDays ? stats.streakDays > 0 : false
     },
     {
       type: historyRec.type || "Cardio",
