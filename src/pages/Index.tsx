@@ -36,7 +36,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Animated Level Up Overlay */}
       <AnimatePresence>
-        {showLevelUp && <AnimatedLevelUp />}
+        {showLevelUp && <AnimatedLevelUp show={showLevelUp} />}
       </AnimatePresence>
 
       {/* Active Workout Banner */}
@@ -48,7 +48,7 @@ const Index = () => {
             exit={{ y: -100, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
           >
-            <WorkoutBanner onContinue={handleContinueWorkout} />
+            <WorkoutBanner />
           </motion.div>
         )}
       </AnimatePresence>
@@ -67,7 +67,7 @@ const Index = () => {
 
         {/* Workout Action Center */}
         <motion.div
-          ref={sectionRef}
+          ref={sectionRef as React.RefObject<HTMLDivElement>}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -81,9 +81,21 @@ const Index = () => {
             />
           ) : (
             <EnhancedWorkoutActionCenter
-              onStartTraining={handleStartTraining}
-              recommendedType={recommendedWorkoutType}
+              isActive={isActive}
+              fabVisible={stableFabVisibility}
+              isSectionVisible={isSectionVisible}
+              recommendedWorkoutType={recommendedWorkoutType}
               recommendedDuration={recommendedDuration}
+              onStartWorkout={handleStartTraining}
+              onContinueWorkout={handleContinueWorkout}
+              onQuickStart={(duration, type) => {
+                handleStartTraining({ 
+                  trainingType: type, 
+                  tags: [], 
+                  duration, 
+                  rankedExercises: [] 
+                });
+              }}
             />
           )}
         </motion.div>
@@ -145,7 +157,7 @@ const Index = () => {
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
             className="fixed bottom-safe-bottom right-6 z-40"
           >
-            <ExerciseFAB />
+            <ExerciseFAB onClick={() => handleStartTraining({ trainingType: recommendedWorkoutType, tags: [], duration: recommendedDuration, rankedExercises: [] })} />
           </motion.div>
         )}
       </AnimatePresence>
