@@ -25,8 +25,38 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
 }) => {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { state, updateState, resetState } = useWorkoutSetup();
   const navigate = useNavigate();
+
+  // Local state for when context is not available
+  const [localState, setLocalState] = useState({
+    trainingType: recommendedType,
+    tags: [] as string[],
+    duration: recommendedDuration,
+    intensity: "Moderate"
+  });
+
+  // Try to use context, fallback to local state if not available
+  let state, updateState, resetState;
+  try {
+    const contextValue = useWorkoutSetup();
+    state = contextValue.state;
+    updateState = contextValue.updateState;
+    resetState = contextValue.resetState;
+  } catch (error) {
+    // Context not available, use local state
+    state = localState;
+    updateState = (updates: Partial<typeof localState>) => {
+      setLocalState(prev => ({ ...prev, ...updates }));
+    };
+    resetState = () => {
+      setLocalState({
+        trainingType: recommendedType,
+        tags: [],
+        duration: recommendedDuration,
+        intensity: "Moderate"
+      });
+    };
+  }
 
   // Quick start with smart defaults
   const handleQuickStart = async () => {
@@ -50,7 +80,7 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
 
   // Advanced customization flow
   const handleAdvancedStart = () => {
-    // Update context with current selections
+    // Update context with current selections if available
     updateState({
       trainingType: state.trainingType || recommendedType,
       duration: state.duration || recommendedDuration
