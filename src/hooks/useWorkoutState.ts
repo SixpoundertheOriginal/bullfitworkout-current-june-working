@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Storage } from '@/utils/storage';
 import { WorkoutStatus, WorkoutError } from '@/types/workout';
 import { TrainingConfig } from './useTrainingSetupPersistence';
@@ -325,10 +325,9 @@ export function useWorkoutState() {
   };
 
   // Update the last active route for better navigation state
-  const updateLastActiveRoute = (route: string) => {
-    setLastActiveRoute(route);
-    persistWorkoutState();
-  };
+  const updateLastActiveRoute = useCallback((route: string) => {
+    setLastActiveRoute(prev => (prev === route ? prev : route));
+  }, []);
 
   // Status management functions
   const markAsSaving = () => {
