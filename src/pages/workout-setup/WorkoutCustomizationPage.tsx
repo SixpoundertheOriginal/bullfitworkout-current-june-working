@@ -3,12 +3,10 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { CardContainer } from "@/components/workout-setup/CardContainer";
-import { DurationSelector } from "@/components/training/DurationSelector";
-import { WorkoutTagPicker } from "@/components/training/WorkoutTagPicker";
+import { SmartWorkoutCustomization } from "@/components/training/SmartWorkoutCustomization";
 import { useWorkoutSetup } from "@/context/WorkoutSetupContext";
-import { Button } from "@/components/ui/button";
-import { Rocket, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Target, Brain } from "lucide-react";
 
 export const WorkoutCustomizationPage = () => {
   const navigate = useNavigate();
@@ -41,71 +39,46 @@ export const WorkoutCustomizationPage = () => {
 
   return (
     <CardContainer
-      title="Customize"
-      subtitle="Your Perfect Workout"
+      title="Smart"
+      subtitle="Workout Setup"
       progress={{ current: 2, total: 2 }}
     >
-      <div className="space-y-8">
-        {/* Selected type badge */}
+      <div className="space-y-6">
+        {/* AI Context Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-center"
+          className="text-center space-y-3"
         >
-          <Badge variant="outline" className="text-purple-400 border-purple-400/30 px-4 py-2">
-            <Target className="h-4 w-4 mr-2" />
-            {state.trainingType}
-          </Badge>
+          <div className="flex items-center justify-center gap-2">
+            <Badge variant="outline" className="text-purple-400 border-purple-400/30 px-3 py-1">
+              <Brain className="h-4 w-4 mr-2" />
+              AI Optimized
+            </Badge>
+            <Badge variant="outline" className="text-blue-400 border-blue-400/30 px-3 py-1">
+              <Target className="h-4 w-4 mr-2" />
+              {state.trainingType}
+            </Badge>
+          </div>
+          <p className="text-white/70 text-sm">
+            We've analyzed your patterns to create the perfect workout
+          </p>
         </motion.div>
 
-        {/* Duration Selection */}
+        {/* Smart Customization Component */}
         <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/5 rounded-2xl p-6 border border-white/10"
         >
-          <DurationSelector
-            value={state.duration}
-            onChange={handleDurationChange}
-          />
-        </motion.div>
-
-        {/* Focus Areas */}
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/5 rounded-2xl p-6 border border-white/10"
-        >
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <Target className="h-5 w-5 mr-2 text-purple-400" />
-            Focus Areas
-            {state.tags.length > 0 && (
-              <Badge variant="secondary" className="ml-auto">
-                {state.tags.length} selected
-              </Badge>
-            )}
-          </h3>
-          <WorkoutTagPicker
-            selectedTags={state.tags}
-            onToggleTag={handleTagToggle}
+          <SmartWorkoutCustomization
             trainingType={state.trainingType}
+            duration={state.duration}
+            tags={state.tags}
+            onDurationChange={handleDurationChange}
+            onTagToggle={handleTagToggle}
+            onStartWorkout={handleStartTraining}
           />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Button
-            onClick={handleStartTraining}
-            className="w-full h-16 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <Rocket className="mr-3 h-6 w-6" />
-            Start Training
-          </Button>
         </motion.div>
       </div>
     </CardContainer>
