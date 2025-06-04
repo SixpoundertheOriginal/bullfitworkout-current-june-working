@@ -36,6 +36,7 @@ import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
 import { predictiveCache } from "@/services/predictiveCache";
 import { LazyExerciseCard, ExerciseCardSkeleton } from "@/components/exercises/LazyExerciseCard";
 import { useNetworkStatus } from "@/utils/serviceWorker";
+import { VirtualizedExerciseList } from "@/components/exercises/VirtualizedExerciseList";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -173,6 +174,124 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     setCurrentPage(1);
   }, [searchQuery, searchFilters]);
 
+  const [useVirtualization, setUseVirtualization] = useState(false);
+
+  const renderExerciseCard = (exercise: Exercise) => {
+    const variant = standalone ? 'library-manage' : 'workout-add';
+    
+    return (
+      <LazyExerciseCard
+        key={exercise.id}
+        exercise={exercise}
+        variant={variant}
+        onAdd={() => handleSelectExercise(exercise)}
+        onEdit={standalone ? () => handleEdit(exercise) : undefined}
+        onDelete={standalone ? () => handleDelete(exercise) : undefined}
+        onViewDetails={standalone ? () => handleViewDetails(exercise) : undefined}
+        onDuplicate={standalone ? () => handleDuplicate(exercise) : undefined}
+      />
+    );
+  };
+
+  const renderExerciseList = (exercisesList: Exercise[], showPagination = false) => {
+    if (exercisesList.length === 0) {
+      return (
+        <div className="text-center py-6 text-gray-400">
+          {isSearching ? "Searching..." : !isOnline ? "No cached exercises available offline" : "No exercises found"}
+        </div>
+      );
+    }
+
+    // Use virtualization for large lists (> 50 items) to improve performance
+    if (useVirtualization && exercisesList.length > 50 && !showPagination) {
+      return (
+        <VirtualizedExerciseList
+          exercises={exercisesList}
+          variant={standalone ? 'library-manage' : 'workout-add'}
+          onAdd={(exercise) => handleSelectExercise(exercise)}
+          onEdit={standalone ? handleEdit : undefined}
+          onDelete={standalone ? handleDelete : undefined}
+          onViewDetails={standalone ? handleViewDetails : undefined}
+          onDuplicate={standalone ? handleDuplicate : undefined}
+          containerHeight={600}
+          itemHeight={120}
+        />
+      );
+    }
+
+    const listToRender = showPagination ? currentExercises : exercisesList;
+
+    return (
+      <div className="space-y-2">
+        {listToRender.map(renderExerciseCard)}
+        
+        {showPagination && totalPages > 1 && (
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => paginate(currentPage - 1)}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              
+              <PaginationItem>
+                <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
+              </PaginationItem>
+              
+              {currentPage > 3 && (
+                <PaginationItem>
+                  <span className="px-2">...</span>
+                </PaginationItem>
+              )}
+              
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(currentPage - 1)}>
+                    {currentPage - 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              <PaginationItem>
+                <PaginationLink isActive>{currentPage}</PaginationLink>
+              </PaginationItem>
+              
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(currentPage + 1)}>
+                    {currentPage + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {currentPage < totalPages - 2 && (
+                <PaginationItem>
+                  <span className="px-2">...</span>
+                </PaginationItem>
+              )}
+              
+              {currentPage < totalPages - 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => paginate(totalPages)}>
+                    {totalPages}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => paginate(currentPage + 1)}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+      </div>
+    );
+  };
+
   const handleAdd = () => {
     setExerciseToEdit(null);
     setDialogMode("add");
@@ -270,105 +389,6 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     }
   };
 
-  const renderExerciseCard = (exercise: Exercise) => {
-    const variant = standalone ? 'library-manage' : 'workout-add';
-    
-    return (
-      <LazyExerciseCard
-        key={exercise.id}
-        exercise={exercise}
-        variant={variant}
-        onAdd={() => handleSelectExercise(exercise)}
-        onEdit={standalone ? () => handleEdit(exercise) : undefined}
-        onDelete={standalone ? () => handleDelete(exercise) : undefined}
-        onViewDetails={standalone ? () => handleViewDetails(exercise) : undefined}
-        onDuplicate={standalone ? () => handleDuplicate(exercise) : undefined}
-      />
-    );
-  };
-
-  const renderExerciseList = (exercisesList: Exercise[], showPagination = false) => {
-    if (exercisesList.length === 0) {
-      return (
-        <div className="text-center py-6 text-gray-400">
-          {isSearching ? "Searching..." : !isOnline ? "No cached exercises available offline" : "No exercises found"}
-        </div>
-      );
-    }
-
-    const listToRender = showPagination ? currentExercises : exercisesList;
-
-    return (
-      <div className="space-y-2">
-        {listToRender.map(renderExerciseCard)}
-        
-        {showPagination && totalPages > 1 && (
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => paginate(currentPage - 1)}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-              
-              <PaginationItem>
-                <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
-              </PaginationItem>
-              
-              {currentPage > 3 && (
-                <PaginationItem>
-                  <span className="px-2">...</span>
-                </PaginationItem>
-              )}
-              
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationLink onClick={() => paginate(currentPage - 1)}>
-                    {currentPage - 1}
-                  </PaginationLink>
-                </PaginationItem>
-              )}
-              
-              <PaginationItem>
-                <PaginationLink isActive>{currentPage}</PaginationLink>
-              </PaginationItem>
-              
-              {currentPage < totalPages && (
-                <PaginationItem>
-                  <PaginationLink onClick={() => paginate(currentPage + 1)}>
-                    {currentPage + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              )}
-              
-              {currentPage < totalPages - 2 && (
-                <PaginationItem>
-                  <span className="px-2">...</span>
-                </PaginationItem>
-              )}
-              
-              {currentPage < totalPages - 1 && (
-                <PaginationItem>
-                  <PaginationLink onClick={() => paginate(totalPages)}>
-                    {totalPages}
-                  </PaginationLink>
-                </PaginationItem>
-              )}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => paginate(currentPage + 1)}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
       {standalone && <PageHeader title="Exercise Library" />}
@@ -432,7 +452,6 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               size="sm"
               variant="outline"
               className="h-9 px-3 rounded-full bg-purple-900/30 border-purple-500/30 hover:bg-purple-800/50"
-              disabled={!isOnline}
             >
               <Plus size={16} className="mr-1" />
               New Exercise
@@ -451,21 +470,35 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
             showCacheIndicator={true}
           />
           
-          {/* Search status indicator */}
+          {/* Search status indicator with virtualization toggle */}
           {isIndexed && (
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="outline" className="text-xs bg-green-900/30 border-green-500/30 text-green-400">
-                Search Ready ({exercises.length} exercises indexed)
-              </Badge>
-              {fromCache && (
-                <Badge variant="outline" className="text-xs bg-blue-900/30 border-blue-500/30 text-blue-400">
-                  Cached Results
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs bg-green-900/30 border-green-500/30 text-green-400">
+                  Search Ready ({exercises.length} exercises indexed)
                 </Badge>
-              )}
-              {!isOnline && (
-                <Badge variant="outline" className="text-xs bg-amber-900/30 border-amber-500/30 text-amber-400">
-                  Offline Mode
-                </Badge>
+                {fromCache && (
+                  <Badge variant="outline" className="text-xs bg-blue-900/30 border-blue-500/30 text-blue-400">
+                    Cached Results
+                  </Badge>
+                )}
+                {!isOnline && (
+                  <Badge variant="outline" className="text-xs bg-amber-900/30 border-amber-500/30 text-amber-400">
+                    Offline Mode
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Virtualization toggle for large lists */}
+              {exercises.length > 50 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUseVirtualization(!useVirtualization)}
+                  className="text-xs text-gray-400 hover:text-gray-300"
+                >
+                  {useVirtualization ? 'Standard View' : 'Virtual Scroll'}
+                </Button>
               )}
             </div>
           )}
