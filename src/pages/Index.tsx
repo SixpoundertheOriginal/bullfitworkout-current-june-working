@@ -86,7 +86,12 @@ const Index = () => {
               isSectionVisible={isSectionVisible}
               recommendedWorkoutType={recommendedWorkoutType}
               recommendedDuration={recommendedDuration}
-              onStartWorkout={handleStartTraining}
+              onStartWorkout={() => handleStartTraining({ 
+                trainingType: recommendedWorkoutType, 
+                tags: [], 
+                duration: recommendedDuration, 
+                rankedExercises: [] 
+              })}
               onContinueWorkout={handleContinueWorkout}
               onQuickStart={(duration, type) => {
                 handleStartTraining({ 
