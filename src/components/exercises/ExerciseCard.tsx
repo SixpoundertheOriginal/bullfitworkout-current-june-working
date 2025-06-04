@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
@@ -143,9 +142,9 @@ const ExerciseCard = ({
         relative overflow-hidden transition-all duration-300 transform-gpu
         ${isActive 
           ? "ring-2 ring-purple-500/50 shadow-xl shadow-purple-500/10 bg-gradient-to-br from-gray-900 via-gray-900 to-purple-900/20" 
-          : "ring-1 ring-muted shadow-sm hover:shadow-md transition-shadow bg-gray-900/80 backdrop-blur-sm"
+          : "border border-muted/40 bg-background/90 shadow-md hover:shadow-lg transition-shadow"
         }
-        border-0 rounded-2xl
+        rounded-2xl
       `}>
         <CardContent className="p-4 md:p-5">
           {/* Enhanced Exercise Header */}
@@ -163,7 +162,7 @@ const ExerciseCard = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 bg-muted/60 hover:bg-muted rounded-md text-gray-400 hover:text-white hover:scale-105 transition-all duration-200"
+                  className="w-9 h-9 text-base rounded-md bg-muted/60 hover:bg-muted transition text-gray-400 hover:text-white hover:scale-105 transition-all duration-200"
                   onClick={() => setIsExpanded(!isExpanded)}
                   aria-label={isExpanded ? "Collapse exercise" : "Expand exercise"}
                 >
@@ -177,7 +176,7 @@ const ExerciseCard = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 bg-muted/60 hover:bg-muted rounded-md text-gray-400 hover:text-red-400 hover:scale-105 transition-all duration-200"
+                  className="w-9 h-9 text-base rounded-md bg-muted/60 hover:bg-muted transition text-gray-400 hover:text-red-400 hover:scale-105 transition-all duration-200"
                   onClick={onDeleteExercise}
                   aria-label="Delete exercise"
                 >
@@ -306,26 +305,20 @@ const ExerciseCard = ({
                     <Button
                       onClick={onAddSet}
                       className="
-                        w-full py-3 px-5 flex items-center justify-center gap-3 mt-4
-                        bg-gradient-to-r from-purple-600/80 to-pink-600/80 
-                        hover:from-purple-600 hover:to-pink-600 
-                        text-white font-medium rounded-xl 
-                        transition-all duration-300 ease-out active:scale-95
-                        shadow-lg hover:shadow-xl hover:shadow-purple-500/20
-                        border border-purple-500/20 hover:border-purple-400/30
-                        group backdrop-blur-sm
+                        w-full bg-muted/40 text-foreground py-2.5 px-4 rounded-xl
+                        hover:bg-muted/60 transition-all duration-300 ease-out 
+                        active:scale-95 transition-transform
+                        flex items-center justify-center gap-3 mt-4
+                        font-medium group
                       "
                     >
                       <motion.div
                         whileHover={{ rotate: 90 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <PlusCircle size={20} className="text-white" />
+                        <PlusCircle size={20} />
                       </motion.div>
                       <span>Add Set</span>
-                      
-                      {/* Subtle glow effect */}
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </Button>
                   </motion.div>
                 </div>

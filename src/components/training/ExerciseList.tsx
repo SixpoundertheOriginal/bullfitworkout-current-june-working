@@ -116,7 +116,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6 pb-6 mb-20">
       {/* Enhanced Section Header */}
       <div className="flex items-center justify-between mb-2">
         <div>
@@ -128,7 +128,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
       </div>
 
       {/* Exercise Cards with Enhanced Spacing */}
-      <div className="space-y-6 mt-4">
+      <div className="space-y-4 mt-6">
         <AnimatePresence mode="popLayout">
           {exerciseList.map((exerciseName, index) => (
             <motion.div
