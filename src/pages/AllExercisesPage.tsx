@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, ChevronLeft } from "lucide-react";
+import { Plus, Filter, ChevronLeft, Wifi, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from "@/types/exercise";
 import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
@@ -31,12 +29,13 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
-import { CommonExerciseCard } from "@/components/exercises/CommonExerciseCard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { EnhancedSearchBar } from "@/components/exercises/EnhancedSearchBar";
 import { useExerciseSearch } from "@/hooks/useExerciseSearch";
 import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
 import { predictiveCache } from "@/services/predictiveCache";
+import { LazyExerciseCard, ExerciseCardSkeleton } from "@/components/exercises/LazyExerciseCard";
+import { useNetworkStatus } from "@/utils/serviceWorker";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -51,6 +50,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const [showDialog, setShowDialog] = useState(false);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<string>("suggested");
+  const isOnline = useNetworkStatus();
   
   // Enhanced search functionality
   const {
@@ -274,25 +274,16 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     const variant = standalone ? 'library-manage' : 'workout-add';
     
     return (
-      <div key={exercise.id} className="mb-4">
-        {standalone ? (
-          <CommonExerciseCard
-            exercise={exercise}
-            variant={variant}
-            onAdd={() => handleSelectExercise(exercise)}
-            onEdit={() => handleEdit(exercise)}
-            onDelete={() => handleDelete(exercise)}
-            onViewDetails={() => handleViewDetails(exercise)}
-            onDuplicate={() => handleDuplicate(exercise)}
-          />
-        ) : (
-          <CommonExerciseCard
-            exercise={exercise}
-            variant={variant}
-            onAdd={() => handleSelectExercise(exercise)}
-          />
-        )}
-      </div>
+      <LazyExerciseCard
+        key={exercise.id}
+        exercise={exercise}
+        variant={variant}
+        onAdd={() => handleSelectExercise(exercise)}
+        onEdit={standalone ? () => handleEdit(exercise) : undefined}
+        onDelete={standalone ? () => handleDelete(exercise) : undefined}
+        onViewDetails={standalone ? () => handleViewDetails(exercise) : undefined}
+        onDuplicate={standalone ? () => handleDuplicate(exercise) : undefined}
+      />
     );
   };
 
@@ -300,7 +291,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     if (exercisesList.length === 0) {
       return (
         <div className="text-center py-6 text-gray-400">
-          {isSearching ? "Searching..." : "No exercises found"}
+          {isSearching ? "Searching..." : !isOnline ? "No cached exercises available offline" : "No exercises found"}
         </div>
       );
     }
@@ -410,7 +401,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           </AlertDialogContent>
         </AlertDialog>
         
-        {/* Header with back button if needed */}
+        {/* Header with back button and network status */}
         <div className="flex items-center justify-between mb-4">
           {onBack && (
             <Button 
@@ -424,10 +415,15 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
             </Button>
           )}
           
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center items-center gap-2">
             <h1 className="text-xl font-semibold text-center">
               {standalone ? "Exercise Library" : "Browse Exercises"}
             </h1>
+            {isOnline ? (
+              <Wifi size={16} className="text-green-400" />
+            ) : (
+              <WifiOff size={16} className="text-amber-400" />
+            )}
           </div>
           
           {standalone && (
@@ -436,6 +432,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               size="sm"
               variant="outline"
               className="h-9 px-3 rounded-full bg-purple-900/30 border-purple-500/30 hover:bg-purple-800/50"
+              disabled={!isOnline}
             >
               <Plus size={16} className="mr-1" />
               New Exercise
@@ -443,7 +440,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           )}
         </div>
         
-        {/* Enhanced search bar */}
+        {/* Enhanced search bar with offline indicator */}
         <div className="mb-4">
           <EnhancedSearchBar
             query={searchQuery}
@@ -463,6 +460,11 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               {fromCache && (
                 <Badge variant="outline" className="text-xs bg-blue-900/30 border-blue-500/30 text-blue-400">
                   Cached Results
+                </Badge>
+              )}
+              {!isOnline && (
+                <Badge variant="outline" className="text-xs bg-amber-900/30 border-amber-500/30 text-amber-400">
+                  Offline Mode
                 </Badge>
               )}
             </div>
@@ -607,16 +609,11 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           
           {/* Tab content with search integration */}
           <div className="flex-1 overflow-y-auto">
-            {/* Loading state */}
+            {/* Loading state with skeletons */}
             {(isLoading || (!isIndexed && exercises.length > 0)) && (
               <div className="space-y-4">
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <Card key={index} className="bg-gray-900 border-gray-700 p-4">
-                    <div className="flex flex-col gap-2">
-                      <Skeleton className="h-6 w-3/4 bg-gray-800" />
-                      <Skeleton className="h-4 w-5/6 bg-gray-800" />
-                    </div>
-                  </Card>
+                  <ExerciseCardSkeleton key={index} />
                 ))}
               </div>
             )}
@@ -624,7 +621,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
             {/* Error state */}
             {isError && (
               <div className="text-red-500 text-center py-8">
-                Error loading exercises. Please try again later.
+                {isOnline ? "Error loading exercises. Please try again later." : "Unable to load exercises. Check your connection."}
               </div>
             )}
             
@@ -656,7 +653,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       
       {/* Mobile Add Button */}
       {standalone && isMobile && (
-        <ExerciseFAB onClick={handleAdd} />
+        <ExerciseFAB onClick={handleAdd} disabled={!isOnline} />
       )}
     </div>
   );

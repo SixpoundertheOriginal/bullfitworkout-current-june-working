@@ -12,6 +12,7 @@ import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationCon
 import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
 import { PerformanceDashboard } from "@/components/PerformanceDashboard";
+import { serviceWorkerManager } from "@/utils/serviceWorker";
 
 // Create the query client with optimized settings for enterprise performance
 const queryClient = new QueryClient({
@@ -27,6 +28,27 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  React.useEffect(() => {
+    // Register ServiceWorker for offline support and caching
+    serviceWorkerManager.register().then((registered) => {
+      if (registered) {
+        console.log('ServiceWorker registered for offline support');
+      }
+    });
+
+    // Listen for ServiceWorker updates
+    const handleSwUpdate = () => {
+      console.log('ServiceWorker update available');
+      // Could show a toast or banner to user
+    };
+
+    window.addEventListener('sw-update-available', handleSwUpdate);
+    
+    return () => {
+      window.removeEventListener('sw-update-available', handleSwUpdate);
+    };
+  }, []);
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>

@@ -1,7 +1,6 @@
-
 import MiniSearch from 'minisearch';
 import type { Exercise } from '@/types/exercise';
-import { requestDeduplication } from './requestDeduplication';
+import { networkOptimization } from './networkOptimization';
 
 export interface SearchFilters {
   muscleGroup?: string;
@@ -219,7 +218,7 @@ class ExerciseSearchEngine {
   ): Promise<SearchResult> {
     const cacheKey = `search:${query}:${JSON.stringify(filters)}:${JSON.stringify(options)}`;
     
-    return requestDeduplication.deduplicate(cacheKey, async () => {
+    return networkOptimization.deduplicate(cacheKey, async () => {
       if (!this.isIndexed) {
         return { results: this.exercises, fromCache: false, fromWorker: false };
       }
