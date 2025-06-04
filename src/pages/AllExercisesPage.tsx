@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
@@ -627,47 +628,9 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               </div>
             )}
             
-            {/* Search results or regular content */}
+            {/* Tab Content */}
             {!isLoading && !isError && isIndexed && (
-              <Tabs className="flex-1 overflow-hidden flex flex-col" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-3 mb-4">
-                  <TabsTrigger value="suggested">
-                    Suggested {searchQuery && `(${suggestedExercises.length})`}
-                  </TabsTrigger>
-                  <TabsTrigger value="recent">
-                    Recent {searchQuery && `(${filteredRecent.length})`}
-                  </TabsTrigger>
-                  <TabsTrigger value="browse">
-                    Browse All {searchQuery && `(${filteredAll.length})`}
-                  </TabsTrigger>
-                </TabsList>
-                
-                {/* Filters button - only show in browse tab */}
-                {activeTab === 'browse' && (
-                  <div className="mb-4">
-                    <Button 
-                      variant="outline"
-                      size="sm" 
-                      onClick={() => setShowFilters(!showFilters)}
-                      className={`flex items-center w-full justify-center ${showFilters ? 'bg-purple-900/50 border-purple-500' : ''}`}
-                    >
-                      <Filter className="w-4 h-4 mr-2" />
-                      Filters
-                      {(selectedMuscleGroup !== "all" || selectedEquipment !== "all" || 
-                        selectedDifficulty !== "all" || selectedMovement !== "all") && (
-                        <Badge variant="secondary" className="ml-2 bg-purple-600 text-xs">
-                          {[
-                            selectedMuscleGroup !== "all" ? 1 : 0,
-                            selectedEquipment !== "all" ? 1 : 0,
-                            selectedDifficulty !== "all" ? 1 : 0,
-                            selectedMovement !== "all" ? 1 : 0
-                          ].reduce((a, b) => a + b, 0)}
-                        </Badge>
-                      )}
-                    </Button>
-                  </div>
-                )}
-                
+              <>
                 <TabsContent value="suggested" className="mt-0 h-full">
                   <div className="overflow-y-auto">
                     {renderExerciseList(suggestedExercises)}
@@ -685,10 +648,11 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                     {renderExerciseList(filteredAll, true)}
                   </div>
                 </TabsContent>
-              </Tabs>
+              </>
             )}
           </div>
-        </div>
+        </Tabs>
+      </div>
       
       {/* Mobile Add Button */}
       {standalone && isMobile && (
