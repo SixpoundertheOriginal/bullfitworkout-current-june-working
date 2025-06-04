@@ -1,3 +1,4 @@
+
 import MiniSearch from 'minisearch';
 import type { Exercise } from '@/types/exercise';
 import { requestDeduplication } from './requestDeduplication';
@@ -12,6 +13,7 @@ export interface SearchFilters {
 export interface SearchResult {
   results: Exercise[];
   fromCache?: boolean;
+  fromWorker?: boolean;
 }
 
 interface SearchOptions {
@@ -21,32 +23,116 @@ interface SearchOptions {
   boost?: Record<string, number>;
 }
 
+interface PendingSearch {
+  resolve: (results: Exercise[]) => void;
+  reject: (error: Error) => void;
+  timeout: number;
+}
+
 class ExerciseSearchEngine {
   private miniSearch: MiniSearch | null = null;
   private exercises: Exercise[] = [];
   private isIndexed = false;
   private worker: Worker | null = null;
-  private pendingSearchResolvers: Map<string, {
-    resolve: (results: Exercise[]) => void;
-    reject: (error: Error) => void;
-  }> = new Map();
+  private workerReady = false;
+  private pendingSearches: Map<string, PendingSearch> = new Map();
+  private requestIdCounter = 0;
+  private initializationAttempts = 0;
+  private maxInitializationAttempts = 3;
 
   constructor() {
     this.initializeWorker();
   }
 
   private initializeWorker() {
+    if (this.initializationAttempts >= this.maxInitializationAttempts) {
+      console.warn('Max worker initialization attempts reached, using main thread only');
+      return;
+    }
+
+    this.initializationAttempts++;
+    
     try {
       this.worker = new Worker('/search-worker.js');
       this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
-      this.worker.addEventListener('error', (error) => {
-        console.error('Search worker error:', error);
-        this.fallbackToMainThread();
-      });
+      this.worker.addEventListener('error', this.handleWorkerError.bind(this));
+      
+      // Ping the worker to check if it's ready
+      this.pingWorker();
     } catch (error) {
-      console.warn('Failed to initialize search worker, falling back to main thread:', error);
-      this.worker = null;
+      console.warn(`Worker initialization attempt ${this.initializationAttempts} failed:`, error);
+      this.fallbackToMainThread();
     }
+  }
+
+  private pingWorker() {
+    if (!this.worker) return;
+    
+    const timeout = setTimeout(() => {
+      console.warn('Worker ping timeout, falling back to main thread');
+      this.fallbackToMainThread();
+    }, 2000);
+
+    const pingHandler = (event: MessageEvent) => {
+      if (event.data.type === 'pong') {
+        clearTimeout(timeout);
+        this.workerReady = true;
+        this.worker?.removeEventListener('message', pingHandler);
+        console.log('Worker is ready');
+      }
+    };
+
+    this.worker.addEventListener('message', pingHandler);
+    this.worker.postMessage({ type: 'ping' });
+  }
+
+  private handleWorkerMessage(event: MessageEvent) {
+    const { type, results, error, requestId, fromWorker } = event.data;
+    
+    switch (type) {
+      case 'searchComplete':
+        if (requestId) {
+          const pending = this.pendingSearches.get(requestId);
+          if (pending) {
+            clearTimeout(pending.timeout);
+            this.pendingSearches.delete(requestId);
+            pending.resolve(results || []);
+          }
+        } else {
+          // Handle legacy responses without requestId
+          this.pendingSearches.forEach(({ resolve }) => {
+            resolve(results || []);
+          });
+          this.pendingSearches.clear();
+        }
+        break;
+        
+      case 'indexComplete':
+        this.isIndexed = true;
+        console.log('Worker indexing complete');
+        break;
+        
+      case 'error':
+        console.error('Search worker error:', error);
+        if (requestId) {
+          const pending = this.pendingSearches.get(requestId);
+          if (pending) {
+            clearTimeout(pending.timeout);
+            this.pendingSearches.delete(requestId);
+            // Fallback to main thread for this search
+            this.searchInMainThread(pending.resolve, pending.reject);
+          }
+        } else {
+          // Fallback to main thread
+          this.fallbackToMainThread();
+        }
+        break;
+    }
+  }
+
+  private handleWorkerError(error: ErrorEvent) {
+    console.error('Worker error:', error);
+    this.fallbackToMainThread();
   }
 
   private fallbackToMainThread() {
@@ -54,38 +140,28 @@ class ExerciseSearchEngine {
       this.worker.terminate();
       this.worker = null;
     }
+    this.workerReady = false;
     
-    // Reject any pending search promises
-    this.pendingSearchResolvers.forEach(({ reject }) => {
-      reject(new Error('Worker failed, falling back to main thread'));
+    // Reject all pending searches and retry with main thread
+    this.pendingSearches.forEach(({ resolve, reject }) => {
+      this.searchInMainThread(resolve, reject);
     });
-    this.pendingSearchResolvers.clear();
+    this.pendingSearches.clear();
   }
 
-  private handleWorkerMessage(event: MessageEvent) {
-    const { type, results, error } = event.data;
-    
-    if (type === 'searchComplete') {
-      // Resolve all pending searches with the results
-      this.pendingSearchResolvers.forEach(({ resolve }) => {
-        resolve(results || []);
-      });
-      this.pendingSearchResolvers.clear();
-    } else if (type === 'indexComplete') {
-      this.isIndexed = true;
-    } else if (type === 'error') {
-      console.error('Search worker error:', error);
-      this.pendingSearchResolvers.forEach(({ reject }) => {
-        reject(new Error(error));
-      });
-      this.pendingSearchResolvers.clear();
+  private searchInMainThread(resolve: (results: Exercise[]) => void, reject: (error: Error) => void) {
+    try {
+      // This will be implemented by the calling search method
+      resolve([]);
+    } catch (error) {
+      reject(error as Error);
     }
   }
 
   async indexExercises(exercises: Exercise[]): Promise<void> {
     this.exercises = exercises;
     
-    if (this.worker) {
+    if (this.worker && this.workerReady) {
       // Use worker for indexing
       this.worker.postMessage({
         type: 'index',
@@ -143,41 +219,61 @@ class ExerciseSearchEngine {
     
     return requestDeduplication.deduplicate(cacheKey, async () => {
       if (!this.isIndexed) {
-        return { results: this.exercises, fromCache: false };
+        return { results: this.exercises, fromCache: false, fromWorker: false };
       }
 
       let results: Exercise[];
-      if (this.worker) {
-        // Use worker for search
-        results = await new Promise((resolve, reject) => {
-          const searchId = `search-${Date.now()}`;
-          this.pendingSearchResolvers.set(searchId, { resolve, reject });
-          
-          this.worker!.postMessage({
-            type: 'search',
-            query,
-            filters,
-            options
-          });
+      let fromWorker = false;
 
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            if (this.pendingSearchResolvers.has(searchId)) {
-              this.pendingSearchResolvers.delete(searchId);
-              reject(new Error('Search timeout'));
-            }
-          }, 5000);
-        });
+      if (this.worker && this.workerReady) {
+        // Use worker for search
+        try {
+          results = await this.searchWithWorker(query, filters, options);
+          fromWorker = true;
+        } catch (error) {
+          console.warn('Worker search failed, falling back to main thread:', error);
+          results = this.searchInMainThreadSync(query, filters, options);
+        }
       } else {
-        // Fallback to main thread search
-        results = this.searchInMainThread(query, filters, options);
+        // Use main thread search
+        results = this.searchInMainThreadSync(query, filters, options);
       }
 
-      return { results, fromCache: false };
+      return { results, fromCache: false, fromWorker };
     });
   }
 
-  private searchInMainThread(
+  private searchWithWorker(
+    query: string, 
+    filters: SearchFilters, 
+    options: SearchOptions
+  ): Promise<Exercise[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.worker) {
+        reject(new Error('Worker not available'));
+        return;
+      }
+
+      const requestId = `search-${++this.requestIdCounter}`;
+      
+      const timeout = setTimeout(() => {
+        this.pendingSearches.delete(requestId);
+        reject(new Error('Search timeout'));
+      }, 5000);
+
+      this.pendingSearches.set(requestId, { resolve, reject, timeout });
+      
+      this.worker.postMessage({
+        type: 'search',
+        query,
+        filters,
+        options,
+        requestId
+      });
+    });
+  }
+
+  private searchInMainThreadSync(
     query: string, 
     filters: SearchFilters = {}, 
     options: SearchOptions = {}
@@ -196,19 +292,18 @@ class ExerciseSearchEngine {
         boost: options.boost
       });
     } else {
-      // If no query, return all indexed documents
       searchResults = this.exercises.map(exercise => ({ id: exercise.id }));
     }
 
-    // Apply filters
     let filteredResults = searchResults.map(result => {
       return this.exercises.find(exercise => exercise.id === result.id);
     }).filter(Boolean) as Exercise[];
 
-    // Apply additional filters
     if (Object.keys(filters).length > 0) {
       filteredResults = filteredResults.filter(exercise => {
         return Object.entries(filters).every(([key, value]) => {
+          if (!value || value === 'all') return true;
+          
           switch (key) {
             case 'muscleGroup':
               return exercise.primary_muscle_groups?.includes(value) || 
@@ -237,14 +332,23 @@ class ExerciseSearchEngine {
     return this.exercises.length;
   }
 
+  getWorkerStatus(): { ready: boolean; available: boolean } {
+    return {
+      ready: this.workerReady,
+      available: this.worker !== null
+    };
+  }
+
   destroy(): void {
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;
     }
+    this.workerReady = false;
     this.miniSearch = null;
     this.exercises = [];
     this.isIndexed = false;
+    this.pendingSearches.clear();
   }
 }
 

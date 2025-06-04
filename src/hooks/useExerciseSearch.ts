@@ -15,7 +15,7 @@ export interface UseExerciseSearchReturn {
   results: Exercise[];
   isSearching: boolean;
   search: (query: string, filters?: SearchFilters) => Promise<void>;
-  searchDebounced: (query: string, filters?: SearchFilters) => Promise<void>;
+  searchDebounced: (query: string, filters?: SearchFilters) => void;
   query: string;
   filters: SearchFilters;
   setQuery: (query: string) => void;
@@ -23,6 +23,8 @@ export interface UseExerciseSearchReturn {
   clearSearch: () => void;
   isIndexed: boolean;
   fromCache: boolean;
+  fromWorker: boolean;
+  workerStatus: { ready: boolean; available: boolean };
 }
 
 export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseExerciseSearchReturn {
@@ -40,9 +42,11 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
   const [filters, setFilters] = useState<SearchFilters>(initialFilters);
   const [isIndexed, setIsIndexed] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [fromWorker, setFromWorker] = useState(false);
   
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSearchRef = useRef<string>('');
+  const searchControllerRef = useRef<AbortController>();
 
   // Index exercises when they're loaded
   useEffect(() => {
@@ -55,6 +59,14 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
   const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFilters = {}) => {
     const searchKey = `${searchQuery}:${JSON.stringify(searchFilters)}`;
     
+    // Cancel previous search if still running
+    if (searchControllerRef.current) {
+      searchControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this search
+    searchControllerRef.current = new AbortController();
+    
     // Avoid duplicate searches
     if (lastSearchRef.current === searchKey && !isSearching) {
       return;
@@ -64,19 +76,30 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
     setIsSearching(true);
 
     try {
+      const startTime = performance.now();
       const result: SearchResult = await exerciseSearchEngine.search(searchQuery, searchFilters);
+      const duration = performance.now() - startTime;
       
-      // Only update if this is still the latest search
-      if (lastSearchRef.current === searchKey) {
+      // Only update if this search wasn't cancelled
+      if (!searchControllerRef.current?.signal.aborted && lastSearchRef.current === searchKey) {
         setResults(result.results);
         setFromCache(result.fromCache || false);
+        setFromWorker(result.fromWorker || false);
+        
+        // Log performance for debugging
+        console.log(`Search completed in ${duration.toFixed(2)}ms, fromWorker: ${result.fromWorker}, results: ${result.results.length}`);
       }
     } catch (error) {
-      console.error('Search error:', error);
-      setResults([]);
-      setFromCache(false);
+      if (!searchControllerRef.current?.signal.aborted) {
+        console.error('Search error:', error);
+        setResults([]);
+        setFromCache(false);
+        setFromWorker(false);
+      }
     } finally {
-      setIsSearching(false);
+      if (!searchControllerRef.current?.signal.aborted) {
+        setIsSearching(false);
+      }
     }
   }, [isSearching]);
 
@@ -85,31 +108,35 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
   }, [performSearch, filters]);
 
   const searchDebounced = useCallback((searchQuery: string, searchFilters?: SearchFilters) => {
-    return new Promise<void>((resolve) => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
-      searchTimeoutRef.current = setTimeout(async () => {
-        await performSearch(searchQuery, searchFilters || filters);
-        resolve();
-      }, debounceMs);
-    });
+    // Set new debounced search
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(searchQuery, searchFilters || filters);
+    }, debounceMs);
   }, [performSearch, filters, debounceMs]);
 
   const clearSearch = useCallback(() => {
+    // Cancel any pending searches
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    if (searchControllerRef.current) {
+      searchControllerRef.current.abort();
+    }
+    
     setQuery('');
     setFilters({});
     setResults([]);
     setFromCache(false);
+    setFromWorker(false);
     lastSearchRef.current = '';
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
   }, []);
 
-  // Auto-search when query or filters change
+  // Auto-search when query or filters change (debounced)
   useEffect(() => {
     if (autoSearch && isIndexed) {
       searchDebounced(query, filters);
@@ -121,6 +148,9 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
+      }
+      if (searchControllerRef.current) {
+        searchControllerRef.current.abort();
       }
     };
   }, []);
@@ -136,6 +166,8 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
     setFilters,
     clearSearch,
     isIndexed,
-    fromCache
+    fromCache,
+    fromWorker,
+    workerStatus: exerciseSearchEngine.getWorkerStatus()
   };
 }
