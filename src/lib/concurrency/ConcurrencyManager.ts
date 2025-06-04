@@ -1,15 +1,4 @@
-
-export interface ConcurrencyTask {
-  id: string;
-  run: () => Promise<any>;
-  priority: "high" | "normal" | "low";
-  retryOnFail?: boolean;
-  tags?: string[];
-  signal?: AbortSignal;
-  createdAt: number;
-  attempts: number;
-  maxRetries?: number;
-}
+import { ConcurrencyTask, ConcurrencyStats, ConcurrencyManagerInterface } from '@/types/concurrency';
 
 interface TaskResult {
   success: boolean;
@@ -18,26 +7,13 @@ interface TaskResult {
   duration: number;
 }
 
-interface ConcurrencyStats {
-  running: number;
-  queued: number;
-  completed: number;
-  failed: number;
-  cancelled: number;
-  byPriority: {
-    high: number;
-    normal: number;
-    low: number;
-  };
-}
-
 export interface ConcurrencyManagerConfig {
   maxConcurrentTasks?: number;
   enableMemoryPressureHandling?: boolean;
   enableVisibilityHandling?: boolean;
 }
 
-export class ConcurrencyManager {
+export class ConcurrencyManager implements ConcurrencyManagerInterface {
   private readonly maxConcurrentTasks: number;
   private readonly taskQueues = {
     high: [] as ConcurrencyTask[],
@@ -47,7 +23,7 @@ export class ConcurrencyManager {
   private runningTasks = new Map<string, { task: ConcurrencyTask; startTime: number; promise: Promise<any> }>();
   private completedTasks = new Map<string, TaskResult>();
   private cancelledTasks = new Set<string>();
-  private stats: ConcurrencyStats = {
+  private stats: Omit<ConcurrencyStats, 'runningTaskIds' | 'queuedTaskIds' | 'memoryPressure'> = {
     running: 0,
     queued: 0,
     completed: 0,
@@ -210,11 +186,7 @@ export class ConcurrencyManager {
     this.processQueue();
   }
 
-  getStats(): ConcurrencyStats & { 
-    runningTaskIds: string[];
-    queuedTaskIds: string[];
-    memoryPressure: string;
-  } {
+  getStats(): ConcurrencyStats {
     return {
       ...this.stats,
       runningTaskIds: Array.from(this.runningTasks.keys()),

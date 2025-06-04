@@ -1,15 +1,7 @@
 
 import { Exercise } from '@/types/exercise';
-import { SearchFilters, SearchResult } from '@/services/exerciseSearchEngine';
-import { concurrencyManager } from '../concurrency/ConcurrencyManager';
-import { predictiveCache } from '@/services/predictiveCache';
-
-interface SearchOptions {
-  priority?: 'high' | 'normal' | 'low';
-  enableCache?: boolean;
-  enablePredictive?: boolean;
-  signal?: AbortSignal;
-}
+import { SearchFilters, SearchResult, SearchOptions, SearchEngineInterface } from '@/types/search';
+import { ConcurrencyManagerInterface } from '@/types/concurrency';
 
 interface SearchEngineConfig {
   cacheTimeout?: number;
@@ -17,19 +9,30 @@ interface SearchEngineConfig {
   maxConcurrentSearches?: number;
 }
 
-export interface SearchEngine<T> {
-  search: (query: string, filters?: SearchFilters) => Promise<SearchResult>;
-  indexItems?: (items: T[]) => Promise<void>;
-  clearCache?: () => void;
+interface PredictiveCacheInterface {
+  recordUserSearch: (query: string, filters: SearchFilters) => void;
+  getCachedResults: (query: string, filters: SearchFilters) => Promise<any[] | null>;
+  setCachedResults: (query: string, filters: SearchFilters, results: any[]) => void;
+  preloadPopularSearches: () => Promise<void>;
+  clearCache: () => void;
 }
 
 export class ConcurrentSearchEngine<TItem = Exercise> {
-  private searchCache = new Map<string, { result: SearchResult; timestamp: number }>();
+  private searchCache = new Map<string, { result: SearchResult<TItem>; timestamp: number }>();
   private readonly config: Required<SearchEngineConfig>;
-  private searchEngine: SearchEngine<TItem>;
+  private searchEngine: SearchEngineInterface<TItem>;
+  private concurrencyManager: ConcurrencyManagerInterface;
+  private predictiveCache: PredictiveCacheInterface;
 
-  constructor(searchEngine: SearchEngine<TItem>, config: SearchEngineConfig = {}) {
+  constructor(
+    searchEngine: SearchEngineInterface<TItem>,
+    concurrencyManager: ConcurrencyManagerInterface,
+    predictiveCache: PredictiveCacheInterface,
+    config: SearchEngineConfig = {}
+  ) {
     this.searchEngine = searchEngine;
+    this.concurrencyManager = concurrencyManager;
+    this.predictiveCache = predictiveCache;
     this.config = {
       cacheTimeout: config.cacheTimeout ?? 5 * 60 * 1000, // 5 minutes
       enableWorkerFallback: config.enableWorkerFallback ?? true,
@@ -41,7 +44,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     query: string, 
     filters: SearchFilters = {}, 
     options: SearchOptions = {}
-  ): Promise<SearchResult> {
+  ): Promise<SearchResult<TItem>> {
     const {
       priority = 'normal',
       enableCache = true,
@@ -63,7 +66,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     const taskId = `search-${searchKey}-${Date.now()}`;
     
     return new Promise((resolve, reject) => {
-      concurrencyManager.enqueue({
+      this.concurrencyManager.enqueue({
         id: taskId,
         priority,
         tags: ['search', 'user-interaction'],
@@ -81,15 +84,15 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
             
             // Cache the result
             if (enableCache) {
-              this.setCachedResult(searchKey, result);
+              this.setCachedResult(searchKey, result as SearchResult<TItem>);
             }
 
             // Record for predictive caching
             if (enablePredictive) {
-              predictiveCache.recordUserSearch(query, filters);
+              this.predictiveCache.recordUserSearch(query, filters);
             }
 
-            resolve(result);
+            resolve(result as SearchResult<TItem>);
           } catch (error) {
             console.error('Search failed:', error);
             reject(error);
@@ -99,17 +102,23 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     });
   }
 
+  async indexItems(items: TItem[]): Promise<void> {
+    if (this.searchEngine.indexItems) {
+      await this.searchEngine.indexItems(items);
+    }
+  }
+
   async preloadPopularSearches(): Promise<void> {
     const taskId = 'preload-popular-searches';
     
-    concurrencyManager.enqueue({
+    this.concurrencyManager.enqueue({
       id: taskId,
       priority: 'low',
       tags: ['preload', 'background-sync'],
       retryOnFail: true,
       maxRetries: 3,
       run: async () => {
-        await predictiveCache.preloadPopularSearches();
+        await this.predictiveCache.preloadPopularSearches();
       }
     });
   }
@@ -117,7 +126,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
   async backgroundSync(): Promise<void> {
     const taskId = 'background-search-sync';
     
-    concurrencyManager.enqueue({
+    this.concurrencyManager.enqueue({
       id: taskId,
       priority: 'low',
       tags: ['background-sync', 'indexing'],
@@ -131,16 +140,27 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
 
   cancelSearch(searchKey: string): void {
     const taskId = `search-${searchKey}`;
-    concurrencyManager.cancel(taskId);
+    this.concurrencyManager.cancel(taskId);
   }
 
   cancelAllSearches(): void {
-    concurrencyManager.cancelByTag('search');
+    this.concurrencyManager.cancelByTag('search');
   }
 
   clearCache(): void {
     this.searchCache.clear();
-    predictiveCache.clearCache();
+    this.predictiveCache.clearCache();
+    if (this.searchEngine.clearCache) {
+      this.searchEngine.clearCache();
+    }
+  }
+
+  getIndexedStatus(): boolean {
+    return this.searchEngine.getIndexedStatus?.() ?? false;
+  }
+
+  getWorkerStatus(): { ready: boolean; available: boolean } {
+    return this.searchEngine.getWorkerStatus?.() ?? { ready: false, available: false };
   }
 
   private generateSearchKey(query: string, filters: SearchFilters): string {
@@ -151,7 +171,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     return `${query.toLowerCase()}#${filterStr}`;
   }
 
-  private async getCachedResult(searchKey: string): Promise<SearchResult | null> {
+  private async getCachedResult(searchKey: string): Promise<SearchResult<TItem> | null> {
     // Check memory cache first
     const cached = this.searchCache.get(searchKey);
     if (cached && Date.now() - cached.timestamp < this.config.cacheTimeout) {
@@ -161,11 +181,11 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     // Check predictive cache
     const [query, filterStr] = searchKey.split('#');
     const filters = this.parseFilters(filterStr);
-    const predictiveCached = await predictiveCache.getCachedResults(query, filters);
+    const predictiveCached = await this.predictiveCache.getCachedResults(query, filters);
     
     if (predictiveCached) {
       return {
-        results: predictiveCached,
+        results: predictiveCached as TItem[],
         fromCache: true,
         fromWorker: false
       };
@@ -174,7 +194,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     return null;
   }
 
-  private setCachedResult(searchKey: string, result: SearchResult): void {
+  private setCachedResult(searchKey: string, result: SearchResult<TItem>): void {
     this.searchCache.set(searchKey, {
       result,
       timestamp: Date.now()
@@ -183,7 +203,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     // Also cache in predictive cache
     const [query, filterStr] = searchKey.split('#');
     const filters = this.parseFilters(filterStr);
-    predictiveCache.setCachedResults(query, filters, result.results);
+    this.predictiveCache.setCachedResults(query, filters, result.results);
   }
 
   private parseFilters(filterStr: string): SearchFilters {
@@ -193,7 +213,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
     filterStr.split('|').forEach(pair => {
       const [key, value] = pair.split(':');
       if (key && value) {
-        (filters as any)[key] = value;
+        (filters as Record<string, string>)[key] = value;
       }
     });
     
@@ -203,11 +223,7 @@ export class ConcurrentSearchEngine<TItem = Exercise> {
   getStats() {
     return {
       cacheSize: this.searchCache.size,
-      concurrency: concurrencyManager.getStats()
+      concurrency: this.concurrencyManager.getStats()
     };
   }
 }
-
-// Create and export default instance for exercises
-import { exerciseSearchEngine } from '@/services/exerciseSearchEngine';
-export const concurrentExerciseSearchEngine = new ConcurrentSearchEngine<Exercise>(exerciseSearchEngine);

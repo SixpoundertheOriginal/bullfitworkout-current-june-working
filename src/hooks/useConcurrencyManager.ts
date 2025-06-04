@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
-import { concurrencyManager, ConcurrencyTask } from '@/lib/concurrency/ConcurrencyManager';
+import { concurrencyManager } from '@/lib/concurrency/ConcurrencyManager';
+import { ConcurrencyTask } from '@/types/concurrency';
 import { useCleanup } from './useCleanup';
 
 interface UseConcurrencyManagerOptions {

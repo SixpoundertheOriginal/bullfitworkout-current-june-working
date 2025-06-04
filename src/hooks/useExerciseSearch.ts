@@ -1,12 +1,17 @@
 
 import { Exercise } from '@/types/exercise';
-import { SearchFilters } from '@/services/exerciseSearchEngine';
-import { concurrentExerciseSearchEngine } from '@/lib/search/SearchEngine';
+import { SearchFilters } from '@/types/search';
+import { concurrentExerciseSearchEngine } from '@/lib/global/index';
+import { concurrencyManager } from '@/lib/concurrency/ConcurrencyManager';
 import { createSearchHook } from '@/lib/search/createSearchHook';
 import { useExercises } from '@/hooks/useExercises';
 
 // Create the exercise search hook using the factory
-const useExerciseSearchBase = createSearchHook<Exercise>(concurrentExerciseSearchEngine, 'exercises');
+const useExerciseSearchBase = createSearchHook<Exercise>({
+  searchEngine: concurrentExerciseSearchEngine,
+  concurrencyManager,
+  hookId: 'exercises'
+});
 
 export interface UseExerciseSearchOptions {
   initialQuery?: string;

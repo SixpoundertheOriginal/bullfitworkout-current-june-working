@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';

@@ -1,23 +1,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { concurrencyManager } from '../concurrency/ConcurrencyManager';
+import { SearchFilters, SearchResult, SearchOptions, SearchEngineInterface } from '@/types/search';
+import { ConcurrencyManagerInterface } from '@/types/concurrency';
 import { useCleanup } from '@/hooks/useCleanup';
-
-export interface SearchFilters {
-  [key: string]: any;
-}
-
-export interface SearchResult<T> {
-  results: T[];
-  fromCache?: boolean;
-  fromWorker?: boolean;
-}
-
-export interface SearchEngine<T> {
-  search: (query: string, filters?: SearchFilters) => Promise<SearchResult<T>>;
-  indexItems?: (items: T[]) => Promise<void>;
-  clearCache?: () => void;
-}
 
 export interface SearchHookOptions {
   initialQuery?: string;
@@ -43,10 +28,13 @@ export interface SearchHookReturn<T> {
   workerStatus: { ready: boolean; available: boolean };
 }
 
-export function createSearchHook<T>(
-  searchEngine: SearchEngine<T>,
-  hookId: string
-) {
+export interface SearchHookConfig<T> {
+  searchEngine: SearchEngineInterface<T>;
+  concurrencyManager: ConcurrencyManagerInterface;
+  hookId: string;
+}
+
+export function createSearchHook<T>(config: SearchHookConfig<T>) {
   return function useSearch(
     items: T[] = [],
     options: SearchHookOptions = {}
@@ -58,6 +46,8 @@ export function createSearchHook<T>(
       autoSearch = true,
       enableIndexing = true
     } = options;
+
+    const { searchEngine, concurrencyManager, hookId } = config;
 
     const [results, setResults] = useState<T[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -91,7 +81,7 @@ export function createSearchHook<T>(
       } else if (!enableIndexing) {
         setIsIndexed(true);
       }
-    }, [items, enableIndexing, hookId]);
+    }, [items, enableIndexing, hookId, searchEngine, concurrencyManager]);
 
     const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFilters = {}) => {
       const searchKey = `${searchQuery}:${JSON.stringify(searchFilters)}`;
@@ -184,7 +174,7 @@ export function createSearchHook<T>(
       setFromCache(false);
       setFromWorker(false);
       lastSearchRef.current = '';
-    }, [hookId, searchEngine]);
+    }, [hookId, searchEngine, concurrencyManager]);
 
     // Auto-search when query or filters change (debounced)
     useEffect(() => {
