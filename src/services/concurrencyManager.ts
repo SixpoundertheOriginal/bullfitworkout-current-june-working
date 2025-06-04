@@ -1,4 +1,3 @@
-
 export interface ConcurrencyTask {
   id: string;
   run: () => Promise<any>;
@@ -8,7 +7,7 @@ export interface ConcurrencyTask {
   signal?: AbortSignal;
   createdAt: number;
   attempts: number;
-  maxRetries: number;
+  maxRetries?: number; // Make this optional
 }
 
 interface TaskResult {
@@ -76,7 +75,7 @@ class ConcurrencyManager {
       ...task,
       createdAt: Date.now(),
       attempts: 0,
-      maxRetries: task.retryOnFail ? 3 : 0
+      maxRetries: task.maxRetries ?? (task.retryOnFail ? 3 : 0) // Default to 3 if retryOnFail is true, 0 otherwise
     };
 
     // Check if task with same ID already exists

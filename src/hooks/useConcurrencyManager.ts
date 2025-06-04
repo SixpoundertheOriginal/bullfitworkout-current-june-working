@@ -20,14 +20,16 @@ export function useConcurrencyManager(options: UseConcurrencyManagerOptions = {}
   const { registerCleanup } = useCleanup('concurrency-manager');
 
   const enqueue = useCallback((
-    taskConfig: Omit<ConcurrencyTask, 'createdAt' | 'attempts' | 'priority'> & {
+    taskConfig: Omit<ConcurrencyTask, 'createdAt' | 'attempts' | 'priority' | 'maxRetries'> & {
       priority?: ConcurrencyTask['priority'];
+      maxRetries?: number;
     }
   ): string => {
     const task = {
       ...taskConfig,
       priority: taskConfig.priority || defaultPriority,
-      tags: [...(taskConfig.tags || []), componentTag]
+      tags: [...(taskConfig.tags || []), componentTag],
+      maxRetries: taskConfig.maxRetries
     };
 
     const taskId = concurrencyManager.enqueue(task);

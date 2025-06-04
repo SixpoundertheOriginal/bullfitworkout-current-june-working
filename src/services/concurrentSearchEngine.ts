@@ -1,4 +1,3 @@
-
 import { Exercise } from '@/types/exercise';
 import { exerciseSearchEngine, SearchFilters, SearchResult } from './exerciseSearchEngine';
 import { concurrencyManager } from './concurrencyManager';
@@ -47,6 +46,7 @@ class ConcurrentSearchEngine {
         tags: ['search', 'user-interaction'],
         signal,
         retryOnFail: false,
+        maxRetries: 0, // No retries for search tasks
         run: async () => {
           try {
             // Check if request was cancelled
@@ -89,6 +89,7 @@ class ConcurrentSearchEngine {
       priority: 'low',
       tags: ['preload', 'background-sync'],
       retryOnFail: true,
+      maxRetries: 3,
       run: async () => {
         await predictiveCache.preloadPopularSearches();
       }
@@ -103,6 +104,7 @@ class ConcurrentSearchEngine {
       priority: 'low',
       tags: ['background-sync', 'indexing'],
       retryOnFail: true,
+      maxRetries: 2,
       run: async () => {
         // Perform background indexing or cache warming
         console.log('Background search sync completed');

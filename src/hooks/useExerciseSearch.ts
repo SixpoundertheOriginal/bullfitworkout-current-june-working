@@ -63,6 +63,7 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
         id: 'index-exercises',
         priority: 'high',
         tags: ['indexing'],
+        maxRetries: 1,
         run: async () => {
           const { exerciseSearchEngine } = await import('@/services/exerciseSearchEngine');
           exerciseSearchEngine.indexExercises(exercises);
@@ -183,6 +184,7 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
         priority: 'low',
         tags: ['preload', 'background-sync'],
         retryOnFail: true,
+        maxRetries: 3,
         run: async () => {
           await concurrentSearchEngine.preloadPopularSearches();
         }
