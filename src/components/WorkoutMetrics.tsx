@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { Timer, Dumbbell, Clock, TrendingUp, Weight, Repeat } from "lucide-react";
+import { Timer, Dumbbell, Clock, TrendingUp } from "lucide-react";
 import { MetricCard } from "./metrics/MetricCard";
 import { TimerContainer } from "./timers/TimerContainer";
 import { useWeightUnit } from "@/context/WeightUnitContext";
@@ -94,14 +93,6 @@ export const WorkoutMetrics = ({
     console.log('Sets card clicked - could show detailed progress');
   };
 
-  const handleVolumeCardClick = () => {
-    console.log('Volume card clicked - could show volume breakdown');
-  };
-
-  const handleRepsCardClick = () => {
-    console.log('Reps card clicked - could show reps analysis');
-  };
-
   // Timer handlers
   const handleSmartTimerStop = () => {
     onRestTimerComplete();
@@ -128,7 +119,7 @@ export const WorkoutMetrics = ({
     <div className={cn("relative w-full", className)}>
       {/* Metrics Cards */}
       <div className="overflow-x-auto pb-2 sm:pb-0">
-        <div className="grid grid-cols-5 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5 min-w-[400px]">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5 min-w-[300px]">
           {/* Time Card */}
           <MetricCard
             icon={Clock}
@@ -151,7 +142,7 @@ export const WorkoutMetrics = ({
             className="touch-target"
           />
 
-          {/* Sets Card with progress */}
+          {/* Sets Card with progress and footer */}
           <MetricCard
             icon={TrendingUp}
             value={`${completedSets}/${totalSets}`}
@@ -161,28 +152,8 @@ export const WorkoutMetrics = ({
             onClick={handleSetsCardClick}
             variant="sets"
             className="touch-target"
-          />
-
-          {/* Volume Card */}
-          <MetricCard
-            icon={Weight}
-            value={formatWeightWithUnit(totalVolume, weightUnit, 0)}
-            label="Volume"
-            tooltip={`Total tonnage (weight × reps) for all completed sets. Higher volume typically leads to better muscle growth and strength gains.`}
-            onClick={handleVolumeCardClick}
-            variant="default"
-            className="touch-target"
-          />
-
-          {/* Reps Card */}
-          <MetricCard
-            icon={Repeat}
-            value={totalReps}
-            label="Reps"
-            tooltip={`Total repetitions completed across all exercises. Tracking reps helps monitor workout density and training volume.`}
-            onClick={handleRepsCardClick}
-            variant="default"
-            className="touch-target"
+            footerLeft={`${totalReps} reps`}
+            footerRight={formatWeightWithUnit(totalVolume, weightUnit, 0) + ' vol'}
           />
         </div>
       </div>

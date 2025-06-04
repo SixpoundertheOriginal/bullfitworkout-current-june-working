@@ -19,6 +19,8 @@ interface MetricCardProps {
   className?: string;
   onClick?: () => void;
   variant?: 'time' | 'exercises' | 'sets' | 'rest' | 'default';
+  footerLeft?: string;
+  footerRight?: string;
 }
 
 const variantStyles = {
@@ -71,7 +73,9 @@ export const MetricCard = ({
   labelClass,
   className,
   onClick,
-  variant = 'default'
+  variant = 'default',
+  footerLeft,
+  footerRight
 }: MetricCardProps) => {
   const styles = variantStyles[variant];
   const isInteractive = !!onClick;
@@ -104,7 +108,7 @@ export const MetricCard = ({
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5 opacity-80" />
 
           {/* Content */}
-          <div className="relative z-10 flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center w-full">
             {/* Icon with enhanced styling */}
             <div className={cn(
               "mb-2 rounded-full shadow-inner flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center transition-all duration-300",
@@ -163,6 +167,17 @@ export const MetricCard = ({
                     !['sets', 'time', 'exercises', 'rest'].includes(variant) && "[&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
                   )}
                 />
+              </div>
+            )}
+
+            {/* Footer section */}
+            {(footerLeft || footerRight) && (
+              <div className="w-full mt-3">
+                <div className="w-full h-px bg-white/10 mb-2" />
+                <div className="flex justify-between items-center w-full text-xs text-gray-500">
+                  <span>{footerLeft}</span>
+                  <span>{footerRight}</span>
+                </div>
               </div>
             )}
 
