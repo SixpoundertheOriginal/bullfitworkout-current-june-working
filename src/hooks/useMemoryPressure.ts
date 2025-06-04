@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';
 import { networkOptimization } from '@/services/networkOptimization';
-import { concurrencyManager } from '@/services/concurrencyManager';
+import { concurrencyManager } from '@/lib/concurrency/ConcurrencyManager';
 
 interface MemoryInfo {
   usedJSHeapSize: number;
