@@ -68,14 +68,14 @@ class ExerciseSearchEngine {
   private pingWorker() {
     if (!this.worker) return;
     
-    const timeout = setTimeout(() => {
+    const timeout = window.setTimeout(() => {
       console.warn('Worker ping timeout, falling back to main thread');
       this.fallbackToMainThread();
     }, 2000);
 
     const pingHandler = (event: MessageEvent) => {
       if (event.data.type === 'pong') {
-        clearTimeout(timeout);
+        window.clearTimeout(timeout);
         this.workerReady = true;
         this.worker?.removeEventListener('message', pingHandler);
         console.log('Worker is ready');
@@ -87,20 +87,21 @@ class ExerciseSearchEngine {
   }
 
   private handleWorkerMessage(event: MessageEvent) {
-    const { type, results, error, requestId, fromWorker } = event.data;
+    const { type, results, error, requestId } = event.data;
     
     switch (type) {
       case 'searchComplete':
         if (requestId) {
           const pending = this.pendingSearches.get(requestId);
           if (pending) {
-            clearTimeout(pending.timeout);
+            window.clearTimeout(pending.timeout);
             this.pendingSearches.delete(requestId);
             pending.resolve(results || []);
           }
         } else {
           // Handle legacy responses without requestId
-          this.pendingSearches.forEach(({ resolve }) => {
+          this.pendingSearches.forEach(({ resolve, timeout }) => {
+            window.clearTimeout(timeout);
             resolve(results || []);
           });
           this.pendingSearches.clear();
@@ -117,10 +118,10 @@ class ExerciseSearchEngine {
         if (requestId) {
           const pending = this.pendingSearches.get(requestId);
           if (pending) {
-            clearTimeout(pending.timeout);
+            window.clearTimeout(pending.timeout);
             this.pendingSearches.delete(requestId);
             // Fallback to main thread for this search
-            this.searchInMainThread(pending.resolve, pending.reject);
+            this.searchInMainThreadAsync(pending.resolve, pending.reject);
           }
         } else {
           // Fallback to main thread
@@ -143,13 +144,14 @@ class ExerciseSearchEngine {
     this.workerReady = false;
     
     // Reject all pending searches and retry with main thread
-    this.pendingSearches.forEach(({ resolve, reject }) => {
-      this.searchInMainThread(resolve, reject);
+    this.pendingSearches.forEach(({ resolve, reject, timeout }) => {
+      window.clearTimeout(timeout);
+      this.searchInMainThreadAsync(resolve, reject);
     });
     this.pendingSearches.clear();
   }
 
-  private searchInMainThread(resolve: (results: Exercise[]) => void, reject: (error: Error) => void) {
+  private searchInMainThreadAsync(resolve: (results: Exercise[]) => void, reject: (error: Error) => void) {
     try {
       // This will be implemented by the calling search method
       resolve([]);
@@ -175,7 +177,7 @@ class ExerciseSearchEngine {
 
   private async indexInMainThread(exercises: Exercise[]): Promise<void> {
     return new Promise((resolve) => {
-      setTimeout(() => {
+      window.setTimeout(() => {
         this.miniSearch = new MiniSearch({
           fields: ['name', 'description', 'primary_muscle_groups', 'secondary_muscle_groups', 'equipment_type'],
           storeFields: ['id', 'name', 'description', 'primary_muscle_groups', 'secondary_muscle_groups', 'equipment_type', 'difficulty', 'movement_pattern'],
@@ -256,7 +258,7 @@ class ExerciseSearchEngine {
 
       const requestId = `search-${++this.requestIdCounter}`;
       
-      const timeout = setTimeout(() => {
+      const timeout = window.setTimeout(() => {
         this.pendingSearches.delete(requestId);
         reject(new Error('Search timeout'));
       }, 5000);
@@ -348,6 +350,9 @@ class ExerciseSearchEngine {
     this.miniSearch = null;
     this.exercises = [];
     this.isIndexed = false;
+    this.pendingSearches.forEach(({ timeout }) => {
+      window.clearTimeout(timeout);
+    });
     this.pendingSearches.clear();
   }
 }
