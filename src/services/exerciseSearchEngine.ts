@@ -1,33 +1,20 @@
 
-import { Exercise } from '@/types/exercise';
-import { requestCache } from './requestDeduplication';
+import MiniSearch from 'minisearch';
+import type { Exercise } from '@/types/exercise';
+import { requestDeduplication } from './requestDeduplication';
 
-export interface SearchFilters {
-  muscleGroup?: string;
-  equipment?: string;
-  difficulty?: string;
-  movement?: string;
-}
-
-export interface SearchRequest {
-  query: string;
-  filters?: SearchFilters;
-  requestId: string;
-}
-
-export interface SearchResult {
-  results: Exercise[];
-  query: string;
-  requestId: string;
-  fromCache?: boolean;
+interface SearchOptions {
+  fuzzy?: boolean;
+  prefix?: boolean;
+  combineWith?: 'AND' | 'OR';
+  boost?: Record<string, number>;
 }
 
 class ExerciseSearchEngine {
-  private worker: Worker | null = null;
+  private miniSearch: MiniSearch | null = null;
+  private exercises: Exercise[] = [];
   private isIndexed = false;
-  private pendingRequests = new Map<string, (result: SearchResult) => void>();
-  private searchCache = requestCache.createNamespace('search');
-  private debounceTimeout: NodeJS.Timeout | null = null;
+  private worker: Worker | null = null;
 
   constructor() {
     this.initializeWorker();
@@ -35,166 +22,202 @@ class ExerciseSearchEngine {
 
   private initializeWorker() {
     try {
-      this.worker = new Worker('/search-worker.js', { type: 'module' });
-      this.worker.onmessage = this.handleWorkerMessage.bind(this);
-      this.worker.onerror = this.handleWorkerError.bind(this);
+      this.worker = new Worker('/search-worker.js');
+      this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
+      this.worker.addEventListener('error', (error) => {
+        console.error('Search worker error:', error);
+      });
     } catch (error) {
-      console.error('Failed to initialize search worker:', error);
-      this.worker = null;
+      console.warn('Failed to initialize search worker, falling back to main thread:', error);
     }
   }
 
   private handleWorkerMessage(event: MessageEvent) {
-    const { type, payload } = event.data;
-
-    switch (type) {
-      case 'INDEX_COMPLETE':
-        this.isIndexed = true;
-        console.log(`Search index ready with ${payload.count} exercises`);
-        break;
-
-      case 'SEARCH_RESULTS':
-        const { requestId, results, query } = payload;
-        const resolver = this.pendingRequests.get(requestId);
-        if (resolver) {
-          // Cache the results
-          const cacheKey = this.generateCacheKey(query, {});
-          this.searchCache.set(cacheKey, results, 300000); // 5 minutes TTL
-
-          resolver({
-            results,
-            query,
-            requestId,
-            fromCache: false
-          });
-          this.pendingRequests.delete(requestId);
-        }
-        break;
-
-      default:
-        console.warn('Unknown worker message type:', type);
+    const { type, results, error } = event.data;
+    
+    if (type === 'searchComplete') {
+      // Handle search results from worker
+      this.resolveSearchPromise(results);
+    } else if (type === 'indexComplete') {
+      this.isIndexed = true;
+    } else if (type === 'error') {
+      console.error('Search worker error:', error);
+      this.rejectSearchPromise(new Error(error));
     }
   }
 
-  private handleWorkerError(error: ErrorEvent) {
-    console.error('Search worker error:', error);
-    // Fallback to client-side search if worker fails
-    this.worker = null;
-  }
+  private searchPromiseResolve: ((results: Exercise[]) => void) | null = null;
+  private searchPromiseReject: ((error: Error) => void) | null = null;
 
-  private generateCacheKey(query: string, filters: SearchFilters): string {
-    return `search:${query}:${JSON.stringify(filters)}`;
-  }
-
-  public indexExercises(exercises: Exercise[]): void {
-    if (!this.worker) {
-      console.warn('Search worker not available, skipping indexing');
-      return;
+  private resolveSearchPromise(results: Exercise[]) {
+    if (this.searchPromiseResolve) {
+      this.searchPromiseResolve(results);
+      this.searchPromiseResolve = null;
+      this.searchPromiseReject = null;
     }
-
-    this.worker.postMessage({
-      type: 'INDEX_EXERCISES',
-      payload: { exercises }
-    });
   }
 
-  public updateExercise(exercise: Exercise): void {
-    if (!this.worker) return;
-
-    this.worker.postMessage({
-      type: 'UPDATE_EXERCISE',
-      payload: { exercise }
-    });
-
-    // Invalidate relevant cache entries
-    this.searchCache.clear(); // Simple approach - clear all search cache
+  private rejectSearchPromise(error: Error) {
+    if (this.searchPromiseReject) {
+      this.searchPromiseReject(error);
+      this.searchPromiseResolve = null;
+      this.searchPromiseReject = null;
+    }
   }
 
-  public search(query: string, filters: SearchFilters = {}): Promise<SearchResult> {
-    return new Promise((resolve) => {
-      // Check cache first
-      const cacheKey = this.generateCacheKey(query, filters);
-      const cachedResult = this.searchCache.get(cacheKey);
-      
-      if (cachedResult) {
-        resolve({
-          results: cachedResult,
-          query,
-          requestId: `cached-${Date.now()}`,
-          fromCache: true
-        });
-        return;
-      }
-
-      // If no worker, return empty results
-      if (!this.worker || !this.isIndexed) {
-        resolve({
-          results: [],
-          query,
-          requestId: `fallback-${Date.now()}`,
-          fromCache: false
-        });
-        return;
-      }
-
-      const requestId = `search-${Date.now()}-${Math.random()}`;
-      this.pendingRequests.set(requestId, resolve);
-
+  async indexExercises(exercises: Exercise[]): Promise<void> {
+    this.exercises = exercises;
+    
+    if (this.worker) {
+      // Use worker for indexing
       this.worker.postMessage({
-        type: 'SEARCH',
-        payload: {
-          query,
-          filters,
-          requestId
-        }
+        type: 'index',
+        exercises
       });
+    } else {
+      // Fallback to main thread
+      await this.indexInMainThread(exercises);
+    }
+  }
 
-      // Timeout fallback
+  private async indexInMainThread(exercises: Exercise[]): Promise<void> {
+    return new Promise((resolve) => {
       setTimeout(() => {
-        if (this.pendingRequests.has(requestId)) {
-          this.pendingRequests.delete(requestId);
-          resolve({
-            results: [],
-            query,
-            requestId,
-            fromCache: false
-          });
-        }
-      }, 5000);
+        this.miniSearch = new MiniSearch({
+          fields: ['name', 'description', 'primary_muscle_groups', 'secondary_muscle_groups', 'equipment_type'],
+          storeFields: ['id', 'name', 'description', 'primary_muscle_groups', 'secondary_muscle_groups', 'equipment_type', 'difficulty', 'movement_pattern'],
+          searchOptions: {
+            fuzzy: 0.2,
+            prefix: true,
+            combineWith: 'AND'
+          }
+        });
+
+        const documentsToIndex = exercises.map(exercise => ({
+          id: exercise.id,
+          name: exercise.name,
+          description: exercise.description || '',
+          primary_muscle_groups: Array.isArray(exercise.primary_muscle_groups) 
+            ? exercise.primary_muscle_groups.join(' ') 
+            : '',
+          secondary_muscle_groups: Array.isArray(exercise.secondary_muscle_groups) 
+            ? exercise.secondary_muscle_groups.join(' ') 
+            : '',
+          equipment_type: Array.isArray(exercise.equipment_type) 
+            ? exercise.equipment_type.join(' ') 
+            : '',
+          difficulty: exercise.difficulty || '',
+          movement_pattern: exercise.movement_pattern || ''
+        }));
+
+        this.miniSearch.addAll(documentsToIndex);
+        this.isIndexed = true;
+        resolve();
+      }, 0);
     });
   }
 
-  public searchDebounced(query: string, filters: SearchFilters = {}, delay = 300): Promise<SearchResult> {
-    return new Promise((resolve) => {
-      if (this.debounceTimeout) {
-        clearTimeout(this.debounceTimeout);
+  async search(
+    query: string, 
+    filters: Record<string, any> = {}, 
+    options: SearchOptions = {}
+  ): Promise<Exercise[]> {
+    const cacheKey = `search:${query}:${JSON.stringify(filters)}:${JSON.stringify(options)}`;
+    
+    return requestDeduplication.deduplicate(cacheKey, async () => {
+      if (!this.isIndexed) {
+        return this.exercises; // Return all exercises if not indexed yet
       }
 
-      this.debounceTimeout = setTimeout(() => {
-        this.search(query, filters).then(resolve);
-      }, delay);
+      if (this.worker) {
+        // Use worker for search
+        return new Promise((resolve, reject) => {
+          this.searchPromiseResolve = resolve;
+          this.searchPromiseReject = reject;
+          
+          this.worker!.postMessage({
+            type: 'search',
+            query,
+            filters,
+            options
+          });
+        });
+      } else {
+        // Fallback to main thread search
+        return this.searchInMainThread(query, filters, options);
+      }
     });
   }
 
-  public dispose(): void {
+  private searchInMainThread(
+    query: string, 
+    filters: Record<string, any> = {}, 
+    options: SearchOptions = {}
+  ): Exercise[] {
+    if (!this.miniSearch) {
+      return this.exercises;
+    }
+
+    let searchResults: any[] = [];
+
+    if (query.trim()) {
+      searchResults = this.miniSearch.search(query, {
+        fuzzy: options.fuzzy ?? 0.2,
+        prefix: options.prefix ?? true,
+        combineWith: options.combineWith ?? 'AND',
+        boost: options.boost
+      });
+    } else {
+      // If no query, return all indexed documents
+      searchResults = this.exercises.map(exercise => ({ id: exercise.id }));
+    }
+
+    // Apply filters
+    let filteredResults = searchResults.map(result => {
+      return this.exercises.find(exercise => exercise.id === result.id);
+    }).filter(Boolean) as Exercise[];
+
+    // Apply additional filters
+    if (Object.keys(filters).length > 0) {
+      filteredResults = filteredResults.filter(exercise => {
+        return Object.entries(filters).every(([key, value]) => {
+          switch (key) {
+            case 'muscleGroup':
+              return exercise.primary_muscle_groups?.includes(value) || 
+                     exercise.secondary_muscle_groups?.includes(value);
+            case 'equipment':
+              return exercise.equipment_type?.includes(value);
+            case 'difficulty':
+              return exercise.difficulty === value;
+            case 'movement':
+              return exercise.movement_pattern === value;
+            default:
+              return true;
+          }
+        });
+      });
+    }
+
+    return filteredResults;
+  }
+
+  getIndexedStatus(): boolean {
+    return this.isIndexed;
+  }
+
+  getExerciseCount(): number {
+    return this.exercises.length;
+  }
+
+  destroy(): void {
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;
     }
-    this.pendingRequests.clear();
-    this.searchCache.clear();
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-    }
+    this.miniSearch = null;
+    this.exercises = [];
+    this.isIndexed = false;
   }
 }
 
-// Singleton instance
 export const exerciseSearchEngine = new ExerciseSearchEngine();
-
-// Cleanup on page unload
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    exerciseSearchEngine.dispose();
-  });
-}
