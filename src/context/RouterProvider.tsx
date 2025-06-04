@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { WorkoutNavigationContextProvider } from "@/context/WorkoutNavigationContext";
@@ -61,6 +62,11 @@ export const RouterProvider = () => {
                 <MainLayout>
                   <WorkoutManagementPage />
                 </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/workout-setup/*" element={
+              <ProtectedRoute>
+                <WorkoutSetup />
               </ProtectedRoute>
             } />
             <Route path="/training-session" element={

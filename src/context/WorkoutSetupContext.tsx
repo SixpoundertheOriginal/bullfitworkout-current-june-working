@@ -6,6 +6,13 @@ interface WorkoutSetupState {
   tags: string[];
   duration: number;
   intensity: string;
+  fitnessLevel: string;
+  selectedExercises: Array<{
+    id: string;
+    name: string;
+    sets?: number;
+    reps?: number;
+  }>;
 }
 
 interface WorkoutSetupContextType {
@@ -20,7 +27,9 @@ const initialState: WorkoutSetupState = {
   trainingType: "Strength",
   tags: [],
   duration: 30,
-  intensity: "Moderate"
+  intensity: "Moderate",
+  fitnessLevel: "Beginner",
+  selectedExercises: []
 };
 
 export const WorkoutSetupProvider = ({ children }: { children: React.ReactNode }) => {

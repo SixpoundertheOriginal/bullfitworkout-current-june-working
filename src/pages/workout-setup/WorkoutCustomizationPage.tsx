@@ -26,25 +26,28 @@ export const WorkoutCustomizationPage = () => {
   };
 
   const handleContinue = () => {
-    navigate("/workout-setup/summary");
+    navigate("/workout-setup/exercises");
   };
 
   return (
     <CardContainer
       title="Customize"
       subtitle="Your Perfect Workout"
-      progress={{ current: 2, total: 3 }}
+      progress={{ current: 3, total: 5 }}
     >
       <div className="space-y-8">
-        {/* Selected type badge */}
+        {/* Selected type and fitness level badges */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-center"
+          className="flex justify-center space-x-2"
         >
           <Badge variant="outline" className="text-purple-400 border-purple-400/30 px-4 py-2">
             <Target className="h-4 w-4 mr-2" />
             {state.trainingType}
+          </Badge>
+          <Badge variant="outline" className="text-blue-400 border-blue-400/30 px-4 py-2">
+            {state.fitnessLevel}
           </Badge>
         </motion.div>
 
