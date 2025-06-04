@@ -1,14 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { Timer, Dumbbell, Clock, Play, TrendingUp } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+import { Timer, Dumbbell, Clock, TrendingUp } from "lucide-react";
 import { MetricCard } from "./metrics/MetricCard";
-import { TopRestTimer } from "./TopRestTimer";
-import { CircularProgress } from "@/components/ui/circular-progress";
+import { TimerContainer } from "./timers/TimerContainer";
 import { cn } from "@/lib/utils";
-import { theme } from "@/lib/theme";
-import { typography } from "@/lib/typography";
 
 interface WorkoutMetricsProps {
   time: number;
@@ -40,6 +35,8 @@ export const WorkoutMetrics = ({
   className
 }: WorkoutMetricsProps) => {
   const [resetCounter, setResetCounter] = useState(0);
+  const [manualTimerTime, setManualTimerTime] = useState(0);
+  const [isManualTimerActive, setIsManualTimerActive] = useState(false);
   
   // Use the external reset signal
   useEffect(() => {
@@ -54,34 +51,16 @@ export const WorkoutMetrics = ({
     }
   }, [showRestTimer]);
 
+  // Manual timer logic
   useEffect(() => {
-    const handleToastReset = () => {
-      if (showRestTimer) {
-        setResetCounter(prev => prev + 1);
-      }
-    };
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node instanceof HTMLElement && 
-                (node.classList.contains('toast') || 
-                 node.getAttribute('role') === 'status' || 
-                 node.getAttribute('data-sonner-toast') === 'true')) {
-              if (node.textContent && node.textContent.includes("logged successfully")) {
-                handleToastReset();
-              }
-            }
-          });
-        }
-      });
-    });
-    
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    return () => observer.disconnect();
-  }, [showRestTimer]);
+    let interval: NodeJS.Timeout;
+    if (isManualTimerActive) {
+      interval = setInterval(() => {
+        setManualTimerTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isManualTimerActive]);
 
   const startTime = new Date();
   startTime.setSeconds(startTime.getSeconds() - time);
@@ -95,7 +74,7 @@ export const WorkoutMetrics = ({
 
   const completionPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
-  // Mock functions for card interactions - you can connect these to actual detail views
+  // Mock functions for card interactions
   const handleTimeCardClick = () => {
     console.log('Time card clicked - could show workout timeline');
   };
@@ -108,12 +87,34 @@ export const WorkoutMetrics = ({
     console.log('Sets card clicked - could show detailed progress');
   };
 
+  // Timer handlers
+  const handleSmartTimerStop = () => {
+    onRestTimerComplete();
+  };
+
+  const handleSmartTimerSkip = () => {
+    onRestTimerComplete();
+  };
+
+  const handleManualTimerStart = () => {
+    setIsManualTimerActive(true);
+  };
+
+  const handleManualTimerStop = () => {
+    setIsManualTimerActive(false);
+  };
+
+  const handleManualTimerReset = () => {
+    setIsManualTimerActive(false);
+    setManualTimerTime(0);
+  };
+
   return (
     <div className={cn("relative w-full", className)}>
-      {/* Horizontal scroll container for mobile */}
+      {/* Metrics Cards */}
       <div className="overflow-x-auto pb-2 sm:pb-0">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5 min-w-[320px]">
-          {/* Time Card with enhanced styling */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5 min-w-[240px]">
+          {/* Time Card */}
           <MetricCard
             icon={Clock}
             value={formatTime(time)}
@@ -146,63 +147,25 @@ export const WorkoutMetrics = ({
             variant="sets"
             className="touch-target"
           />
+        </div>
+      </div>
 
-          {/* Enhanced Rest Timer Card */}
-          <div className={cn(
-            "group relative flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border border-white/10 backdrop-blur-xl transition-all duration-300",
-            "bg-gradient-to-br from-orange-600/20 via-orange-800/10 to-orange-900/20 hover:from-orange-600/30 hover:to-orange-900/30",
-            "hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/20",
-            "min-w-[80px] w-full touch-target",
-            "relative overflow-hidden"
-          )}>
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/5 opacity-80" />
-            
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="relative mb-1 sm:mb-2 rounded-full bg-orange-500/20 shadow-inner flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center transition-all duration-300 group-hover:scale-110">
-                <CircularProgress
-                  value={showRestTimer ? 100 : 0}
-                  size={32}
-                  className="text-orange-500/30"
-                >
-                  <Timer
-                    size={16}
-                    className={cn(
-                      "text-orange-300 absolute inset-0 m-auto transition-all duration-300",
-                      showRestTimer && "animate-pulse",
-                      "group-hover:drop-shadow-lg"
-                    )}
-                  />
-                </CircularProgress>
-              </div>
-              
-              <TopRestTimer
-                isActive={showRestTimer}
-                onComplete={onRestTimerComplete}
-                resetSignal={resetCounter}
-                onTimeUpdate={onRestTimeUpdate}
-                onManualStart={onManualRestStart}
-                currentRestTime={currentRestTime}
-                className="scale-90 sm:scale-100"
-              />
-
-              {!showRestTimer && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onManualRestStart}
-                  className="mt-1 sm:mt-2 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20 text-orange-300 transition-all duration-300 text-xs font-medium scale-90 sm:scale-100 hover:scale-100 sm:hover:scale-105"
-                >
-                  <Play size={12} className="mr-1" /> Start Timer
-                </Button>
-              )}
-            </div>
-
-            {/* Interactive indicator */}
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="w-2 h-2 bg-orange-300/50 rounded-full animate-pulse" />
-            </div>
-          </div>
+      {/* Timer Section */}
+      <div className="mt-4">
+        <div className="rounded-2xl bg-gray-900/40 backdrop-blur-md border border-white/5">
+          <TimerContainer
+            smartTimerActive={showRestTimer}
+            smartTimerCurrentTime={currentRestTime || 0}
+            smartTimerTargetTime={60}
+            onSmartTimerStart={onManualRestStart}
+            onSmartTimerStop={handleSmartTimerStop}
+            onSmartTimerSkip={handleSmartTimerSkip}
+            manualTimerActive={isManualTimerActive}
+            manualTimerCurrentTime={manualTimerTime}
+            onManualTimerStart={handleManualTimerStart}
+            onManualTimerStop={handleManualTimerStop}
+            onManualTimerReset={handleManualTimerReset}
+          />
         </div>
       </div>
     </div>
