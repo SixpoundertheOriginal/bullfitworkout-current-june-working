@@ -1,23 +1,94 @@
 
 // Search Worker for heavy exercise filtering and indexing operations
-import { MiniSearch } from 'minisearch';
+// Using importScripts since ES6 modules aren't supported in web workers by default
 
 let searchIndex = null;
 let exercises = [];
 let isIndexed = false;
 
-// Initialize MiniSearch with exercise-specific configuration
-function initializeSearchIndex() {
-  searchIndex = new MiniSearch({
-    fields: ['name', 'description', 'primary_muscle_groups', 'secondary_muscle_groups', 'equipment_type', 'movement_pattern', 'difficulty'],
-    storeFields: ['id', 'name', 'description', 'primary_muscle_groups', 'secondary_muscle_groups', 'equipment_type', 'movement_pattern', 'difficulty', 'is_compound'],
-    searchOptions: {
-      boost: { name: 2, primary_muscle_groups: 1.5 },
-      fuzzy: 0.2,
-      prefix: true,
-      combineWith: 'AND'
+// We'll inline a simple search implementation since importing MiniSearch is problematic
+class SimpleSearch {
+  constructor() {
+    this.documents = [];
+    this.index = new Map();
+  }
+
+  addAll(documents) {
+    this.documents = documents;
+    this.buildIndex(documents);
+  }
+
+  buildIndex(documents) {
+    documents.forEach((doc, docIndex) => {
+      const searchableText = [
+        doc.name,
+        doc.description,
+        doc.primary_muscle_groups,
+        doc.secondary_muscle_groups,
+        doc.equipment_type,
+        doc.movement_pattern,
+        doc.difficulty
+      ].join(' ').toLowerCase();
+
+      const words = searchableText.split(/\s+/).filter(word => word.length > 0);
+      
+      words.forEach(word => {
+        if (!this.index.has(word)) {
+          this.index.set(word, new Set());
+        }
+        this.index.get(word).add(docIndex);
+      });
+    });
+  }
+
+  search(query) {
+    if (!query.trim()) {
+      return this.documents.map((doc, index) => ({ ...doc, score: 1 }));
     }
-  });
+
+    const queryWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    const matchingDocs = new Map();
+
+    queryWords.forEach(word => {
+      // Exact matches
+      if (this.index.has(word)) {
+        this.index.get(word).forEach(docIndex => {
+          const current = matchingDocs.get(docIndex) || 0;
+          matchingDocs.set(docIndex, current + 2);
+        });
+      }
+
+      // Fuzzy matches (simple prefix matching)
+      this.index.forEach((docSet, indexedWord) => {
+        if (indexedWord.startsWith(word) && indexedWord !== word) {
+          docSet.forEach(docIndex => {
+            const current = matchingDocs.get(docIndex) || 0;
+            matchingDocs.set(docIndex, current + 1);
+          });
+        }
+      });
+    });
+
+    // Convert to results array and sort by score
+    const results = Array.from(matchingDocs.entries())
+      .map(([docIndex, score]) => ({
+        ...this.documents[docIndex],
+        score
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    return results;
+  }
+
+  removeAll() {
+    this.documents = [];
+    this.index.clear();
+  }
+}
+
+// Initialize search index
+function initializeSearchIndex() {
+  searchIndex = new SimpleSearch();
 }
 
 // Index exercises in the background
@@ -45,8 +116,7 @@ function indexExercises(exerciseData) {
   isIndexed = true;
   
   self.postMessage({
-    type: 'INDEX_COMPLETE',
-    payload: { count: exerciseData.length }
+    type: 'indexComplete'
   });
 }
 
@@ -56,23 +126,7 @@ function performSearch(query, filters = {}) {
     return [];
   }
   
-  let results = [];
-  
-  if (query.trim()) {
-    // Perform text search
-    results = searchIndex.search(query, {
-      boost: { name: 2 },
-      fuzzy: 0.2,
-      prefix: true
-    });
-  } else {
-    // No query, return all exercises
-    results = exercises.map(exercise => ({
-      id: exercise.id,
-      score: 1,
-      ...exercise
-    }));
-  }
+  let results = searchIndex.search(query);
   
   // Apply filters
   if (Object.keys(filters).length > 0) {
@@ -106,61 +160,35 @@ function performSearch(query, filters = {}) {
     });
   }
   
-  // Sort by search score (higher is better)
-  results.sort((a, b) => (b.score || 0) - (a.score || 0));
-  
   return results;
 }
 
 // Handle messages from main thread
 self.onmessage = function(e) {
-  const { type, payload } = e.data;
+  const { type, exercises: exerciseData, query, filters } = e.data;
   
-  switch (type) {
-    case 'INDEX_EXERCISES':
-      indexExercises(payload.exercises);
-      break;
-      
-    case 'SEARCH':
-      const results = performSearch(payload.query, payload.filters);
-      self.postMessage({
-        type: 'SEARCH_RESULTS',
-        payload: {
-          results,
-          query: payload.query,
-          requestId: payload.requestId
-        }
-      });
-      break;
-      
-    case 'UPDATE_EXERCISE':
-      // Update single exercise in index
-      if (searchIndex && isIndexed) {
-        const exercise = payload.exercise;
-        searchIndex.discard(exercise.id);
-        searchIndex.add({
-          id: exercise.id,
-          name: exercise.name,
-          description: exercise.description || '',
-          primary_muscle_groups: exercise.primary_muscle_groups?.join(' ') || '',
-          secondary_muscle_groups: exercise.secondary_muscle_groups?.join(' ') || '',
-          equipment_type: exercise.equipment_type?.join(' ') || '',
-          movement_pattern: exercise.movement_pattern || '',
-          difficulty: exercise.difficulty || ''
-        });
+  try {
+    switch (type) {
+      case 'index':
+        indexExercises(exerciseData);
+        break;
         
-        // Update local exercises array
-        const index = exercises.findIndex(e => e.id === exercise.id);
-        if (index !== -1) {
-          exercises[index] = exercise;
-        } else {
-          exercises.push(exercise);
-        }
-      }
-      break;
-      
-    default:
-      console.warn('Unknown message type:', type);
+      case 'search':
+        const results = performSearch(query, filters);
+        self.postMessage({
+          type: 'searchComplete',
+          results: results
+        });
+        break;
+        
+      default:
+        console.warn('Unknown message type:', type);
+    }
+  } catch (error) {
+    self.postMessage({
+      type: 'error',
+      error: error.message
+    });
   }
 };
 

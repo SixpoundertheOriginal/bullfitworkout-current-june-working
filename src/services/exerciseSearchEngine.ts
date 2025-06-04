@@ -26,6 +26,10 @@ class ExerciseSearchEngine {
   private exercises: Exercise[] = [];
   private isIndexed = false;
   private worker: Worker | null = null;
+  private pendingSearchResolvers: Map<string, {
+    resolve: (results: Exercise[]) => void;
+    reject: (error: Error) => void;
+  }> = new Map();
 
   constructor() {
     this.initializeWorker();
@@ -37,42 +41,44 @@ class ExerciseSearchEngine {
       this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
       this.worker.addEventListener('error', (error) => {
         console.error('Search worker error:', error);
+        this.fallbackToMainThread();
       });
     } catch (error) {
       console.warn('Failed to initialize search worker, falling back to main thread:', error);
+      this.worker = null;
     }
+  }
+
+  private fallbackToMainThread() {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    
+    // Reject any pending search promises
+    this.pendingSearchResolvers.forEach(({ reject }) => {
+      reject(new Error('Worker failed, falling back to main thread'));
+    });
+    this.pendingSearchResolvers.clear();
   }
 
   private handleWorkerMessage(event: MessageEvent) {
     const { type, results, error } = event.data;
     
     if (type === 'searchComplete') {
-      // Handle search results from worker
-      this.resolveSearchPromise(results);
+      // Resolve all pending searches with the results
+      this.pendingSearchResolvers.forEach(({ resolve }) => {
+        resolve(results || []);
+      });
+      this.pendingSearchResolvers.clear();
     } else if (type === 'indexComplete') {
       this.isIndexed = true;
     } else if (type === 'error') {
       console.error('Search worker error:', error);
-      this.rejectSearchPromise(new Error(error));
-    }
-  }
-
-  private searchPromiseResolve: ((results: Exercise[]) => void) | null = null;
-  private searchPromiseReject: ((error: Error) => void) | null = null;
-
-  private resolveSearchPromise(results: Exercise[]) {
-    if (this.searchPromiseResolve) {
-      this.searchPromiseResolve(results);
-      this.searchPromiseResolve = null;
-      this.searchPromiseReject = null;
-    }
-  }
-
-  private rejectSearchPromise(error: Error) {
-    if (this.searchPromiseReject) {
-      this.searchPromiseReject(error);
-      this.searchPromiseResolve = null;
-      this.searchPromiseReject = null;
+      this.pendingSearchResolvers.forEach(({ reject }) => {
+        reject(new Error(error));
+      });
+      this.pendingSearchResolvers.clear();
     }
   }
 
@@ -144,8 +150,8 @@ class ExerciseSearchEngine {
       if (this.worker) {
         // Use worker for search
         results = await new Promise((resolve, reject) => {
-          this.searchPromiseResolve = resolve;
-          this.searchPromiseReject = reject;
+          const searchId = `search-${Date.now()}`;
+          this.pendingSearchResolvers.set(searchId, { resolve, reject });
           
           this.worker!.postMessage({
             type: 'search',
@@ -153,6 +159,14 @@ class ExerciseSearchEngine {
             filters,
             options
           });
+
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            if (this.pendingSearchResolvers.has(searchId)) {
+              this.pendingSearchResolvers.delete(searchId);
+              reject(new Error('Search timeout'));
+            }
+          }, 5000);
         });
       } else {
         // Fallback to main thread search
