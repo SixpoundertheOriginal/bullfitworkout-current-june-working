@@ -88,11 +88,12 @@ class PredictiveCacheService {
         const cached = await this.getCachedResults(pattern.query, pattern.filters);
         if (!cached) {
           // Use requestDeduplication to avoid duplicate searches
-          const results = await requestDeduplication.deduplicate(
+          const searchResult = await requestDeduplication.deduplicate(
             `preload-${key}`,
             () => exerciseSearchEngine.search(pattern.query, pattern.filters)
           );
-          this.setCachedResults(pattern.query, pattern.filters, results);
+          // Extract results from SearchResult object
+          this.setCachedResults(pattern.query, pattern.filters, searchResult.results);
         }
       } catch (error) {
         console.warn('Failed to preload search:', error);
