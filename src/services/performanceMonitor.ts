@@ -1,4 +1,3 @@
-
 import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
 interface PerformanceMetrics {
@@ -188,6 +187,10 @@ class PerformanceMonitor {
   private logMetric(name: string, value: number, rating: 'good' | 'needs-improvement' | 'poor') {
     const emoji = rating === 'good' ? '✅' : rating === 'needs-improvement' ? '⚠️' : '❌';
     console.log(`[PerformanceMonitor] ${emoji} ${name}: ${value.toFixed(2)}ms (${rating})`);
+  }
+
+  getMetrics(): PerformanceMetrics {
+    return { ...this.metrics };
   }
 
   generateReport(): PerformanceMetrics {

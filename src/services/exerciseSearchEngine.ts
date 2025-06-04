@@ -1,7 +1,18 @@
-
 import MiniSearch from 'minisearch';
 import type { Exercise } from '@/types/exercise';
 import { requestDeduplication } from './requestDeduplication';
+
+export interface SearchFilters {
+  muscleGroup?: string;
+  equipment?: string;
+  difficulty?: string;
+  movement?: string;
+}
+
+export interface SearchResult {
+  results: Exercise[];
+  fromCache?: boolean;
+}
 
 interface SearchOptions {
   fuzzy?: boolean;
@@ -119,19 +130,20 @@ class ExerciseSearchEngine {
 
   async search(
     query: string, 
-    filters: Record<string, any> = {}, 
+    filters: SearchFilters = {}, 
     options: SearchOptions = {}
-  ): Promise<Exercise[]> {
+  ): Promise<SearchResult> {
     const cacheKey = `search:${query}:${JSON.stringify(filters)}:${JSON.stringify(options)}`;
     
     return requestDeduplication.deduplicate(cacheKey, async () => {
       if (!this.isIndexed) {
-        return this.exercises; // Return all exercises if not indexed yet
+        return { results: this.exercises, fromCache: false };
       }
 
+      let results: Exercise[];
       if (this.worker) {
         // Use worker for search
-        return new Promise((resolve, reject) => {
+        results = await new Promise((resolve, reject) => {
           this.searchPromiseResolve = resolve;
           this.searchPromiseReject = reject;
           
@@ -144,14 +156,16 @@ class ExerciseSearchEngine {
         });
       } else {
         // Fallback to main thread search
-        return this.searchInMainThread(query, filters, options);
+        results = this.searchInMainThread(query, filters, options);
       }
+
+      return { results, fromCache: false };
     });
   }
 
   private searchInMainThread(
     query: string, 
-    filters: Record<string, any> = {}, 
+    filters: SearchFilters = {}, 
     options: SearchOptions = {}
   ): Exercise[] {
     if (!this.miniSearch) {
