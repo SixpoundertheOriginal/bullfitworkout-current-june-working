@@ -1,0 +1,89 @@
+
+/* Mobile-first optimizations for App Store quality */
+
+/* Touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Gesture handling */
+.gesture-enabled {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Safe area handling */
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-safe-bottom {
+  bottom: env(safe-area-inset-bottom);
+}
+
+/* High-performance animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Backdrop blur optimization */
+.backdrop-blur-optimized {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Touch feedback */
+.touch-feedback {
+  transition: transform 0.1s ease-out;
+}
+
+.touch-feedback:active {
+  transform: scale(0.98);
+}
+
+/* Smooth scrolling */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-optimized {
+    color-scheme: dark;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .respect-motion-preference {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Battery optimization */
+.battery-optimized {
+  contain: layout style paint;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .high-contrast-optimized {
+    border: 2px solid;
+  }
+}
