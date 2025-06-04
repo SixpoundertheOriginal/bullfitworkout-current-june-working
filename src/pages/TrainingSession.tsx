@@ -17,6 +17,8 @@ import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
 import { ReadyWorkoutState } from "@/components/training/ReadyWorkoutState";
 import { WorkoutMotivation } from "@/components/training/WorkoutMotivation";
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
+import { WorkoutProgressTracker } from "@/components/training/WorkoutProgressTracker";
+import { InteractionFeedback, useFeedback } from "@/components/training/InteractionFeedback";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -59,6 +61,9 @@ const TrainingSessionPage = () => {
     ],
     [0, 0]
   );
+
+  // Add feedback hook
+  const { feedbackMessages, showFeedback } = useFeedback();
 
   useWorkoutTimer();
   const { play: playBell } = useSound('/sounds/bell.mp3');
@@ -128,7 +133,17 @@ const TrainingSessionPage = () => {
     }));
   };
 
-  const handleAddExercise = (exercise: Exercise | string) => {
+  // Enhanced set completion with feedback
+  const handleCompleteSetWithFeedback = (exerciseName: string, setIndex: number) => {
+    handleCompleteSet(exerciseName, setIndex);
+    showFeedback(
+      `Set ${setIndex + 1} completed! Great work! 💪`,
+      'success'
+    );
+  };
+
+  // Enhanced exercise addition with feedback
+  const handleAddExerciseWithFeedback = (exercise: Exercise | string) => {
     const name = typeof exercise === 'string' ? exercise : exercise.name;
     if (storeExercises[name]) {
       toast({ title: "Exercise already added", description: `${name} is already in your workout` });
@@ -138,6 +153,20 @@ const TrainingSessionPage = () => {
     setActiveExercise(name);
     if (workoutStatus === 'idle') startWorkout();
     setIsAddExerciseSheetOpen(false);
+    
+    showFeedback(
+      `${name} added to workout`,
+      'info'
+    );
+  };
+
+  // Enhanced exercise deletion with feedback
+  const handleDeleteExerciseWithFeedback = (exerciseName: string) => {
+    deleteExercise(exerciseName);
+    showFeedback(
+      `${exerciseName} removed from workout`,
+      'warning'
+    );
   };
 
   const handleAutoPopulateWorkout = () => {
@@ -238,6 +267,10 @@ const TrainingSessionPage = () => {
     );
   }
 
+  // Calculate navigation state
+  const exerciseNames = Object.keys(exercises);
+  const currentExerciseIndex = activeExercise ? exerciseNames.indexOf(activeExercise) : 0;
+  
   // Set up the adapter function to convert between the different exercise formats
   const handleSetExercises = (updatedExercises) => {
     if (typeof updatedExercises === 'function') {
@@ -249,6 +282,30 @@ const TrainingSessionPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
+      {/* Feedback Toast Container */}
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        {feedbackMessages.map((feedback) => (
+          <motion.div
+            key={feedback.id}
+            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.9 }}
+            className={`
+              flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm
+              ${feedback.type === 'success' 
+                ? 'bg-green-600/90 text-green-100' 
+                : feedback.type === 'warning'
+                  ? 'bg-orange-600/90 text-orange-100'
+                  : 'bg-blue-600/90 text-blue-100'
+              }
+            `}
+          >
+            {feedback.icon}
+            <span className="text-sm font-medium">{feedback.message}</span>
+          </motion.div>
+        ))}
+      </div>
+
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-4 py-6 pb-40">
           
@@ -310,20 +367,35 @@ const TrainingSessionPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Add Progress Tracker for Navigation Clarity */}
+              {hasExercises && (
+                <WorkoutProgressTracker
+                  currentExerciseIndex={currentExerciseIndex}
+                  totalExercises={exerciseNames.length}
+                  completedSets={completedSets}
+                  totalSets={totalSets}
+                  exercises={exerciseNames}
+                  activeExercise={activeExercise}
+                />
+              )}
+
               <ExerciseList
                 exercises={exercises}
                 activeExercise={activeExercise}
                 onAddSet={handleAddSet}
-                onCompleteSet={handleCompleteSet}
-                onDeleteExercise={deleteExercise}
+                onCompleteSet={handleCompleteSetWithFeedback}
+                onDeleteExercise={handleDeleteExerciseWithFeedback}
                 onRemoveSet={(name, i) => {
                   setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));
+                  showFeedback(`Set removed from ${name}`, 'info');
                 }}
                 onEditSet={(name, i) => {
                   setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: true } : s) }));
                 }}
                 onSaveSet={(name, i) => {
                   setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: false } : s) }));
+                  showFeedback(`${name} set updated`, 'success');
                 }}
                 onWeightChange={(name, i, v) => {
                   setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: +v || 0 } : s) }));
@@ -375,7 +447,7 @@ const TrainingSessionPage = () => {
       <AddExerciseSheet
         open={isAddExerciseSheetOpen}
         onOpenChange={setIsAddExerciseSheetOpen}
-        onSelectExercise={handleAddExercise}
+        onSelectExercise={handleAddExerciseWithFeedback}
         trainingType={trainingConfig?.trainingType}
       />
     </div>
