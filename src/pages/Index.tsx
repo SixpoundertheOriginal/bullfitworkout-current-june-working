@@ -32,6 +32,11 @@ const Index = () => {
 
   const isMobile = useIsMobile();
 
+  // Update handleStartTraining to go to funnel instead of direct training
+  const handleStartWorkoutFunnel = () => {
+    window.location.href = '/workout-setup/type';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Animated Level Up Overlay */}
@@ -86,12 +91,7 @@ const Index = () => {
               isSectionVisible={isSectionVisible}
               recommendedWorkoutType={recommendedWorkoutType}
               recommendedDuration={recommendedDuration}
-              onStartWorkout={() => handleStartTraining({ 
-                trainingType: recommendedWorkoutType, 
-                tags: [], 
-                duration: recommendedDuration, 
-                rankedExercises: [] 
-              })}
+              onStartWorkout={handleStartWorkoutFunnel}
               onContinueWorkout={handleContinueWorkout}
               onQuickStart={(duration, type) => {
                 handleStartTraining({ 
@@ -162,7 +162,7 @@ const Index = () => {
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
             className="fixed bottom-safe-bottom right-6 z-40"
           >
-            <ExerciseFAB onClick={() => handleStartTraining({ trainingType: recommendedWorkoutType, tags: [], duration: recommendedDuration, rankedExercises: [] })} />
+            <ExerciseFAB onClick={handleStartWorkoutFunnel} />
           </motion.div>
         )}
       </AnimatePresence>

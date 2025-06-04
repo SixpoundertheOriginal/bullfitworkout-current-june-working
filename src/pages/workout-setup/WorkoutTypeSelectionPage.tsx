@@ -17,7 +17,7 @@ export const WorkoutTypeSelectionPage = () => {
   };
 
   const handleContinue = () => {
-    navigate("/workout-setup/fitness-level");
+    navigate("/workout-setup/customize");
   };
 
   return (
@@ -25,7 +25,7 @@ export const WorkoutTypeSelectionPage = () => {
       title="Choose Your"
       subtitle="Adventure"
       showBackButton={false}
-      progress={{ current: 1, total: 5 }}
+      progress={{ current: 1, total: 2 }}
     >
       <div className="space-y-8">
         <motion.div

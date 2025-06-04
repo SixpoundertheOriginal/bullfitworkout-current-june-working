@@ -58,36 +58,15 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
     };
   }
 
-  // Quick start with smart defaults
-  const handleQuickStart = async () => {
-    setIsLoading(true);
-    
-    // Use smart defaults for 80% of users
-    const quickConfig = {
-      trainingType: recommendedType,
-      tags: [],
-      duration: recommendedDuration,
-      intensity: "Moderate"
-    };
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate processing
-      onStartTraining(quickConfig);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Advanced customization flow
-  const handleAdvancedStart = () => {
+  // Main start button now goes to funnel
+  const handleStartWorkout = () => {
     // Update context with current selections if available
     updateState({
       trainingType: state.trainingType || recommendedType,
       duration: state.duration || recommendedDuration
     });
     
-    setIsBottomSheetOpen(false);
-    navigate('/workout-setup');
+    navigate('/workout-setup/type');
   };
 
   const handleCustomStart = () => {
@@ -110,9 +89,9 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
     <>
       {/* Hero Section */}
       <div className="space-y-6">
-        {/* Quick Start Button */}
+        {/* Main Start Button - Now goes to funnel */}
         <HeroWorkoutButton
-          onPress={handleQuickStart}
+          onPress={handleStartWorkout}
           isLoading={isLoading}
           className="w-full"
         />
@@ -131,12 +110,12 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
             className="text-gray-600 dark:text-gray-400"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Customize
+            Quick Setup
           </Button>
         </div>
       </div>
 
-      {/* Bottom Sheet for Advanced Options */}
+      {/* Bottom Sheet for Quick Setup */}
       <BottomSheet
         isOpen={isBottomSheetOpen}
         onClose={() => setIsBottomSheetOpen(false)}
@@ -146,10 +125,10 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
           {/* Header */}
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Customize Workout
+              Quick Setup
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Tailor your training to your goals
+              Skip the funnel with quick options
             </p>
           </div>
 
@@ -219,17 +198,20 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
           >
             <Button
               variant="outline"
-              onClick={handleAdvancedStart}
+              onClick={() => {
+                setIsBottomSheetOpen(false);
+                handleStartWorkout();
+              }}
               className="h-12"
             >
-              Advanced Setup
+              Use Funnel
             </Button>
             <Button
               onClick={handleCustomStart}
               disabled={!state.trainingType}
               className="h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
             >
-              Start Custom
+              Start Now
             </Button>
           </motion.div>
         </div>
