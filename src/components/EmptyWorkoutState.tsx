@@ -13,7 +13,7 @@ interface EmptyWorkoutStateProps {
   className?: string;
 }
 
-export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({ 
+export const EmptyWorkoutState = React.memo<EmptyWorkoutStateProps>(({ 
   onTemplateSelect,
   className 
 }) => {
@@ -57,4 +57,6 @@ export const EmptyWorkoutState: React.FC<EmptyWorkoutStateProps> = ({
       </Card>
     </div>
   );
-}
+});
+
+EmptyWorkoutState.displayName = 'EmptyWorkoutState';

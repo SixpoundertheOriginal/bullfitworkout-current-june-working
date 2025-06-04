@@ -8,7 +8,7 @@ interface ExerciseCardProps {
   onAdd?: (exercise: Exercise) => void;
 }
 
-export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd }) => {
+export const ExerciseCard = React.memo<ExerciseCardProps>(({ exercise, onAdd }) => {
   return (
     <CommonExerciseCard
       exercise={exercise}
@@ -16,6 +16,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onAdd }) =
       onAdd={onAdd}
     />
   );
-};
+});
+
+ExerciseCard.displayName = 'ExerciseCard';
 
 export default ExerciseCard;
