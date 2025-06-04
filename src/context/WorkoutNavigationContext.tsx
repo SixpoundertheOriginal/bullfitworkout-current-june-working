@@ -44,7 +44,7 @@ export function WorkoutNavigationContextProvider({
     
     // Keep track of last path for recovery
     setLastPath(location.pathname);
-  }, [isTrainingRoute, location.pathname, updateLastActiveRoute]);
+  }, [isTrainingRoute, location.pathname]);
 
   // Log debug info for navigation context
   useEffect(() => {
