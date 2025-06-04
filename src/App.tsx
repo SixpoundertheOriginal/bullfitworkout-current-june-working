@@ -12,7 +12,9 @@ import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationCon
 import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
 import { PerformanceDashboard } from "@/components/PerformanceDashboard";
+import { MemoryDebugPanel } from "@/components/debug/MemoryDebugPanel";
 import { serviceWorkerManager } from "@/utils/serviceWorker";
+import { cleanupManager } from "@/services/cleanupManager";
 
 // Create the query client with optimized settings for enterprise performance
 const queryClient = new QueryClient({
@@ -42,10 +44,20 @@ function App() {
       // Could show a toast or banner to user
     };
 
+    // Listen for route changes to trigger cleanup
+    const handleRouteChange = () => {
+      // Clean up old scopes when navigating
+      const stats = cleanupManager.getStats();
+      const oldScopes = stats.scopeDetails.filter(scope => scope.age > 60000); // 1 minute
+      oldScopes.forEach(scope => cleanupManager.cleanupScope(scope.id));
+    };
+
     window.addEventListener('sw-update-available', handleSwUpdate);
+    window.addEventListener('popstate', handleRouteChange);
     
     return () => {
       window.removeEventListener('sw-update-available', handleSwUpdate);
+      window.removeEventListener('popstate', handleRouteChange);
     };
   }, []);
 
@@ -63,6 +75,7 @@ function App() {
                         <Toaster />
                         <RouterProvider />
                         <PerformanceDashboard />
+                        <MemoryDebugPanel />
                       </TooltipProvider>
                     </LayoutProvider>
                   </WorkoutNavigationContextProvider>

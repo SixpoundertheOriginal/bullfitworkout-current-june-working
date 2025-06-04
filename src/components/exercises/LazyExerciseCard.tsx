@@ -5,6 +5,7 @@ import { CommonExerciseCard } from './CommonExerciseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLazyLoading } from '@/hooks/useLazyLoading';
 import { useNetworkStatus } from '@/utils/serviceWorker';
+import { useCleanup } from '@/hooks/useCleanup';
 
 interface LazyExerciseCardProps {
   exercise: Exercise;
@@ -26,6 +27,17 @@ export const LazyExerciseCard: React.FC<LazyExerciseCardProps> = ({
     threshold: 0.1
   });
   const isOnline = useNetworkStatus();
+  const { registerCleanup } = useCleanup(`exercise-card-${exercise.id}`);
+
+  // Register any cleanup needed for this component
+  React.useEffect(() => {
+    // Example: if there were any timers, intervals, or subscriptions
+    // they would be registered here for cleanup
+    
+    return () => {
+      // Additional cleanup if needed beyond the useCleanup hook
+    };
+  }, [registerCleanup]);
 
   if (!shouldLoad) {
     return (

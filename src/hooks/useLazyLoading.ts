@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCleanup } from './useCleanup';
 
 interface LazyLoadOptions {
   rootMargin?: string;
@@ -18,13 +19,15 @@ export function useLazyLoading(options: LazyLoadOptions = {}) {
   const [isInView, setIsInView] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const { registerCleanup } = useCleanup('lazy-loading');
 
   const observeElement = useCallback((element: HTMLDivElement | null) => {
     if (!element) return;
 
     // Fallback for older browsers
     if (!window.IntersectionObserver) {
-      setTimeout(() => setIsInView(true), fallbackDelay);
+      const timeout = setTimeout(() => setIsInView(true), fallbackDelay);
+      registerCleanup(() => clearTimeout(timeout));
       return;
     }
 
@@ -44,19 +47,21 @@ export function useLazyLoading(options: LazyLoadOptions = {}) {
     );
 
     observerRef.current.observe(element);
-  }, [rootMargin, threshold, fallbackDelay]);
+    
+    // Register cleanup for the observer
+    registerCleanup(() => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    });
+  }, [rootMargin, threshold, fallbackDelay, registerCleanup]);
 
   useEffect(() => {
     const element = elementRef.current;
     if (element) {
       observeElement(element);
     }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
   }, [observeElement]);
 
   const load = useCallback(() => {
@@ -78,6 +83,7 @@ export function useLazyImage(src: string, options: LazyLoadOptions = {}) {
   const [imageSrc, setImageSrc] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const { registerCleanup } = useCleanup('lazy-image');
 
   useEffect(() => {
     if (!shouldLoad || !src) return;
@@ -87,18 +93,27 @@ export function useLazyImage(src: string, options: LazyLoadOptions = {}) {
 
     const img = new Image();
     
-    img.onload = () => {
+    const handleLoad = () => {
       setImageSrc(src);
       setIsLoading(false);
     };
     
-    img.onerror = () => {
+    const handleError = () => {
       setHasError(true);
       setIsLoading(false);
     };
     
+    img.onload = handleLoad;
+    img.onerror = handleError;
     img.src = src;
-  }, [shouldLoad, src]);
+
+    // Register cleanup to prevent memory leaks
+    registerCleanup(() => {
+      img.onload = null;
+      img.onerror = null;
+      img.src = '';
+    });
+  }, [shouldLoad, src, registerCleanup]);
 
   return {
     elementRef,

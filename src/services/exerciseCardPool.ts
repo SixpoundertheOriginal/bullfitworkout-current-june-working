@@ -1,4 +1,6 @@
 
+import { cleanupManager } from './cleanupManager';
+
 interface PooledExerciseCard {
   id: string;
   element: HTMLDivElement;
@@ -8,10 +10,13 @@ interface PooledExerciseCard {
 
 class ExerciseCardPool {
   private pool: PooledExerciseCard[] = [];
-  private maxPoolSize = 50; // Maximum number of cards to keep in pool
+  private maxPoolSize = 50;
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
+    // Register this pool for global cleanup
+    cleanupManager.registerGlobalCleanup(() => this.destroy());
+    
     // Clean up unused cards every 30 seconds
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
@@ -48,6 +53,28 @@ class ExerciseCardPool {
     }
   }
 
+  cleanup(): void {
+    const now = Date.now();
+    const maxAge = 5 * 60 * 1000; // 5 minutes
+
+    const beforeSize = this.pool.length;
+    
+    // Remove cards that haven't been used in 5 minutes
+    this.pool = this.pool.filter(card => {
+      if (!card.isInUse && (now - card.lastUsed) > maxAge) {
+        // Properly remove from DOM and clean up
+        this.cleanupCard(card);
+        return false;
+      }
+      return true;
+    });
+
+    const afterSize = this.pool.length;
+    if (beforeSize !== afterSize) {
+      console.log(`ExerciseCardPool cleanup: ${beforeSize} -> ${afterSize} cards`);
+    }
+  }
+
   private createNewCard(): PooledExerciseCard {
     const element = document.createElement('div');
     element.className = 'mb-4';
@@ -65,23 +92,24 @@ class ExerciseCardPool {
     card.element.innerHTML = '';
     card.element.className = 'mb-4';
     card.element.style.cssText = '';
+    
+    // Remove any event listeners that might be attached
+    const newElement = card.element.cloneNode(false) as HTMLDivElement;
+    if (card.element.parentNode) {
+      card.element.parentNode.replaceChild(newElement, card.element);
+    }
+    card.element = newElement;
   }
 
-  private cleanup(): void {
-    const now = Date.now();
-    const maxAge = 5 * 60 * 1000; // 5 minutes
-
-    // Remove cards that haven't been used in 5 minutes
-    this.pool = this.pool.filter(card => {
-      if (!card.isInUse && (now - card.lastUsed) > maxAge) {
-        // Remove from DOM if attached
-        if (card.element.parentNode) {
-          card.element.parentNode.removeChild(card.element);
-        }
-        return false;
-      }
-      return true;
-    });
+  private cleanupCard(card: PooledExerciseCard): void {
+    // Remove from DOM if attached
+    if (card.element.parentNode) {
+      card.element.parentNode.removeChild(card.element);
+    }
+    
+    // Clear references to help GC
+    card.element.innerHTML = '';
+    card.element.remove();
   }
 
   getPoolStats() {
@@ -93,18 +121,15 @@ class ExerciseCardPool {
   }
 
   destroy(): void {
+    console.log('Destroying ExerciseCardPool');
+    
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
     }
     
     // Clean up all cards
-    this.pool.forEach(card => {
-      if (card.element.parentNode) {
-        card.element.parentNode.removeChild(card.element);
-      }
-    });
-    
+    this.pool.forEach(card => this.cleanupCard(card));
     this.pool = [];
   }
 }
