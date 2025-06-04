@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -262,9 +261,16 @@ const TrainingSessionPage = () => {
   
   if (loadingExercises) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading exercises...
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center gap-4 text-white"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+          <p className="text-white/80 font-medium">Loading exercises...</p>
+        </motion.div>
       </div>
     );
   }
@@ -283,37 +289,54 @@ const TrainingSessionPage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white pt-16 pb-16">
-      {/* Feedback Toast Container */}
-      <div className="fixed top-20 right-4 z-50 space-y-2">
-        {feedbackMessages.map((feedback) => (
-          <motion.div
-            key={feedback.id}
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.9 }}
-            className={`
-              flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm
-              ${feedback.type === 'success' 
-                ? 'bg-green-600/90 text-green-100' 
-                : feedback.type === 'warning'
-                  ? 'bg-orange-600/90 text-orange-100'
-                  : 'bg-blue-600/90 text-blue-100'
-              }
-            `}
-          >
-            {feedback.icon}
-            <span className="text-sm font-medium">{feedback.message}</span>
-          </motion.div>
-        ))}
-      </div>
+    <div className="flex flex-col min-h-screen bg-black text-white relative">
+      {/* Enhanced Feedback Toast Container */}
+      <AnimatePresence>
+        <div className="fixed top-20 right-4 z-50 space-y-3 max-w-sm">
+          {feedbackMessages.map((feedback) => (
+            <motion.div
+              key={feedback.id}
+              initial={{ opacity: 0, x: 100, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 100, scale: 0.9 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 25,
+                mass: 0.8
+              }}
+              className={`
+                flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border
+                ${feedback.type === 'success' 
+                  ? 'bg-emerald-600/90 border-emerald-500/30 text-emerald-50' 
+                  : feedback.type === 'warning'
+                    ? 'bg-amber-600/90 border-amber-500/30 text-amber-50'
+                    : 'bg-blue-600/90 border-blue-500/30 text-blue-50'
+                }
+                transform-gpu will-change-transform
+              `}
+            >
+              <div className="flex-shrink-0">
+                {feedback.icon}
+              </div>
+              <span className="text-sm font-medium leading-5">{feedback.message}</span>
+            </motion.div>
+          ))}
+        </div>
+      </AnimatePresence>
 
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6 pb-40">
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto pt-16 pb-20">
+        <div className="mx-auto max-w-4xl px-4 py-6">
           
-          {/* Show Ready State for Auto-Populated Workouts */}
+          {/* Ready State Section */}
           {showReadyState && workoutTemplate && (
-            <div className="space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="space-y-8"
+            >
               <ReadyWorkoutState
                 template={workoutTemplate}
                 onStartWorkout={handleAutoPopulateWorkout}
@@ -325,22 +348,34 @@ const TrainingSessionPage = () => {
                 trainingType={trainingConfig?.trainingType || "Strength"}
               />
               
-              {/* Manual option */}
-              <div className="text-center pt-4">
+              {/* Manual Option */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+                className="text-center pt-6"
+              >
                 <button
                   onClick={() => setShowReadyState(false)}
-                  className="text-white/60 hover:text-white text-sm underline"
+                  className="text-white/60 hover:text-white text-sm underline underline-offset-4 
+                           transition-colors duration-200 hover:underline-offset-2"
                 >
                   Prefer to build your own workout?
                 </button>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
 
-          {/* Standard workout session UI */}
+          {/* Active Workout Session */}
           {!showReadyState && (
-            <>
-              <div className="mb-6 relative">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              {/* Session Header */}
+              <div className="relative">
                 <WorkoutSessionHeader
                   elapsedTime={elapsedTime}
                   exerciseCount={exerciseCount}
@@ -358,94 +393,128 @@ const TrainingSessionPage = () => {
                   restTimerResetSignal={restTimerResetSignal}
                   currentRestTime={currentRestTime}
                 />
-                {showRestTimerModal && (
-                  <div className="absolute right-4 top-full z-50 mt-2 w-72">
-                    <RestTimer
-                      isVisible={showRestTimerModal}
-                      onClose={() => { setShowRestTimerModal(false); setRestTimerActive(false); }}
-                      onComplete={handleRestTimerComplete}
-                      maxTime={currentRestTime || 60}
-                    />
-                  </div>
-                )}
+                
+                {/* Enhanced Rest Timer Modal */}
+                <AnimatePresence>
+                  {showRestTimerModal && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 25 
+                      }}
+                      className="absolute right-4 top-full z-50 mt-3 w-80"
+                    >
+                      <RestTimer
+                        isVisible={showRestTimerModal}
+                        onClose={() => { setShowRestTimerModal(false); setRestTimerActive(false); }}
+                        onComplete={handleRestTimerComplete}
+                        maxTime={currentRestTime || 60}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* Add Progress Tracker for Navigation Clarity */}
+              {/* Progress Tracker */}
               {hasExercises && (
-                <WorkoutProgressTracker
-                  currentExerciseIndex={currentExerciseIndex}
-                  totalExercises={exerciseNames.length}
-                  completedSets={completedSets}
-                  totalSets={totalSets}
-                  exercises={exerciseNames}
-                  activeExercise={activeExercise}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.4 }}
+                >
+                  <WorkoutProgressTracker
+                    currentExerciseIndex={currentExerciseIndex}
+                    totalExercises={exerciseNames.length}
+                    completedSets={completedSets}
+                    totalSets={totalSets}
+                    exercises={exerciseNames}
+                    activeExercise={activeExercise}
+                  />
+                </motion.div>
               )}
 
-              <ExerciseList
-                exercises={exercises}
-                activeExercise={activeExercise}
-                onAddSet={handleAddSet}
-                onCompleteSet={handleCompleteSetWithFeedback}
-                onDeleteExercise={handleDeleteExerciseWithFeedback}
-                onRemoveSet={(name, i) => {
-                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));
-                  showFeedback(`Set removed from ${name}`, 'info');
-                }}
-                onEditSet={(name, i) => {
-                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: true } : s) }));
-                }}
-                onSaveSet={(name, i) => {
-                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: false } : s) }));
-                  showFeedback(`${name} set updated`, 'success');
-                }}
-                onWeightChange={(name, i, v) => {
-                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: +v || 0 } : s) }));
-                }}
-                onRepsChange={(name, i, v) => {
-                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: parseInt(v) || 0 } : s) }));
-                }}
-                onRestTimeChange={(name, i, v) => {
-                  setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: parseInt(v) || 60 } : s) }));
-                }}
-                onWeightIncrement={(name, i, inc) => {
-                  setStoreExercises(prev => {
-                    const set = prev[name][i];
-                    return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: Math.max(0, (set.weight || 0) + inc) } : s) };
-                  });
-                }}
-                onRepsIncrement={(name, i, inc) => {
-                  setStoreExercises(prev => {
-                    const set = prev[name][i];
-                    return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: Math.max(0, (set.reps || 0) + inc) } : s) };
-                  });
-                }}
-                onRestTimeIncrement={(name, i, inc) => {
-                  setStoreExercises(prev => {
-                    const set = prev[name][i];
-                    return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: Math.max(0, (set.restTime || 60) + inc) } : s) };
-                  });
-                }}
-                onShowRestTimer={handleShowRestTimer}
-                onResetRestTimer={triggerRestTimerReset}
-                onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
-                setExercises={handleSetExercises}
-              />
-            </>
+              {/* Exercise List */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+              >
+                <ExerciseList
+                  exercises={exercises}
+                  activeExercise={activeExercise}
+                  onAddSet={handleAddSet}
+                  onCompleteSet={handleCompleteSetWithFeedback}
+                  onDeleteExercise={handleDeleteExerciseWithFeedback}
+                  onRemoveSet={(name, i) => {
+                    setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));
+                    showFeedback(`Set removed from ${name}`, 'info');
+                  }}
+                  onEditSet={(name, i) => {
+                    setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: true } : s) }));
+                  }}
+                  onSaveSet={(name, i) => {
+                    setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, isEditing: false } : s) }));
+                    showFeedback(`${name} set updated`, 'success');
+                  }}
+                  onWeightChange={(name, i, v) => {
+                    setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: +v || 0 } : s) }));
+                  }}
+                  onRepsChange={(name, i, v) => {
+                    setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: parseInt(v) || 0 } : s) }));
+                  }}
+                  onRestTimeChange={(name, i, v) => {
+                    setStoreExercises(prev => ({ ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: parseInt(v) || 60 } : s) }));
+                  }}
+                  onWeightIncrement={(name, i, inc) => {
+                    setStoreExercises(prev => {
+                      const set = prev[name][i];
+                      return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, weight: Math.max(0, (set.weight || 0) + inc) } : s) };
+                    });
+                  }}
+                  onRepsIncrement={(name, i, inc) => {
+                    setStoreExercises(prev => {
+                      const set = prev[name][i];
+                      return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, reps: Math.max(0, (set.reps || 0) + inc) } : s) };
+                    });
+                  }}
+                  onRestTimeIncrement={(name, i, inc) => {
+                    setStoreExercises(prev => {
+                      const set = prev[name][i];
+                      return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: Math.max(0, (set.restTime || 60) + inc) } : s) };
+                    });
+                  }}
+                  onShowRestTimer={handleShowRestTimer}
+                  onResetRestTimer={triggerRestTimerReset}
+                  onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
+                  setExercises={handleSetExercises}
+                />
+              </motion.div>
+            </motion.div>
           )}
         </div>
       </main>
 
-      {/* Bottom drawer for Add & Finish - only show when not in ready state */}
+      {/* Enhanced Footer */}
       {!showReadyState && (
-        <WorkoutSessionFooter
-          onAddExercise={() => setIsAddExerciseSheetOpen(true)}
-          onFinishWorkout={handleFinishWorkout}
-          hasExercises={hasExercises}
-          isSaving={isSaving}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
+          <WorkoutSessionFooter
+            onAddExercise={() => setIsAddExerciseSheetOpen(true)}
+            onFinishWorkout={handleFinishWorkout}
+            hasExercises={hasExercises}
+            isSaving={isSaving}
+          />
+        </motion.div>
       )}
 
+      {/* Enhanced Add Exercise Sheet */}
       <AddExerciseSheet
         open={isAddExerciseSheetOpen}
         onOpenChange={setIsAddExerciseSheetOpen}

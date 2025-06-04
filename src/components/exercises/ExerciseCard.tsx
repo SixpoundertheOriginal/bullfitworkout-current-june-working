@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowUpRight, ArrowDownRight, PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { SetRow } from '@/components/SetRow';
 import { Badge } from "@/components/ui/badge";
 import { ExerciseHeader } from '@/components/ExerciseHeader';
@@ -94,6 +95,7 @@ const ExerciseCard = ({
 }) => {
   const { weightUnit } = useWeightUnit();
   const { exercises: dbExercises } = useExercises();
+  const [isExpanded, setIsExpanded] = useState(true);
   
   const previousSession = getPreviousSessionData(exercise);
   const olderSession = exerciseHistoryData[exercise]?.[1] || previousSession;
@@ -124,113 +126,215 @@ const ExerciseCard = ({
   const exerciseGroup = previousSession?.exerciseGroup || "";
   const hasSameGroupData = exerciseGroup && previousVolume > 0;
 
+  const completedSetsCount = sets.filter(set => set.completed).length;
+  const completionProgress = sets.length > 0 ? (completedSetsCount / sets.length) * 100 : 0;
+
   return (
-    <Card className={`relative overflow-hidden transition-all duration-300 ${
-      isActive ? "ring-2 ring-purple-500/50" : "ring-1 ring-gray-800"
-    }`}>
-      <CardContent className="p-0">
-        <ExerciseHeader
-          exerciseName={exercise}
-          lastSession={{
-            weight: previousSessionWeight,
-            reps: previousSession.reps,
-            sets: previousSession.sets
-          }}
-          weightUnit={weightUnit}
-        />
-
-        {/* Add Delete Button for Exercise */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-1 top-1 text-gray-400 hover:text-red-500 hover:bg-gray-800/50"
-          onClick={onDeleteExercise}
-          aria-label="Delete exercise"
-        >
-          <Trash2 size={16} />
-        </Button>
-        
-        <div className="px-4 pb-4">
-          <Progress 
-            value={0}
-            className="h-1.5 mb-6 bg-gray-800/50 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
-          />
-
-          <div className="space-y-1">
-            {sets.map((set, index) => (
-              <SetRow 
-                key={index}
-                setNumber={index + 1}
-                weight={set.weight}
-                reps={set.reps}
-                restTime={set.restTime}
-                completed={set.completed}
-                isEditing={set.isEditing || false}
-                exerciseName={exercise}
-                onComplete={() => onCompleteSet(index)}
-                onEdit={() => onEditSet(index)}
-                onSave={() => onSaveSet(index)}
-                onRemove={() => onRemoveSet(index)}
-                onWeightChange={(e) => onWeightChange(index, e.target.value)}
-                onRepsChange={(e) => onRepsChange(index, e.target.value)}
-                onRestTimeChange={onRestTimeChange ? (e) => onRestTimeChange(index, e.target.value) : undefined}
-                onWeightIncrement={(value) => onWeightIncrement(index, value)}
-                onRepsIncrement={(value) => onRepsIncrement(index, value)}
-                onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(index, value) : undefined}
-                weightUnit={weightUnit}
-                currentVolume={set.weight * set.reps}
-              />
-            ))}
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-gray-800">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Current Volume</span>
-              <span className="font-mono">
-                {currentVolume.toFixed(1)} {weightUnit}
-              </span>
-            </div>
-            
-            {hasSameGroupData && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">vs Previous Session</span>
-                <span className={`font-mono ${volumeDiff >= 0 ? "text-green-400" : "text-red-400"}`}>
-                  {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
-                </span>
-              </div>
-            )}
-
-            {hasSameGroupData && (
-              <Progress 
-                value={currentVolume > 0 ? 
-                  Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200) : 0} 
-                className={`h-1.5 mt-2 bg-gray-800 ${
-                  currentVolume >= previousVolume ? "[&>div]:bg-green-500" : "[&>div]:bg-red-500"
-                }`}
-              />
-            )}
-          </div>
-
-          <Button
-            onClick={onAddSet}
-            className="w-full mt-4 py-3 flex items-center justify-center text-sm 
-              bg-gradient-to-r from-purple-600 to-pink-500 
-              hover:from-purple-700 hover:to-pink-600 
-              text-white font-medium rounded-full 
-              transition-all duration-300 
-              transform hover:scale-[1.02] active:scale-[0.98] 
-              shadow-lg hover:shadow-xl 
-              group"
-          >
-            <PlusCircle 
-              size={24} 
-              className="mr-2 group-hover:rotate-90 transition-transform duration-300" 
+    <motion.div
+      layout
+      whileHover={{ y: -2 }}
+      transition={{ 
+        layout: { duration: 0.3 },
+        hover: { duration: 0.2 }
+      }}
+    >
+      <Card className={`
+        relative overflow-hidden transition-all duration-300 transform-gpu
+        ${isActive 
+          ? "ring-2 ring-purple-500/50 shadow-xl shadow-purple-500/10 bg-gradient-to-br from-gray-900 via-gray-900 to-purple-900/20" 
+          : "ring-1 ring-gray-800 hover:ring-gray-700 bg-gray-900/80 backdrop-blur-sm"
+        }
+        hover:shadow-2xl hover:shadow-black/20
+        border-0
+      `}>
+        <CardContent className="p-0">
+          {/* Enhanced Exercise Header */}
+          <div className="relative">
+            <ExerciseHeader
+              exerciseName={exercise}
+              lastSession={{
+                weight: previousSessionWeight,
+                reps: previousSession.reps,
+                sets: previousSession.sets
+              }}
+              weightUnit={weightUnit}
             />
-            Add Set
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+
+            {/* Enhanced Action Buttons */}
+            <div className="absolute right-2 top-2 flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800/50 transition-all duration-200"
+                onClick={() => setIsExpanded(!isExpanded)}
+                aria-label={isExpanded ? "Collapse exercise" : "Expand exercise"}
+              >
+                <motion.div
+                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown size={16} />
+                </motion.div>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-900/20 transition-all duration-200"
+                onClick={onDeleteExercise}
+                aria-label="Delete exercise"
+              >
+                <Trash2 size={16} />
+              </Button>
+            </div>
+
+            {/* Active Exercise Indicator */}
+            {isActive && (
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"
+              />
+            )}
+          </div>
+          
+          {/* Collapsible Content */}
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 space-y-4">
+                  {/* Enhanced Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>Progress</span>
+                      <span>{completedSetsCount}/{sets.length} sets</span>
+                    </div>
+                    <Progress 
+                      value={completionProgress}
+                      className="h-2 bg-gray-800/50 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 [&>div]:transition-all [&>div]:duration-500"
+                    />
+                  </div>
+
+                  {/* Sets List with Enhanced Animation */}
+                  <div className="space-y-2">
+                    <AnimatePresence mode="popLayout">
+                      {sets.map((set, index) => (
+                        <motion.div
+                          key={index}
+                          layout
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ 
+                            duration: 0.3,
+                            delay: index * 0.05,
+                            layout: { duration: 0.2 }
+                          }}
+                        >
+                          <SetRow 
+                            setNumber={index + 1}
+                            weight={set.weight}
+                            reps={set.reps}
+                            restTime={set.restTime}
+                            completed={set.completed}
+                            isEditing={set.isEditing || false}
+                            exerciseName={exercise}
+                            onComplete={() => onCompleteSet(index)}
+                            onEdit={() => onEditSet(index)}
+                            onSave={() => onSaveSet(index)}
+                            onRemove={() => onRemoveSet(index)}
+                            onWeightChange={(e) => onWeightChange(index, e.target.value)}
+                            onRepsChange={(e) => onRepsChange(index, e.target.value)}
+                            onRestTimeChange={onRestTimeChange ? (e) => onRestTimeChange(index, e.target.value) : undefined}
+                            onWeightIncrement={(value) => onWeightIncrement(index, value)}
+                            onRepsIncrement={(value) => onRepsIncrement(index, value)}
+                            onRestTimeIncrement={onRestTimeIncrement ? (value) => onRestTimeIncrement(index, value) : undefined}
+                            weightUnit={weightUnit}
+                            currentVolume={set.weight * set.reps}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Enhanced Volume Stats */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="pt-3 border-t border-gray-800 space-y-2"
+                  >
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400 font-medium">Current Volume</span>
+                      <span className="font-mono text-purple-300 font-semibold">
+                        {currentVolume.toFixed(1)} {weightUnit}
+                      </span>
+                    </div>
+                    
+                    {hasSameGroupData && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">vs Previous Session</span>
+                          <span className={`font-mono font-semibold ${volumeDiff >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                            {volumeDiff > 0 ? "+" : ""}{volumeDiff.toFixed(1)} {weightUnit} ({volumePercentChange}%)
+                          </span>
+                        </div>
+
+                        <Progress 
+                          value={currentVolume > 0 ? Math.min((currentVolume / Math.max(previousVolume, 1)) * 100, 200) : 0} 
+                          className={`h-1.5 mt-2 bg-gray-800 transition-all duration-500 ${
+                            currentVolume >= previousVolume 
+                              ? "[&>div]:bg-gradient-to-r [&>div]:from-emerald-500 [&>div]:to-green-500" 
+                              : "[&>div]:bg-gradient-to-r [&>div]:from-red-500 [&>div]:to-orange-500"
+                          }`}
+                        />
+                      </>
+                    )}
+                  </motion.div>
+
+                  {/* Enhanced Add Set Button */}
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <Button
+                      onClick={onAddSet}
+                      className="
+                        w-full py-3 flex items-center justify-center gap-3 mt-4
+                        bg-gradient-to-r from-purple-600/80 to-pink-600/80 
+                        hover:from-purple-600 hover:to-pink-600 
+                        text-white font-medium rounded-xl 
+                        transition-all duration-300 ease-out
+                        shadow-lg hover:shadow-xl hover:shadow-purple-500/20
+                        border border-purple-500/20 hover:border-purple-400/30
+                        group backdrop-blur-sm
+                      "
+                    >
+                      <motion.div
+                        whileHover={{ rotate: 90 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <PlusCircle size={20} className="text-white" />
+                      </motion.div>
+                      <span>Add Set</span>
+                      
+                      {/* Subtle glow effect */}
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </Button>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 

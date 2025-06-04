@@ -1,6 +1,7 @@
 
 import React from "react";
-import { Card } from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
 import { ExerciseSet } from "@/types/exercise";
 import ExerciseCard from '@/components/exercises/ExerciseCard';
 
@@ -48,9 +49,34 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   
   if (exerciseList.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-        <p className="text-lg mb-4">No exercises added yet</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center justify-center py-16 px-6"
+      >
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-16 h-16 mx-auto rounded-full bg-gray-800/50 flex items-center justify-center mb-6">
+            <svg 
+              className="w-8 h-8 text-gray-500" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={1.5} 
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6" 
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-white">Ready to start training?</h3>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Add your first exercise to begin your workout session
+          </p>
+        </div>
+      </motion.div>
     );
   }
 
@@ -90,29 +116,58 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   };
 
   return (
-    <div className="space-y-6 mb-32">
-      {exerciseList.map(exerciseName => (
-        <ExerciseCard
-          key={exerciseName}
-          exercise={exerciseName}
-          sets={exercises[exerciseName]}
-          isActive={activeExercise === exerciseName}
-          onAddSet={() => handleAddSet(exerciseName)}
-          onCompleteSet={(setIndex) => onCompleteSet(exerciseName, setIndex)}
-          onDeleteExercise={() => onDeleteExercise(exerciseName)}
-          onRemoveSet={(setIndex) => onRemoveSet(exerciseName, setIndex)}
-          onEditSet={(setIndex) => onEditSet(exerciseName, setIndex)}
-          onSaveSet={(setIndex) => onSaveSet(exerciseName, setIndex)}
-          onWeightChange={(setIndex, value) => onWeightChange(exerciseName, setIndex, value)}
-          onRepsChange={(setIndex, value) => onRepsChange(exerciseName, setIndex, value)}
-          onRestTimeChange={(setIndex, value) => onRestTimeChange(exerciseName, setIndex, value)}
-          onWeightIncrement={(setIndex, increment) => onWeightIncrement(exerciseName, setIndex, increment)}
-          onRepsIncrement={(setIndex, increment) => onRepsIncrement(exerciseName, setIndex, increment)}
-          onRestTimeIncrement={(setIndex, increment) => onRestTimeIncrement(exerciseName, setIndex, increment)}
-          onShowRestTimer={onShowRestTimer}
-          onResetRestTimer={onResetRestTimer}
-        />
-      ))}
+    <div className="space-y-4 pb-6">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-white">Active Exercises</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            {exerciseList.length} exercise{exerciseList.length !== 1 ? 's' : ''} in progress
+          </p>
+        </div>
+      </div>
+
+      {/* Exercise Cards with Staggered Animation */}
+      <div className="space-y-6">
+        <AnimatePresence mode="popLayout">
+          {exerciseList.map((exerciseName, index) => (
+            <motion.div
+              key={exerciseName}
+              layout
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              transition={{ 
+                duration: 0.4,
+                delay: index * 0.1,
+                ease: [0.25, 0.46, 0.45, 0.94],
+                layout: { duration: 0.3 }
+              }}
+              className="transform-gpu will-change-transform"
+            >
+              <ExerciseCard
+                exercise={exerciseName}
+                sets={exercises[exerciseName]}
+                isActive={activeExercise === exerciseName}
+                onAddSet={() => handleAddSet(exerciseName)}
+                onCompleteSet={(setIndex) => onCompleteSet(exerciseName, setIndex)}
+                onDeleteExercise={() => onDeleteExercise(exerciseName)}
+                onRemoveSet={(setIndex) => onRemoveSet(exerciseName, setIndex)}
+                onEditSet={(setIndex) => onEditSet(exerciseName, setIndex)}
+                onSaveSet={(setIndex) => onSaveSet(exerciseName, setIndex)}
+                onWeightChange={(setIndex, value) => onWeightChange(exerciseName, setIndex, value)}
+                onRepsChange={(setIndex, value) => onRepsChange(exerciseName, setIndex, value)}
+                onRestTimeChange={(setIndex, value) => onRestTimeChange(exerciseName, setIndex, value)}
+                onWeightIncrement={(setIndex, increment) => onWeightIncrement(exerciseName, setIndex, increment)}
+                onRepsIncrement={(setIndex, increment) => onRepsIncrement(exerciseName, setIndex, increment)}
+                onRestTimeIncrement={(setIndex, increment) => onRestTimeIncrement(exerciseName, setIndex, increment)}
+                onShowRestTimer={onShowRestTimer}
+                onResetRestTimer={onResetRestTimer}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
