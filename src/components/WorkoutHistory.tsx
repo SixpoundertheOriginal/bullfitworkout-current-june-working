@@ -57,7 +57,6 @@ export function WorkoutHistory({
   const handleFixWorkout = async (id: string) => {
     try {
       setFixingId(id);
-      // TODO: Implement workout fixing functionality
       toast({
         title: "Workout data updated"
       });
