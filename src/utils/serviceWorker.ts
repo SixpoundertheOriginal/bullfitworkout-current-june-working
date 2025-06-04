@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 export interface ServiceWorkerStatus {
   isSupported: boolean;
   isRegistered: boolean;
@@ -89,9 +91,11 @@ class ServiceWorkerManager {
 
   // Background sync
   async requestBackgroundSync(tag: string): Promise<void> {
-    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+    if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
       try {
-        await this.registration?.sync.register(tag);
+        // Type assertion for sync support
+        const registration = this.registration as any;
+        await registration?.sync?.register(tag);
       } catch (error) {
         console.log('Background sync not available:', error);
       }

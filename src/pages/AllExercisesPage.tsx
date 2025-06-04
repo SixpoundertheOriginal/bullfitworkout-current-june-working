@@ -653,7 +653,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       
       {/* Mobile Add Button */}
       {standalone && isMobile && (
-        <ExerciseFAB onClick={handleAdd} disabled={!isOnline} />
+        <ExerciseFAB onClick={handleAdd} />
       )}
     </div>
   );

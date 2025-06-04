@@ -16,10 +16,10 @@ export function useLazyLoading(options: LazyLoadOptions = {}) {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const elementRef = useRef<HTMLElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const observeElement = useCallback((element: HTMLElement | null) => {
+  const observeElement = useCallback((element: HTMLDivElement | null) => {
     if (!element) return;
 
     // Fallback for older browsers

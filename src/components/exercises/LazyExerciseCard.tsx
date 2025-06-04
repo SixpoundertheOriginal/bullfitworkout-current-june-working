@@ -29,14 +29,14 @@ export const LazyExerciseCard: React.FC<LazyExerciseCardProps> = ({
 
   if (!shouldLoad) {
     return (
-      <div ref={elementRef} className="mb-4">
+      <div ref={elementRef as React.RefObject<HTMLDivElement>} className="mb-4">
         <ExerciseCardSkeleton />
       </div>
     );
   }
 
   return (
-    <div ref={elementRef} className="mb-4">
+    <div ref={elementRef as React.RefObject<HTMLDivElement>} className="mb-4">
       <CommonExerciseCard
         exercise={exercise}
         variant={variant}
