@@ -1,6 +1,6 @@
 
 import { Exercise } from '@/types/exercise';
-import { exerciseSearchEngine, SearchFilters, SearchResult } from '@/services/exerciseSearchEngine';
+import { SearchFilters, SearchResult } from '@/services/exerciseSearchEngine';
 import { concurrencyManager } from '../concurrency/ConcurrencyManager';
 import { predictiveCache } from '@/services/predictiveCache';
 
@@ -17,11 +17,19 @@ interface SearchEngineConfig {
   maxConcurrentSearches?: number;
 }
 
-export class SearchEngine<TItem = Exercise> {
+export interface SearchEngine<T> {
+  search: (query: string, filters?: SearchFilters) => Promise<SearchResult>;
+  indexItems?: (items: T[]) => Promise<void>;
+  clearCache?: () => void;
+}
+
+export class ConcurrentSearchEngine<TItem = Exercise> {
   private searchCache = new Map<string, { result: SearchResult; timestamp: number }>();
   private readonly config: Required<SearchEngineConfig>;
+  private searchEngine: SearchEngine<TItem>;
 
-  constructor(config: SearchEngineConfig = {}) {
+  constructor(searchEngine: SearchEngine<TItem>, config: SearchEngineConfig = {}) {
+    this.searchEngine = searchEngine;
     this.config = {
       cacheTimeout: config.cacheTimeout ?? 5 * 60 * 1000, // 5 minutes
       enableWorkerFallback: config.enableWorkerFallback ?? true,
@@ -69,7 +77,7 @@ export class SearchEngine<TItem = Exercise> {
               throw new Error('Search cancelled');
             }
 
-            const result = await exerciseSearchEngine.search(query, filters);
+            const result = await this.searchEngine.search(query, filters);
             
             // Cache the result
             if (enableCache) {
@@ -201,4 +209,5 @@ export class SearchEngine<TItem = Exercise> {
 }
 
 // Create and export default instance for exercises
-export const exerciseSearchEngine = new SearchEngine<Exercise>();
+import { exerciseSearchEngine } from '@/services/exerciseSearchEngine';
+export const concurrentExerciseSearchEngine = new ConcurrentSearchEngine<Exercise>(exerciseSearchEngine);
