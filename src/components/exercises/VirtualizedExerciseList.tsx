@@ -115,11 +115,11 @@ export const VirtualizedExerciseList: React.FC<VirtualizedExerciseListProps> = (
                 <LazyExerciseCard
                   exercise={exercise}
                   variant={variant}
-                  onAdd={onAdd}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onViewDetails={onViewDetails}
-                  onDuplicate={onDuplicate}
+                  onAdd={onAdd ? () => onAdd(exercise) : undefined}
+                  onEdit={onEdit ? () => onEdit(exercise) : undefined}
+                  onDelete={onDelete ? () => onDelete(exercise) : undefined}
+                  onViewDetails={onViewDetails ? () => onViewDetails(exercise) : undefined}
+                  onDuplicate={onDuplicate ? () => onDuplicate(exercise) : undefined}
                 />
               </div>
             );
