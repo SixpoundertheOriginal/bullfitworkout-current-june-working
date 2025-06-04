@@ -1,8 +1,9 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Exercise } from '@/types/exercise';
-import { exerciseSearchEngine, SearchFilters, SearchResult } from '@/services/exerciseSearchEngine';
+import { SearchFilters, SearchResult } from '@/services/exerciseSearchEngine';
+import { concurrentSearchEngine } from '@/services/concurrentSearchEngine';
 import { useExercises } from '@/hooks/useExercises';
+import { useConcurrencyManager } from '@/hooks/useConcurrencyManager';
 
 export interface UseExerciseSearchOptions {
   initialQuery?: string;
@@ -48,13 +49,28 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
   const lastSearchRef = useRef<string>('');
   const searchControllerRef = useRef<AbortController>();
 
+  // Use concurrency manager for task coordination
+  const { enqueue, cancel, getStats } = useConcurrencyManager({
+    autoCancel: true,
+    defaultPriority: 'normal',
+    componentTag: 'exercise-search'
+  });
+
   // Index exercises when they're loaded
   useEffect(() => {
     if (exercises.length > 0) {
-      exerciseSearchEngine.indexExercises(exercises);
-      setIsIndexed(true);
+      enqueue({
+        id: 'index-exercises',
+        priority: 'high',
+        tags: ['indexing'],
+        run: async () => {
+          const { exerciseSearchEngine } = await import('@/services/exerciseSearchEngine');
+          exerciseSearchEngine.indexExercises(exercises);
+          setIsIndexed(true);
+        }
+      });
     }
-  }, [exercises]);
+  }, [exercises, enqueue]);
 
   const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFilters = {}) => {
     const searchKey = `${searchQuery}:${JSON.stringify(searchFilters)}`;
@@ -77,7 +93,19 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
 
     try {
       const startTime = performance.now();
-      const result: SearchResult = await exerciseSearchEngine.search(searchQuery, searchFilters);
+      
+      // Use concurrent search engine with high priority for user searches
+      const result: SearchResult = await concurrentSearchEngine.search(
+        searchQuery, 
+        searchFilters,
+        {
+          priority: 'high',
+          enableCache: true,
+          enablePredictive: true,
+          signal: searchControllerRef.current.signal
+        }
+      );
+      
       const duration = performance.now() - startTime;
       
       // Only update if this search wasn't cancelled
@@ -128,13 +156,17 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
       searchControllerRef.current.abort();
     }
     
+    // Cancel all search tasks
+    cancel('search');
+    concurrentSearchEngine.cancelAllSearches();
+    
     setQuery('');
     setFilters({});
     setResults([]);
     setFromCache(false);
     setFromWorker(false);
     lastSearchRef.current = '';
-  }, []);
+  }, [cancel]);
 
   // Auto-search when query or filters change (debounced)
   useEffect(() => {
@@ -142,6 +174,21 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
       searchDebounced(query, filters);
     }
   }, [query, filters, autoSearch, isIndexed, searchDebounced]);
+
+  // Preload popular searches in background
+  useEffect(() => {
+    if (isIndexed) {
+      enqueue({
+        id: 'preload-popular-searches',
+        priority: 'low',
+        tags: ['preload', 'background-sync'],
+        retryOnFail: true,
+        run: async () => {
+          await concurrentSearchEngine.preloadPopularSearches();
+        }
+      });
+    }
+  }, [isIndexed, enqueue]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -155,6 +202,8 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
     };
   }, []);
 
+  const concurrencyStats = getStats();
+  
   return {
     results,
     isSearching,
@@ -168,6 +217,9 @@ export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseEx
     isIndexed,
     fromCache,
     fromWorker,
-    workerStatus: exerciseSearchEngine.getWorkerStatus()
+    workerStatus: {
+      ready: isIndexed,
+      available: concurrencyStats.running < 5 // Based on max concurrent tasks
+    }
   };
 }

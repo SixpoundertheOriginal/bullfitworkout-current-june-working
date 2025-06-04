@@ -7,13 +7,15 @@ import { useMemoryPressure } from '@/hooks/useMemoryPressure';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';
 import { networkOptimization } from '@/services/networkOptimization';
+import { concurrencyManager } from '@/services/concurrencyManager';
 
 export const MemoryDebugPanel: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [stats, setStats] = useState({
     cleanup: cleanupManager.getStats(),
     pool: exerciseCardPool.getPoolStats(),
-    network: networkOptimization.getCacheStats()
+    network: networkOptimization.getCacheStats(),
+    concurrency: concurrencyManager.getStats()
   });
   const { memoryPressure, isHighMemoryUsage } = useMemoryPressure();
 
@@ -22,7 +24,8 @@ export const MemoryDebugPanel: React.FC = () => {
       setStats({
         cleanup: cleanupManager.getStats(),
         pool: exerciseCardPool.getPoolStats(),
-        network: networkOptimization.getCacheStats()
+        network: networkOptimization.getCacheStats(),
+        concurrency: concurrencyManager.getStats()
       });
     }, 1000);
 
@@ -45,6 +48,8 @@ export const MemoryDebugPanel: React.FC = () => {
     cleanupManager.cleanupAll();
     exerciseCardPool.cleanup();
     networkOptimization.clearCache();
+    concurrencyManager.cancelByTag('background-sync');
+    concurrencyManager.cancelByTag('prefetch');
   };
 
   const handleForceGC = () => {
@@ -55,8 +60,16 @@ export const MemoryDebugPanel: React.FC = () => {
     }
   };
 
+  const handlePauseConcurrency = () => {
+    concurrencyManager.pause();
+  };
+
+  const handleResumeConcurrency = () => {
+    concurrencyManager.resume();
+  };
+
   return (
-    <Card className="fixed bottom-4 right-4 z-50 w-80 max-h-96 overflow-auto bg-gray-900 border-gray-700">
+    <Card className="fixed bottom-4 right-4 z-50 w-96 max-h-96 overflow-auto bg-gray-900 border-gray-700">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm text-white">Memory Debug Panel</CardTitle>
@@ -83,6 +96,23 @@ export const MemoryDebugPanel: React.FC = () => {
           {isHighMemoryUsage && (
             <div className="text-red-400 text-xs">⚠ High memory usage detected</div>
           )}
+        </div>
+
+        <div>
+          <div className="text-gray-300 mb-1">Concurrency Manager:</div>
+          <div className="text-gray-400">
+            • Running: {stats.concurrency.running}
+            <br />
+            • Queued: {stats.concurrency.queued}
+            <br />
+            • Completed: {stats.concurrency.completed}
+            <br />
+            • Failed: {stats.concurrency.failed}
+            <br />
+            • Cancelled: {stats.concurrency.cancelled}
+            <br />
+            • Memory Pressure: {stats.concurrency.memoryPressure}
+          </div>
         </div>
 
         <div>
@@ -114,7 +144,7 @@ export const MemoryDebugPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button 
             onClick={handleForceCleanup} 
             size="sm" 
@@ -130,6 +160,22 @@ export const MemoryDebugPanel: React.FC = () => {
             className="text-xs"
           >
             Force GC
+          </Button>
+          <Button 
+            onClick={handlePauseConcurrency} 
+            size="sm" 
+            variant="outline"
+            className="text-xs"
+          >
+            Pause Tasks
+          </Button>
+          <Button 
+            onClick={handleResumeConcurrency} 
+            size="sm" 
+            variant="outline"
+            className="text-xs"
+          >
+            Resume Tasks
           </Button>
         </div>
       </CardContent>

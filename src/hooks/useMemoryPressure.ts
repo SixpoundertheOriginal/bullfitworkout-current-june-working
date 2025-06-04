@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';
 import { networkOptimization } from '@/services/networkOptimization';
+import { concurrencyManager } from '@/services/concurrencyManager';
 
 interface MemoryInfo {
   usedJSHeapSize: number;
@@ -33,6 +33,13 @@ export function useMemoryPressure() {
         
         setMemoryPressure(pressure);
         setIsHighMemoryUsage(pressure === 'high');
+        
+        // Dispatch memory pressure event for ConcurrencyManager
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('memory-pressure', {
+            detail: { level: pressure }
+          }));
+        }
       }
     };
 
@@ -50,6 +57,14 @@ export function useMemoryPressure() {
       const oldScopes = stats.scopeDetails.filter(scope => scope.age > 300000); // 5 minutes
       oldScopes.forEach(scope => cleanupManager.cleanupScope(scope.id));
       
+      // Cancel low-priority concurrent tasks
+      concurrencyManager.cancelByTag('low-priority');
+      concurrencyManager.cancelByTag('background-sync');
+      concurrencyManager.cancelByTag('prefetch');
+      
+      // Reduce concurrency limit
+      concurrencyManager.setConcurrencyLimit(2);
+      
       // Force garbage collection if available
       if ('gc' in window && typeof (window as any).gc === 'function') {
         (window as any).gc();
@@ -63,6 +78,13 @@ export function useMemoryPressure() {
       const stats = cleanupManager.getStats();
       const veryOldScopes = stats.scopeDetails.filter(scope => scope.age > 600000); // 10 minutes
       veryOldScopes.forEach(scope => cleanupManager.cleanupScope(scope.id));
+      
+      // Cancel background tasks only
+      concurrencyManager.cancelByTag('background-sync');
+      concurrencyManager.cancelByTag('prefetch');
+      
+      // Reduce concurrency limit slightly
+      concurrencyManager.setConcurrencyLimit(3);
     };
 
     // Check initially
