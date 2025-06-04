@@ -1,15 +1,13 @@
-
 import React, { useState, useEffect } from "react";
 import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Filter, X, ChevronLeft } from "lucide-react";
+import { Plus, Filter, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseDialog } from "@/components/ExerciseDialog";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Input } from "@/components/ui/input";
 import { 
   Select, 
   SelectContent, 
@@ -34,6 +32,10 @@ import {
 } from "@/components/ui/pagination";
 import { CommonExerciseCard } from "@/components/exercises/CommonExerciseCard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { EnhancedSearchBar } from "@/components/exercises/EnhancedSearchBar";
+import { useExerciseSearch } from "@/hooks/useExerciseSearch";
+import { usePerformanceOptimization } from "@/hooks/usePerformanceOptimization";
+import { predictiveCache } from "@/services/predictiveCache";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -49,12 +51,32 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<string>("suggested");
   
+  // Enhanced search functionality
+  const {
+    results: searchResults,
+    isSearching,
+    query: searchQuery,
+    filters: searchFilters,
+    setQuery: setSearchQuery,
+    setFilters: setSearchFilters,
+    fromCache,
+    isIndexed
+  } = useExerciseSearch({
+    autoSearch: true,
+    debounceMs: 300
+  });
+
+  // Performance optimization
+  usePerformanceOptimization({
+    enableMemoryMonitoring: true,
+    enablePerformanceTracking: true
+  });
+  
   // For delete confirmation
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
 
-  // Search and filter states
-  const [searchQuery, setSearchQuery] = useState("");
+  // Filter states for advanced filtering
   const [showFilters, setShowFilters] = useState(false);
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<MuscleGroup | "all">("all");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | "all">("all");
@@ -94,39 +116,44 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     return Array.from(exerciseMap.values());
   }, [workouts, exercises]);
 
-  // Filter exercises based on search query and filters
-  const filterExercises = (exercisesList: Exercise[]) => {
-    return exercisesList.filter(exercise => {
-      // Search filter
-      const matchesSearch = searchQuery === "" || 
-        exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        exercise.description?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Update search filters when local filters change
+  useEffect(() => {
+    const filters = {
+      muscleGroup: selectedMuscleGroup !== "all" ? selectedMuscleGroup : undefined,
+      equipment: selectedEquipment !== "all" ? selectedEquipment : undefined,
+      difficulty: selectedDifficulty !== "all" ? selectedDifficulty : undefined,
+      movement: selectedMovement !== "all" ? selectedMovement : undefined
+    };
+    
+    // Remove undefined values
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value !== undefined)
+    );
+    
+    setSearchFilters(cleanFilters);
+  }, [selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement, setSearchFilters]);
 
-      // Muscle group filter
-      const matchesMuscleGroup = selectedMuscleGroup === "all" || 
-        exercise.primary_muscle_groups.includes(selectedMuscleGroup as MuscleGroup) ||
-        (exercise.secondary_muscle_groups && exercise.secondary_muscle_groups.includes(selectedMuscleGroup as MuscleGroup));
+  // Record user search patterns for predictive caching
+  useEffect(() => {
+    if (searchQuery || Object.keys(searchFilters).length > 0) {
+      predictiveCache.recordUserSearch(searchQuery, searchFilters);
+    }
+  }, [searchQuery, searchFilters]);
 
-      // Equipment filter
-      const matchesEquipment = selectedEquipment === "all" || 
-        exercise.equipment_type.includes(selectedEquipment as EquipmentType);
-
-      // Difficulty filter
-      const matchesDifficulty = selectedDifficulty === "all" || 
-        exercise.difficulty === selectedDifficulty;
-
-      // Movement pattern filter
-      const matchesMovement = selectedMovement === "all" || 
-        exercise.movement_pattern === selectedMovement;
-
-      return matchesSearch && matchesMuscleGroup && matchesEquipment && 
-            matchesDifficulty && matchesMovement;
-    });
-  };
-
-  const suggestedExercises = filterExercises(exercises.slice(0, 20)); // Limit suggested to top 20 for better performance
-  const filteredRecent = filterExercises(recentExercises);
-  const filteredAll = filterExercises(exercises);
+  // Use search results when available, otherwise fallback to original exercises
+  const suggestedExercises = searchQuery || Object.keys(searchFilters).length > 0 
+    ? searchResults.slice(0, 20) 
+    : exercises.slice(0, 20);
+    
+  const filteredRecent = searchQuery || Object.keys(searchFilters).length > 0 
+    ? searchResults.filter(exercise => 
+        recentExercises.some(recent => recent.id === exercise.id)
+      )
+    : recentExercises;
+    
+  const filteredAll = searchQuery || Object.keys(searchFilters).length > 0 
+    ? searchResults 
+    : exercises;
 
   // Pagination logic
   const indexOfLastExercise = currentPage * exercisesPerPage;
@@ -140,10 +167,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     }
   };
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]);
+  }, [searchQuery, searchFilters]);
 
   const handleAdd = () => {
     setExerciseToEdit(null);
@@ -272,7 +299,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     if (exercisesList.length === 0) {
       return (
         <div className="text-center py-6 text-gray-400">
-          No exercises found
+          {isSearching ? "Searching..." : "No exercises found"}
         </div>
       );
     }
@@ -293,21 +320,16 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 />
               </PaginationItem>
               
-              {/* First page */}
-              {currentPage > 2 && (
-                <PaginationItem>
-                  <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
-                </PaginationItem>
-              )}
+              <PaginationItem>
+                <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
+              </PaginationItem>
               
-              {/* Ellipsis */}
               {currentPage > 3 && (
                 <PaginationItem>
                   <span className="px-2">...</span>
                 </PaginationItem>
               )}
               
-              {/* Previous page */}
               {currentPage > 1 && (
                 <PaginationItem>
                   <PaginationLink onClick={() => paginate(currentPage - 1)}>
@@ -316,12 +338,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 </PaginationItem>
               )}
               
-              {/* Current page */}
               <PaginationItem>
                 <PaginationLink isActive>{currentPage}</PaginationLink>
               </PaginationItem>
               
-              {/* Next page */}
               {currentPage < totalPages && (
                 <PaginationItem>
                   <PaginationLink onClick={() => paginate(currentPage + 1)}>
@@ -330,14 +350,12 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 </PaginationItem>
               )}
               
-              {/* Ellipsis */}
               {currentPage < totalPages - 2 && (
                 <PaginationItem>
                   <span className="px-2">...</span>
                 </PaginationItem>
               )}
               
-              {/* Last page */}
               {currentPage < totalPages - 1 && (
                 <PaginationItem>
                   <PaginationLink onClick={() => paginate(totalPages)}>
@@ -374,7 +392,6 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           mode={dialogMode}
         />
         
-        {/* Delete confirmation */}
         <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -425,24 +442,29 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           )}
         </div>
         
-        {/* Search bar */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
+        {/* Enhanced search bar */}
+        <div className="mb-4">
+          <EnhancedSearchBar
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            isSearching={isSearching}
+            fromCache={fromCache}
             placeholder="Search exercises..."
-            className="pl-9 bg-gray-800 border-gray-700"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            showCacheIndicator={true}
           />
-          {searchQuery && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="absolute right-2 top-1.5 h-7 w-7 p-0"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          
+          {/* Search status indicator */}
+          {isIndexed && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline" className="text-xs bg-green-900/30 border-green-500/30 text-green-400">
+                Search Ready ({exercises.length} exercises indexed)
+              </Badge>
+              {fromCache && (
+                <Badge variant="outline" className="text-xs bg-blue-900/30 border-blue-500/30 text-blue-400">
+                  Cached Results
+                </Badge>
+              )}
+            </div>
           )}
         </div>
                 
@@ -582,10 +604,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
             </Card>
           )}
           
-          {/* Tab content */}
+          {/* Tab content with search integration */}
           <div className="flex-1 overflow-y-auto">
             {/* Loading state */}
-            {isLoading && (
+            {(isLoading || (!isIndexed && exercises.length > 0)) && (
               <div className="space-y-4">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <Card key={index} className="bg-gray-900 border-gray-700 p-4">
@@ -605,52 +627,68 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               </div>
             )}
             
-            {/* Empty state */}
-            {!isLoading && !isError && filteredAll.length === 0 && activeTab === 'browse' && (
-              <div className="text-center py-12">
-                <div className="bg-gray-800/50 rounded-lg py-10 px-6 max-w-md mx-auto">
-                  {searchQuery || selectedMuscleGroup !== "all" || selectedEquipment !== "all" || 
-                  selectedDifficulty !== "all" || selectedMovement !== "all" ? (
-                    <>
-                      <h3 className="text-xl font-medium mb-2">No matching exercises</h3>
-                      <p className="text-gray-400 mb-6">Try adjusting your filters or search query</p>
-                      <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="text-xl font-medium mb-2">No exercises found</h3>
-                      <p className="text-gray-400 mb-6">Create your first exercise to get started</p>
-                      <Button variant="gradient" onClick={handleAdd}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Your First Exercise
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
+            {/* Search results or regular content */}
+            {!isLoading && !isError && isIndexed && (
+              <Tabs className="flex-1 overflow-hidden flex flex-col" value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid grid-cols-3 mb-4">
+                  <TabsTrigger value="suggested">
+                    Suggested {searchQuery && `(${suggestedExercises.length})`}
+                  </TabsTrigger>
+                  <TabsTrigger value="recent">
+                    Recent {searchQuery && `(${filteredRecent.length})`}
+                  </TabsTrigger>
+                  <TabsTrigger value="browse">
+                    Browse All {searchQuery && `(${filteredAll.length})`}
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Filters button - only show in browse tab */}
+                {activeTab === 'browse' && (
+                  <div className="mb-4">
+                    <Button 
+                      variant="outline"
+                      size="sm" 
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`flex items-center w-full justify-center ${showFilters ? 'bg-purple-900/50 border-purple-500' : ''}`}
+                    >
+                      <Filter className="w-4 h-4 mr-2" />
+                      Filters
+                      {(selectedMuscleGroup !== "all" || selectedEquipment !== "all" || 
+                        selectedDifficulty !== "all" || selectedMovement !== "all") && (
+                        <Badge variant="secondary" className="ml-2 bg-purple-600 text-xs">
+                          {[
+                            selectedMuscleGroup !== "all" ? 1 : 0,
+                            selectedEquipment !== "all" ? 1 : 0,
+                            selectedDifficulty !== "all" ? 1 : 0,
+                            selectedMovement !== "all" ? 1 : 0
+                          ].reduce((a, b) => a + b, 0)}
+                        </Badge>
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                <TabsContent value="suggested" className="mt-0 h-full">
+                  <div className="overflow-y-auto">
+                    {renderExerciseList(suggestedExercises)}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="recent" className="mt-0 h-full">
+                  <div className="overflow-y-auto">
+                    {renderExerciseList(filteredRecent)}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="browse" className="mt-0 h-full">
+                  <div className="overflow-y-auto">
+                    {renderExerciseList(filteredAll, true)}
+                  </div>
+                </TabsContent>
+              </Tabs>
             )}
-            
-            {/* Tab content */}
-            <TabsContent value="suggested" className="mt-0 h-full">
-              <div className="overflow-y-auto">
-                {renderExerciseList(suggestedExercises)}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="recent" className="mt-0 h-full">
-              <div className="overflow-y-auto">
-                {renderExerciseList(filteredRecent)}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="browse" className="mt-0 h-full">
-              <div className="overflow-y-auto">
-                {renderExerciseList(filteredAll, true)}
-              </div>
-            </TabsContent>
           </div>
-        </Tabs>
-      </div>
+        </div>
       
       {/* Mobile Add Button */}
       {standalone && isMobile && (
