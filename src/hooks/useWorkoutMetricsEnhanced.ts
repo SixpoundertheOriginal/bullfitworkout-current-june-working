@@ -117,7 +117,6 @@ export const useWorkoutMetricsEnhanced = (
       } else {
         weightedCount++;
       }
-      
       // Calculate volume for this exercise using our enhanced volume calculation
       let exerciseVolume = 0;
       sets.forEach(set => {
