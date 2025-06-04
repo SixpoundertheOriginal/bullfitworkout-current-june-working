@@ -63,6 +63,17 @@ const TrainingSessionPage = () => {
     [0, 0]
   );
 
+  // Calculate total volume (tonnage) and total reps
+  const [totalVolume, totalReps] = Object.entries(exercises).reduce(
+    ([volume, reps], [_, sets]) => {
+      const completedSets = sets.filter(s => s.completed);
+      const exerciseVolume = completedSets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+      const exerciseReps = completedSets.reduce((sum, set) => sum + set.reps, 0);
+      return [volume + exerciseVolume, reps + exerciseReps];
+    },
+    [0, 0]
+  );
+
   // Add feedback hook
   const { feedbackMessages, showFeedback } = useFeedback();
 
@@ -381,6 +392,8 @@ const TrainingSessionPage = () => {
                   exerciseCount={exerciseCount}
                   completedSets={completedSets}
                   totalSets={totalSets}
+                  totalVolume={totalVolume}
+                  totalReps={totalReps}
                   workoutStatus={workoutStatus}
                   isRecoveryMode={!!workoutId}
                   saveProgress={0}

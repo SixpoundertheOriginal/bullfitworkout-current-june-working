@@ -10,6 +10,8 @@ interface WorkoutSessionHeaderProps {
   exerciseCount: number;
   completedSets: number;
   totalSets: number;
+  totalVolume: number;
+  totalReps: number;
   workoutStatus: WorkoutStatus;
   isRecoveryMode: boolean;
   saveProgress: any;
@@ -28,6 +30,8 @@ export const WorkoutSessionHeader: React.FC<WorkoutSessionHeaderProps> = ({
   exerciseCount,
   completedSets,
   totalSets,
+  totalVolume,
+  totalReps,
   workoutStatus,
   isRecoveryMode,
   saveProgress,
@@ -64,6 +68,8 @@ export const WorkoutSessionHeader: React.FC<WorkoutSessionHeaderProps> = ({
           exerciseCount={exerciseCount}
           completedSets={completedSets}
           totalSets={totalSets}
+          totalVolume={totalVolume}
+          totalReps={totalReps}
           showRestTimer={restTimerActive}
           onRestTimerComplete={onRestTimerComplete}
           onManualRestStart={onShowRestTimer}
