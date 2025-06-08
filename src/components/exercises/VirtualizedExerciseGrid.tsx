@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UnifiedExerciseCard } from './UnifiedExerciseCard';
 
 interface VirtualizedExerciseGridProps {
   exercises: Exercise[];
@@ -113,9 +115,6 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
       return next;
     });
   }, []);
-
-  // Import the unified card
-  const { UnifiedExerciseCard } = await import('./UnifiedExerciseCard');
 
   // Enhanced grid cell renderer using unified card
   const Cell = useCallback(({ columnIndex, rowIndex, style }: {
