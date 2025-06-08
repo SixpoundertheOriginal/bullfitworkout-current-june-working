@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from 'react';
 import { performanceMonitor } from '@/services/performanceMonitor';
 import { errorTracking } from '@/services/errorTracking';
@@ -145,10 +146,10 @@ export function useEnterprisePerformance(options: PerformanceOptions) {
     return () => clearTimeout(optimizationTimer);
   }, [autoOptimize, componentName, trackMemory]);
 
-  // Memory pressure callback
+  // Memory pressure callback - Fixed return type
   useEffect(() => {
     if (trackMemory) {
-      return memoryManager.onMemoryPressure((level) => {
+      const unsubscribe = memoryManager.onMemoryPressure((level) => {
         if (level.level === 'high' || level.level === 'critical') {
           console.log(`[Performance] Memory pressure in ${componentName}: ${level.level}`);
           errorTracking.capturePerformanceMetric(`${componentName}_memory_pressure`, level.usagePercentage, {
@@ -157,6 +158,8 @@ export function useEnterprisePerformance(options: PerformanceOptions) {
           });
         }
       });
+      
+      return unsubscribe;
     }
   }, [trackMemory, componentName]);
 

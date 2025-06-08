@@ -1,3 +1,4 @@
+
 import { performanceMonitor } from './performanceMonitor';
 import { cleanupManager } from './cleanupManager';
 
@@ -12,6 +13,13 @@ interface MemoryMetrics {
   totalJSHeapSize: number;
   jsHeapSizeLimit: number;
   pressureLevel: MemoryPressureLevel;
+}
+
+// Extend window interface for React Query client
+declare global {
+  interface Window {
+    __REACT_QUERY_CLIENT__?: any;
+  }
 }
 
 class MemoryManager {
@@ -130,7 +138,7 @@ class MemoryManager {
     console.log('🚨 Emergency memory cleanup initiated');
     
     // Clear all non-critical caches immediately
-    cleanupManager.forceCleanupAll();
+    cleanupManager.cleanupAll();
     
     // Clear React Query cache except active queries
     if (window.__REACT_QUERY_CLIENT__) {

@@ -64,21 +64,21 @@ export const PerformanceProfiler: React.FC<PerformanceProfilerProps> = ({
   );
 };
 
-// HOC for automatic performance profiling
-export function withPerformanceProfiler<P extends object>(
+// HOC for automatic performance profiling - Fixed typing
+export function withPerformanceProfiler<P extends Record<string, any>>(
   Component: React.ComponentType<P>,
   profileId?: string,
   threshold?: number
 ) {
-  const WrappedComponent = React.forwardRef<any, P>((props, ref) => {
+  const WrappedComponent = (props: P) => {
     const id = profileId || Component.displayName || Component.name || 'UnknownComponent';
     
     return (
       <PerformanceProfiler id={id} threshold={threshold}>
-        <Component {...props} ref={ref} />
+        <Component {...props} />
       </PerformanceProfiler>
     );
-  });
+  };
 
   WrappedComponent.displayName = `withPerformanceProfiler(${Component.displayName || Component.name})`;
   

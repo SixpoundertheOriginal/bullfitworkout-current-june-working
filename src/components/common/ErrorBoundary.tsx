@@ -208,12 +208,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// HOC for automatic error boundary wrapping
-export function withErrorBoundary<P extends object>(
+// HOC for automatic error boundary wrapping - Fixed typing
+export function withErrorBoundary<P extends Record<string, any>>(
   Component: React.ComponentType<P>,
   errorBoundaryProps?: Omit<Props, 'children'>
 ) {
-  const WrappedComponent = React.forwardRef<any, P>((props, ref) => {
+  const WrappedComponent = (props: P) => {
     const componentName = Component.displayName || Component.name || 'UnknownComponent';
     
     return (
@@ -221,10 +221,10 @@ export function withErrorBoundary<P extends object>(
         componentName={componentName}
         {...errorBoundaryProps}
       >
-        <Component {...props} ref={ref} />
+        <Component {...props} />
       </ErrorBoundary>
     );
-  });
+  };
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
   
