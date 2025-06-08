@@ -102,55 +102,57 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gray-900 border-gray-700">
-        <div className="flex flex-col h-full">
+      <DialogContent className="max-w-4xl h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] overflow-hidden p-0 bg-gray-900 border-gray-700 flex flex-col">
+        {/* Fixed Header with Progress */}
+        <div className="flex-shrink-0">
           <WizardProgressBar 
             currentStep={currentStep}
             totalSteps={4}
             percentage={getStepPercentage()}
           />
+        </div>
+        
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {currentStep === 1 && (
+            <WizardStep1
+              formData={formData}
+              updateFormData={updateFormData}
+              onNext={nextStep}
+              onCancel={() => onOpenChange(false)}
+            />
+          )}
           
-          <div className="flex-1 overflow-y-auto">
-            {currentStep === 1 && (
-              <WizardStep1
-                formData={formData}
-                updateFormData={updateFormData}
-                onNext={nextStep}
-                onCancel={() => onOpenChange(false)}
-              />
-            )}
-            
-            {currentStep === 2 && (
-              <WizardStep2
-                formData={formData}
-                updateFormData={updateFormData}
-                onNext={nextStep}
-                onPrev={prevStep}
-              />
-            )}
-            
-            {currentStep === 3 && (
-              <WizardStep3
-                formData={formData}
-                updateFormData={updateFormData}
-                onNext={nextStep}
-                onPrev={prevStep}
-              />
-            )}
-            
-            {currentStep === 4 && (
-              <WizardStep4
-                formData={formData}
-                onSubmit={handleSubmit}
-                onPrev={prevStep}
-                onAddAnother={() => {
-                  handleSubmit();
-                  resetWizard();
-                }}
-                loading={loading}
-              />
-            )}
-          </div>
+          {currentStep === 2 && (
+            <WizardStep2
+              formData={formData}
+              updateFormData={updateFormData}
+              onNext={nextStep}
+              onPrev={prevStep}
+            />
+          )}
+          
+          {currentStep === 3 && (
+            <WizardStep3
+              formData={formData}
+              updateFormData={updateFormData}
+              onNext={nextStep}
+              onPrev={prevStep}
+            />
+          )}
+          
+          {currentStep === 4 && (
+            <WizardStep4
+              formData={formData}
+              onSubmit={handleSubmit}
+              onPrev={prevStep}
+              onAddAnother={() => {
+                handleSubmit();
+                resetWizard();
+              }}
+              loading={loading}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

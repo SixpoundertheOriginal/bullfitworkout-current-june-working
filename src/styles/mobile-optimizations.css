@@ -60,6 +60,30 @@
   scroll-behavior: smooth;
 }
 
+/* Mobile modal optimizations */
+.mobile-modal-container {
+  height: calc(100vh - 2rem);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.mobile-fixed-footer {
+  flex-shrink: 0;
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 /* Dark mode optimizations */
 @media (prefers-color-scheme: dark) {
   .dark-mode-optimized {

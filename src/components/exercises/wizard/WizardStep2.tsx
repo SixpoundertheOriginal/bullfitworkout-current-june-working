@@ -39,8 +39,9 @@ export const WizardStep2: React.FC<WizardStep2Props> = ({
   const canProceed = formData.primaryMuscles.length > 0;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+    <div className="flex flex-col min-h-full">
+      {/* Scrollable Content */}
+      <div className="flex-1 p-6 space-y-6 pb-24">
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
@@ -90,12 +91,12 @@ export const WizardStep2: React.FC<WizardStep2Props> = ({
       </div>
 
       {/* Fixed Navigation Footer */}
-      <div className="flex-shrink-0 p-6 border-t border-gray-700 bg-gray-900/50">
-        <div className="flex justify-between items-center">
+      <div className="flex-shrink-0 p-6 border-t border-gray-700 bg-gray-900/95 backdrop-blur-sm">
+        <div className="flex justify-between items-center max-w-2xl mx-auto">
           <Button
             variant="outline"
             onClick={onPrev}
-            className="flex items-center gap-2 text-gray-400 border-gray-600 hover:text-white hover:border-gray-500"
+            className="flex items-center gap-2 text-gray-400 border-gray-600 hover:text-white hover:border-gray-500 touch-target"
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
@@ -105,7 +106,7 @@ export const WizardStep2: React.FC<WizardStep2Props> = ({
             onClick={onNext}
             disabled={!canProceed}
             className={cn(
-              "flex items-center gap-2 px-6",
+              "flex items-center gap-2 px-6 touch-target",
               canProceed
                 ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 : "bg-gray-700 text-gray-400"

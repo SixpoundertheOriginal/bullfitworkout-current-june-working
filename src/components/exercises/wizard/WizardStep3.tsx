@@ -37,144 +37,149 @@ export const WizardStep3: React.FC<WizardStep3Props> = ({
   const canProceed = formData.equipment.length > 0;
 
   return (
-    <div className="p-6 space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
-          <Settings className="w-8 h-8 text-green-500 mr-2" />
-          <h3 className="text-2xl font-bold text-white">Equipment & Details</h3>
+    <div className="flex flex-col min-h-full">
+      {/* Scrollable Content */}
+      <div className="flex-1 p-6 space-y-6 pb-24">
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-4">
+            <Settings className="w-8 h-8 text-green-500 mr-2" />
+            <h3 className="text-2xl font-bold text-white">Equipment & Details</h3>
+          </div>
+          <p className="text-gray-400">
+            Almost there! Select the equipment needed and set the difficulty level.
+          </p>
+          <div className="mt-2 text-sm text-purple-400 font-medium">
+            80% Complete ⚡
+          </div>
         </div>
-        <p className="text-gray-400">
-          Almost there! Select the equipment needed and set the difficulty level.
-        </p>
-        <div className="mt-2 text-sm text-purple-400 font-medium">
-          80% Complete ⚡
+
+        {/* Equipment Selection */}
+        <div>
+          <VisualEquipmentSelector
+            selectedEquipment={formData.equipment}
+            onEquipmentToggle={handleEquipmentToggle}
+            multiSelect={false}
+          />
         </div>
-      </div>
 
-      {/* Equipment Selection */}
-      <div>
-        <VisualEquipmentSelector
-          selectedEquipment={formData.equipment}
-          onEquipmentToggle={handleEquipmentToggle}
-          multiSelect={false}
-        />
-      </div>
-
-      {/* Difficulty Selection */}
-      <div className="max-w-2xl mx-auto">
-        <Label className="text-sm font-medium text-white mb-4 block">
-          Difficulty Level*
-        </Label>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {difficultyLevels.map((level) => {
-            const isSelected = formData.difficulty === level.id;
-            
-            return (
-              <button
-                key={level.id}
-                type="button"
-                onClick={() => updateFormData({ difficulty: level.id as any })}
-                className={cn(
-                  "p-4 rounded-xl border-2 transition-all duration-200 text-left",
-                  "hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500",
-                  isSelected
-                    ? "border-green-500 bg-green-600/20 shadow-lg shadow-green-500/20"
-                    : "border-gray-700 bg-gray-800/50 hover:border-green-400"
-                )}
-              >
-                <div className="flex items-center mb-2">
-                  <div className={cn(
-                    "w-3 h-3 rounded-full mr-3",
-                    isSelected ? level.color : "bg-gray-600"
-                  )} />
-                  <h4 className={cn(
-                    "font-semibold",
-                    isSelected ? "text-white" : "text-gray-300"
+        {/* Difficulty Selection */}
+        <div className="max-w-2xl mx-auto">
+          <Label className="text-sm font-medium text-white mb-4 block">
+            Difficulty Level*
+          </Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {difficultyLevels.map((level) => {
+              const isSelected = formData.difficulty === level.id;
+              
+              return (
+                <button
+                  key={level.id}
+                  type="button"
+                  onClick={() => updateFormData({ difficulty: level.id as any })}
+                  className={cn(
+                    "p-4 rounded-xl border-2 transition-all duration-200 text-left touch-target",
+                    "hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500",
+                    isSelected
+                      ? "border-green-500 bg-green-600/20 shadow-lg shadow-green-500/20"
+                      : "border-gray-700 bg-gray-800/50 hover:border-green-400"
+                  )}
+                >
+                  <div className="flex items-center mb-2">
+                    <div className={cn(
+                      "w-3 h-3 rounded-full mr-3",
+                      isSelected ? level.color : "bg-gray-600"
+                    )} />
+                    <h4 className={cn(
+                      "font-semibold",
+                      isSelected ? "text-white" : "text-gray-300"
+                    )}>
+                      {level.name}
+                    </h4>
+                  </div>
+                  <p className={cn(
+                    "text-sm",
+                    isSelected ? "text-green-200" : "text-gray-500"
                   )}>
-                    {level.name}
-                  </h4>
-                </div>
-                <p className={cn(
-                  "text-sm",
-                  isSelected ? "text-green-200" : "text-gray-500"
-                )}>
-                  {level.description}
-                </p>
-              </button>
-            );
-          })}
+                    {level.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Optional Details (Collapsible) */}
-      <div className="max-w-2xl mx-auto">
-        <button
-          type="button"
-          onClick={() => setShowOptionalDetails(!showOptionalDetails)}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
-        >
-          <span className="text-sm font-medium">Optional Details</span>
-          {showOptionalDetails ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
+        {/* Optional Details (Collapsible) */}
+        <div className="max-w-2xl mx-auto">
+          <button
+            type="button"
+            onClick={() => setShowOptionalDetails(!showOptionalDetails)}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 touch-target"
+          >
+            <span className="text-sm font-medium">Optional Details</span>
+            {showOptionalDetails ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
 
-        {showOptionalDetails && (
-          <div className="space-y-4 border border-gray-700 rounded-lg p-4 bg-gray-800/30">
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium text-white">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Brief description of the exercise (optional)..."
-                value={formData.description}
-                onChange={(e) => updateFormData({ description: e.target.value })}
-                className="mt-2 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500"
-                rows={3}
-              />
+          {showOptionalDetails && (
+            <div className="space-y-4 border border-gray-700 rounded-lg p-4 bg-gray-800/30">
+              <div>
+                <Label htmlFor="description" className="text-sm font-medium text-white">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Brief description of the exercise (optional)..."
+                  value={formData.description}
+                  onChange={(e) => updateFormData({ description: e.target.value })}
+                  className="mt-2 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500"
+                  rows={3}
+                />
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* Validation Message */}
+        {!canProceed && (
+          <div className="text-center">
+            <p className="text-amber-400 text-sm">
+              ⚡ Select equipment type to continue
+            </p>
           </div>
         )}
       </div>
 
-      {/* Validation Message */}
-      {!canProceed && (
-        <div className="text-center">
-          <p className="text-amber-400 text-sm">
-            ⚡ Select equipment type to continue
-          </p>
+      {/* Fixed Navigation Footer */}
+      <div className="flex-shrink-0 p-6 border-t border-gray-700 bg-gray-900/95 backdrop-blur-sm">
+        <div className="flex justify-between items-center max-w-2xl mx-auto">
+          <Button
+            variant="outline"
+            onClick={onPrev}
+            className="flex items-center gap-2 text-gray-400 border-gray-600 hover:text-white hover:border-gray-500 touch-target"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Previous
+          </Button>
+
+          <Button
+            onClick={onNext}
+            disabled={!canProceed}
+            className={cn(
+              "flex items-center gap-2 px-6 touch-target",
+              canProceed
+                ? "bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                : "bg-gray-700 text-gray-400"
+            )}
+          >
+            Review & Create
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex justify-between pt-6 border-t border-gray-700">
-        <Button
-          variant="outline"
-          onClick={onPrev}
-          className="flex items-center gap-2 text-gray-400 border-gray-600 hover:text-white hover:border-gray-500"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Previous
-        </Button>
-
-        <Button
-          onClick={onNext}
-          disabled={!canProceed}
-          className={cn(
-            "flex items-center gap-2 px-6",
-            canProceed
-              ? "bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-              : "bg-gray-700 text-gray-400"
-          )}
-        >
-          Review & Create
-          <ArrowRight className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
