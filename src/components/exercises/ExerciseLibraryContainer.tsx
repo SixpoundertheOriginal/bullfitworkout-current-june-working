@@ -71,7 +71,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   const exercisesPerPage = 8;
 
   // Extract recently used exercises with crash fixes
-  const recentExercises = useMemo(() => {
+  const recentExercises = React.useMemo(() => {
     if (!workouts?.length || !Array.isArray(exercises)) return [];
     
     const exerciseMap = new Map<string, Exercise>();
@@ -99,7 +99,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   }, [workouts, exercises]);
 
   // Update search filters when local filters change
-  useEffect(() => {
+  React.useEffect(() => {
     const filters = {
       muscleGroup: state.selectedMuscleGroup !== "all" ? state.selectedMuscleGroup : undefined,
       equipment: state.selectedEquipment !== "all" ? state.selectedEquipment : undefined,
@@ -115,14 +115,14 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   }, [state.selectedMuscleGroup, state.selectedEquipment, state.selectedDifficulty, state.selectedMovement, setSearchFilters]);
 
   // Record user search patterns for predictive caching
-  useEffect(() => {
+  React.useEffect(() => {
     if (state.searchQuery || Object.keys(searchFilters).length > 0) {
       predictiveCache.recordUserSearch(state.searchQuery, searchFilters);
     }
   }, [state.searchQuery, searchFilters]);
 
   // Use search results when available, otherwise fallback to original exercises
-  const suggestedExercises = useMemo(() => {
+  const suggestedExercises = React.useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
     
@@ -131,7 +131,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
       : safeExercises.slice(0, 20);
   }, [state.searchQuery, searchFilters, searchResults, exercises]);
     
-  const filteredRecent = useMemo(() => {
+  const filteredRecent = React.useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeRecentExercises = Array.isArray(recentExercises) ? recentExercises : [];
     
@@ -142,7 +142,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
       : safeRecentExercises;
   }, [state.searchQuery, searchFilters, searchResults, recentExercises]);
     
-  const filteredAll = useMemo(() => {
+  const filteredAll = React.useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
     
