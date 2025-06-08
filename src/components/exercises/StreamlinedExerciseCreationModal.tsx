@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { MuscleGroup, EquipmentType, MovementPattern, Difficulty,
          COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from '@/types/exercise';
 import { MultiSelect } from '@/components/MultiSelect';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { exerciseDataTransform } from '@/utils/exerciseDataTransform';
 
 interface StreamlinedExerciseCreationModalProps {
   open: boolean;
@@ -42,18 +42,35 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Defensive programming - ensure safe data access
+  const safeMuscleGroups = React.useMemo(() => {
+    return Array.isArray(COMMON_MUSCLE_GROUPS) ? COMMON_MUSCLE_GROUPS : [];
+  }, []);
+
+  const safeEquipment = React.useMemo(() => {
+    return Array.isArray(COMMON_EQUIPMENT) ? COMMON_EQUIPMENT : [];
+  }, []);
+
+  const safeMovementPatterns = React.useMemo(() => {
+    return Array.isArray(MOVEMENT_PATTERNS) ? MOVEMENT_PATTERNS : [];
+  }, []);
+
+  const safeDifficultyLevels = React.useMemo(() => {
+    return Array.isArray(DIFFICULTY_LEVELS) ? DIFFICULTY_LEVELS : [];
+  }, []);
+
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
       if (!exerciseData.name.trim()) newErrors.name = 'Name is required';
-      if (exerciseData.primary_muscle_groups.length === 0) {
+      if (!Array.isArray(exerciseData.primary_muscle_groups) || exerciseData.primary_muscle_groups.length === 0) {
         newErrors.primary_muscle_groups = 'At least one primary muscle group is required';
       }
     }
 
     if (step === 2) {
-      if (exerciseData.equipment_type.length === 0) {
+      if (!Array.isArray(exerciseData.equipment_type) || exerciseData.equipment_type.length === 0) {
         newErrors.equipment_type = 'At least one equipment type is required';
       }
     }
@@ -75,7 +92,9 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
 
   const handleSubmit = () => {
     if (validateStep(currentStep)) {
-      onSubmit(exerciseData);
+      // Use defensive data transformation
+      const transformedData = exerciseDataTransform.toDatabase(exerciseData);
+      onSubmit(transformedData);
     }
   };
 
@@ -131,9 +150,12 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
       <div>
         <Label>Primary Muscle Groups*</Label>
         <MultiSelect
-          options={COMMON_MUSCLE_GROUPS.map(group => ({ label: group, value: group }))}
-          selected={exerciseData.primary_muscle_groups}
-          onChange={(selected) => setExerciseData({ ...exerciseData, primary_muscle_groups: selected as MuscleGroup[] })}
+          options={safeMuscleGroups.map(group => ({ label: group, value: group }))}
+          selected={exerciseDataTransform.ensureArray(exerciseData.primary_muscle_groups)}
+          onChange={(selected) => setExerciseData({ 
+            ...exerciseData, 
+            primary_muscle_groups: exerciseDataTransform.ensureArray(selected) as MuscleGroup[] 
+          })}
           placeholder="Select primary muscle groups"
           className={errors.primary_muscle_groups ? 'border-red-500' : ''}
         />
@@ -143,9 +165,12 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
       <div>
         <Label>Secondary Muscle Groups</Label>
         <MultiSelect
-          options={COMMON_MUSCLE_GROUPS.map(group => ({ label: group, value: group }))}
-          selected={exerciseData.secondary_muscle_groups}
-          onChange={(selected) => setExerciseData({ ...exerciseData, secondary_muscle_groups: selected as MuscleGroup[] })}
+          options={safeMuscleGroups.map(group => ({ label: group, value: group }))}
+          selected={exerciseDataTransform.ensureArray(exerciseData.secondary_muscle_groups)}
+          onChange={(selected) => setExerciseData({ 
+            ...exerciseData, 
+            secondary_muscle_groups: exerciseDataTransform.ensureArray(selected) as MuscleGroup[] 
+          })}
           placeholder="Select secondary muscle groups"
         />
       </div>
@@ -157,9 +182,12 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
       <div>
         <Label>Equipment Type*</Label>
         <MultiSelect
-          options={COMMON_EQUIPMENT.map(equip => ({ label: equip, value: equip }))}
-          selected={exerciseData.equipment_type}
-          onChange={(selected) => setExerciseData({ ...exerciseData, equipment_type: selected as EquipmentType[] })}
+          options={safeEquipment.map(equip => ({ label: equip, value: equip }))}
+          selected={exerciseDataTransform.ensureArray(exerciseData.equipment_type)}
+          onChange={(selected) => setExerciseData({ 
+            ...exerciseData, 
+            equipment_type: exerciseDataTransform.ensureArray(selected) as EquipmentType[] 
+          })}
           placeholder="Select equipment types"
           className={errors.equipment_type ? 'border-red-500' : ''}
         />
@@ -177,7 +205,7 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {DIFFICULTY_LEVELS.map((level) => (
+              {safeDifficultyLevels.map((level) => (
                 <SelectItem key={level} value={level}>
                   {level.charAt(0).toUpperCase() + level.slice(1)}
                 </SelectItem>
@@ -196,7 +224,7 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MOVEMENT_PATTERNS.map((pattern) => (
+              {safeMovementPatterns.map((pattern) => (
                 <SelectItem key={pattern} value={pattern}>
                   {pattern.charAt(0).toUpperCase() + pattern.slice(1)}
                 </SelectItem>
@@ -249,8 +277,8 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
         <h4 className="font-medium mb-2">Exercise Summary</h4>
         <div className="space-y-1 text-sm text-gray-300">
           <p><span className="font-medium">Name:</span> {exerciseData.name}</p>
-          <p><span className="font-medium">Primary Muscles:</span> {exerciseData.primary_muscle_groups.join(', ')}</p>
-          <p><span className="font-medium">Equipment:</span> {exerciseData.equipment_type.join(', ')}</p>
+          <p><span className="font-medium">Primary Muscles:</span> {exerciseDataTransform.ensureArray(exerciseData.primary_muscle_groups).join(', ')}</p>
+          <p><span className="font-medium">Equipment:</span> {exerciseDataTransform.ensureArray(exerciseData.equipment_type).join(', ')}</p>
           <p><span className="font-medium">Difficulty:</span> {exerciseData.difficulty}</p>
         </div>
       </div>
