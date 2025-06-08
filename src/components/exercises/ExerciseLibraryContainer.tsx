@@ -7,7 +7,9 @@ import { usePerformanceOptimization } from '@/hooks/usePerformanceOptimization';
 import { useNetworkStatus } from '@/utils/serviceWorker';
 import { predictiveCache } from '@/services/predictiveCache';
 import { useExerciseLibraryState, ExerciseLibraryState } from '@/hooks/useExerciseLibraryState';
+import { usePersonalInsights } from '@/hooks/usePersonalInsights';
 import { Exercise } from '@/types/exercise';
+import { PersonalInsight } from '@/types/personal-analytics';
 
 interface ExerciseLibraryContainerProps {
   children: (props: {
@@ -39,6 +41,10 @@ interface ExerciseLibraryContainerProps {
     searchResults: Exercise[];
     searchFilters: Record<string, any>;
     setSearchFilters: (filters: Record<string, any>) => void;
+    
+    // Personal Analytics
+    personalInsights: PersonalInsight[];
+    isLoadingInsights: boolean;
   }) => React.ReactNode;
 }
 
@@ -97,7 +103,9 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
       exercisesPerPage: 8,
       searchResults: [],
       searchFilters: {},
-      setSearchFilters: () => {}
+      setSearchFilters: () => {},
+      personalInsights: [],
+      isLoadingInsights: true
     });
   }
 
@@ -120,7 +128,6 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     );
   }, [state.selectedMuscleGroup, state.selectedEquipment, state.selectedDifficulty, state.selectedMovement]);
 
-  // Enhanced search functionality with stable options
   const searchOptions = useMemo(() => ({
     autoSearch: true,
     debounceMs: 300
@@ -141,6 +148,12 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     enablePerformanceTracking: true
   });
 
+  // Personal Insights Integration
+  const { data: personalInsights = [], isLoading: isLoadingInsights } = usePersonalInsights({
+    exercises: Array.isArray(exercises) ? exercises : [],
+    enabled: Array.isArray(exercises) && exercises.length > 0
+  });
+
   // Sync search query with state
   useEffect(() => {
     if (state.searchQuery !== undefined) {
@@ -148,7 +161,6 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     }
   }, [state.searchQuery, setQuery]);
 
-  // Sync search filters
   useEffect(() => {
     if (searchFilters && Object.keys(searchFilters).length >= 0) {
       setSearchFilters(searchFilters);
@@ -205,7 +217,6 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     return () => clearTimeout(timeout);
   }, [state.searchQuery, searchFilters]);
 
-  // Safe computed values with proper fallbacks
   const suggestedExercises = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
@@ -248,7 +259,6 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     return { currentExercises, totalPages };
   }, [filteredAll, state.currentPage, exercisesPerPage]);
 
-  // Stable setSearchFilters function
   const stableSetSearchFilters = useCallback((filters: Record<string, any>) => {
     setSearchFilters(filters);
   }, [setSearchFilters]);
@@ -273,7 +283,9 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     exercisesPerPage: Number(exercisesPerPage) || 8,
     searchResults: Array.isArray(searchResults) ? searchResults : [],
     searchFilters: searchFilters || {},
-    setSearchFilters: stableSetSearchFilters
+    setSearchFilters: stableSetSearchFilters,
+    personalInsights: Array.isArray(personalInsights) ? personalInsights : [],
+    isLoadingInsights: Boolean(isLoadingInsights)
   }), [
     state,
     actions,
@@ -293,7 +305,9 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     exercisesPerPage,
     searchResults,
     searchFilters,
-    stableSetSearchFilters
+    stableSetSearchFilters,
+    personalInsights,
+    isLoadingInsights
   ]);
 
   return children(renderProps);

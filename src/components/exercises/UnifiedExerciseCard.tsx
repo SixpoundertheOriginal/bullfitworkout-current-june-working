@@ -6,6 +6,8 @@ import { ExerciseCardBase } from './ExerciseCardBase';
 import { ExerciseCardHeader } from './ExerciseCardHeader';
 import { ExerciseCardContent } from './ExerciseCardContent';
 import { ExerciseCardActions } from './ExerciseCardActions';
+import { PersonalStatsDisplay } from './PersonalStatsDisplay';
+import { usePersonalStats } from '@/hooks/usePersonalStats';
 
 export type ExerciseCardVariant = 'premium' | 'compact' | 'minimal';
 export type ExerciseCardContext = 'library' | 'selection' | 'workout';
@@ -20,6 +22,7 @@ interface UnifiedExerciseCardProps {
   onDelete?: (exercise: Exercise) => void;
   onFavorite?: (exercise: Exercise) => void;
   isFavorited?: boolean;
+  showPersonalStats?: boolean;
   className?: string;
 }
 
@@ -33,9 +36,16 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
   onDelete,
   onFavorite,
   isFavorited = false,
+  showPersonalStats = true,
   className
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+
+  // Fetch personal stats for this exercise
+  const { data: personalStats, isLoading: isLoadingStats } = usePersonalStats({
+    exerciseId: exercise.name,
+    enabled: showPersonalStats && context === 'library'
+  });
 
   const handleFavorite = () => {
     onFavorite?.(exercise);
@@ -67,6 +77,27 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
         
         {/* Content */}
         <ExerciseCardContent />
+        
+        {/* Personal Stats Section */}
+        {showPersonalStats && context === 'library' && (
+          <div className="mt-3 pt-3 border-t border-gray-700/50">
+            {isLoadingStats ? (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="w-3 h-3 border border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                Loading stats...
+              </div>
+            ) : personalStats ? (
+              <PersonalStatsDisplay 
+                stats={personalStats} 
+                variant={variant === 'minimal' ? 'compact' : 'compact'}
+              />
+            ) : (
+              <div className="text-xs text-gray-500">
+                Start training to see your stats
+              </div>
+            )}
+          </div>
+        )}
         
         {/* Actions */}
         <div className="mt-auto">
