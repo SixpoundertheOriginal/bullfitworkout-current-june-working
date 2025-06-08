@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "./styles/animations.css";
 @import "./styles/mobile-optimizations.css";
@@ -176,9 +175,10 @@
   @apply mx-auto px-4 md:px-8;
 }
 
-/* Dark theme: Always ON */
+/* Dark theme: Always ON - Enhanced for theme system */
 @layer base {
   :root {
+    /* Core color system with theme support */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -197,7 +197,79 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
     --radius: 0.75rem;
+    
+    /* Theme-aware color tokens */
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+    --color-muted: hsl(var(--muted, 240 3.7% 15.9%));
+    --color-border: hsl(var(--border));
+    --color-accent: hsl(var(--accent));
+    --color-primary: hsl(var(--primary));
+    --color-secondary: hsl(var(--secondary));
+    
+    /* Brand color fallbacks */
+    --brand-primary: var(--color-primary);
+    --brand-secondary: var(--color-secondary);
   }
+
+  /* Corporate Blue Theme */
+  [data-theme="corporate-blue"] {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 220 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 100% 60%;
+    --secondary-foreground: 0 0% 98%;
+    --accent: 200 100% 70%;
+    --accent-foreground: 220 100% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 220 100% 50%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+  }
+
+  /* Fitness Red Theme */
+  [data-theme="fitness-red"] {
+    --primary: 0 84% 60%;
+    --secondary: 15 90% 55%;
+    --accent: 45 96% 65%;
+    --ring: 0 84% 60%;
+  }
+
+  /* Enterprise Dark Theme */
+  [data-theme="enterprise-dark"] {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 50%;
+    --secondary: 220 30% 60%;
+    --accent: 200 50% 70%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 210 40% 50%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+  }
+
+  /* Theme transition animations */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
   .glass,
   .card-gradient {
     @apply bg-gradient-to-br from-secondary to-accent backdrop-blur-sm;
@@ -589,103 +661,96 @@
   }
 }
 
-@layer base {
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-    font-variation-settings: normal;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Enhanced mobile viewport handling */
-  html {
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    height: 100%;
-    height: -webkit-fill-available;
-  }
-
-  body {
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-  }
-
-  /* iOS specific optimizations */
-  @supports (-webkit-touch-callout: none) {
-    html {
-      height: -webkit-fill-available;
-    }
-  }
-}
-
+/* Theme-aware component classes */
 @layer components {
-  /* Button optimizations */
-  .btn-touch-optimized {
-    @apply min-h-[44px] min-w-[44px] touch-manipulation select-none;
+  /* Enhanced button system with theme support */
+  .btn-theme-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors;
   }
 
-  /* Card optimizations */
-  .card-optimized {
-    @apply gpu-accelerated battery-optimized;
+  .btn-theme-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors;
   }
 
-  /* Animation optimizations */
-  .animate-optimized {
-    @apply will-change-transform respect-motion-preference;
+  .btn-theme-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90 transition-colors;
   }
 
-  /* Responsive Component Variants */
-  .component-responsive {
-    container-type: inline-size;
+  .btn-theme-outline {
+    @apply border border-primary bg-transparent text-primary hover:bg-primary/10 transition-colors;
   }
 
-  /* Fluid Component System */
-  .component-fluid {
-    padding: clamp(var(--space-sm), 3vw, var(--space-lg));
-    margin: clamp(var(--space-xs), 1vw, var(--space-sm));
+  .btn-theme-ghost {
+    @apply bg-transparent text-primary hover:bg-primary/10 transition-colors;
   }
 
-  .component-fluid-large {
-    padding: clamp(var(--space-md), 4vw, var(--space-xl));
-    margin: clamp(var(--space-sm), 2vw, var(--space-md));
+  /* Theme-aware card system */
+  .card-theme {
+    @apply bg-card text-card-foreground border border-border shadow-sm;
+  }
+
+  .card-theme-muted {
+    @apply bg-muted text-muted-foreground border border-border;
+  }
+
+  /* Theme-aware text classes */
+  .text-theme-primary {
+    @apply text-primary;
+  }
+
+  .text-theme-secondary {
+    @apply text-secondary;
+  }
+
+  .text-theme-accent {
+    @apply text-accent;
+  }
+
+  .text-theme-muted {
+    @apply text-muted-foreground;
+  }
+
+  /* Enterprise branding support */
+  .brand-primary {
+    color: var(--brand-primary);
+  }
+
+  .brand-secondary {
+    color: var(--brand-secondary);
+  }
+
+  .bg-brand-primary {
+    background-color: var(--brand-primary);
+  }
+
+  .bg-brand-secondary {
+    background-color: var(--brand-secondary);
+  }
+
+  .border-brand-primary {
+    border-color: var(--brand-primary);
+  }
+
+  /* Theme transition optimizations */
+  .theme-transition {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  .theme-transition-slow {
+    transition-duration: 300ms;
   }
 }
 
-/* Safe-area inset utility for bottom (home-indicator / gesture nav) */
-@layer utilities {
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+/* Reduced motion for theme transitions */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0ms !important;
   }
-
-  /* Advanced Browser Support Detection */
-  @supports not (container-type: inline-size) {
-    .fallback-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: var(--space-md);
-    }
-  }
-
-  /* Reduced Motion Preferences */
-  @media (prefers-reduced-motion: reduce) {
-    .text-fluid-xs,
-    .text-fluid-sm,
-    .text-fluid-base,
-    .text-fluid-lg,
-    .text-fluid-xl,
-    .text-fluid-2xl,
-    .text-fluid-3xl {
-      font-size: var(--text-base);
-    }
-
-    .space-y-fluid-sm > * + *,
-    .space-y-fluid-md > * + *,
-    .space-y-fluid-lg > * + *,
-    .space-y-fluid-xl > * + * {
-      margin-top: var(--space-md);
-    }
+  
+  .theme-transition,
+  .theme-transition-slow {
+    transition: none !important;
   }
 }

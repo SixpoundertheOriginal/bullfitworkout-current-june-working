@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationContext";
 import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { DevOnly } from "@/components/debug/DevOnly";
 import { serviceWorkerManager } from "@/utils/serviceWorker";
 import { cleanupManager } from "@/services/cleanupManager";
@@ -63,22 +65,24 @@ function App() {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AuthProvider>
-            <WeightUnitContextProvider>
-              <DateRangeProvider>
-                <WorkoutStatsProvider>
-                  <WorkoutNavigationContextProvider>
-                    <LayoutProvider>
-                      <TooltipProvider>
-                        <Toaster />
-                        <RouterProvider />
-                      </TooltipProvider>
-                    </LayoutProvider>
-                  </WorkoutNavigationContextProvider>
-                </WorkoutStatsProvider>
-              </DateRangeProvider>
-            </WeightUnitContextProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <WeightUnitContextProvider>
+                <DateRangeProvider>
+                  <WorkoutStatsProvider>
+                    <WorkoutNavigationContextProvider>
+                      <LayoutProvider>
+                        <TooltipProvider>
+                          <Toaster />
+                          <RouterProvider />
+                        </TooltipProvider>
+                      </LayoutProvider>
+                    </WorkoutNavigationContextProvider>
+                  </WorkoutStatsProvider>
+                </DateRangeProvider>
+              </WeightUnitContextProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </React.StrictMode>
