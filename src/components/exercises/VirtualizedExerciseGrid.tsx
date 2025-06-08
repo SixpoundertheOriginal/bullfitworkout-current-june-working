@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
-import { ExerciseCard } from './ExerciseCard';
+import ExerciseCard from './ExerciseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface VirtualizedExerciseGridProps {
