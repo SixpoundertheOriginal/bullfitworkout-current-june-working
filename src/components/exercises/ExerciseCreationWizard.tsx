@@ -7,6 +7,8 @@ import { WizardStep1 } from './wizard/WizardStep1';
 import { WizardStep2 } from './wizard/WizardStep2';
 import { WizardStep3 } from './wizard/WizardStep3';
 import { WizardStep4 } from './wizard/WizardStep4';
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 export interface WizardFormData {
   name: string;
@@ -31,6 +33,7 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
   onSubmit,
   loading = false
 }) => {
+  const { user, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<WizardFormData>({
     name: '',
@@ -59,6 +62,17 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
   }, [currentStep]);
 
   const handleSubmit = useCallback(() => {
+    // Authentication guard
+    if (!user?.id) {
+      console.error("No authenticated user found");
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to create exercises",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const submitData = {
       name: formData.name,
       description: formData.description,
@@ -71,11 +85,11 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
       is_compound: formData.primaryMuscles.length > 1,
       tips: [],
       variations: [],
-      user_id: 'current-user-id'
+      user_id: user.id
     };
     
     onSubmit(submitData);
-  }, [formData, onSubmit]);
+  }, [formData, onSubmit, user?.id]);
 
   const resetWizard = useCallback(() => {
     setCurrentStep(1);
@@ -99,6 +113,11 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
   const getStepPercentage = () => {
     return (currentStep / 4) * 100;
   };
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

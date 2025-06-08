@@ -12,6 +12,7 @@ import { ExerciseLibraryHeader } from "@/components/exercises/ExerciseLibraryHea
 import { ExerciseLibrarySearch } from "@/components/exercises/ExerciseLibrarySearch";
 import { ExerciseLibraryTabs } from "@/components/exercises/ExerciseLibraryTabs";
 import { useExercises } from "@/hooks/useExercises";
+import { useAuth } from "@/context/AuthContext";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -23,6 +24,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const { createExercise, isPending } = useExercises();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { user, loading: authLoading } = useAuth();
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
     if (onSelectExercise) {
@@ -53,10 +55,21 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
 
   // Handle wizard submission
   const handleCreateExercise = useCallback(async (exerciseData: any) => {
+    // Authentication guard
+    if (!user?.id) {
+      console.error("No authenticated user found");
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to create exercises",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       await createExercise({
         ...exerciseData,
-        user_id: "current-user-id"
+        user_id: user.id
       });
       
       toast({
@@ -71,7 +84,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
         variant: "destructive"
       });
     }
-  }, [createExercise, toast]);
+  }, [createExercise, toast, user?.id]);
 
   const handleDeleteConfirm = useCallback(async (exerciseToDelete: Exercise | null) => {
     if (!exerciseToDelete) return;
@@ -81,6 +94,11 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       description: `${exerciseToDelete.name} has been removed from your library`,
     });
   }, [toast]);
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return <div className="flex items-center justify-center h-full">Loading...</div>;
+  }
 
   return (
     <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>

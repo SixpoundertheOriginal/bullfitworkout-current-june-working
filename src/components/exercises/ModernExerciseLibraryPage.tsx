@@ -11,8 +11,10 @@ import { ExerciseFilters } from './ExerciseFilters';
 import { ExerciseLibraryPerformanceMonitor } from './ExerciseLibraryPerformanceMonitor';
 import { MuscleGroup, EquipmentType, Difficulty, MovementPattern } from '@/types/exercise';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from "@/context/AuthContext";
 
 export const ModernExerciseLibraryPage: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
@@ -43,10 +45,21 @@ export const ModernExerciseLibraryPage: React.FC = () => {
   }, [selectedMuscleGroup, selectedEquipment, selectedDifficulty, selectedMovement]);
 
   const handleCreateExercise = async (exerciseData: any) => {
+    // Authentication guard
+    if (!user?.id) {
+      console.error("No authenticated user found");
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to create exercises",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       await createExercise({
         ...exerciseData,
-        user_id: 'current-user-id' // This should come from auth context
+        user_id: user.id
       });
       setShowCreateWizard(false);
       
@@ -96,6 +109,11 @@ export const ModernExerciseLibraryPage: React.FC = () => {
       description: `Viewing details for ${exercise.name}`,
     });
   };
+
+  // Show loading if auth is still loading
+  if (authLoading) {
+    return <div className="flex items-center justify-center h-full">Loading...</div>;
+  }
 
   return (
     <div className="flex flex-col h-full max-w-7xl mx-auto p-4 space-y-6">
