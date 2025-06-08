@@ -1,3 +1,4 @@
+
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Clock, BarChart3, Zap, Dumbbell, User, Code, Palette } from "lucide-react"
 import { useLocation, Link } from "react-router-dom"
@@ -15,10 +16,9 @@ export function MainMenu() {
     { icon: <Dumbbell className="w-5 h-5" />, label: "Exercises", path: "/all-exercises" },
     { icon: <User className="w-5 h-5" />, label: "Profile", path: "/profile" },
     {
+      icon: <Palette className="w-5 h-5" />,
       label: "Design System",
-      href: "/design-system",
-      icon: Palette,
-      description: "Component library and design tokens"
+      path: "/design-system",
     },
   ];
 
