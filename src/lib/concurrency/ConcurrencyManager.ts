@@ -14,7 +14,7 @@ export interface ConcurrencyManagerConfig {
 }
 
 export class ConcurrencyManager implements ConcurrencyManagerInterface {
-  private readonly maxConcurrentTasks: number;
+  private maxConcurrentTasks: number;
   private readonly taskQueues = {
     high: [] as ConcurrencyTask[],
     normal: [] as ConcurrencyTask[],
@@ -170,9 +170,12 @@ export class ConcurrencyManager implements ConcurrencyManagerInterface {
   }
 
   setConcurrencyLimit(limit: number): void {
-    console.log(`Concurrency limit updated from ${this.maxConcurrentTasks} to ${limit}`);
-    (this as any).maxConcurrentTasks = limit;
-    this.processQueue();
+    // Only log and update if the limit is actually changing
+    if (limit !== this.maxConcurrentTasks) {
+      console.log(`Concurrency limit updated from ${this.maxConcurrentTasks} to ${limit}`);
+      this.maxConcurrentTasks = limit;
+      this.processQueue();
+    }
   }
 
   pause(): void {
