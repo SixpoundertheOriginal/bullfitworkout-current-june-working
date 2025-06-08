@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EquipmentType } from '@/types/exercise';
 import { cn } from '@/lib/utils';
@@ -9,7 +8,7 @@ import {
   User, 
   Cable,
   Box,
-  Bench,
+  RectangleHorizontal,
   MoreHorizontal 
 } from 'lucide-react';
 
@@ -88,7 +87,7 @@ const EQUIPMENT_CARDS: EquipmentCard[] = [
   {
     id: 'bench',
     name: 'Bench',
-    icon: Bench,
+    icon: RectangleHorizontal,
     category: 'strength',
     description: 'Support for exercises'
   },
