@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Plus, Filter, Grid, List, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useLibraryExercises } from '@/hooks/useLibraryExercises';
 import { VirtualizedExerciseGrid } from './VirtualizedExerciseGrid';
 import { OptimizedExerciseSearchBar } from './OptimizedExerciseSearchBar';
-import { ModernExerciseCreator } from './ModernExerciseCreator';
+import { ExerciseCreationWizard } from './ExerciseCreationWizard';
 import { ExerciseFilters } from './ExerciseFilters';
 import { ExerciseLibraryPerformanceMonitor } from './ExerciseLibraryPerformanceMonitor';
 import { MuscleGroup, EquipmentType, Difficulty, MovementPattern } from '@/types/exercise';
@@ -15,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 export const ModernExerciseLibraryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   // Filter states
@@ -48,10 +47,10 @@ export const ModernExerciseLibraryPage: React.FC = () => {
         ...exerciseData,
         user_id: 'current-user-id' // This should come from auth context
       });
-      setShowCreateModal(false);
+      setShowCreateWizard(false);
       
       toast({
-        title: "Exercise created successfully",
+        title: "Exercise created successfully! 🎉",
         description: `${exerciseData.name} has been added to your library`,
       });
     } catch (error) {
@@ -119,7 +118,7 @@ export const ModernExerciseLibraryPage: React.FC = () => {
           </Button>
           
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => setShowCreateWizard(true)}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" />
@@ -180,10 +179,10 @@ export const ModernExerciseLibraryPage: React.FC = () => {
         />
       </div>
 
-      {/* Modern Exercise Creator Modal */}
-      <ModernExerciseCreator
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
+      {/* Exercise Creation Wizard */}
+      <ExerciseCreationWizard
+        open={showCreateWizard}
+        onOpenChange={setShowCreateWizard}
         onSubmit={handleCreateExercise}
         loading={isCreating}
       />
