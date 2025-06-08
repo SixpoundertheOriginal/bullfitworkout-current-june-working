@@ -39,7 +39,10 @@ export interface UseExerciseSearchReturn {
 export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseExerciseSearchReturn {
   const { exercises } = useExercises();
   
-  return useExerciseSearchBase(exercises, {
+  // Ensure exercises is always an array
+  const safeExercises = exercises && Array.isArray(exercises) ? exercises : [];
+  
+  return useExerciseSearchBase(safeExercises, {
     ...options,
     enableIndexing: true
   });

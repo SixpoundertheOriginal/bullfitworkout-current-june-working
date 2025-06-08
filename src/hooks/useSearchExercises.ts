@@ -24,7 +24,7 @@ export const useSearchExercises = (query: string, filters: SearchFilters = {}) =
   // Search-specific query with intelligent caching
   const { data: searchResults, isLoading, error } = useQuery({
     queryKey: ['exercises', 'search', debouncedQuery, filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<Exercise[]> => {
       if (!allExercises || !Array.isArray(allExercises)) return [];
       
       let results = [...allExercises];
@@ -83,7 +83,7 @@ export const useSearchExercises = (query: string, filters: SearchFilters = {}) =
     },
     enabled: !!allExercises,
     staleTime: 2 * 60 * 1000, // 2 minutes for search results
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (replaced cacheTime)
     keepPreviousData: true,
     refetchOnWindowFocus: false
   });
@@ -95,8 +95,8 @@ export const useSearchExercises = (query: string, filters: SearchFilters = {}) =
     popularQueries.forEach(popularQuery => {
       queryClient.prefetchQuery({
         queryKey: ['exercises', 'search', popularQuery, {}],
-        queryFn: async () => {
-          if (!allExercises) return [];
+        queryFn: async (): Promise<Exercise[]> => {
+          if (!allExercises || !Array.isArray(allExercises)) return [];
           return allExercises.filter(exercise =>
             exercise?.name?.toLowerCase().includes(popularQuery) ||
             exercise?.primary_muscle_groups?.some(muscle => 

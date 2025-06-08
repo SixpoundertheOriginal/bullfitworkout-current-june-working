@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
@@ -41,7 +42,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
   // Main exercises query with enterprise caching strategy
   const { data: exercises, isLoading, error } = useQuery({
     queryKey: ['exercises'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Exercise[]> => {
       const { data, error } = await supabase
         .from('exercises')
         .select('*');
@@ -67,7 +68,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
       }));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 60 * 60 * 1000, // 1 hour (replaced cacheTime)
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     // Enable background refetching for fresh data
@@ -156,7 +157,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
   const getSortedExercises = React.useCallback((
     sortBy: ExerciseSortBy = initialSortBy, 
     sortOrder: SortOrder = initialSortOrder
-  ) => {
+  ): Exercise[] => {
     if (!exercises || !Array.isArray(exercises)) return [];
 
     return [...exercises].sort((a, b) => {
@@ -183,7 +184,7 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
 
   // Prefetch exercise details for performance
   const prefetchExercise = React.useCallback(async (exerciseId: string) => {
-    if (!exercises) return;
+    if (!exercises || !Array.isArray(exercises)) return;
     
     await queryClient.prefetchQuery({
       queryKey: ['exercise', exerciseId],

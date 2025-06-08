@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useState, useEffect } from "react";
 import { Plus, Dumbbell, Search } from "lucide-react";
@@ -29,7 +30,7 @@ export const SmartExerciseFAB = ({
   const { exercises } = useExercises();
 
   useEffect(() => {
-    if (!exercises?.length) return;
+    if (!exercises || !Array.isArray(exercises) || !exercises.length) return;
 
     const scoreExercise = (exercise: Exercise): number => {
       let score = 0;
@@ -75,8 +76,9 @@ export const SmartExerciseFAB = ({
     setIsExpanded(!isExpanded);
 
     if (!isExpanded && suggestions.length === 0) {
-      toast.info("No suggestions available for current training configuration", {
-        duration: 2000
+      toast({
+        title: "No suggestions available",
+        description: "No suggestions available for current training configuration",
       });
     }
   };
@@ -84,12 +86,9 @@ export const SmartExerciseFAB = ({
   const handleSelectExercise = (exercise: Exercise) => {
     onSelectExercise(exercise);
     setIsExpanded(false);
-    toast.success(`Added ${exercise.name} to your workout`, {
-      style: {
-        backgroundColor: "rgba(20, 20, 20, 0.9)",
-        color: "white",
-        border: "1px solid rgba(120, 120, 120, 0.3)"
-      }
+    toast({
+      title: "Exercise added",
+      description: `Added ${exercise.name} to your workout`,
     });
   };
 

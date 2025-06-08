@@ -14,16 +14,16 @@ export const useTrainingExercises = () => {
   // Training-specific query with separate cache
   const { data: trainingExercises, isLoading, error } = useQuery({
     queryKey: ['exercises', 'training'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Exercise[]> => {
       // Filter exercises suitable for training sessions
-      if (!allExercises) return [];
+      if (!allExercises || !Array.isArray(allExercises)) return [];
       return allExercises.filter(exercise => 
         exercise && exercise.name && exercise.primary_muscle_groups?.length > 0
       );
     },
     enabled: !!allExercises,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes (replaced cacheTime)
     refetchOnWindowFocus: false,
     refetchOnMount: false
   });

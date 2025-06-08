@@ -58,8 +58,10 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
 
   // Enable virtualization for large datasets
   React.useEffect(() => {
-    setUseVirtualization(exercises.length > 50);
-  }, [exercises.length]);
+    if (exercises && Array.isArray(exercises)) {
+      setUseVirtualization(exercises.length > 50);
+    }
+  }, [exercises]);
 
   const handleExerciseHover = useCallback((exercise: Exercise) => {
     // Prefetch exercise details on hover for instant loading
@@ -90,6 +92,8 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
       </div>
     );
   }
+
+  const safeExercises = exercises && Array.isArray(exercises) ? exercises : [];
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
@@ -132,7 +136,7 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
       {showFilters && (
         <ExerciseFilters
           isOpen={showFilters}
-          onToggle={setShowFilters}
+          onToggle={() => setShowFilters(!showFilters)}
           selectedMuscleGroup={selectedMuscleGroup}
           onMuscleGroupChange={setSelectedMuscleGroup}
           selectedEquipment={selectedEquipment}
@@ -142,7 +146,7 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
           selectedMovement={selectedMovement}
           onMovementChange={setSelectedMovement}
           onClearAll={clearFilters}
-          resultCount={exercises.length}
+          resultCount={safeExercises.length}
           className="mb-4"
         />
       )}
@@ -151,7 +155,7 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
       <div className="flex-1 overflow-hidden">
         {isLoading ? (
           <LibraryManagerSkeleton />
-        ) : exercises.length === 0 ? (
+        ) : safeExercises.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
             <p className="mb-4">No exercises found</p>
             {(searchQuery || Object.values(filters).some(f => f !== undefined)) && (
@@ -162,7 +166,7 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
           </div>
         ) : useVirtualization ? (
           <VirtualizedExerciseList
-            exercises={exercises}
+            exercises={safeExercises}
             onEdit={onEditExercise}
             onDelete={onDeleteExercise}
             onViewDetails={onViewDetails}
@@ -171,7 +175,7 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
           />
         ) : (
           <div className="space-y-4 overflow-y-auto">
-            {exercises.map(exercise => (
+            {safeExercises.map(exercise => (
               <LazyExerciseCard
                 key={exercise.id}
                 exercise={exercise}
@@ -187,9 +191,9 @@ export const LibraryExerciseManager: React.FC<LibraryExerciseManagerProps> = Rea
       </div>
 
       {/* Performance indicator */}
-      {exercises.length > 50 && (
+      {safeExercises.length > 50 && (
         <div className="mt-2 text-xs text-gray-500 text-center">
-          {useVirtualization ? 'Virtual scrolling enabled' : `Showing ${exercises.length} exercises`}
+          {useVirtualization ? 'Virtual scrolling enabled' : `Showing ${safeExercises.length} exercises`}
         </div>
       )}
     </div>

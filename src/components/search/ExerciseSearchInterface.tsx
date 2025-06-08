@@ -88,6 +88,8 @@ export const ExerciseSearchInterface: React.FC<ExerciseSearchInterfaceProps> = R
     onAddExercise?.(exercise);
   }, [onSelectExercise, onAddExercise]);
 
+  const safeResults = results && Array.isArray(results) ? results : [];
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Search Bar */}
@@ -127,11 +129,11 @@ export const ExerciseSearchInterface: React.FC<ExerciseSearchInterfaceProps> = R
             </div>
           ) : (
             <ExerciseTabsContent
-              exercises={results}
+              exercises={safeResults}
               isLoading={isSearching}
               isSearching={isSearching}
               variant={variant}
-              useVirtualization={results.length > 50}
+              useVirtualization={safeResults.length > 50}
               onAdd={handleSelectExercise}
               isOnline={true}
             />

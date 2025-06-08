@@ -23,7 +23,7 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
   // Library-specific query with advanced filtering
   const { data: libraryExercises, isLoading, error } = useQuery({
     queryKey: ['exercises', 'library', filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<Exercise[]> => {
       if (!allExercises || !Array.isArray(allExercises)) return [];
       
       let filtered = [...allExercises];
@@ -80,7 +80,7 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     },
     enabled: !!allExercises,
     staleTime: 10 * 60 * 1000, // 10 minutes for library data
-    cacheTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 60 * 60 * 1000, // 1 hour (replaced cacheTime)
     refetchOnWindowFocus: true,
     keepPreviousData: true // Smooth transitions between filter changes
   });
