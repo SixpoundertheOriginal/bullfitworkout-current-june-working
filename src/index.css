@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "./styles/animations.css";
 @import "./styles/mobile-optimizations.css";
@@ -201,6 +200,185 @@
   .glass,
   .card-gradient {
     @apply bg-gradient-to-br from-secondary to-accent backdrop-blur-sm;
+  }
+}
+
+/* Layout Utility Classes - Using Design Tokens */
+@layer utilities {
+  /* Container System - Consistent Width and Padding Patterns */
+  .container-app {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+    max-width: var(--container-max);
+  }
+
+  .container-narrow {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+    max-width: var(--container-md);
+  }
+
+  .container-wide {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+    max-width: var(--container-xl);
+  }
+
+  /* Safe Area System - iOS/Android Compatible */
+  .safe-top {
+    padding-top: var(--safe-area-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: var(--safe-area-bottom);
+  }
+
+  .safe-header {
+    padding-top: var(--safe-header-height);
+  }
+
+  .safe-nav {
+    padding-bottom: var(--safe-nav-height);
+  }
+
+  .safe-full {
+    padding-top: var(--safe-header-height);
+    padding-bottom: var(--safe-nav-height);
+  }
+
+  /* Page Layout System - Consistent Structure */
+  .page-container {
+    min-height: 100vh;
+    padding-top: var(--safe-header-height);
+    padding-bottom: var(--safe-nav-height);
+  }
+
+  .page-content {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+    max-width: var(--container-max);
+  }
+
+  .page-section {
+    margin-bottom: var(--space-xl);
+  }
+
+  .page-section:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Systematic Spacing Classes - Using Design Tokens */
+  .space-y-section > * + * {
+    margin-top: var(--space-xl);
+  }
+
+  .space-y-content > * + * {
+    margin-top: var(--space-lg);
+  }
+
+  .space-y-compact > * + * {
+    margin-top: var(--space-md);
+  }
+
+  .space-y-tight > * + * {
+    margin-top: var(--space-sm);
+  }
+
+  /* Header/Navigation System - Consistent Heights */
+  .header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    z-index: var(--z-header);
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .nav-fixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    z-index: var(--z-header);
+    background: var(--color-background);
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* Content Area System - Responsive Patterns */
+  .content-grid {
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .content-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .content-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+  }
+
+  /* Responsive Padding - Mobile First */
+  .responsive-padding {
+    padding: var(--space-md);
+  }
+
+  @media (min-width: 768px) {
+    .responsive-padding {
+      padding: var(--space-lg);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .responsive-padding {
+      padding: var(--space-xl);
+    }
+  }
+
+  /* Responsive Container */
+  .responsive-container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  @media (min-width: 640px) {
+    .responsive-container { max-width: var(--container-sm); }
+  }
+
+  @media (min-width: 768px) {
+    .responsive-container { max-width: var(--container-md); }
+  }
+
+  @media (min-width: 1024px) {
+    .responsive-container { max-width: var(--container-lg); }
+  }
+
+  @media (min-width: 1280px) {
+    .responsive-container { max-width: var(--container-xl); }
   }
 }
 
