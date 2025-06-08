@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "./styles/animations.css";
 @import "./styles/mobile-optimizations.css";
@@ -380,6 +381,212 @@
   @media (min-width: 1280px) {
     .responsive-container { max-width: var(--container-xl); }
   }
+
+  /* Advanced Responsive System - Fluid Typography */
+  .text-fluid-xs {
+    font-size: clamp(var(--text-xs), 1.5vw, var(--text-sm));
+    line-height: var(--leading-normal);
+  }
+
+  .text-fluid-sm {
+    font-size: clamp(var(--text-sm), 2vw, var(--text-base));
+    line-height: var(--leading-normal);
+  }
+
+  .text-fluid-base {
+    font-size: clamp(var(--text-base), 2.5vw, var(--text-lg));
+    line-height: var(--leading-normal);
+  }
+
+  .text-fluid-lg {
+    font-size: clamp(var(--text-lg), 3vw, var(--text-xl));
+    line-height: var(--leading-tight);
+  }
+
+  .text-fluid-xl {
+    font-size: clamp(var(--text-xl), 3.5vw, var(--text-2xl));
+    line-height: var(--leading-tight);
+  }
+
+  .text-fluid-2xl {
+    font-size: clamp(var(--text-2xl), 4vw, var(--text-3xl));
+    line-height: var(--leading-tight);
+  }
+
+  .text-fluid-3xl {
+    font-size: clamp(var(--text-3xl), 5vw, var(--text-4xl));
+    line-height: var(--leading-tight);
+  }
+
+  /* Fluid Spacing System */
+  .space-y-fluid-sm > * + * {
+    margin-top: clamp(var(--space-sm), 2vw, var(--space-md));
+  }
+
+  .space-y-fluid-md > * + * {
+    margin-top: clamp(var(--space-md), 3vw, var(--space-lg));
+  }
+
+  .space-y-fluid-lg > * + * {
+    margin-top: clamp(var(--space-lg), 4vw, var(--space-xl));
+  }
+
+  .space-y-fluid-xl > * + * {
+    margin-top: clamp(var(--space-xl), 5vw, var(--space-2xl));
+  }
+
+  /* Fluid Padding System */
+  .padding-fluid-sm {
+    padding: clamp(var(--space-sm), 2vw, var(--space-md));
+  }
+
+  .padding-fluid-md {
+    padding: clamp(var(--space-md), 3vw, var(--space-lg));
+  }
+
+  .padding-fluid-lg {
+    padding: clamp(var(--space-lg), 4vw, var(--space-xl));
+  }
+
+  .padding-fluid-xl {
+    padding: clamp(var(--space-xl), 5vw, var(--space-2xl));
+  }
+
+  /* Container Query System */
+  .container-query-card {
+    container-type: inline-size;
+    container-name: card;
+  }
+
+  .container-query-section {
+    container-type: inline-size;
+    container-name: section;
+  }
+
+  .container-query-layout {
+    container-type: inline-size;
+    container-name: layout;
+  }
+
+  /* Progressive Enhancement for Container Queries */
+  @supports (container-type: inline-size) {
+    .card-responsive {
+      container-type: inline-size;
+    }
+
+    .section-responsive {
+      container-type: inline-size;
+    }
+
+    .layout-responsive {
+      container-type: inline-size;
+    }
+  }
+
+  /* Container Query Responsive Classes */
+  @container card (min-width: 300px) {
+    .card-content-responsive {
+      padding: var(--space-md);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-sm);
+    }
+
+    .card-title-responsive {
+      font-size: var(--text-lg);
+    }
+  }
+
+  @container card (min-width: 400px) {
+    .card-content-responsive {
+      padding: var(--space-lg);
+      gap: var(--space-md);
+    }
+
+    .card-actions-responsive {
+      display: flex;
+      gap: var(--space-sm);
+    }
+  }
+
+  @container card (min-width: 500px) {
+    .card-content-responsive {
+      grid-template-columns: 1fr 1fr auto;
+    }
+
+    .card-title-responsive {
+      font-size: var(--text-xl);
+    }
+  }
+
+  /* Touch-Optimized Responsive Classes */
+  .touch-target-responsive {
+    min-height: clamp(var(--button-height), 10vw, 3.5rem);
+    min-width: clamp(var(--button-height), 10vw, 3.5rem);
+    touch-action: manipulation;
+  }
+
+  /* Responsive Chart Container */
+  .chart-responsive {
+    container-type: inline-size;
+    height: clamp(200px, 30vw, 400px);
+    width: 100%;
+  }
+
+  @container (min-width: 400px) {
+    .chart-legend-responsive {
+      display: block;
+    }
+
+    .chart-data-responsive {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-md);
+    }
+  }
+
+  @container (min-width: 600px) {
+    .chart-controls-responsive {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  /* Workout Card Responsive System */
+  .workout-card-responsive {
+    container-type: inline-size;
+    container-name: workout-card;
+  }
+
+  @container workout-card (min-width: 280px) {
+    .workout-card-content {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-sm);
+      padding: var(--space-md);
+    }
+  }
+
+  @container workout-card (min-width: 400px) {
+    .workout-card-content {
+      grid-template-columns: 1fr 1fr auto;
+      padding: var(--space-lg);
+    }
+
+    .workout-card-actions {
+      display: flex;
+      gap: var(--space-sm);
+    }
+  }
+
+  @container workout-card (min-width: 500px) {
+    .workout-card-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-sm);
+    }
+  }
 }
 
 @layer base {
@@ -429,11 +636,56 @@
   .animate-optimized {
     @apply will-change-transform respect-motion-preference;
   }
+
+  /* Responsive Component Variants */
+  .component-responsive {
+    container-type: inline-size;
+  }
+
+  /* Fluid Component System */
+  .component-fluid {
+    padding: clamp(var(--space-sm), 3vw, var(--space-lg));
+    margin: clamp(var(--space-xs), 1vw, var(--space-sm));
+  }
+
+  .component-fluid-large {
+    padding: clamp(var(--space-md), 4vw, var(--space-xl));
+    margin: clamp(var(--space-sm), 2vw, var(--space-md));
+  }
 }
 
 /* Safe-area inset utility for bottom (home-indicator / gesture nav) */
 @layer utilities {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Advanced Browser Support Detection */
+  @supports not (container-type: inline-size) {
+    .fallback-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-md);
+    }
+  }
+
+  /* Reduced Motion Preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .text-fluid-xs,
+    .text-fluid-sm,
+    .text-fluid-base,
+    .text-fluid-lg,
+    .text-fluid-xl,
+    .text-fluid-2xl,
+    .text-fluid-3xl {
+      font-size: var(--text-base);
+    }
+
+    .space-y-fluid-sm > * + *,
+    .space-y-fluid-md > * + *,
+    .space-y-fluid-lg > * + *,
+    .space-y-fluid-xl > * + * {
+      margin-top: var(--space-md);
+    }
   }
 }
