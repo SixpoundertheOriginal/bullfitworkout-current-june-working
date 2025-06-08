@@ -107,6 +107,18 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
     }
   };
 
+  // Handle preset application with proper type handling
+  const handleApplyPreset = (filters: any) => {
+    // Create a new filters object with proper typing
+    const typedFilters = {
+      selectedMuscleGroup: filters.selectedMuscleGroup || 'all',
+      selectedEquipment: filters.selectedEquipment || 'all',
+      selectedDifficulty: filters.selectedDifficulty || 'all',
+      selectedMovement: filters.selectedMovement || 'all'
+    };
+    onApplyPreset(typedFilters);
+  };
+
   // Convert union types to strings for Select components
   const movementPatternValue = selectedMovementPattern as string;
   const trainingFocusValue = selectedTrainingFocus as string;
@@ -115,7 +127,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   return (
     <div className={className}>
       {/* Smart Filter Presets - Always visible for quick access */}
-      <SmartFilterPresets onApplyPreset={onApplyPreset} className="mb-4" />
+      <SmartFilterPresets onApplyPreset={handleApplyPreset} className="mb-4" />
 
       {/* Base Filters (reuse existing component) */}
       <ExerciseFilters
