@@ -119,11 +119,6 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
     onApplyPreset(typedFilters);
   };
 
-  // Convert union types to strings for Select components
-  const movementPatternValue = selectedMovementPattern as string;
-  const trainingFocusValue = selectedTrainingFocus as string;
-  const complexityLevelValue = selectedComplexityLevel as string;
-
   return (
     <div className={className}>
       {/* Smart Filter Presets - Always visible for quick access */}
@@ -167,7 +162,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={movementPatternValue} onValueChange={handleMovementPatternChange}>
+              <Select value={String(selectedMovementPattern)} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -188,7 +183,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={trainingFocusValue} onValueChange={handleTrainingFocusChange}>
+              <Select value={String(selectedTrainingFocus)} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -209,7 +204,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={complexityLevelValue} onValueChange={handleComplexityLevelChange}>
+              <Select value={String(selectedComplexityLevel)} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
@@ -230,7 +225,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
               
               <div className="space-y-2">
                 <Select 
-                  value={hasPersonalStats === 'all' ? 'all' : hasPersonalStats ? 'true' : 'false'} 
+                  value={hasPersonalStats === 'all' ? 'all' : String(hasPersonalStats)} 
                   onValueChange={(value) => 
                     onHasPersonalStatsChange(value === 'all' ? 'all' : value === 'true')
                   }
@@ -246,7 +241,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 </Select>
 
                 <Select 
-                  value={isReadyToProgress === 'all' ? 'all' : isReadyToProgress ? 'true' : 'false'} 
+                  value={isReadyToProgress === 'all' ? 'all' : String(isReadyToProgress)} 
                   onValueChange={(value) => 
                     onIsReadyToProgressChange(value === 'all' ? 'all' : value === 'true')
                   }
