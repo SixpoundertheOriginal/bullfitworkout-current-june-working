@@ -56,8 +56,13 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     });
   }, [toast]);
 
+  // Create exercise handler
+  const handleCreateExercise = useCallback(() => {
+    setShowCreateWizard(true);
+  }, []);
+
   // Optimized wizard submission handler
-  const handleCreateExercise = useCallback(async (exerciseData: any) => {
+  const handleSubmitExercise = useCallback(async (exerciseData: any) => {
     if (!user?.id) {
       console.error("No authenticated user found");
       toast({
@@ -125,6 +130,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
         {/* Use the optimized exercise library component */}
         <PerformanceOptimizedExerciseLibrary
           onSelectExercise={handleSelectExercise}
+          onCreateExercise={handleCreateExercise}
           showCreateButton={standalone}
         />
         
@@ -132,7 +138,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
         <ExerciseCreationWizard
           open={showCreateWizard}
           onOpenChange={setShowCreateWizard}
-          onSubmit={handleCreateExercise}
+          onSubmit={handleSubmitExercise}
           loading={isLoading}
         />
         

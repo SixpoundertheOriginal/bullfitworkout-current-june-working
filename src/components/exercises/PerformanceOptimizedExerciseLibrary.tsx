@@ -10,11 +10,13 @@ import { Plus } from 'lucide-react';
 
 interface PerformanceOptimizedExerciseLibraryProps {
   onSelectExercise?: (exercise: Exercise) => void;
+  onCreateExercise?: () => void;
   showCreateButton?: boolean;
 }
 
 export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedExerciseLibraryProps> = React.memo(({
   onSelectExercise,
+  onCreateExercise,
   showCreateButton = false
 }) => {
   return (
@@ -69,11 +71,11 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
             />
 
             {/* Create Button */}
-            {showCreateButton && (
+            {showCreateButton && onCreateExercise && (
               <div className="flex justify-end">
                 <Button 
                   className="bg-purple-600 hover:bg-purple-700 text-white"
-                  onClick={() => {/* Handle create */}}
+                  onClick={onCreateExercise}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Exercise
