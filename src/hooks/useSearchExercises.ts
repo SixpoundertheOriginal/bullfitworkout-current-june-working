@@ -1,5 +1,5 @@
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -84,7 +84,7 @@ export const useSearchExercises = (query: string, filters: SearchFilters = {}) =
     enabled: !!allExercises,
     staleTime: 2 * 60 * 1000, // 2 minutes for search results
     gcTime: 10 * 60 * 1000, // 10 minutes (replaced cacheTime)
-    keepPreviousData: true,
+    placeholderData: keepPreviousData, // New React Query v5 API
     refetchOnWindowFocus: false
   });
 
@@ -109,12 +109,14 @@ export const useSearchExercises = (query: string, filters: SearchFilters = {}) =
     });
   };
 
+  const safeResults = searchResults && Array.isArray(searchResults) ? searchResults : [];
+
   return {
-    results: searchResults || [],
+    results: safeResults,
     isSearching: isLoading || isLoadingAll,
     error,
     hasQuery: debouncedQuery.trim().length > 0,
-    resultsCount: searchResults?.length || 0,
+    resultsCount: safeResults.length,
     prefetchPopularSearches
   };
 };

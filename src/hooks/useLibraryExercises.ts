@@ -1,5 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
 
@@ -82,7 +82,7 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     staleTime: 10 * 60 * 1000, // 10 minutes for library data
     gcTime: 60 * 60 * 1000, // 1 hour (replaced cacheTime)
     refetchOnWindowFocus: true,
-    keepPreviousData: true // Smooth transitions between filter changes
+    placeholderData: keepPreviousData // New React Query v5 API
   });
 
   // Optimistic create exercise for library
@@ -137,20 +137,23 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
 
   // Prefetch related data for performance
   const prefetchExerciseDetails = async (exerciseId: string) => {
+    const safeLibraryExercises = libraryExercises && Array.isArray(libraryExercises) ? libraryExercises : [];
     await queryClient.prefetchQuery({
       queryKey: ['exercise', exerciseId],
-      queryFn: () => libraryExercises?.find(e => e.id === exerciseId),
+      queryFn: () => safeLibraryExercises.find(e => e.id === exerciseId),
       staleTime: 5 * 60 * 1000
     });
   };
 
+  const safeLibraryExercises = libraryExercises && Array.isArray(libraryExercises) ? libraryExercises : [];
+
   return {
-    exercises: libraryExercises || [],
+    exercises: safeLibraryExercises,
     isLoading: isLoading || isLoadingAll,
     error,
     createExercise: createLibraryExercise.mutate,
     isCreating: createLibraryExercise.isPending || isPending,
     prefetchExerciseDetails,
-    totalCount: libraryExercises?.length || 0
+    totalCount: safeLibraryExercises.length
   };
 };

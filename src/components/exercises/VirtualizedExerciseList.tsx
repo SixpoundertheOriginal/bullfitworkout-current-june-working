@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Exercise } from '@/types/exercise';
 import { LazyExerciseCard } from './LazyExerciseCard';
@@ -13,6 +12,7 @@ interface VirtualizedExerciseListProps {
   onDelete?: (exercise: Exercise) => void;
   onViewDetails?: (exercise: Exercise) => void;
   onDuplicate?: (exercise: Exercise) => void;
+  onHover?: (exercise: Exercise) => void;
   itemHeight?: number;
   containerHeight?: number;
   overscan?: number;
@@ -26,6 +26,7 @@ export const VirtualizedExerciseList: React.FC<VirtualizedExerciseListProps> = (
   onDelete,
   onViewDetails,
   onDuplicate,
+  onHover,
   itemHeight = 120,
   containerHeight = 600,
   overscan = 5
@@ -124,6 +125,7 @@ export const VirtualizedExerciseList: React.FC<VirtualizedExerciseListProps> = (
                   display: 'flex',
                   alignItems: 'stretch'
                 }}
+                onMouseEnter={() => onHover?.(exercise)}
               >
                 <LazyExerciseCard
                   exercise={exercise}
