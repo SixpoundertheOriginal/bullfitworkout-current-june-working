@@ -65,17 +65,36 @@ const ExerciseCard = React.memo<ExerciseCardProps>(({
         rounded-2xl
       `}>
         <CardContent className="p-4 md:p-5">
-          {/* Header */}
-          <ExerciseCardHeader
-            exercise={exercise}
-            isExpanded={isExpanded}
-            isActive={isActive}
-            previousSession={previousSession}
-            previousSessionWeight={previousSessionWeight}
-            weightUnit={weightUnit}
-            onToggleExpand={handleToggleExpand}
-            onDeleteExercise={onDeleteExercise}
-          />
+          {/* Header - This is the legacy header, different from the new ExerciseCardHeader */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-white leading-tight truncate text-lg mb-1">
+                {exercise.name}
+              </h3>
+              {exercise.description && (
+                <p className="text-gray-400 leading-relaxed text-sm line-clamp-2">
+                  {exercise.description}
+                </p>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={handleToggleExpand}
+                className="text-gray-400 hover:text-gray-300 transition-colors"
+              >
+                {isExpanded ? '−' : '+'}
+              </button>
+              {onDeleteExercise && (
+                <button
+                  onClick={onDeleteExercise}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
           
           {/* Collapsible Content */}
           <AnimatePresence initial={false}>
