@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { Exercise, ExerciseCardVariant, ExerciseCardContext as ExerciseCardContextType } from '@/types/exercise';
+import { Exercise, ExerciseCardVariant, ExerciseCardContextType } from '@/types/exercise';
 
 interface ExerciseCardProviderProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export const ExerciseCardProvider: React.FC<ExerciseCardProviderProps> = ({
   isFavorited = false,
   className
 }) => {
-  const value = useMemo(() => ({
+  const value = useMemo((): ExerciseCardContextType => ({
     exercise,
     variant,
     context,
