@@ -1,9 +1,11 @@
+
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useScroll } from "@/hooks/useScroll";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
+import useScrollHeader from "@/hooks/useScrollHeader";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -25,6 +27,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const location = useLocation();
   const { isScrolled, scrollDirection } = useScroll(20);
   const { isActive } = useWorkoutState();
+  const { isHeaderVisible } = useScrollHeader();
   
   const handleBack = () => {
     if (onBack) {
@@ -53,8 +56,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <header className={cn(
       "fixed top-0 left-0 right-0 h-16 flex items-center px-4 bg-gray-900/95 backdrop-blur-sm z-10 border-b border-gray-800/50",
-      "transition-transform duration-300 ease-out",
-      shouldHideOnScroll ? "-translate-y-full" : "translate-y-0"
+      "transition-transform duration-300 ease-in-out",
+      !isHeaderVisible ? "-translate-y-full" : "translate-y-0"
     )}>
       <div className="flex-1 flex items-center min-w-0">
         {showBackButton && (
