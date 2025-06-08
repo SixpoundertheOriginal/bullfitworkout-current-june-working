@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
@@ -74,7 +75,6 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
           onViewDetails={() => onSelectExercise?.(exercise)}
           onEdit={() => onEditExercise?.(exercise)}
           onDelete={() => onDeleteExercise?.(exercise)}
-          className="h-full"
         />
       </div>
     );
@@ -119,3 +119,4 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
 });
 
 VirtualizedExerciseGrid.displayName = 'VirtualizedExerciseGrid';
+
