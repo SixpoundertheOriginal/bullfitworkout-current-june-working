@@ -84,8 +84,12 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   const handleMovementPatternChange = (value: string) => {
     if (value === "all") {
       onMovementPatternChange("all");
-    } else if (MOVEMENT_PATTERNS.includes(value as MovementPattern)) {
-      onMovementPatternChange(value as MovementPattern);
+    } else {
+      // Type-safe casting with validation
+      const validPattern = MOVEMENT_PATTERNS.find(pattern => pattern === value);
+      if (validPattern) {
+        onMovementPatternChange(validPattern);
+      }
     }
   };
 
@@ -93,8 +97,12 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   const handleTrainingFocusChange = (value: string) => {
     if (value === "all") {
       onTrainingFocusChange("all");
-    } else if (TRAINING_FOCUS.includes(value as TrainingFocus)) {
-      onTrainingFocusChange(value as TrainingFocus);
+    } else {
+      // Type-safe casting with validation
+      const validFocus = TRAINING_FOCUS.find(focus => focus === value);
+      if (validFocus) {
+        onTrainingFocusChange(validFocus);
+      }
     }
   };
 
@@ -102,8 +110,12 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   const handleComplexityLevelChange = (value: string) => {
     if (value === "all") {
       onComplexityLevelChange("all");
-    } else if (COMPLEXITY_LEVELS.includes(value as ComplexityLevel)) {
-      onComplexityLevelChange(value as ComplexityLevel);
+    } else {
+      // Type-safe casting with validation
+      const validLevel = COMPLEXITY_LEVELS.find(level => level === value);
+      if (validLevel) {
+        onComplexityLevelChange(validLevel);
+      }
     }
   };
 
@@ -162,7 +174,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={selectedMovementPattern as string} onValueChange={handleMovementPatternChange}>
+              <Select value={String(selectedMovementPattern)} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -183,7 +195,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={selectedTrainingFocus as string} onValueChange={handleTrainingFocusChange}>
+              <Select value={String(selectedTrainingFocus)} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -204,7 +216,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={selectedComplexityLevel as string} onValueChange={handleComplexityLevelChange}>
+              <Select value={String(selectedComplexityLevel)} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
