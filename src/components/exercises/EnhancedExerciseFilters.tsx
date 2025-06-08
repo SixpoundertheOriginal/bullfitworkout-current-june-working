@@ -107,6 +107,11 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
     }
   };
 
+  // Convert union types to strings for Select components
+  const movementPatternValue = selectedMovementPattern as string;
+  const trainingFocusValue = selectedTrainingFocus as string;
+  const complexityLevelValue = selectedComplexityLevel as string;
+
   return (
     <div className={className}>
       {/* Smart Filter Presets - Always visible for quick access */}
@@ -150,7 +155,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={selectedMovementPattern as string} onValueChange={handleMovementPatternChange}>
+              <Select value={movementPatternValue} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -171,7 +176,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={selectedTrainingFocus as string} onValueChange={handleTrainingFocusChange}>
+              <Select value={trainingFocusValue} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -192,7 +197,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={selectedComplexityLevel as string} onValueChange={handleComplexityLevelChange}>
+              <Select value={complexityLevelValue} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
