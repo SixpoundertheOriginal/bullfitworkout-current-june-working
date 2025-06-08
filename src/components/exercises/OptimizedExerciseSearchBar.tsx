@@ -1,10 +1,9 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { Search, X, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDebounce } from '@/hooks/useDebounce';
 
 interface OptimizedExerciseSearchBarProps {
   searchTerm: string;
@@ -28,30 +27,49 @@ export const OptimizedExerciseSearchBar: React.FC<OptimizedExerciseSearchBarProp
   className = ""
 }) => {
   const [localTerm, setLocalTerm] = useState(searchTerm);
-  const debouncedSearch = useDebounce(localTerm, 150);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Sync debounced value with parent
-  React.useEffect(() => {
-    if (debouncedSearch !== searchTerm) {
-      onSearchChange(debouncedSearch);
-    }
-  }, [debouncedSearch, onSearchChange, searchTerm]);
-
-  // Sync external changes
+  // Sync external changes with local state
   React.useEffect(() => {
     if (searchTerm !== localTerm) {
       setLocalTerm(searchTerm);
     }
   }, [searchTerm, localTerm]);
 
+  // Optimized input change handler with proper debouncing
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalTerm(e.target.value);
-  }, []);
+    const newValue = e.target.value;
+    setLocalTerm(newValue);
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set new debounced timeout for 300ms
+    debounceTimeoutRef.current = setTimeout(() => {
+      onSearchChange(newValue);
+    }, 300);
+  }, [onSearchChange]);
 
   const handleClear = useCallback(() => {
     setLocalTerm('');
     onSearchChange('');
+    
+    // Clear any pending debounced calls
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
   }, [onSearchChange]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const resultText = useMemo(() => {
     if (isLoading) return 'Searching...';

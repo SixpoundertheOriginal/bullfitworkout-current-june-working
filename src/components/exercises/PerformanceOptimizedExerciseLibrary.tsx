@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Plus, Activity, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,7 +16,7 @@ interface PerformanceOptimizedExerciseLibraryProps {
   showCreateButton?: boolean;
 }
 
-export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedExerciseLibraryProps> = ({
+export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedExerciseLibraryProps> = React.memo(({
   onSelectExercise,
   showCreateButton = true
 }) => {
@@ -28,21 +28,43 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
   // Use the optimized hook
   const { exercises, isLoading, createExercise, isPending, totalCount } = useOptimizedExercises();
 
-  // Optimized search with memoization
+  // Memoized search function with performance optimization
   const filteredExercises = useMemo(() => {
-    if (!searchTerm) return exercises;
+    console.log('Filtering exercises:', { exerciseCount: exercises.length, searchTerm });
+    
+    if (!searchTerm.trim()) {
+      console.log('No search term, returning all exercises:', exercises.length);
+      return exercises;
+    }
     
     const searchLower = searchTerm.toLowerCase();
-    return exercises.filter(exercise =>
-      exercise?.name?.toLowerCase().includes(searchLower) ||
-      exercise?.description?.toLowerCase().includes(searchLower) ||
-      exercise?.primary_muscle_groups?.some(muscle => 
-        muscle?.toLowerCase().includes(searchLower)
-      )
-    );
+    const filtered = exercises.filter(exercise => {
+      if (!exercise) return false;
+      
+      return exercise.name?.toLowerCase().includes(searchLower) ||
+             exercise.description?.toLowerCase().includes(searchLower) ||
+             exercise.primary_muscle_groups?.some(muscle => 
+               muscle?.toLowerCase().includes(searchLower)
+             ) ||
+             exercise.secondary_muscle_groups?.some(muscle => 
+               muscle?.toLowerCase().includes(searchLower)
+             ) ||
+             exercise.equipment_type?.some(equipment => 
+               equipment?.toLowerCase().includes(searchLower)
+             );
+    });
+
+    console.log('Filtered exercises result:', { originalCount: exercises.length, filteredCount: filtered.length, searchTerm });
+    return filtered;
   }, [exercises, searchTerm]);
 
-  const handleCreateExercise = async (exerciseData: any) => {
+  // Memoized search handler to prevent unnecessary rerenders
+  const handleSearchChange = useCallback((newSearchTerm: string) => {
+    console.log('Search term changed:', newSearchTerm);
+    setSearchTerm(newSearchTerm);
+  }, []);
+
+  const handleCreateExercise = useCallback(async (exerciseData: any) => {
     if (!user?.id) {
       toast({
         title: "Authentication Error",
@@ -75,9 +97,9 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [createExercise, toast, user?.id]);
 
-  const handleViewExercise = (exercise: any) => {
+  const handleViewExercise = useCallback((exercise: any) => {
     if (onSelectExercise) {
       onSelectExercise(exercise);
     } else {
@@ -86,9 +108,19 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
         description: `Viewing ${exercise.name}`,
       });
     }
-  };
+  }, [onSelectExercise, toast]);
 
   const isProcessing = isPending || isSubmitting;
+
+  // Debug logging for exercise display
+  React.useEffect(() => {
+    console.log('PerformanceOptimizedExerciseLibrary render:', {
+      exerciseCount: exercises.length,
+      filteredCount: filteredExercises.length,
+      isLoading,
+      searchTerm
+    });
+  }, [exercises.length, filteredExercises.length, isLoading, searchTerm]);
 
   return (
     <div className="flex flex-col h-full space-y-4">
@@ -100,7 +132,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
             <h2 className="text-xl font-semibold text-white">Exercise Library</h2>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <Zap className="w-3 h-3 text-yellow-500" />
-              <span>RLS Optimized • {totalCount} exercises</span>
+              <span>RLS Optimized • {totalCount} exercises loaded</span>
               <Badge variant="secondary" className="text-xs">
                 Enhanced Performance
               </Badge>
@@ -124,7 +156,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
       <Card className="p-4 bg-gray-900/50 border-gray-700/50">
         <OptimizedExerciseSearchBar
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={handleSearchChange}
           totalExercises={totalCount}
           filteredCount={filteredExercises.length}
           onFiltersToggle={() => {}}
@@ -140,20 +172,38 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
             <span>Indexed Queries: Active</span>
             <span>•</span>
             <span>Cache Strategy: Enhanced</span>
+            <span>•</span>
+            <span>Exercises Showing: {filteredExercises.length}</span>
           </div>
         </div>
       </Card>
 
       {/* Virtualized Grid */}
       <div className="flex-1 min-h-0">
-        <VirtualizedExerciseGrid
-          exercises={filteredExercises}
-          isLoading={isLoading}
-          onSelectExercise={handleViewExercise}
-          onEditExercise={() => {}}
-          onDeleteExercise={() => {}}
-          className="h-full"
-        />
+        {filteredExercises.length > 0 ? (
+          <VirtualizedExerciseGrid
+            exercises={filteredExercises}
+            isLoading={isLoading}
+            onSelectExercise={handleViewExercise}
+            onEditExercise={() => {}}
+            onDeleteExercise={() => {}}
+            className="h-full"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-300 mb-2">
+                {isLoading ? 'Loading exercises...' : searchTerm ? 'No exercises found' : 'No exercises available'}
+              </h3>
+              <p className="text-gray-500">
+                {isLoading ? 'Please wait while we load your exercises' : 
+                 searchTerm ? 'Try adjusting your search terms' : 
+                 'Create your first exercise to get started'}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Creation Wizard */}
@@ -165,4 +215,6 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
       />
     </div>
   );
-};
+});
+
+PerformanceOptimizedExerciseLibrary.displayName = 'PerformanceOptimizedExerciseLibrary';

@@ -27,7 +27,9 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
 
+  // Memoized exercise selection handler to prevent rerenders
   const handleSelectExercise = useCallback((exercise: Exercise) => {
+    console.log('Exercise selected:', exercise.name);
     if (onSelectExercise) {
       onSelectExercise(exercise);
     }
@@ -54,7 +56,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     });
   }, [toast]);
 
-  // Handle wizard submission with optimized performance
+  // Optimized wizard submission handler
   const handleCreateExercise = useCallback(async (exerciseData: any) => {
     if (!user?.id) {
       console.error("No authenticated user found");
@@ -103,7 +105,14 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   }, [toast]);
 
   if (authLoading) {
-    return <div className="flex items-center justify-center h-full">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   const isLoading = isPending || isSubmitting;
