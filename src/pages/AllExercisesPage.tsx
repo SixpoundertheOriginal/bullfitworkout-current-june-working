@@ -4,7 +4,7 @@ import { useExercises } from "@/hooks/useExercises";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ExerciseDialog } from "@/components/ExerciseDialog";
+import { ExerciseCreationWizard } from "@/components/exercises/ExerciseCreationWizard";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty, Exercise } from "@/types/exercise";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -30,7 +30,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const { exercises, isLoading, isError, createExercise, isPending } = useExercises();
   const { workouts } = useWorkoutHistory();
   const { toast } = useToast();
-  const [showDialog, setShowDialog] = useState(false);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<string>("suggested");
   const isOnline = useNetworkStatus();
@@ -70,10 +70,6 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const exercisesPerPage = 8;
-
-  // For add/edit
-  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-  const [exerciseToEdit, setExerciseToEdit] = useState<any | null>(null);
 
   // Virtualization toggle
   const [useVirtualization, setUseVirtualization] = useState(false);
@@ -186,16 +182,15 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   }, [searchQuery, searchFilters]);
 
   const handleAdd = useCallback(() => {
-    setExerciseToEdit(null);
-    setDialogMode("add");
-    setShowDialog(true);
+    setShowCreateWizard(true);
   }, []);
 
   const handleEdit = useCallback((exercise: Exercise) => {
-    setExerciseToEdit(exercise);
-    setDialogMode("edit");
-    setShowDialog(true);
-  }, []);
+    toast({
+      title: "Edit Exercise",
+      description: "Exercise editing will be available soon!",
+    });
+  }, [toast]);
   
   const handleDelete = useCallback((exercise: Exercise) => {
     setExerciseToDelete(exercise);
@@ -243,44 +238,28 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     setSelectedMovement("all");
   }, [setSearchQuery]);
 
-  // Add/Edit handler
-  const handleDialogSubmit = useCallback(async (exercise: {
-    name: string;
-    description: string;
-    primary_muscle_groups: MuscleGroup[];
-    secondary_muscle_groups: MuscleGroup[];
-    equipment_type: EquipmentType[];
-    movement_pattern: MovementPattern;
-    difficulty: Difficulty;
-    instructions?: Record<string, any>;
-    is_compound?: boolean;
-    tips?: string[];
-    variations?: string[];
-    metadata?: Record<string, any>;
-  }) => {
-    if (dialogMode === "add") {
-      await new Promise(resolve => setTimeout(resolve, 350));
-      await new Promise<void>((resolve, reject) => {
-        createExercise(
-          {
-            ...exercise,
-            user_id: "",
-          },
-          {
-            onSuccess: () => resolve(),
-            onError: err => reject(err),
-          }
-        );
+  // Handle wizard submission
+  const handleCreateExercise = useCallback(async (exerciseData: any) => {
+    try {
+      await createExercise({
+        ...exerciseData,
+        user_id: "current-user-id" // This should come from auth context
       });
+      setShowCreateWizard(false);
+      
       toast({
-        title: "Exercise added",
-        description: `Added ${exercise.name} to your library`
+        title: "Exercise created successfully! 🎉",
+        description: `${exerciseData.name} has been added to your library`,
       });
-      setShowDialog(false);
-    } else {
-      toast({ title: "Edit not implemented", description: "Update exercise functionality will be implemented soon!" });
+    } catch (error) {
+      console.error('Failed to create exercise:', error);
+      toast({
+        title: "Failed to create exercise",
+        description: "Please try again or check your connection",
+        variant: "destructive"
+      });
     }
-  }, [dialogMode, createExercise, toast]);
+  }, [createExercise, toast]);
 
   return (
     <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
@@ -288,13 +267,11 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       
       {/* Main content container */}
       <div className={`flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-4xl px-4 ${standalone ? 'py-4' : 'pt-0'}`}>
-        <ExerciseDialog
-          open={showDialog}
-          onOpenChange={setShowDialog}
-          onSubmit={handleDialogSubmit}
-          initialExercise={exerciseToEdit!}
+        <ExerciseCreationWizard
+          open={showCreateWizard}
+          onOpenChange={setShowCreateWizard}
+          onSubmit={handleCreateExercise}
           loading={isPending}
-          mode={dialogMode}
         />
         
         <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
