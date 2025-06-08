@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,49 +36,49 @@ const equipmentData: Array<{
     description: 'Show all exercises'
   },
   {
-    type: 'Bodyweight',
+    type: 'bodyweight',
     label: 'Bodyweight',
     icon: <Activity className="w-5 h-5" />,
     color: 'text-green-400 bg-green-400/10 border-green-500/30',
     description: 'No equipment needed'
   },
   {
-    type: 'Dumbbells',
+    type: 'dumbbell',
     label: 'Dumbbells',
     icon: <Dumbbell className="w-5 h-5" />,
     color: 'text-blue-400 bg-blue-400/10 border-blue-500/30',
     description: 'Free weight training'
   },
   {
-    type: 'Barbell',
+    type: 'barbell',
     label: 'Barbell',
     icon: <Minus className="w-5 h-5" />,
     color: 'text-purple-400 bg-purple-400/10 border-purple-500/30',
     description: 'Heavy compound movements'
   },
   {
-    type: 'Cable Machine',
+    type: 'cable',
     label: 'Cable',
     icon: <Zap className="w-5 h-5" />,
     color: 'text-yellow-400 bg-yellow-400/10 border-yellow-500/30',
     description: 'Constant tension'
   },
   {
-    type: 'Machine',
+    type: 'machine',
     label: 'Machine',
     icon: <Square className="w-5 h-5" />,
     color: 'text-red-400 bg-red-400/10 border-red-500/30',
     description: 'Guided movement'
   },
   {
-    type: 'Resistance Bands',
+    type: 'resistance band',
     label: 'Bands',
     icon: <Target className="w-5 h-5" />,
     color: 'text-orange-400 bg-orange-400/10 border-orange-500/30',
     description: 'Variable resistance'
   },
   {
-    type: 'Kettlebell',
+    type: 'kettlebell',
     label: 'Kettlebell',
     icon: <Triangle className="w-5 h-5" />,
     color: 'text-cyan-400 bg-cyan-400/10 border-cyan-500/30',

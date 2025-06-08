@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,28 +31,28 @@ const quickFilterChips: FilterChip[] = [
     id: 'push-day',
     label: 'Push Day',
     icon: <Zap className="w-3 h-3" />,
-    muscleGroup: 'Chest',
+    muscleGroup: 'chest',
     color: 'bg-red-500/20 text-red-400 border-red-500/30'
   },
   {
     id: 'pull-day',
     label: 'Pull Day',
     icon: <Target className="w-3 h-3" />,
-    muscleGroup: 'Back',
+    muscleGroup: 'back',
     color: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
   },
   {
     id: 'leg-day',
     label: 'Leg Day',
     icon: <Activity className="w-3 h-3" />,
-    muscleGroup: 'Quadriceps',
+    muscleGroup: 'legs',
     color: 'bg-green-500/20 text-green-400 border-green-500/30'
   },
   {
     id: 'bodyweight',
     label: 'No Equipment',
     icon: <Activity className="w-3 h-3" />,
-    equipment: 'Bodyweight',
+    equipment: 'bodyweight',
     color: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
   },
   {
