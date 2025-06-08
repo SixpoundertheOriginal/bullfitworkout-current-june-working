@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +11,6 @@ import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationCon
 import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
 import { DevOnly } from "@/components/debug/DevOnly";
-import { PerformanceDashboard } from "@/components/PerformanceDashboard";
 import { serviceWorkerManager } from "@/utils/serviceWorker";
 import { cleanupManager } from "@/services/cleanupManager";
 
@@ -74,9 +72,6 @@ function App() {
                       <TooltipProvider>
                         <Toaster />
                         <RouterProvider />
-                        <DevOnly>
-                          <PerformanceDashboard />
-                        </DevOnly>
                       </TooltipProvider>
                     </LayoutProvider>
                   </WorkoutNavigationContextProvider>
