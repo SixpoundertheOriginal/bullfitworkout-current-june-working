@@ -1,11 +1,10 @@
-
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Clock, BarChart3, Zap, Dumbbell, User, Code } from "lucide-react"
+import { Clock, BarChart3, Zap, Dumbbell, User, Code, Palette } from "lucide-react"
 import { useLocation, Link } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { DevOnly } from "@/components/debug/DevOnly"
 
-export const MainMenu = () => {
+export function MainMenu() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   
@@ -15,6 +14,12 @@ export const MainMenu = () => {
     { icon: <Zap className="w-5 h-5" />, label: "Workouts", path: "/workouts" },
     { icon: <Dumbbell className="w-5 h-5" />, label: "Exercises", path: "/all-exercises" },
     { icon: <User className="w-5 h-5" />, label: "Profile", path: "/profile" },
+    {
+      label: "Design System",
+      href: "/design-system",
+      icon: Palette,
+      description: "Component library and design tokens"
+    },
   ];
 
   const developerItems = [
