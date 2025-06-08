@@ -1,4 +1,5 @@
 
+
 import { useEffect, useRef, useCallback } from 'react';
 import { performanceMonitor } from '@/services/performanceMonitor';
 import { errorTracking } from '@/services/errorTracking';
@@ -159,7 +160,9 @@ export function useEnterprisePerformance(options: PerformanceOptions) {
         }
       });
       
-      return unsubscribe;
+      return () => {
+        unsubscribe();
+      };
     }
   }, [trackMemory, componentName]);
 
@@ -219,3 +222,4 @@ export function useEnterprisePerformance(options: PerformanceOptions) {
       : 0
   };
 }
+
