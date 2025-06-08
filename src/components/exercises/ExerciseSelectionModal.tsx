@@ -15,6 +15,7 @@ import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ModalContent } from "@/components/ui/ModalContent";
 import { TabNavigation } from "@/components/ui/TabNavigation";
 import { SearchableList } from "@/components/ui/SearchableList";
+import { useUnifiedExerciseFiltering } from '@/hooks/useUnifiedExerciseFiltering';
 
 interface ExerciseSelectionModalProps {
   open: boolean;
@@ -45,7 +46,6 @@ const ExerciseSelectionModalContent: React.FC<Omit<ExerciseSelectionModalProps, 
   } = useExerciseSelectionModal();
 
   // Use existing filtering hook for advanced filters
-  const { useUnifiedExerciseFiltering } = require('@/hooks/useUnifiedExerciseFiltering');
   const {
     filters,
     setSelectedMuscleGroup,
