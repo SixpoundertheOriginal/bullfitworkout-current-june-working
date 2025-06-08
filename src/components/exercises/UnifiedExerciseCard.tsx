@@ -7,7 +7,9 @@ import { ExerciseCardHeader } from './ExerciseCardHeader';
 import { ExerciseCardContent } from './ExerciseCardContent';
 import { ExerciseCardActions } from './ExerciseCardActions';
 import { PersonalStatsDisplay } from './PersonalStatsDisplay';
+import { MovementPatternBadge } from './MovementPatternBadge';
 import { usePersonalStats } from '@/hooks/usePersonalStats';
+import { getExerciseMovementPattern } from '@/utils/movementPatterns';
 
 export type ExerciseCardVariant = 'premium' | 'compact' | 'minimal';
 export type ExerciseCardContext = 'library' | 'selection' | 'workout';
@@ -47,6 +49,9 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
     enabled: showPersonalStats && context === 'library'
   });
 
+  // Get movement pattern for this exercise
+  const movementPattern = getExerciseMovementPattern(exercise);
+
   const handleFavorite = () => {
     onFavorite?.(exercise);
   };
@@ -72,8 +77,20 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleCardClick}
       >
-        {/* Header */}
-        <ExerciseCardHeader onFavorite={handleFavorite} />
+        {/* Header with Movement Pattern Badge */}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <ExerciseCardHeader onFavorite={handleFavorite} />
+          </div>
+          {movementPattern && (
+            <div className="ml-2 mt-1">
+              <MovementPatternBadge 
+                pattern={movementPattern} 
+                size={variant === 'minimal' ? 'sm' : 'sm'}
+              />
+            </div>
+          )}
+        </div>
         
         {/* Content */}
         <ExerciseCardContent />
