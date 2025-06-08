@@ -11,6 +11,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WorkoutNavigationContextProvider } from "./context/WorkoutNavigationContext";
 import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
+import { DevOnly } from "@/components/debug/DevOnly";
 import { PerformanceDashboard } from "@/components/PerformanceDashboard";
 import { MemoryDebugPanel } from "@/components/debug/MemoryDebugPanel";
 import { serviceWorkerManager } from "@/utils/serviceWorker";
@@ -74,8 +75,10 @@ function App() {
                       <TooltipProvider>
                         <Toaster />
                         <RouterProvider />
-                        <PerformanceDashboard />
-                        <MemoryDebugPanel />
+                        <DevOnly>
+                          <PerformanceDashboard />
+                          <MemoryDebugPanel />
+                        </DevOnly>
                       </TooltipProvider>
                     </LayoutProvider>
                   </WorkoutNavigationContextProvider>

@@ -26,6 +26,8 @@ const getPageTitle = (pathname: string): string => {
       return "All Exercises";
     case "/workouts":
       return "Workouts";
+    case "/developer":
+      return "Developer Tools";
     default:
       if (pathname.startsWith("/workout-details")) {
         return "Workout Details";

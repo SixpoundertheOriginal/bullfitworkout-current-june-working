@@ -1,8 +1,9 @@
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Clock, BarChart3, Zap, Dumbbell, User } from "lucide-react"
+import { Clock, BarChart3, Zap, Dumbbell, User, Code } from "lucide-react"
 import { useLocation, Link } from "react-router-dom"
 import { useState, useEffect } from "react"
+import { DevOnly } from "@/components/debug/DevOnly"
 
 export const MainMenu = () => {
   const location = useLocation();
@@ -14,6 +15,10 @@ export const MainMenu = () => {
     { icon: <Zap className="w-5 h-5" />, label: "Workouts", path: "/workouts" },
     { icon: <Dumbbell className="w-5 h-5" />, label: "Exercises", path: "/all-exercises" },
     { icon: <User className="w-5 h-5" />, label: "Profile", path: "/profile" },
+  ];
+
+  const developerItems = [
+    { icon: <Code className="w-5 h-5" />, label: "Developer", path: "/developer" },
   ];
 
   // Auto-close menu when route changes
@@ -53,6 +58,29 @@ export const MainMenu = () => {
                 <span>{item.label}</span>
               </Link>
             ))}
+            
+            <DevOnly>
+              <div className="pt-4 border-t border-gray-800 mt-4">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-2 px-4">
+                  Development
+                </div>
+                {developerItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={handleLinkClick}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+                      location.pathname === item.path 
+                        ? "bg-purple-800/50 text-purple-300" 
+                        : "hover:bg-purple-800/20 text-purple-400"
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </DevOnly>
           </nav>
         </div>
       </SheetContent>
