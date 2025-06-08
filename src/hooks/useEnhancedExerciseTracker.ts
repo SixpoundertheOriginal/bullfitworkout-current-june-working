@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo } from 'react';
 import { useWorkoutStore } from '@/store/workoutStore';
 
@@ -30,6 +29,13 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
     setActiveExercise 
   } = useWorkoutStore();
 
+  // Format duration helper - moved before useMemo to avoid temporal dead zone
+  const formatDuration = useCallback((seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
   // Convert store format to enhanced format
   const enhancedExercise = useMemo((): EnhancedExercise => {
     const storeSets = storeExercises[exerciseName] || [];
@@ -47,14 +53,7 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
         volume: (set.weight || 0) * (set.reps || 0)
       }))
     };
-  }, [storeExercises, exerciseName]);
-
-  // Format duration helper
-  const formatDuration = useCallback((seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, []);
+  }, [storeExercises, exerciseName, formatDuration]);
 
   // Update set handler
   const handleUpdateSet = useCallback((setId: number, updates: Partial<EnhancedExerciseSet>) => {
