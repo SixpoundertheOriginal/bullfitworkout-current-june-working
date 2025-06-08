@@ -43,16 +43,19 @@ interface ExerciseLibraryContainerProps {
 }
 
 export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> = ({ children }) => {
+  // Ensure all hooks are called at the top level consistently
   const { state, actions } = useExerciseLibraryState();
-  const { exercises, isLoading, isError } = useExercises();
-  const { workouts } = useWorkoutHistory();
+  const { exercises = [], isLoading = false, isError = false } = useExercises();
+  const { workouts = [] } = useWorkoutHistory();
   const isOnline = useNetworkStatus();
   
   // Constants
   const exercisesPerPage = 8;
 
-  // Memoized search filters to prevent unnecessary updates
+  // Stable search filters to prevent unnecessary updates
   const searchFilters = useMemo(() => {
+    if (!state) return {};
+    
     const filters = {
       muscleGroup: state.selectedMuscleGroup !== "all" ? state.selectedMuscleGroup : undefined,
       equipment: state.selectedEquipment !== "all" ? state.selectedEquipment : undefined,
@@ -63,7 +66,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     return Object.fromEntries(
       Object.entries(filters).filter(([_, value]) => value !== undefined)
     );
-  }, [state.selectedMuscleGroup, state.selectedEquipment, state.selectedDifficulty, state.selectedMovement]);
+  }, [state?.selectedMuscleGroup, state?.selectedEquipment, state?.selectedDifficulty, state?.selectedMovement]);
 
   // Enhanced search functionality with stable options
   const searchOptions = useMemo(() => ({
@@ -72,12 +75,12 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   }), []);
 
   const {
-    results: searchResults,
-    isSearching,
+    results: searchResults = [],
+    isSearching = false,
     setQuery,
     setFilters: setSearchFilters,
-    fromCache,
-    isIndexed
+    fromCache = false,
+    isIndexed = false
   } = useExerciseSearch(searchOptions);
 
   // Performance optimization
@@ -88,131 +91,141 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
 
   // Sync search query with state
   useEffect(() => {
-    setQuery(state.searchQuery);
-  }, [state.searchQuery, setQuery]);
+    if (state?.searchQuery !== undefined) {
+      setQuery(state.searchQuery);
+    }
+  }, [state?.searchQuery, setQuery]);
 
   // Sync search filters
   useEffect(() => {
-    setSearchFilters(searchFilters);
+    if (searchFilters && Object.keys(searchFilters).length >= 0) {
+      setSearchFilters(searchFilters);
+    }
   }, [searchFilters, setSearchFilters]);
 
-  // Extract recently used exercises with crash fixes - memoized
+  // Extract recently used exercises - ensure safe array operations
   const recentExercises = useMemo(() => {
-    if (!workouts?.length || !Array.isArray(exercises)) return [];
+    if (!Array.isArray(workouts) || workouts.length === 0) return [];
+    if (!Array.isArray(exercises) || exercises.length === 0) return [];
     
     const exerciseMap = new Map<string, Exercise>();
     
-    workouts.slice(0, 8).forEach(workout => {
-      const exerciseNames = new Set<string>();
-      
-      if (workout?.exerciseSets && Array.isArray(workout.exerciseSets)) {
-        workout.exerciseSets.forEach(set => {
-          if (set?.exercise_name) {
-            exerciseNames.add(set.exercise_name);
+    try {
+      workouts.slice(0, 8).forEach(workout => {
+        const exerciseNames = new Set<string>();
+        
+        if (workout?.exerciseSets && Array.isArray(workout.exerciseSets)) {
+          workout.exerciseSets.forEach(set => {
+            if (set?.exercise_name) {
+              exerciseNames.add(set.exercise_name);
+            }
+          });
+        }
+        
+        exerciseNames.forEach(name => {
+          const exercise = exercises.find(e => e?.name === name);
+          if (exercise && !exerciseMap.has(exercise.id)) {
+            exerciseMap.set(exercise.id, exercise);
           }
         });
-      }
-      
-      exerciseNames.forEach(name => {
-        const exercise = exercises.find(e => e?.name === name);
-        if (exercise && !exerciseMap.has(exercise.id)) {
-          exerciseMap.set(exercise.id, exercise);
-        }
       });
-    });
+    } catch (error) {
+      console.error('Error processing recent exercises:', error);
+      return [];
+    }
     
-    return exerciseMap.size > 0 ? Array.from(exerciseMap.values()) : [];
+    return Array.from(exerciseMap.values());
   }, [workouts, exercises]);
 
-  // Record user search patterns for predictive caching - optimized
+  // Record user search patterns for predictive caching
   useEffect(() => {
-    if (state.searchQuery || Object.keys(searchFilters).length > 0) {
-      const recordSearch = () => {
-        predictiveCache.recordUserSearch(state.searchQuery, searchFilters);
-      };
-      
-      // Debounce the recording to avoid excessive calls
-      const timeout = setTimeout(recordSearch, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [state.searchQuery, searchFilters]);
+    if (!state?.searchQuery && Object.keys(searchFilters).length === 0) return;
+    
+    const recordSearch = () => {
+      try {
+        predictiveCache.recordUserSearch(state?.searchQuery || '', searchFilters);
+      } catch (error) {
+        console.error('Error recording search:', error);
+      }
+    };
+    
+    const timeout = setTimeout(recordSearch, 1000);
+    return () => clearTimeout(timeout);
+  }, [state?.searchQuery, searchFilters]);
 
-  // Memoized computed values to prevent unnecessary re-renders
+  // Safe computed values with proper fallbacks
   const suggestedExercises = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
     
-    return state.searchQuery || Object.keys(searchFilters).length > 0 
-      ? safeSearchResults.slice(0, 20) 
-      : safeExercises.slice(0, 20);
-  }, [state.searchQuery, searchFilters, searchResults, exercises]);
+    const hasActiveSearch = state?.searchQuery || Object.keys(searchFilters).length > 0;
+    return hasActiveSearch ? safeSearchResults.slice(0, 20) : safeExercises.slice(0, 20);
+  }, [state?.searchQuery, searchFilters, searchResults, exercises]);
     
   const filteredRecent = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeRecentExercises = Array.isArray(recentExercises) ? recentExercises : [];
     
-    return state.searchQuery || Object.keys(searchFilters).length > 0 
+    const hasActiveSearch = state?.searchQuery || Object.keys(searchFilters).length > 0;
+    return hasActiveSearch 
       ? safeSearchResults.filter(exercise => 
           safeRecentExercises.some(recent => recent?.id === exercise?.id)
         )
       : safeRecentExercises;
-  }, [state.searchQuery, searchFilters, searchResults, recentExercises]);
+  }, [state?.searchQuery, searchFilters, searchResults, recentExercises]);
     
   const filteredAll = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
     
-    return state.searchQuery || Object.keys(searchFilters).length > 0 
-      ? safeSearchResults 
-      : safeExercises;
-  }, [state.searchQuery, searchFilters, searchResults, exercises]);
+    const hasActiveSearch = state?.searchQuery || Object.keys(searchFilters).length > 0;
+    return hasActiveSearch ? safeSearchResults : safeExercises;
+  }, [state?.searchQuery, searchFilters, searchResults, exercises]);
 
-  // Memoized pagination logic
+  // Stable pagination logic
   const paginationData = useMemo(() => {
+    if (!state?.currentPage || !Array.isArray(filteredAll)) {
+      return { currentExercises: [], totalPages: 0 };
+    }
+    
     const indexOfLastExercise = state.currentPage * exercisesPerPage;
     const indexOfFirstExercise = indexOfLastExercise - exercisesPerPage;
-    const currentExercises = Array.isArray(filteredAll) 
-      ? filteredAll.slice(indexOfFirstExercise, indexOfLastExercise)
-      : [];
-    const totalPages = Array.isArray(filteredAll) 
-      ? Math.ceil(filteredAll.length / exercisesPerPage)
-      : 0;
+    const currentExercises = filteredAll.slice(indexOfFirstExercise, indexOfLastExercise);
+    const totalPages = Math.ceil(filteredAll.length / exercisesPerPage);
 
     return { currentExercises, totalPages };
-  }, [filteredAll, state.currentPage, exercisesPerPage]);
+  }, [filteredAll, state?.currentPage, exercisesPerPage]);
 
-  const safeExercises = Array.isArray(exercises) ? exercises : [];
-
-  // Memoized stable setSearchFilters function
+  // Stable setSearchFilters function
   const stableSetSearchFilters = useCallback((filters: Record<string, any>) => {
     setSearchFilters(filters);
   }, [setSearchFilters]);
 
-  // Memoized render props to prevent unnecessary re-renders
+  // Create render props safely
   const renderProps = useMemo(() => ({
-    state,
-    actions,
-    exercises: safeExercises,
-    recentExercises,
-    suggestedExercises,
-    filteredRecent,
-    filteredAll,
-    currentExercises: paginationData.currentExercises,
-    isLoading,
-    isSearching,
-    isError,
-    isIndexed,
-    fromCache,
-    isOnline,
-    totalPages: paginationData.totalPages,
-    exercisesPerPage,
-    searchResults,
-    searchFilters,
+    state: state || {},
+    actions: actions || {},
+    exercises: Array.isArray(exercises) ? exercises : [],
+    recentExercises: Array.isArray(recentExercises) ? recentExercises : [],
+    suggestedExercises: Array.isArray(suggestedExercises) ? suggestedExercises : [],
+    filteredRecent: Array.isArray(filteredRecent) ? filteredRecent : [],
+    filteredAll: Array.isArray(filteredAll) ? filteredAll : [],
+    currentExercises: Array.isArray(paginationData.currentExercises) ? paginationData.currentExercises : [],
+    isLoading: Boolean(isLoading),
+    isSearching: Boolean(isSearching),
+    isError: Boolean(isError),
+    isIndexed: Boolean(isIndexed),
+    fromCache: Boolean(fromCache),
+    isOnline: Boolean(isOnline),
+    totalPages: Number(paginationData.totalPages) || 0,
+    exercisesPerPage: Number(exercisesPerPage) || 8,
+    searchResults: Array.isArray(searchResults) ? searchResults : [],
+    searchFilters: searchFilters || {},
     setSearchFilters: stableSetSearchFilters
   }), [
     state,
     actions,
-    safeExercises,
+    exercises,
     recentExercises,
     suggestedExercises,
     filteredRecent,
