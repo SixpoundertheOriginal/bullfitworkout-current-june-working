@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UnifiedExerciseCard } from './UnifiedExerciseCard';
+import { useVirtualizedGrid } from '@/hooks/useVirtualizedGrid';
 
 interface VirtualizedExerciseGridProps {
   exercises: Exercise[];
@@ -22,99 +23,12 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   isLoading = false,
   className = ""
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  
-  // Enhanced grid configuration for premium layout
-  const itemWidth = 340;
-  const itemHeight = 220;
-  const gap = 20;
+  const { containerRef, gridDimensions, gridConfig } = useVirtualizedGrid({
+    items: exercises || [],
+    className
+  });
 
-  console.log('VirtualizedExerciseGrid received exercises:', exercises?.length || 0);
-
-  // Set initial dimensions
-  useEffect(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        console.log('Initial container dimensions:', rect.width, 'x', rect.height);
-        setContainerSize({ width: rect.width, height: rect.height });
-      } else {
-        const fallbackWidth = Math.min(window.innerWidth - 64, 1200);
-        const fallbackHeight = Math.max(600, window.innerHeight - 200);
-        console.log('Using fallback dimensions:', fallbackWidth, 'x', fallbackHeight);
-        setContainerSize({ width: fallbackWidth, height: fallbackHeight });
-      }
-    }
-  }, []);
-
-  // Calculate grid dimensions
-  const { columnCount, rowCount, shouldUseVirtualization } = useMemo(() => {
-    console.log('Calculating grid dimensions with containerSize:', containerSize);
-    
-    if (!exercises?.length) {
-      console.log('No exercises to display');
-      return { columnCount: 1, rowCount: 0, shouldUseVirtualization: false };
-    }
-    
-    const width = Math.max(containerSize.width, 340);
-    const height = Math.max(containerSize.height, 400);
-    
-    const availableWidth = width - gap;
-    const columns = Math.max(1, Math.floor(availableWidth / (itemWidth + gap)));
-    const rows = Math.ceil(exercises.length / columns);
-    
-    const useVirtualization = exercises.length > 12 && height > 0 && width > 0;
-    
-    console.log('Grid calculation result:', { 
-      columns, 
-      rows, 
-      exerciseCount: exercises.length, 
-      useVirtualization,
-      containerWidth: width,
-      containerHeight: height
-    });
-    
-    return { 
-      columnCount: columns, 
-      rowCount: rows, 
-      shouldUseVirtualization: useVirtualization 
-    };
-  }, [containerSize.width, containerSize.height, exercises?.length]);
-
-  // Resize observer
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver(entries => {
-      try {
-        const { width, height } = entries[0].contentRect;
-        console.log('ResizeObserver update:', width, 'x', height);
-        if (width > 0 && height > 0) {
-          setContainerSize({ width, height });
-        }
-      } catch (error) {
-        console.error('ResizeObserver error:', error);
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  // Handle favorite toggle
-  const handleFavorite = useCallback((exercise: Exercise) => {
-    setFavorites(prev => {
-      const next = new Set(prev);
-      if (next.has(exercise.id)) {
-        next.delete(exercise.id);
-      } else {
-        next.add(exercise.id);
-      }
-      return next;
-    });
-  }, []);
+  const { columnCount, rowCount, shouldUseVirtualization } = gridDimensions;
 
   // Enhanced grid cell renderer using unified card
   const Cell = useCallback(({ columnIndex, rowIndex, style }: {
@@ -131,7 +45,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
       <div
         style={{
           ...style,
-          padding: gap / 2,
+          padding: gridConfig.gap / 2,
           width: style.width,
           height: style.height,
         }}
@@ -144,16 +58,13 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
             onSelectExercise={onSelectExercise}
             onEdit={onEditExercise}
             onDelete={onDeleteExercise}
-            onFavorite={handleFavorite}
-            isFavorited={favorites.has(exercise.id)}
           />
         </div>
       </div>
     );
-  }, [exercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, favorites, handleFavorite, gap]);
+  }, [exercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, gridConfig.gap]);
 
   if (isLoading) {
-    console.log('Showing loading skeleton');
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}>
         {Array.from({ length: 8 }).map((_, i) => (
@@ -188,7 +99,6 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   }
 
   if (!exercises?.length) {
-    console.log('No exercises found, showing empty state');
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
@@ -202,9 +112,8 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
     );
   }
 
-  // Use regular CSS Grid for smaller lists with unified card
+  // Use regular CSS Grid for smaller lists
   if (!shouldUseVirtualization || columnCount === 0 || rowCount === 0) {
-    console.log('Using fallback CSS Grid rendering for', exercises.length, 'exercises');
     return (
       <div ref={containerRef} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}>
         {exercises.map((exercise) => (
@@ -216,8 +125,6 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
             onSelectExercise={onSelectExercise}
             onEdit={onEditExercise}
             onDelete={onDeleteExercise}
-            onFavorite={handleFavorite}
-            isFavorited={favorites.has(exercise.id)}
           />
         ))}
       </div>
@@ -225,17 +132,16 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   }
 
   // Use virtualized grid for large lists
-  console.log('Using virtualized grid rendering');
   return (
     <div ref={containerRef} className={`w-full h-full ${className}`}>
       <Grid
         columnCount={columnCount}
         rowCount={rowCount}
-        width={containerSize.width}
-        height={containerSize.height}
-        columnWidth={itemWidth + gap}
-        rowHeight={itemHeight + gap}
-        itemData={{ exercises, onSelectExercise, favorites, handleFavorite }}
+        width={gridDimensions.containerSize.width}
+        height={gridDimensions.containerSize.height}
+        columnWidth={gridConfig.itemWidth + gridConfig.gap}
+        rowHeight={gridConfig.itemHeight + gridConfig.gap}
+        itemData={{ exercises, onSelectExercise }}
         className="scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-700"
       >
         {Cell}
