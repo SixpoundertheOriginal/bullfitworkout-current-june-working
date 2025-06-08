@@ -84,7 +84,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   const handleMovementPatternChange = (value: string) => {
     if (value === "all") {
       onMovementPatternChange("all");
-    } else {
+    } else if (MOVEMENT_PATTERNS.includes(value as MovementPattern)) {
       onMovementPatternChange(value as MovementPattern);
     }
   };
@@ -93,7 +93,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   const handleTrainingFocusChange = (value: string) => {
     if (value === "all") {
       onTrainingFocusChange("all");
-    } else {
+    } else if (TRAINING_FOCUS.includes(value as TrainingFocus)) {
       onTrainingFocusChange(value as TrainingFocus);
     }
   };
@@ -102,7 +102,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   const handleComplexityLevelChange = (value: string) => {
     if (value === "all") {
       onComplexityLevelChange("all");
-    } else {
+    } else if (COMPLEXITY_LEVELS.includes(value as ComplexityLevel)) {
       onComplexityLevelChange(value as ComplexityLevel);
     }
   };
@@ -117,6 +117,11 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
       selectedMovement: filters.selectedMovement || 'all'
     };
     onApplyPreset(typedFilters);
+  };
+
+  // Convert values to strings for Select components
+  const getSelectValue = (value: string | MovementPattern | TrainingFocus | ComplexityLevel | boolean | "all"): string => {
+    return String(value);
   };
 
   return (
@@ -162,7 +167,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={String(selectedMovementPattern)} onValueChange={handleMovementPatternChange}>
+              <Select value={getSelectValue(selectedMovementPattern)} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -183,7 +188,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={String(selectedTrainingFocus)} onValueChange={handleTrainingFocusChange}>
+              <Select value={getSelectValue(selectedTrainingFocus)} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -204,7 +209,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={String(selectedComplexityLevel)} onValueChange={handleComplexityLevelChange}>
+              <Select value={getSelectValue(selectedComplexityLevel)} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
@@ -225,7 +230,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
               
               <div className="space-y-2">
                 <Select 
-                  value={hasPersonalStats === 'all' ? 'all' : String(hasPersonalStats)} 
+                  value={getSelectValue(hasPersonalStats)} 
                   onValueChange={(value) => 
                     onHasPersonalStatsChange(value === 'all' ? 'all' : value === 'true')
                   }
@@ -241,7 +246,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 </Select>
 
                 <Select 
-                  value={isReadyToProgress === 'all' ? 'all' : String(isReadyToProgress)} 
+                  value={getSelectValue(isReadyToProgress)} 
                   onValueChange={(value) => 
                     onIsReadyToProgressChange(value === 'all' ? 'all' : value === 'true')
                   }
