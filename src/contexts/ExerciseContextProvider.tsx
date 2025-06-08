@@ -9,9 +9,9 @@ interface ExerciseContextProviderProps {
 }
 
 /**
- * Root provider that combines all exercise-related contexts
- * This provides the foundation for the enterprise-scale exercise management system
- * with proper separation between training, library, and search contexts.
+ * Enterprise-scale exercise context provider
+ * Provides foundation for millions of users with proper separation between
+ * training, library, and search contexts for optimal performance and scalability
  */
 export const ExerciseContextProvider: React.FC<ExerciseContextProviderProps> = ({ children }) => {
   return (
