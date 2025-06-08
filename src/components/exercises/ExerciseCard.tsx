@@ -69,13 +69,8 @@ const ExerciseCard = React.memo<ExerciseCardProps>(({
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-white leading-tight truncate text-lg mb-1">
-                {exercise.name}
+                {exercise}
               </h3>
-              {exercise.description && (
-                <p className="text-gray-400 leading-relaxed text-sm line-clamp-2">
-                  {exercise.description}
-                </p>
-              )}
             </div>
             
             <div className="flex items-center gap-2 flex-shrink-0">
