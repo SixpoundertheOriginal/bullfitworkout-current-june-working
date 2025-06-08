@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "./styles/animations.css";
 @import "./styles/mobile-optimizations.css";
@@ -6,6 +7,138 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Design Token System - Foundation for consistent layout and spacing */
+:root {
+  /* Spacing Scale - Fibonacci-based for visual hierarchy */
+  --space-xs: 0.25rem;    /* 4px - Tailwind: space-1 */
+  --space-sm: 0.5rem;     /* 8px - Tailwind: space-2 */
+  --space-md: 1rem;       /* 16px - Tailwind: space-4 */
+  --space-lg: 1.5rem;     /* 24px - Tailwind: space-6 */
+  --space-xl: 2.5rem;     /* 40px - Tailwind: space-10 */
+  --space-2xl: 4rem;      /* 64px - Tailwind: space-16 */
+  --space-3xl: 6rem;      /* 96px - Tailwind: space-24 */
+  
+  /* Component Heights - System Standards */
+  --header-height: 4rem;        /* 64px - Current h-16 */
+  --nav-height: 4rem;           /* 64px - Current bottom nav */
+  --input-height: 2.75rem;      /* 44px - Touch standard */
+  --button-height: 2.75rem;     /* 44px - Touch standard */
+  --card-height-sm: 8rem;       /* 128px - Small card standard */
+  --card-height-md: 12rem;      /* 192px - Medium card standard */
+  --card-height-lg: 16rem;      /* 256px - Large card standard */
+  
+  /* Container Widths - Responsive Breakpoints */
+  --container-xs: 480px;
+  --container-sm: 640px;        /* Tailwind sm: */
+  --container-md: 768px;        /* Tailwind md: */
+  --container-lg: 1024px;       /* Tailwind lg: */
+  --container-xl: 1280px;       /* Tailwind xl: */
+  --container-max: 1440px;      /* Max content width */
+  
+  /* Safe Areas - iOS/Android Compatibility */
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+  
+  /* Safe Area Calculations */
+  --safe-header-height: calc(var(--header-height) + var(--safe-area-top));
+  --safe-nav-height: calc(var(--nav-height) + var(--safe-area-bottom));
+  --safe-content-height: calc(100vh - var(--safe-header-height) - var(--safe-nav-height));
+  
+  /* Typography Scale - Modular Scale */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  
+  /* Font Weights */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* Base Color System - Compatible with existing theme */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-muted: hsl(var(--muted));
+  --color-border: hsl(var(--border));
+  --color-accent: hsl(var(--accent));
+  --color-primary: hsl(var(--primary));
+  --color-secondary: hsl(var(--secondary));
+  
+  /* Semantic Colors */
+  --color-success: hsl(142, 76%, 36%);
+  --color-warning: hsl(38, 92%, 50%);
+  --color-error: hsl(0, 84%, 60%);
+  --color-info: hsl(217, 91%, 60%);
+  
+  /* Border Radius Scale */
+  --radius-sm: 0.25rem;    /* 4px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px - Current --radius */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-full: 50%;      /* Circular */
+  
+  /* Shadow Scale */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  
+  /* Animation Duration */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  
+  /* Easing Functions */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Common Transitions */
+  --transition-fast: all var(--duration-fast) var(--ease-out);
+  --transition-normal: all var(--duration-normal) var(--ease-out);
+  --transition-slow: all var(--duration-slow) var(--ease-out);
+  --transition-bounce: all var(--duration-normal) var(--ease-bounce);
+  
+  /* Z-Index Scale - Systematic Layering */
+  --z-base: 0;
+  --z-elevated: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-header: 50;
+  --z-toast: 60;
+  
+  /* Layout Grid System */
+  --grid-cols-1: 1;
+  --grid-cols-2: 2;
+  --grid-cols-3: 3;
+  --grid-cols-4: 4;
+  --grid-cols-6: 6;
+  --grid-cols-12: 12;
+  
+  /* Responsive Breakpoint Values */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
 
 /* Font family setup */
 @layer base {
