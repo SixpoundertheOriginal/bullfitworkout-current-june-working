@@ -22,16 +22,8 @@ export const BottomNav = () => {
   
   const isWorkoutActive = Object.keys(exercises).length > 0 && elapsedTime > 0;
   
-  // Prevent showing bottom nav on dialog or auth page
-  const isDialogOpen = document.querySelector('[role="dialog"]') !== null;
-  const isAuthPage = location.pathname === '/auth';
-  
-  if (isDialogOpen || isAuthPage) {
-    return null;
-  }
-  
   return (
-    <nav className="grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm safe-bottom">
+    <nav className="grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm h-16 items-center z-navigation">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Home" 
@@ -84,7 +76,7 @@ const NavButton = ({
     <button 
       onClick={onClick} 
       className={cn(
-        "content-stack py-3 transition-all duration-200 ease-out",
+        "content-stack py-3 transition-all duration-200 ease-out h-full flex flex-col items-center justify-center",
         "active:scale-95 active:bg-gray-800/30",
         "hover:bg-gray-800/20",
         active ? 'text-white' : 'text-gray-500',

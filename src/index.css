@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "./styles/animations.css";
 @import "./styles/mobile-optimizations.css";
@@ -114,14 +115,18 @@
   --transition-slow: all var(--duration-slow) var(--ease-out);
   --transition-bounce: all var(--duration-normal) var(--ease-bounce);
   
-  /* Z-Index Scale - Systematic Layering */
+  /* Systematic Z-Index Scale - Enhanced for stable layering */
   --z-base: 0;
   --z-elevated: 10;
   --z-sticky: 20;
   --z-overlay: 30;
   --z-modal: 40;
   --z-header: 50;
-  --z-toast: 60;
+  --z-navigation: 60;  /* Footer navigation layer */
+  --z-toast: 70;
+  --z-tooltip: 80;
+  --z-dropdown: 90;
+  --z-max: 999;
   
   /* Layout Grid System */
   --grid-cols-1: 1;
@@ -381,13 +386,43 @@
     border-bottom: 1px solid var(--color-border);
   }
 
+  /* Stable Footer System - Enhanced positioning */
+  .footer-fixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    z-index: var(--z-navigation);
+    background: var(--color-background);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footer-stable {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-navigation);
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(75, 85, 99, 0.3);
+    padding-bottom: env(safe-area-inset-bottom);
+    min-height: var(--nav-height);
+  }
+
+  .footer-content-clearance {
+    padding-bottom: calc(var(--nav-height) + var(--safe-area-bottom) + var(--space-md));
+  }
+
   .nav-fixed {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     height: var(--nav-height);
-    z-index: var(--z-header);
+    z-index: var(--z-navigation);
     background: var(--color-background);
     border-top: 1px solid var(--color-border);
   }
@@ -411,6 +446,19 @@
     gap: var(--space-md);
     align-items: center;
   }
+
+  /* Z-Index Management System */
+  .z-base { z-index: var(--z-base); }
+  .z-elevated { z-index: var(--z-elevated); }
+  .z-sticky { z-index: var(--z-sticky); }
+  .z-overlay { z-index: var(--z-overlay); }
+  .z-modal { z-index: var(--z-modal); }
+  .z-header { z-index: var(--z-header); }
+  .z-navigation { z-index: var(--z-navigation); }
+  .z-toast { z-index: var(--z-toast); }
+  .z-tooltip { z-index: var(--z-tooltip); }
+  .z-dropdown { z-index: var(--z-dropdown); }
+  .z-max { z-index: var(--z-max); }
 
   /* Responsive Padding - Mobile First */
   .responsive-padding {

@@ -28,6 +28,8 @@ const getPageTitle = (pathname: string): string => {
       return "Workouts";
     case "/developer":
       return "Developer Tools";
+    case "/design-system":
+      return "Design System";
     default:
       if (pathname.startsWith("/workout-details")) {
         return "Workout Details";
@@ -71,14 +73,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return () => { document.body.style.overflow = '' };
   }, [location.pathname]);
 
-  // Hide global bottom nav only on workout complete page
-  const hideGlobalNavOn = ['/workout-complete'];
-  const shouldShowGlobalNav = !noFooter && !hideGlobalNavOn.some(route => location.pathname.startsWith(route));
+  // Simplified footer visibility logic - always show unless explicitly disabled
+  const shouldShowFooter = !noFooter;
 
   return (
     <div className="page-container bg-gray-900 will-change-transform">
       {!noHeader && (
-        <div className="fixed top-0 left-0 right-0 z-50">
+        <div className="fixed top-0 left-0 right-0 z-header">
           <PageHeader 
             title={title} 
             showBackButton={location.pathname !== '/' && location.pathname !== '/overview'}
@@ -96,13 +97,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       )}
       
       <main className="flex-grow overflow-y-auto safe-header safe-nav will-change-transform">
-        <div className="content-container w-full">
+        <div className={`content-container w-full ${shouldShowFooter ? 'footer-content-clearance' : ''}`}>
           {children}
         </div>
       </main>
       
-      {shouldShowGlobalNav && (
-        <div className="nav-fixed">
+      {shouldShowFooter && (
+        <div className="footer-stable">
           <BottomNav />
         </div>
       )}
