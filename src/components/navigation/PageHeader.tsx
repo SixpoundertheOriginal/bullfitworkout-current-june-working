@@ -1,8 +1,9 @@
-
 import React from "react";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useScroll } from "@/hooks/useScroll";
+import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
+import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -21,13 +22,29 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   scrollResponsive = false
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isScrolled, scrollDirection } = useScroll(20);
+  const { isActive } = useWorkoutState();
   
   const handleBack = () => {
     if (onBack) {
+      // Existing explicit back handler takes priority
       onBack();
     } else {
-      navigate(-1);
+      // Context-aware back button logic
+      if (isActive && location.pathname !== '/training-session') {
+        // Return to workout session for active workouts (unless already there)
+        navigate('/training-session');
+      } else if (location.state?.from) {
+        // Use explicit navigation state if available
+        navigate(location.state.from);
+      } else if (location.key !== 'default') {
+        // Has history - safe to go back
+        navigate(-1);
+      } else {
+        // No history or unknown state - go to home
+        navigate('/');
+      }
     }
   };
 
