@@ -119,10 +119,10 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
     onApplyPreset(typedFilters);
   };
 
-  // Convert typed values to strings for Select components
-  const movementPatternValue = selectedMovementPattern;
-  const trainingFocusValue = selectedTrainingFocus;
-  const complexityLevelValue = selectedComplexityLevel;
+  // Convert typed values to strings for Select components - FIX: Use String() to ensure proper conversion
+  const movementPatternValue = String(selectedMovementPattern);
+  const trainingFocusValue = String(selectedTrainingFocus);
+  const complexityLevelValue = String(selectedComplexityLevel);
 
   return (
     <div className={className}>
