@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
-import { PremiumExerciseCard } from './PremiumExerciseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface VirtualizedExerciseGridProps {
@@ -116,7 +114,10 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
     });
   }, []);
 
-  // Enhanced grid cell renderer
+  // Import the unified card
+  const { UnifiedExerciseCard } = await import('./UnifiedExerciseCard');
+
+  // Enhanced grid cell renderer using unified card
   const Cell = useCallback(({ columnIndex, rowIndex, style }: {
     columnIndex: number;
     rowIndex: number;
@@ -137,16 +138,20 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
         }}
       >
         <div className="h-full">
-          <PremiumExerciseCard
+          <UnifiedExerciseCard
             exercise={exercise}
+            variant="premium"
+            context="library"
             onSelectExercise={onSelectExercise}
+            onEdit={onEditExercise}
+            onDelete={onDeleteExercise}
             onFavorite={handleFavorite}
             isFavorited={favorites.has(exercise.id)}
           />
         </div>
       </div>
     );
-  }, [exercises, columnCount, onSelectExercise, favorites, handleFavorite, gap]);
+  }, [exercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, favorites, handleFavorite, gap]);
 
   if (isLoading) {
     console.log('Showing loading skeleton');
@@ -198,16 +203,20 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
     );
   }
 
-  // Use regular CSS Grid for smaller lists
+  // Use regular CSS Grid for smaller lists with unified card
   if (!shouldUseVirtualization || columnCount === 0 || rowCount === 0) {
     console.log('Using fallback CSS Grid rendering for', exercises.length, 'exercises');
     return (
       <div ref={containerRef} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}>
         {exercises.map((exercise) => (
-          <PremiumExerciseCard
+          <UnifiedExerciseCard
             key={exercise.id}
             exercise={exercise}
+            variant="premium"
+            context="library"
             onSelectExercise={onSelectExercise}
+            onEdit={onEditExercise}
+            onDelete={onDeleteExercise}
             onFavorite={handleFavorite}
             isFavorited={favorites.has(exercise.id)}
           />
