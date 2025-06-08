@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { MuscleGroup, EquipmentType, MovementPattern, Difficulty,
          COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS } from '@/types/exercise';
-import { MultiSelect } from '@/components/MultiSelect';
+import { TagSelector } from '@/components/ui/TagSelector';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { exerciseDataTransform } from '@/utils/exerciseDataTransform';
 
@@ -92,7 +93,6 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
 
   const handleSubmit = () => {
     if (validateStep(currentStep)) {
-      // Use defensive data transformation
       const transformedData = exerciseDataTransform.toDatabase(exerciseData);
       onSubmit(transformedData);
     }
@@ -123,7 +123,7 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
   }, [open]);
 
   const renderStep1 = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <Label htmlFor="name">Exercise Name*</Label>
         <Input
@@ -148,8 +148,8 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
       </div>
 
       <div>
-        <Label>Primary Muscle Groups*</Label>
-        <MultiSelect
+        <TagSelector
+          label="Primary Muscle Groups*"
           options={safeMuscleGroups.map(group => ({ label: group, value: group }))}
           selected={exerciseDataTransform.ensureArray(exerciseData.primary_muscle_groups)}
           onChange={(selected) => setExerciseData({ 
@@ -163,8 +163,8 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
       </div>
 
       <div>
-        <Label>Secondary Muscle Groups</Label>
-        <MultiSelect
+        <TagSelector
+          label="Secondary Muscle Groups"
           options={safeMuscleGroups.map(group => ({ label: group, value: group }))}
           selected={exerciseDataTransform.ensureArray(exerciseData.secondary_muscle_groups)}
           onChange={(selected) => setExerciseData({ 
@@ -178,10 +178,10 @@ export const StreamlinedExerciseCreationModal: React.FC<StreamlinedExerciseCreat
   );
 
   const renderStep2 = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <Label>Equipment Type*</Label>
-        <MultiSelect
+        <TagSelector
+          label="Equipment Type*"
           options={safeEquipment.map(equip => ({ label: equip, value: equip }))}
           selected={exerciseDataTransform.ensureArray(exerciseData.equipment_type)}
           onChange={(selected) => setExerciseData({ 
