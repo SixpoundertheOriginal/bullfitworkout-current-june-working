@@ -162,7 +162,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={selectedMovementPattern} onValueChange={handleMovementPatternChange}>
+              <Select value={selectedMovementPattern as string} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -183,7 +183,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={selectedTrainingFocus} onValueChange={handleTrainingFocusChange}>
+              <Select value={selectedTrainingFocus as string} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -204,7 +204,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={selectedComplexityLevel} onValueChange={handleComplexityLevelChange}>
+              <Select value={selectedComplexityLevel as string} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
