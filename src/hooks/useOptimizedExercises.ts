@@ -43,7 +43,10 @@ export const useOptimizedExercises = () => {
           is_compound: transformed.is_compound,
           tips: transformed.tips,
           variations: transformed.variations,
-          metadata: exercise.metadata || {}
+          // Fix the metadata type casting issue
+          metadata: (exercise.metadata && typeof exercise.metadata === 'object' && !Array.isArray(exercise.metadata)) 
+            ? exercise.metadata as Record<string, any>
+            : {}
         };
       }).filter(Boolean) as Exercise[];
     },
