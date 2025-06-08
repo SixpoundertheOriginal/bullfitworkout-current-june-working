@@ -192,3 +192,16 @@ export const getSuggestedProgressionVariant = (
   // For now, return null as a placeholder
   return null;
 };
+
+export type ExerciseCardVariant = 'premium' | 'compact' | 'minimal';
+export type ExerciseCardContext = 'library' | 'selection' | 'workout';
+
+export interface ExerciseCardContextType {
+  exercise: Exercise;
+  variant: ExerciseCardVariant;
+  context: ExerciseCardContext;
+  isFavorited: boolean;
+  className?: string;
+  primaryMuscles: MuscleGroup[];
+  equipment: EquipmentType[];
+}
