@@ -3,6 +3,7 @@ import { Clock, User as UserIcon, Dumbbell, BarChart3, Zap } from "lucide-react"
 import { useLocation } from "react-router-dom";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { cn } from "@/lib/utils";
 
 export const BottomNav = () => {
   const location = useLocation();
@@ -82,12 +83,20 @@ const NavButton = ({
   return (
     <button 
       onClick={onClick} 
-      className={`flex flex-col items-center justify-center py-3 ${active ? 'text-white' : 'text-gray-500'} ${highlight ? 'relative' : ''}`}
+      className={cn(
+        "flex flex-col items-center justify-center py-3 transition-all duration-200 ease-out",
+        "active:scale-95 active:bg-gray-800/30",
+        "hover:bg-gray-800/20",
+        active ? 'text-white' : 'text-gray-500',
+        highlight && 'relative'
+      )}
     >
-      {icon}
-      <span className="text-xs mt-1">{label}</span>
+      <div className="transition-transform duration-200 ease-out">
+        {icon}
+      </div>
+      <span className="text-xs mt-1 transition-colors duration-200">{label}</span>
       {highlight && (
-        <span className="absolute top-2 right-1/4 h-2 w-2 bg-green-500 rounded-full"></span>
+        <span className="absolute top-2 right-1/4 h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
       )}
     </button>
   );

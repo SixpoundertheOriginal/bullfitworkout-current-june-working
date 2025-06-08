@@ -7,6 +7,7 @@ import { useLocation } from "react-router-dom";
 import { useLayout } from "@/context/LayoutContext";
 import { DateRangeFilter } from "@/components/date-filters/DateRangeFilter";
 import { MainMenu } from "@/components/navigation/MainMenu";
+import { DevOnly } from "@/components/debug/DevOnly";
 
 // Function to get page title based on the current route
 const getPageTitle = (pathname: string): string => {
@@ -33,6 +34,11 @@ const getPageTitle = (pathname: string): string => {
   }
 };
 
+// Determine if page should use scroll-responsive header
+const shouldUseScrollResponsiveHeader = (pathname: string): boolean => {
+  return ['/all-exercises', '/overview', '/workouts'].includes(pathname);
+};
+
 interface MainLayoutProps {
   children: React.ReactNode;
   noHeader?: boolean;
@@ -47,6 +53,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const location = useLocation();
   const { isFilterVisible } = useLayout();
   const title = getPageTitle(location.pathname);
+  const useScrollResponsive = shouldUseScrollResponsiveHeader(location.pathname);
   
   // Prevent layout shifts during route changes
   useLayoutEffect(() => {
@@ -70,7 +77,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
       {!noHeader && (
         <div className="fixed top-0 left-0 right-0 z-50">
-          <PageHeader title={title} showBackButton={location.pathname !== '/' && location.pathname !== '/overview'}>
+          <PageHeader 
+            title={title} 
+            showBackButton={location.pathname !== '/' && location.pathname !== '/overview'}
+            scrollResponsive={useScrollResponsive}
+          >
             <MainMenu />
             {isFilterVisible && (
               <div className="h-[36px] overflow-hidden">
@@ -94,17 +105,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       )}
       
-      <style>
-        {`
-        .force-no-transition * {
-          transition: none !important;
-          animation: none !important;
-        }
-        .content-container {
-          min-height: calc(100vh - 48px);
-        }
-        `}
-      </style>
+      <DevOnly>
+        <style>
+          {`
+          .force-no-transition * {
+            transition: none !important;
+            animation: none !important;
+          }
+          .content-container {
+            min-height: calc(100vh - 48px);
+          }
+          `}
+        </style>
+      </DevOnly>
     </div>
   );
 };
