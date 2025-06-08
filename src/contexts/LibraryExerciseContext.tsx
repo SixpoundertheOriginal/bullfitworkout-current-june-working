@@ -3,6 +3,7 @@ import React, { createContext, useContext, useReducer, useCallback, useEffect } 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
+import { exerciseDataTransform } from '@/utils/exerciseDataTransform';
 
 // Types for library exercise state
 interface LibraryExerciseState {
@@ -105,60 +106,76 @@ function libraryExerciseReducer(state: LibraryExerciseState, action: LibraryExer
   }
 }
 
-// Helper function to apply filters and sorting
+// Helper function to apply filters and sorting with defensive programming
 const applyFiltersAndSort = (exercises: Exercise[], filters: LibraryExerciseState['filters'], sortBy: string, sortOrder: string): Exercise[] => {
-  let filtered = [...exercises];
+  // Defensive programming - ensure exercises is always an array
+  const safeExercises = exerciseDataTransform.ensureArray(exercises);
+  let filtered = [...safeExercises];
 
-  // Apply search filter
+  // Apply search filter with null safety
   if (filters.search) {
     const searchLower = filters.search.toLowerCase();
-    filtered = filtered.filter(exercise =>
-      exercise.name.toLowerCase().includes(searchLower) ||
-      exercise.description?.toLowerCase().includes(searchLower) ||
-      exercise.primary_muscle_groups.some(muscle => muscle.toLowerCase().includes(searchLower)) ||
-      exercise.secondary_muscle_groups.some(muscle => muscle.toLowerCase().includes(searchLower))
-    );
+    filtered = filtered.filter(exercise => {
+      if (!exercise) return false;
+      
+      const name = exercise.name?.toLowerCase() || '';
+      const description = exercise.description?.toLowerCase() || '';
+      const primaryMuscles = exerciseDataTransform.ensureArray(exercise.primary_muscle_groups);
+      const secondaryMuscles = exerciseDataTransform.ensureArray(exercise.secondary_muscle_groups);
+      
+      return name.includes(searchLower) ||
+             description.includes(searchLower) ||
+             primaryMuscles.some(muscle => muscle?.toLowerCase().includes(searchLower)) ||
+             secondaryMuscles.some(muscle => muscle?.toLowerCase().includes(searchLower));
+    });
   }
 
-  // Apply muscle group filter
+  // Apply muscle group filter with defensive checks
   if (filters.muscleGroup !== 'all') {
-    filtered = filtered.filter(exercise =>
-      exercise.primary_muscle_groups.includes(filters.muscleGroup as MuscleGroup) ||
-      exercise.secondary_muscle_groups.includes(filters.muscleGroup as MuscleGroup)
-    );
+    filtered = filtered.filter(exercise => {
+      if (!exercise) return false;
+      const primaryMuscles = exerciseDataTransform.ensureArray(exercise.primary_muscle_groups);
+      const secondaryMuscles = exerciseDataTransform.ensureArray(exercise.secondary_muscle_groups);
+      return primaryMuscles.includes(filters.muscleGroup as MuscleGroup) ||
+             secondaryMuscles.includes(filters.muscleGroup as MuscleGroup);
+    });
   }
 
-  // Apply equipment filter
+  // Apply equipment filter with defensive checks
   if (filters.equipment !== 'all') {
-    filtered = filtered.filter(exercise =>
-      exercise.equipment_type.includes(filters.equipment as EquipmentType)
-    );
+    filtered = filtered.filter(exercise => {
+      if (!exercise) return false;
+      const equipmentTypes = exerciseDataTransform.ensureArray(exercise.equipment_type);
+      return equipmentTypes.includes(filters.equipment as EquipmentType);
+    });
   }
 
   // Apply difficulty filter
   if (filters.difficulty !== 'all') {
     filtered = filtered.filter(exercise =>
-      exercise.difficulty === filters.difficulty
+      exercise?.difficulty === filters.difficulty
     );
   }
 
   // Apply movement pattern filter
   if (filters.movement !== 'all') {
     filtered = filtered.filter(exercise =>
-      exercise.movement_pattern === filters.movement
+      exercise?.movement_pattern === filters.movement
     );
   }
 
-  // Apply sorting
+  // Apply sorting with null safety
   filtered.sort((a, b) => {
+    if (!a || !b) return 0;
+    
     let comparison = 0;
     
     switch (sortBy) {
       case 'name':
-        comparison = a.name.localeCompare(b.name);
+        comparison = (a.name || '').localeCompare(b.name || '');
         break;
       case 'created_at':
-        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        comparison = new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
         break;
       case 'difficulty': {
         const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
@@ -193,23 +210,28 @@ interface LibraryExerciseContextType {
 // Create context
 const LibraryExerciseContext = createContext<LibraryExerciseContextType | undefined>(undefined);
 
-// Provider component
+// Provider component with enhanced error handling
 export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(libraryExerciseReducer, initialState);
   const queryClient = useQueryClient();
   const { exercises, createExercise: createExerciseAPI, isPending } = useExercises();
 
-  // Update exercises when data changes from useExercises hook
+  // Update exercises when data changes from useExercises hook with defensive programming
   useEffect(() => {
-    if (Array.isArray(exercises)) {
-      dispatch({ type: 'SET_EXERCISES', payload: exercises });
-    }
+    const safeExercises = exerciseDataTransform.ensureArray(exercises);
+    dispatch({ type: 'SET_EXERCISES', payload: safeExercises });
   }, [exercises]);
 
   // Update filtered exercises when exercises or filters change
   useEffect(() => {
-    const filtered = applyFiltersAndSort(state.exercises, state.filters, state.sortBy, state.sortOrder);
-    dispatch({ type: 'SET_FILTERED_EXERCISES', payload: filtered });
+    try {
+      const filtered = applyFiltersAndSort(state.exercises, state.filters, state.sortBy, state.sortOrder);
+      dispatch({ type: 'SET_FILTERED_EXERCISES', payload: filtered });
+    } catch (error) {
+      console.error('Error filtering exercises:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to filter exercises' });
+      dispatch({ type: 'SET_FILTERED_EXERCISES', payload: [] });
+    }
   }, [state.exercises, state.filters, state.sortBy, state.sortOrder]);
 
   // Filter and search functions
@@ -234,17 +256,20 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
     dispatch({ type: 'SET_SELECTED_EXERCISE', payload: exercise });
   }, []);
 
-  // CRUD operations
+  // CRUD operations with enhanced error handling
   const createExercise = useCallback(async (exerciseData: Omit<Exercise, 'id' | 'created_at'>) => {
     dispatch({ type: 'SET_CREATING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
     
     try {
+      // Apply enterprise data transformation before submission
+      const safeData = exerciseDataTransform.toDatabase(exerciseData);
+      
       await new Promise<void>((resolve, reject) => {
         createExerciseAPI(
           {
-            ...exerciseData,
-            user_id: exerciseData.user_id || '',
+            ...safeData,
+            user_id: safeData.user_id || '',
           },
           {
             onSuccess: () => {
@@ -252,7 +277,8 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
               resolve();
             },
             onError: (error) => {
-              dispatch({ type: 'SET_ERROR', payload: error.message });
+              const errorMessage = error instanceof Error ? error.message : 'Failed to create exercise';
+              dispatch({ type: 'SET_ERROR', payload: errorMessage });
               dispatch({ type: 'SET_CREATING', payload: false });
               reject(error);
             }
@@ -273,7 +299,8 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
       console.log('Update exercise not yet implemented:', id, exerciseData);
       dispatch({ type: 'SET_UPDATING', payload: false });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update exercise';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       dispatch({ type: 'SET_UPDATING', payload: false });
       throw error;
     }
@@ -288,32 +315,41 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
       console.log('Delete exercise not yet implemented:', id);
       dispatch({ type: 'SET_DELETING', payload: false });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete exercise';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       dispatch({ type: 'SET_DELETING', payload: false });
       throw error;
     }
   }, []);
 
-  // Query functions
+  // Query functions with defensive programming
   const getExerciseById = useCallback((id: string) => {
-    return state.exercises.find(exercise => exercise.id === id);
+    const safeExercises = exerciseDataTransform.ensureArray(state.exercises);
+    return safeExercises.find(exercise => exercise?.id === id);
   }, [state.exercises]);
 
   const getExercisesByMuscleGroup = useCallback((muscleGroup: MuscleGroup) => {
-    return state.exercises.filter(exercise =>
-      exercise.primary_muscle_groups.includes(muscleGroup) ||
-      exercise.secondary_muscle_groups.includes(muscleGroup)
-    );
+    const safeExercises = exerciseDataTransform.ensureArray(state.exercises);
+    return safeExercises.filter(exercise => {
+      if (!exercise) return false;
+      const primaryMuscles = exerciseDataTransform.ensureArray(exercise.primary_muscle_groups);
+      const secondaryMuscles = exerciseDataTransform.ensureArray(exercise.secondary_muscle_groups);
+      return primaryMuscles.includes(muscleGroup) || secondaryMuscles.includes(muscleGroup);
+    });
   }, [state.exercises]);
 
   const getExercisesByEquipment = useCallback((equipment: EquipmentType) => {
-    return state.exercises.filter(exercise =>
-      exercise.equipment_type.includes(equipment)
-    );
+    const safeExercises = exerciseDataTransform.ensureArray(state.exercises);
+    return safeExercises.filter(exercise => {
+      if (!exercise) return false;
+      const equipmentTypes = exerciseDataTransform.ensureArray(exercise.equipment_type);
+      return equipmentTypes.includes(equipment);
+    });
   }, [state.exercises]);
 
   const getExercisesByDifficulty = useCallback((difficulty: Difficulty) => {
-    return state.exercises.filter(exercise => exercise.difficulty === difficulty);
+    const safeExercises = exerciseDataTransform.ensureArray(state.exercises);
+    return safeExercises.filter(exercise => exercise?.difficulty === difficulty);
   }, [state.exercises]);
 
   // Context value

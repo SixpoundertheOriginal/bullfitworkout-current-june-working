@@ -3,6 +3,7 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
+import { exerciseDataTransform } from '@/utils/exerciseDataTransform';
 
 export type ExerciseMetadata = {
   default_weight?: number;
@@ -33,8 +34,8 @@ export type ExerciseSortBy = 'name' | 'created_at' | 'difficulty';
 export type SortOrder = 'asc' | 'desc';
 
 /**
- * Enterprise-grade exercise management hook with optimized caching
- * Foundation for all exercise-related operations across the application
+ * Enterprise-grade exercise management hook with bulletproof data transformation
+ * Now includes type safety and crash prevention for Exercise Library
  */
 export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSortOrder: SortOrder = 'asc') => {
   const queryClient = useQueryClient();
@@ -49,23 +50,29 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
 
       if (error) throw error;
 
-      return data.map((exercise): Exercise => ({
-        id: exercise.id,
-        name: exercise.name,
-        created_at: exercise.created_at || '',
-        user_id: exercise.created_by || '', // Map created_by to user_id
-        description: exercise.description || '',
-        primary_muscle_groups: (exercise.primary_muscle_groups || []) as MuscleGroup[],
-        secondary_muscle_groups: (exercise.secondary_muscle_groups || []) as MuscleGroup[],
-        equipment_type: (exercise.equipment_type || []) as EquipmentType[],
-        movement_pattern: (exercise.movement_pattern || 'push') as MovementPattern,
-        difficulty: (exercise.difficulty || 'beginner') as Difficulty,
-        instructions: (exercise.instructions || {}) as Record<string, any>,
-        is_compound: exercise.is_compound || false,
-        tips: exercise.tips || [],
-        variations: exercise.variations || [],
-        metadata: exercise.metadata as ExerciseMetadata || {}
-      }));
+      // Apply defensive transformation from database
+      return (data || []).map((exercise): Exercise => {
+        const transformed = exerciseDataTransform.fromDatabase(exercise);
+        if (!transformed) return null;
+        
+        return {
+          id: exercise.id,
+          name: transformed.name,
+          created_at: exercise.created_at || '',
+          user_id: exercise.created_by || '', // Map created_by to user_id
+          description: transformed.description,
+          primary_muscle_groups: transformed.primary_muscle_groups as MuscleGroup[],
+          secondary_muscle_groups: transformed.secondary_muscle_groups as MuscleGroup[],
+          equipment_type: transformed.equipment_type as EquipmentType[],
+          movement_pattern: (exercise.movement_pattern || 'push') as MovementPattern,
+          difficulty: (exercise.difficulty || 'beginner') as Difficulty,
+          instructions: transformed.instructions as Record<string, any>,
+          is_compound: transformed.is_compound,
+          tips: transformed.tips,
+          variations: transformed.variations,
+          metadata: exercise.metadata as ExerciseMetadata || {}
+        };
+      }).filter(Boolean) as Exercise[]; // Filter out any null results
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 60 * 60 * 1000, // 1 hour (replaced cacheTime)
@@ -81,31 +88,37 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
 
-  // Optimized create exercise mutation with cache management
+  // Enterprise-grade create exercise mutation with bulletproof data transformation
   const { mutate: createExercise, isPending } = useMutation({
     mutationFn: async (newExercise: ExerciseInput) => {
       console.log("Creating exercise with data:", newExercise);
       
-      if (!newExercise.name || !newExercise.primary_muscle_groups || newExercise.primary_muscle_groups.length === 0) {
-        throw new Error("Exercise name and at least one primary muscle group are required");
+      // Validate data before transformation
+      const validation = exerciseDataTransform.validateExerciseData(newExercise);
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
       }
+      
+      // Transform data to database-safe format (CRITICAL FIX)
+      const safeData = exerciseDataTransform.toDatabase(newExercise);
+      console.log("Transformed safe data:", safeData);
       
       const { data, error } = await supabase
         .from('exercises')
         .insert([{
-          name: newExercise.name,
-          description: newExercise.description || '',
-          primary_muscle_groups: newExercise.primary_muscle_groups,
-          secondary_muscle_groups: newExercise.secondary_muscle_groups || [],
-          equipment_type: newExercise.equipment_type || [],
-          movement_pattern: newExercise.movement_pattern,
-          difficulty: newExercise.difficulty,
-          instructions: newExercise.instructions || {},
-          is_compound: Boolean(newExercise.is_compound),
-          tips: newExercise.tips || [],
-          variations: newExercise.variations || [],
-          metadata: newExercise.metadata || {},
-          created_by: newExercise.user_id || '',
+          name: safeData.name,
+          description: safeData.description,
+          primary_muscle_groups: safeData.primary_muscle_groups, // Now guaranteed to be array
+          secondary_muscle_groups: safeData.secondary_muscle_groups, // Now guaranteed to be array
+          equipment_type: safeData.equipment_type, // Now guaranteed to be array
+          movement_pattern: safeData.movement_pattern,
+          difficulty: safeData.difficulty,
+          instructions: safeData.instructions,
+          is_compound: safeData.is_compound,
+          tips: safeData.tips, // Now guaranteed to be array
+          variations: safeData.variations, // Now guaranteed to be array
+          metadata: safeData.metadata,
+          created_by: safeData.user_id,
           is_custom: true
         }])
         .select();
@@ -121,24 +134,27 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
     onSuccess: (newExercise) => {
       console.log("Invalidating exercises query cache");
       
-      // Optimistic update to main cache
+      // Apply transformation for cache update as well
+      const transformedExercise = exerciseDataTransform.fromDatabase(newExercise);
+      
+      // Optimistic update to main cache with transformed data
       queryClient.setQueryData(['exercises'], (old: Exercise[] = []) => [
         ...old,
         {
           id: newExercise.id,
-          name: newExercise.name,
+          name: transformedExercise?.name || newExercise.name,
           created_at: newExercise.created_at || '',
           user_id: newExercise.created_by || '',
-          description: newExercise.description || '',
-          primary_muscle_groups: (newExercise.primary_muscle_groups || []) as MuscleGroup[],
-          secondary_muscle_groups: (newExercise.secondary_muscle_groups || []) as MuscleGroup[],
-          equipment_type: (newExercise.equipment_type || []) as EquipmentType[],
+          description: transformedExercise?.description || '',
+          primary_muscle_groups: transformedExercise?.primary_muscle_groups || [],
+          secondary_muscle_groups: transformedExercise?.secondary_muscle_groups || [],
+          equipment_type: transformedExercise?.equipment_type || [],
           movement_pattern: (newExercise.movement_pattern || 'push') as MovementPattern,
           difficulty: (newExercise.difficulty || 'beginner') as Difficulty,
-          instructions: (newExercise.instructions || {}) as Record<string, any>,
-          is_compound: newExercise.is_compound || false,
-          tips: newExercise.tips || [],
-          variations: newExercise.variations || [],
+          instructions: transformedExercise?.instructions || {},
+          is_compound: transformedExercise?.is_compound || false,
+          tips: transformedExercise?.tips || [],
+          variations: transformedExercise?.variations || [],
           metadata: newExercise.metadata as ExerciseMetadata || {}
         }
       ]);
@@ -153,22 +169,24 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
     }
   });
 
-  // Enterprise-grade sorting with memoization
+  // Enterprise-grade sorting with memoization and defensive programming
   const getSortedExercises = React.useCallback((
     sortBy: ExerciseSortBy = initialSortBy, 
     sortOrder: SortOrder = initialSortOrder
   ): Exercise[] => {
-    if (!exercises || !Array.isArray(exercises)) return [];
+    // Defensive programming - ensure exercises is always an array
+    const safeExercises = exercises ? Array.from(exercises) : [];
+    if (!Array.isArray(safeExercises)) return [];
 
-    return [...exercises].sort((a, b) => {
+    return [...safeExercises].sort((a, b) => {
       let comparison = 0;
       
       switch (sortBy) {
         case 'name':
-          comparison = a.name.localeCompare(b.name);
+          comparison = (a.name || '').localeCompare(b.name || '');
           break;
         case 'created_at':
-          comparison = (new Date(a.created_at)).getTime() - (new Date(b.created_at)).getTime();
+          comparison = (new Date(a.created_at || 0)).getTime() - (new Date(b.created_at || 0)).getTime();
           break;
         case 'difficulty': {
           const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
@@ -184,19 +202,22 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
 
   // Prefetch exercise details for performance
   const prefetchExercise = React.useCallback(async (exerciseId: string) => {
-    if (!exercises || !Array.isArray(exercises)) return;
+    const safeExercises = exercises ? Array.from(exercises) : [];
+    if (!Array.isArray(safeExercises)) return;
     
     await queryClient.prefetchQuery({
       queryKey: ['exercise', exerciseId],
-      queryFn: () => exercises.find(e => e.id === exerciseId),
+      queryFn: () => safeExercises.find(e => e.id === exerciseId),
       staleTime: 5 * 60 * 1000
     });
   }, [exercises, queryClient]);
 
+  // Defensive programming for error handling
   const isError = !!error;
+  const safeExercises = exercises ? Array.from(exercises) : [];
 
   return {
-    exercises: exercises || [],
+    exercises: safeExercises,
     getSortedExercises,
     isLoading,
     error,
@@ -204,6 +225,6 @@ export const useExercises = (initialSortBy: ExerciseSortBy = 'name', initialSort
     isPending,
     isError,
     prefetchExercise,
-    totalCount: exercises?.length || 0
+    totalCount: safeExercises.length || 0
   };
 };

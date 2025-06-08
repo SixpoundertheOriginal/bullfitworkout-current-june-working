@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { MuscleGroup, EquipmentType, MovementPattern, Difficulty,
          COMMON_MUSCLE_GROUPS, COMMON_EQUIPMENT, MOVEMENT_PATTERNS, DIFFICULTY_LEVELS,
          LOADING_TYPES, VARIANT_CATEGORIES, LoadingType, VariantCategory } from "@/types/exercise";
 import { MultiSelect } from "@/components/MultiSelect";
+import { exerciseDataTransform } from "@/utils/exerciseDataTransform";
 
 interface ExerciseDialogProps {
   open: boolean;
@@ -61,8 +63,8 @@ export function ExerciseDialog({
     movement_pattern: "push" as MovementPattern,
     difficulty: "beginner" as Difficulty,
     instructions: {
-      steps: "", // Initialize steps property
-      form: ""   // Initialize form property
+      steps: "",
+      form: ""
     },
     is_compound: false,
     tips: [] as string[],
@@ -78,17 +80,32 @@ export function ExerciseDialog({
   const [newTip, setNewTip] = useState("");
   const [newVariation, setNewVariation] = useState("");
   const [formError, setFormError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Reset form when dialog opens/closes or when initialExercise changes
   useEffect(() => {
     if (initialExercise) {
+      // Apply defensive transformation for existing exercise data
+      const safeData = exerciseDataTransform.fromDatabase(initialExercise);
+      
       setExercise({
-        ...initialExercise,
+        name: safeData?.name || "",
+        description: safeData?.description || "",
+        primary_muscle_groups: safeData?.primary_muscle_groups || [],
+        secondary_muscle_groups: safeData?.secondary_muscle_groups || [],
+        equipment_type: safeData?.equipment_type || [],
+        movement_pattern: initialExercise.movement_pattern || "push",
+        difficulty: initialExercise.difficulty || "beginner",
+        instructions: safeData?.instructions || { steps: "", form: "" },
+        is_compound: safeData?.is_compound || false,
+        tips: safeData?.tips || [],
+        variations: safeData?.variations || [],
+        metadata: safeData?.metadata || {},
         loading_type: initialExercise.loading_type || undefined,
         estimated_load_percent: initialExercise.estimated_load_percent,
         variant_category: initialExercise.variant_category || undefined,
-        is_bodyweight: initialExercise.is_bodyweight || false,
-        energy_cost_factor: initialExercise.energy_cost_factor || 1,
+        is_bodyweight: safeData?.is_bodyweight || false,
+        energy_cost_factor: safeData?.energy_cost_factor || 1,
       });
     } else {
       setExercise({
@@ -99,10 +116,7 @@ export function ExerciseDialog({
         equipment_type: [],
         movement_pattern: "push",
         difficulty: "beginner",
-        instructions: {
-          steps: "", // Initialize steps property
-          form: ""   // Initialize form property
-        },
+        instructions: { steps: "", form: "" },
         is_compound: false,
         tips: [],
         variations: [],
@@ -115,81 +129,97 @@ export function ExerciseDialog({
       });
     }
     setFormError("");
+    setValidationErrors([]);
     setActiveTab("basic");
   }, [initialExercise, open]);
 
   // Update whether the exercise is bodyweight based on equipment type
   useEffect(() => {
-    if (exercise.equipment_type.includes('bodyweight')) {
+    const safeEquipmentType = exerciseDataTransform.ensureArray(exercise.equipment_type);
+    if (safeEquipmentType.includes('bodyweight')) {
       setExercise(prev => ({ ...prev, is_bodyweight: true }));
     }
   }, [exercise.equipment_type]);
 
-  // Add a tip to the exercise
+  // Real-time validation
+  useEffect(() => {
+    const validation = exerciseDataTransform.validateExerciseData(exercise);
+    setValidationErrors(validation.errors);
+  }, [exercise]);
+
+  // Add a tip to the exercise with safety checks
   const addTip = () => {
-    if (newTip.trim()) {
+    const trimmedTip = newTip.trim();
+    if (trimmedTip) {
+      const safeTips = exerciseDataTransform.ensureArray(exercise.tips);
       setExercise({
         ...exercise,
-        tips: [...exercise.tips, newTip.trim()],
+        tips: [...safeTips, trimmedTip],
       });
       setNewTip("");
     }
   };
 
-  // Remove a tip from the exercise
+  // Remove a tip from the exercise with safety checks
   const removeTip = (index: number) => {
+    const safeTips = exerciseDataTransform.ensureArray(exercise.tips);
     setExercise({
       ...exercise,
-      tips: exercise.tips.filter((_, i) => i !== index),
+      tips: safeTips.filter((_, i) => i !== index),
     });
   };
 
-  // Add a variation to the exercise
+  // Add a variation to the exercise with safety checks
   const addVariation = () => {
-    if (newVariation.trim()) {
+    const trimmedVariation = newVariation.trim();
+    if (trimmedVariation) {
+      const safeVariations = exerciseDataTransform.ensureArray(exercise.variations);
       setExercise({
         ...exercise,
-        variations: [...exercise.variations, newVariation.trim()],
+        variations: [...safeVariations, trimmedVariation],
       });
       setNewVariation("");
     }
   };
 
-  // Remove a variation from the exercise
+  // Remove a variation from the exercise with safety checks
   const removeVariation = (index: number) => {
+    const safeVariations = exerciseDataTransform.ensureArray(exercise.variations);
     setExercise({
       ...exercise,
-      variations: exercise.variations.filter((_, i) => i !== index),
+      variations: safeVariations.filter((_, i) => i !== index),
     });
   };
 
-  // Handle form submission
+  // Handle form submission with enterprise-grade validation
   const handleSubmit = () => {
-    // Validate form
-    if (!exercise.name) {
-      setFormError("Exercise name is required");
-      return;
-    }
+    try {
+      // Clear previous errors
+      setFormError("");
+      
+      // Validate using our enterprise utility
+      const validation = exerciseDataTransform.validateExerciseData(exercise);
+      if (!validation.isValid) {
+        setFormError(validation.errors.join(', '));
+        return;
+      }
 
-    if (exercise.primary_muscle_groups.length === 0) {
-      setFormError("At least one primary muscle group is required");
-      return;
+      // Apply data transformation before submission (CRITICAL FIX)
+      const safeExerciseData = exerciseDataTransform.toDatabase(exercise);
+      
+      console.log("Submitting transformed exercise data:", safeExerciseData);
+      
+      // Submit the transformed exercise data
+      onSubmit(safeExerciseData);
+    } catch (error) {
+      console.error("Error preparing exercise data:", error);
+      setFormError(error instanceof Error ? error.message : "Failed to prepare exercise data");
     }
-
-    if (exercise.equipment_type.length === 0) {
-      setFormError("At least one equipment type is required");
-      return;
-    }
-
-    // Check if the exercise is bodyweight and set appropriate loading_type if needed
-    const updatedExercise = { ...exercise };
-    if (exercise.is_bodyweight && !exercise.loading_type) {
-      updatedExercise.loading_type = 'bodyweight';
-    }
-
-    // Submit the exercise
-    onSubmit(updatedExercise);
   };
+
+  // Safe array access with defensive programming
+  const safeTips = exerciseDataTransform.ensureArray(exercise.tips);
+  const safeVariations = exerciseDataTransform.ensureArray(exercise.variations);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -574,14 +604,39 @@ export function ExerciseDialog({
           </ScrollArea>
         </Tabs>
 
-        {formError && <p className="text-red-500 text-sm">{formError}</p>}
+        {/* Enhanced error display */}
+        {formError && (
+          <div className="text-red-500 text-sm p-2 bg-red-50 rounded border border-red-200">
+            {formError}
+          </div>
+        )}
+        
+        {validationErrors.length > 0 && (
+          <div className="text-amber-600 text-xs">
+            <div className="font-medium">Validation:</div>
+            {validationErrors.map((error, index) => (
+              <div key={index} className="ml-2">• {error}</div>
+            ))}
+          </div>
+        )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving..." : mode === "add" ? "Add Exercise" : "Update Exercise"}
+          <Button 
+            onClick={handleSubmit} 
+            disabled={loading || validationErrors.length > 0}
+            className="min-w-[100px]"
+          >
+            {loading ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                <span>Saving...</span>
+              </div>
+            ) : (
+              mode === "add" ? "Add Exercise" : "Update Exercise"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
