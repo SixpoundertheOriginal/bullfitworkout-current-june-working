@@ -31,7 +31,7 @@ export const BottomNav = () => {
   }
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm z-10 safe-bottom">
+    <nav className="grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm safe-bottom">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Home" 
@@ -84,7 +84,7 @@ const NavButton = ({
     <button 
       onClick={onClick} 
       className={cn(
-        "flex flex-col items-center justify-center py-3 transition-all duration-200 ease-out",
+        "content-stack py-3 transition-all duration-200 ease-out",
         "active:scale-95 active:bg-gray-800/30",
         "hover:bg-gray-800/20",
         active ? 'text-white' : 'text-gray-500',

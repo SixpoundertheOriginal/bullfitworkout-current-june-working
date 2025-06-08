@@ -76,7 +76,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const shouldShowGlobalNav = !noFooter && !hideGlobalNavOn.some(route => location.pathname.startsWith(route));
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 will-change-transform">
+    <div className="page-container bg-gray-900 will-change-transform">
       {!noHeader && (
         <div className="fixed top-0 left-0 right-0 z-50">
           <PageHeader 
@@ -95,14 +95,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       )}
       
-      <main className="flex-grow overflow-y-auto pt-16 pb-16 will-change-transform">
+      <main className="flex-grow overflow-y-auto safe-header safe-nav will-change-transform">
         <div className="content-container w-full">
           {children}
         </div>
       </main>
       
       {shouldShowGlobalNav && (
-        <div className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="nav-fixed">
           <BottomNav />
         </div>
       )}

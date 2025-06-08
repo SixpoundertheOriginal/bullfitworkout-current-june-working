@@ -79,10 +79,10 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
   const hasTimeOfDayData = Object.values(timeOfDayData).some(value => value > 0);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="content-grid">
       <Card className="bg-gray-900/80 border-gray-800">
-        <div className="p-4">
-          <h3 className="text-sm flex items-center mb-4">
+        <div className="responsive-padding">
+          <h3 className="text-sm content-row space-y-compact mb-4">
             <Activity className="h-4 w-4 mr-2 text-purple-400" />
             Workout Density Analysis
           </h3>
@@ -101,8 +101,8 @@ export const WorkoutAnalysisSection: React.FC<WorkoutAnalysisSectionProps> = ({
       </Card>
 
       <Card className="bg-gray-900/80 border-gray-800">
-        <div className="p-4">
-          <h3 className="text-sm flex items-center mb-4">
+        <div className="responsive-padding">
+          <h3 className="text-sm content-row space-y-compact mb-4">
             <Clock className="h-4 w-4 mr-2 text-purple-400" />
             Time of Day
           </h3>
