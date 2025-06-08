@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo } from 'react';
 import { Exercise } from '@/types/exercise';
 import { EnhancedExercise, WorkoutAnalysis, ExerciseRecommendation, BalanceReport, MovementPattern, TrainingFocus, ComplexityLevel } from '@/types/enhanced-exercise';
@@ -47,9 +46,35 @@ export function useWorkoutContextEngine({
   // Analyze current workout session balance
   const analyzeCurrentSession = useCallback((exercises: EnhancedExercise[]): WorkoutAnalysis => {
     const muscleGroupBalance: Record<string, number> = {};
-    const movementPatternBalance: Record<MovementPattern, number> = {};
-    const complexityDistribution: Record<ComplexityLevel, number> = {};
-    const trainingFocusDistribution: Record<TrainingFocus, number> = {};
+    
+    // Initialize movement pattern balance with all possible values
+    const movementPatternBalance: Record<MovementPattern, number> = {
+      push: 0,
+      pull: 0,
+      squat: 0,
+      hinge: 0,
+      carry: 0,
+      core: 0,
+      rotation: 0
+    };
+    
+    // Initialize complexity distribution with all possible values
+    const complexityDistribution: Record<ComplexityLevel, number> = {
+      fundamental: 0,
+      intermediate: 0,
+      advanced: 0,
+      expert: 0
+    };
+    
+    // Initialize training focus distribution with all possible values
+    const trainingFocusDistribution: Record<TrainingFocus, number> = {
+      strength: 0,
+      hypertrophy: 0,
+      endurance: 0,
+      power: 0,
+      mobility: 0,
+      stability: 0
+    };
 
     exercises.forEach(exercise => {
       // Count muscle groups

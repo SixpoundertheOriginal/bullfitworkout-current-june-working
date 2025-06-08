@@ -58,8 +58,6 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   onMovementChange,
   onClearAll,
   resultCount,
-  
-  // Enhanced props
   selectedMovementPattern,
   onMovementPatternChange,
   selectedTrainingFocus,
@@ -71,7 +69,6 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
   isReadyToProgress,
   onIsReadyToProgressChange,
   onApplyPreset,
-  
   className = ""
 }) => {
   // Count active enhanced filters
@@ -82,6 +79,33 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
     hasPersonalStats !== "all" ? 1 : 0,
     isReadyToProgress !== "all" ? 1 : 0
   ].reduce((a, b) => a + b, 0);
+
+  // Handle movement pattern change with proper typing
+  const handleMovementPatternChange = (value: string) => {
+    if (value === "all") {
+      onMovementPatternChange("all");
+    } else {
+      onMovementPatternChange(value as MovementPattern);
+    }
+  };
+
+  // Handle training focus change with proper typing
+  const handleTrainingFocusChange = (value: string) => {
+    if (value === "all") {
+      onTrainingFocusChange("all");
+    } else {
+      onTrainingFocusChange(value as TrainingFocus);
+    }
+  };
+
+  // Handle complexity level change with proper typing
+  const handleComplexityLevelChange = (value: string) => {
+    if (value === "all") {
+      onComplexityLevelChange("all");
+    } else {
+      onComplexityLevelChange(value as ComplexityLevel);
+    }
+  };
 
   return (
     <div className={className}>
@@ -126,7 +150,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={selectedMovementPattern} onValueChange={onMovementPatternChange}>
+              <Select value={selectedMovementPattern} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -147,7 +171,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={selectedTrainingFocus} onValueChange={onTrainingFocusChange}>
+              <Select value={selectedTrainingFocus} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -168,7 +192,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={selectedComplexityLevel} onValueChange={onComplexityLevelChange}>
+              <Select value={selectedComplexityLevel} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
