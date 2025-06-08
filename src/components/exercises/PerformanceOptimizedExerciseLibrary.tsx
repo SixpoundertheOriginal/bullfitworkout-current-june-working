@@ -62,39 +62,59 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
         }
 
         return (
-          <div className="flex flex-col h-full space-y-6">
-            {/* Premium Header */}
-            <div className="space-y-4">
-              {/* Enhanced Search Bar */}
-              <PremiumSearchBar
-                searchTerm={state.searchQuery}
-                onSearchChange={actions.setSearchQuery}
-                totalExercises={exercises?.length || 0}
-                filteredCount={currentExercises?.length || 0}
-                onFiltersToggle={() => setShowFilters(!showFilters)}
-                hasActiveFilters={Object.keys(searchFilters).length > 0}
-                isLoading={isLoading || isSearching}
-              />
+          <div className="flex flex-col h-full space-y-8">
+            {/* Premium Header with improved spacing */}
+            <div className="space-y-6">
+              {/* Top Row: Search Bar and Create Button */}
+              <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                {/* Enhanced Search Bar */}
+                <div className="flex-1">
+                  <PremiumSearchBar
+                    searchTerm={state.searchQuery}
+                    onSearchChange={actions.setSearchQuery}
+                    totalExercises={exercises?.length || 0}
+                    filteredCount={currentExercises?.length || 0}
+                    onFiltersToggle={() => setShowFilters(!showFilters)}
+                    hasActiveFilters={Object.keys(searchFilters).length > 0}
+                    isLoading={isLoading || isSearching}
+                  />
+                </div>
 
-              {/* Smart Filter Chips */}
-              <SmartFilterChips
-                selectedMuscleGroup={state.selectedMuscleGroup}
-                selectedEquipment={state.selectedEquipment}
-                selectedDifficulty={state.selectedDifficulty}
-                onMuscleGroupChange={actions.setSelectedMuscleGroup}
-                onEquipmentChange={actions.setSelectedEquipment}
-                onDifficultyChange={actions.setSelectedDifficulty}
-                onClearAll={() => {
-                  actions.setSelectedMuscleGroup('all');
-                  actions.setSelectedEquipment('all');
-                  actions.setSelectedDifficulty('all');
-                  actions.setSearchQuery('');
-                }}
-              />
+                {/* Create Button - Prominently positioned */}
+                {showCreateButton && onCreateExercise && (
+                  <div className="flex-shrink-0">
+                    <Button 
+                      className="h-14 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 whitespace-nowrap"
+                      onClick={onCreateExercise}
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Create Exercise
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-              {/* Toolbar */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              {/* Smart Filter Chips Row - Better spacing */}
+              <div className="py-2">
+                <SmartFilterChips
+                  selectedMuscleGroup={state.selectedMuscleGroup}
+                  selectedEquipment={state.selectedEquipment}
+                  selectedDifficulty={state.selectedDifficulty}
+                  onMuscleGroupChange={actions.setSelectedMuscleGroup}
+                  onEquipmentChange={actions.setSelectedEquipment}
+                  onDifficultyChange={actions.setSelectedDifficulty}
+                  onClearAll={() => {
+                    actions.setSelectedMuscleGroup('all');
+                    actions.setSelectedEquipment('all');
+                    actions.setSelectedDifficulty('all');
+                    actions.setSearchQuery('');
+                  }}
+                />
+              </div>
+
+              {/* Toolbar Row - View controls and advanced filters */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-800/50">
+                <div className="flex items-center gap-4">
                   {/* View Mode Toggle */}
                   <div className="flex items-center bg-gray-900/50 rounded-lg p-1 border border-gray-800">
                     <Button
@@ -142,16 +162,19 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                   </Button>
                 </div>
 
-                {/* Create Button */}
-                {showCreateButton && onCreateExercise && (
-                  <Button 
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                    onClick={onCreateExercise}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Exercise
-                  </Button>
-                )}
+                {/* Results Count */}
+                <div className="text-sm text-gray-400">
+                  {isLoading || isSearching ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                      Searching...
+                    </span>
+                  ) : (
+                    <span>
+                      {currentExercises?.length || 0} of {exercises?.length || 0} exercises
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -193,8 +216,8 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
               </Card>
             )}
 
-            {/* Exercise Grid */}
-            <div className="flex-1 min-h-0">
+            {/* Exercise Grid with visual separation */}
+            <div className="flex-1 min-h-0 pt-4 border-t border-gray-800/30">
               <VirtualizedExerciseGrid
                 exercises={currentExercises || []}
                 onSelectExercise={onSelectExercise}
