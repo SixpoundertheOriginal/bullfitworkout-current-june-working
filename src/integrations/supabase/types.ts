@@ -1414,6 +1414,15 @@ export type Database = {
           },
         ]
       }
+      rls_performance_metrics: {
+        Row: {
+          policy_status: string | null
+          policyname: unknown | null
+          schemaname: unknown | null
+          tablename: unknown | null
+        }
+        Relationships: []
+      }
       workout_time_preferences: {
         Row: {
           avg_duration: number | null
@@ -1440,6 +1449,10 @@ export type Database = {
         Args: { workout_id: string }
         Returns: undefined
       }
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       increment_template_usage: {
         Args: { template_id: string }
         Returns: undefined
@@ -1447,6 +1460,16 @@ export type Database = {
       save_workout_transaction: {
         Args: { p_workout_data: Json; p_exercise_sets: Json }
         Returns: Json
+      }
+      validate_rls_optimization: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          rls_enabled: boolean
+          policy_count: number
+          index_count: number
+          status: string
+        }[]
       }
     }
     Enums: {

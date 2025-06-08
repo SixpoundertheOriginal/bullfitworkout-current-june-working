@@ -2,16 +2,13 @@
 import React, { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseCreationWizard } from "@/components/exercises/ExerciseCreationWizard";
+import { PerformanceOptimizedExerciseLibrary } from "@/components/exercises/PerformanceOptimizedExerciseLibrary";
 import { Exercise } from "@/types/exercise";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ExerciseLibraryContainer } from "@/components/exercises/ExerciseLibraryContainer";
-import { ExerciseLibraryHeader } from "@/components/exercises/ExerciseLibraryHeader";
-import { ExerciseLibrarySearch } from "@/components/exercises/ExerciseLibrarySearch";
-import { ExerciseLibraryTabs } from "@/components/exercises/ExerciseLibraryTabs";
-import { useExercises } from "@/hooks/useExercises";
+import { useOptimizedExercises } from "@/hooks/useOptimizedExercises";
 import { useAuth } from "@/context/AuthContext";
 
 interface AllExercisesPageProps {
@@ -21,11 +18,14 @@ interface AllExercisesPageProps {
 }
 
 export default function AllExercisesPage({ onSelectExercise, standalone = true, onBack }: AllExercisesPageProps) {
-  const { createExercise, isPending } = useExercises();
+  const { createExercise, isPending } = useOptimizedExercises();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { user, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
     if (onSelectExercise) {
@@ -54,9 +54,8 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     });
   }, [toast]);
 
-  // Handle wizard submission
+  // Handle wizard submission with optimized performance
   const handleCreateExercise = useCallback(async (exerciseData: any) => {
-    // Authentication guard
     if (!user?.id) {
       console.error("No authenticated user found");
       toast({
@@ -75,9 +74,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
         user_id: user.id
       });
       
+      setShowCreateWizard(false);
       toast({
         title: "Exercise created successfully! 🎉",
-        description: `${exerciseData.name} has been added to your library`,
+        description: `${exerciseData.name} has been added with optimized performance`,
       });
     } catch (error) {
       console.error('Failed to create exercise:', error);
@@ -98,9 +98,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       title: "Exercise deleted",
       description: `${exerciseToDelete.name} has been removed from your library`,
     });
+    setDeleteConfirmOpen(false);
+    setExerciseToDelete(null);
   }, [toast]);
 
-  // Show loading if auth is still loading
   if (authLoading) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
   }
@@ -111,114 +112,46 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
       {standalone && <PageHeader title="Exercise Library" />}
       
-      <ExerciseLibraryContainer>
-        {({ 
-          state, 
-          actions, 
-          exercises,
-          suggestedExercises, 
-          filteredRecent, 
-          currentExercises,
-          isLoading: containerLoading,
-          isSearching,
-          isError,
-          isIndexed,
-          fromCache,
-          isOnline,
-          totalPages
-        }) => (
-          <div className={`flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-4xl px-4 ${standalone ? 'py-4' : 'pt-0'}`}>
-            {/* Exercise Creation Wizard */}
-            <ExerciseCreationWizard
-              open={state.showCreateWizard}
-              onOpenChange={actions.setShowCreateWizard}
-              onSubmit={handleCreateExercise}
-              loading={isLoading}
-            />
-            
-            {/* Delete Confirmation Dialog */}
-            <AlertDialog open={state.deleteConfirmOpen} onOpenChange={(open) => actions.setDeleteConfirm(open)}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Exercise</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete "{state.exerciseToDelete?.name}"? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={() => handleDeleteConfirm(state.exerciseToDelete)} 
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            
-            {/* Header */}
-            <ExerciseLibraryHeader
-              standalone={standalone}
-              onBack={onBack}
-              onAdd={() => actions.setShowCreateWizard(true)}
-            />
-            
-            {/* Search */}
-            <ExerciseLibrarySearch
-              searchQuery={state.searchQuery}
-              onSearchChange={actions.setSearchQuery}
-              isSearching={isSearching}
-              fromCache={fromCache}
-              isIndexed={isIndexed}
-              totalExercises={exercises.length}
-              useVirtualization={state.useVirtualization}
-              onToggleVirtualization={() => actions.setUseVirtualization(!state.useVirtualization)}
-            />
-            
-            {/* Tabs */}
-            <ExerciseLibraryTabs
-              activeTab={state.activeTab}
-              onTabChange={actions.setActiveTab}
-              showFilters={state.showFilters}
-              onToggleFilters={() => actions.setShowFilters(!state.showFilters)}
-              selectedMuscleGroup={state.selectedMuscleGroup}
-              onMuscleGroupChange={actions.setSelectedMuscleGroup}
-              selectedEquipment={state.selectedEquipment}
-              onEquipmentChange={actions.setSelectedEquipment}
-              selectedDifficulty={state.selectedDifficulty}
-              onDifficultyChange={actions.setSelectedDifficulty}
-              selectedMovement={state.selectedMovement}
-              onMovementChange={actions.setSelectedMovement}
-              onClearFilters={actions.clearFilters}
-              suggestedExercises={suggestedExercises}
-              filteredRecent={filteredRecent}
-              currentExercises={currentExercises}
-              isLoading={containerLoading}
-              isSearching={isSearching}
-              isIndexed={isIndexed}
-              isError={isError}
-              isOnline={isOnline}
-              showPagination={state.activeTab === 'browse'}
-              currentPage={state.currentPage}
-              totalPages={totalPages}
-              onPageChange={actions.setCurrentPage}
-              standalone={standalone}
-              useVirtualization={state.useVirtualization}
-              onSelectExercise={handleSelectExercise}
-              onEdit={standalone ? handleEdit : undefined}
-              onDelete={standalone ? (exercise) => actions.setDeleteConfirm(true, exercise) : undefined}
-              onViewDetails={standalone ? handleViewDetails : undefined}
-              onDuplicate={standalone ? handleDuplicate : undefined}
-              onAddExercise={() => actions.setShowCreateWizard(true)}
-            />
-          </div>
-        )}
-      </ExerciseLibraryContainer>
+      <div className={`flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-4xl px-4 ${standalone ? 'py-4' : 'pt-0'}`}>
+        {/* Use the optimized exercise library component */}
+        <PerformanceOptimizedExerciseLibrary
+          onSelectExercise={handleSelectExercise}
+          showCreateButton={standalone}
+        />
+        
+        {/* Exercise Creation Wizard */}
+        <ExerciseCreationWizard
+          open={showCreateWizard}
+          onOpenChange={setShowCreateWizard}
+          onSubmit={handleCreateExercise}
+          loading={isLoading}
+        />
+        
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Exercise</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{exerciseToDelete?.name}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => handleDeleteConfirm(exerciseToDelete)} 
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
       
       {/* Mobile Add Button */}
       {standalone && isMobile && (
-        <ExerciseFAB onClick={() => {}} />
+        <ExerciseFAB onClick={() => setShowCreateWizard(true)} />
       )}
     </div>
   );
