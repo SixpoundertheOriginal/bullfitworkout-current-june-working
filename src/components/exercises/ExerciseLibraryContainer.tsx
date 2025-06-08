@@ -48,18 +48,34 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   const { workouts } = useWorkoutHistory();
   const isOnline = useNetworkStatus();
   
-  // Enhanced search functionality
+  // Memoized search filters to prevent unnecessary updates
+  const searchFilters = useMemo(() => {
+    const filters = {
+      muscleGroup: state.selectedMuscleGroup !== "all" ? state.selectedMuscleGroup : undefined,
+      equipment: state.selectedEquipment !== "all" ? state.selectedEquipment : undefined,
+      difficulty: state.selectedDifficulty !== "all" ? state.selectedDifficulty : undefined,
+      movement: state.selectedMovement !== "all" ? state.selectedMovement : undefined
+    };
+    
+    return Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value !== undefined)
+    );
+  }, [state.selectedMuscleGroup, state.selectedEquipment, state.selectedDifficulty, state.selectedMovement]);
+
+  // Enhanced search functionality with stable options
+  const searchOptions = useMemo(() => ({
+    autoSearch: true,
+    debounceMs: 300
+  }), []);
+
   const {
     results: searchResults,
     isSearching,
-    filters: searchFilters,
+    setQuery,
     setFilters: setSearchFilters,
     fromCache,
     isIndexed
-  } = useExerciseSearch({
-    autoSearch: true,
-    debounceMs: 300
-  });
+  } = useExerciseSearch(searchOptions);
 
   // Performance optimization
   usePerformanceOptimization({
@@ -70,8 +86,18 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   // Constants
   const exercisesPerPage = 8;
 
-  // Extract recently used exercises with crash fixes
-  const recentExercises = React.useMemo(() => {
+  // Sync search query with state
+  useEffect(() => {
+    setQuery(state.searchQuery);
+  }, [state.searchQuery, setQuery]);
+
+  // Sync search filters
+  useEffect(() => {
+    setSearchFilters(searchFilters);
+  }, [searchFilters, setSearchFilters]);
+
+  // Extract recently used exercises with crash fixes - memoized
+  const recentExercises = useMemo(() => {
     if (!workouts?.length || !Array.isArray(exercises)) return [];
     
     const exerciseMap = new Map<string, Exercise>();
@@ -98,31 +124,21 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     return exerciseMap.size > 0 ? Array.from(exerciseMap.values()) : [];
   }, [workouts, exercises]);
 
-  // Update search filters when local filters change
-  React.useEffect(() => {
-    const filters = {
-      muscleGroup: state.selectedMuscleGroup !== "all" ? state.selectedMuscleGroup : undefined,
-      equipment: state.selectedEquipment !== "all" ? state.selectedEquipment : undefined,
-      difficulty: state.selectedDifficulty !== "all" ? state.selectedDifficulty : undefined,
-      movement: state.selectedMovement !== "all" ? state.selectedMovement : undefined
-    };
-    
-    const cleanFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, value]) => value !== undefined)
-    );
-    
-    setSearchFilters(cleanFilters);
-  }, [state.selectedMuscleGroup, state.selectedEquipment, state.selectedDifficulty, state.selectedMovement, setSearchFilters]);
-
-  // Record user search patterns for predictive caching
-  React.useEffect(() => {
+  // Record user search patterns for predictive caching - optimized
+  useEffect(() => {
     if (state.searchQuery || Object.keys(searchFilters).length > 0) {
-      predictiveCache.recordUserSearch(state.searchQuery, searchFilters);
+      const recordSearch = () => {
+        predictiveCache.recordUserSearch(state.searchQuery, searchFilters);
+      };
+      
+      // Debounce the recording to avoid excessive calls
+      const timeout = setTimeout(recordSearch, 1000);
+      return () => clearTimeout(timeout);
     }
   }, [state.searchQuery, searchFilters]);
 
-  // Use search results when available, otherwise fallback to original exercises
-  const suggestedExercises = React.useMemo(() => {
+  // Memoized computed values to prevent unnecessary re-renders
+  const suggestedExercises = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
     
@@ -131,7 +147,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
       : safeExercises.slice(0, 20);
   }, [state.searchQuery, searchFilters, searchResults, exercises]);
     
-  const filteredRecent = React.useMemo(() => {
+  const filteredRecent = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeRecentExercises = Array.isArray(recentExercises) ? recentExercises : [];
     
@@ -142,7 +158,7 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
       : safeRecentExercises;
   }, [state.searchQuery, searchFilters, searchResults, recentExercises]);
     
-  const filteredAll = React.useMemo(() => {
+  const filteredAll = useMemo(() => {
     const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
     const safeExercises = Array.isArray(exercises) ? exercises : [];
     
@@ -151,19 +167,29 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
       : safeExercises;
   }, [state.searchQuery, searchFilters, searchResults, exercises]);
 
-  // Pagination logic
-  const indexOfLastExercise = state.currentPage * exercisesPerPage;
-  const indexOfFirstExercise = indexOfLastExercise - exercisesPerPage;
-  const currentExercises = Array.isArray(filteredAll) 
-    ? filteredAll.slice(indexOfFirstExercise, indexOfLastExercise)
-    : [];
-  const totalPages = Array.isArray(filteredAll) 
-    ? Math.ceil(filteredAll.length / exercisesPerPage)
-    : 0;
+  // Memoized pagination logic
+  const paginationData = useMemo(() => {
+    const indexOfLastExercise = state.currentPage * exercisesPerPage;
+    const indexOfFirstExercise = indexOfLastExercise - exercisesPerPage;
+    const currentExercises = Array.isArray(filteredAll) 
+      ? filteredAll.slice(indexOfFirstExercise, indexOfLastExercise)
+      : [];
+    const totalPages = Array.isArray(filteredAll) 
+      ? Math.ceil(filteredAll.length / exercisesPerPage)
+      : 0;
+
+    return { currentExercises, totalPages };
+  }, [filteredAll, state.currentPage, exercisesPerPage]);
 
   const safeExercises = Array.isArray(exercises) ? exercises : [];
 
-  return children({
+  // Memoized stable setSearchFilters function
+  const stableSetSearchFilters = useCallback((filters: Record<string, any>) => {
+    setSearchFilters(filters);
+  }, [setSearchFilters]);
+
+  // Memoized render props to prevent unnecessary re-renders
+  const renderProps = useMemo(() => ({
     state,
     actions,
     exercises: safeExercises,
@@ -171,17 +197,39 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     suggestedExercises,
     filteredRecent,
     filteredAll,
-    currentExercises,
+    currentExercises: paginationData.currentExercises,
     isLoading,
     isSearching,
     isError,
     isIndexed,
     fromCache,
     isOnline,
-    totalPages,
+    totalPages: paginationData.totalPages,
     exercisesPerPage,
     searchResults,
     searchFilters,
-    setSearchFilters
-  });
+    setSearchFilters: stableSetSearchFilters
+  }), [
+    state,
+    actions,
+    safeExercises,
+    recentExercises,
+    suggestedExercises,
+    filteredRecent,
+    filteredAll,
+    paginationData.currentExercises,
+    isLoading,
+    isSearching,
+    isError,
+    isIndexed,
+    fromCache,
+    isOnline,
+    paginationData.totalPages,
+    exercisesPerPage,
+    searchResults,
+    searchFilters,
+    stableSetSearchFilters
+  ]);
+
+  return children(renderProps);
 };

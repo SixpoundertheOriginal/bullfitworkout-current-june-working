@@ -56,7 +56,6 @@ class ExerciseSearchEngine {
       this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
       this.worker.addEventListener('error', this.handleWorkerError.bind(this));
       
-      // Ping the worker to check if it's ready
       this.pingWorker();
     } catch (error) {
       console.warn(`Worker initialization attempt ${this.initializationAttempts} failed:`, error);
@@ -98,7 +97,6 @@ class ExerciseSearchEngine {
             pending.resolve(results || []);
           }
         } else {
-          // Handle legacy responses without requestId
           this.pendingSearches.forEach(({ resolve, timeout }) => {
             window.clearTimeout(timeout);
             resolve(results || []);
@@ -119,11 +117,9 @@ class ExerciseSearchEngine {
           if (pending) {
             window.clearTimeout(pending.timeout);
             this.pendingSearches.delete(requestId);
-            // Fallback to main thread for this search
             this.searchInMainThreadAsync(pending.resolve, pending.reject);
           }
         } else {
-          // Fallback to main thread
           this.fallbackToMainThread();
         }
         break;
@@ -142,7 +138,6 @@ class ExerciseSearchEngine {
     }
     this.workerReady = false;
     
-    // Reject all pending searches and retry with main thread
     this.pendingSearches.forEach(({ resolve, reject, timeout }) => {
       window.clearTimeout(timeout);
       this.searchInMainThreadAsync(resolve, reject);
@@ -152,7 +147,6 @@ class ExerciseSearchEngine {
 
   private searchInMainThreadAsync(resolve: (results: Exercise[]) => void, reject: (error: Error) => void) {
     try {
-      // This will be implemented by the calling search method
       resolve([]);
     } catch (error) {
       reject(error as Error);
@@ -160,16 +154,15 @@ class ExerciseSearchEngine {
   }
 
   async indexExercises(exercises: Exercise[]): Promise<void> {
+    console.log('ExerciseSearchEngine: Indexing', exercises.length, 'exercises');
     this.exercises = exercises;
     
     if (this.worker && this.workerReady) {
-      // Use worker for indexing
       this.worker.postMessage({
         type: 'index',
         exercises
       });
     } else {
-      // Fallback to main thread
       await this.indexInMainThread(exercises);
     }
   }
@@ -187,25 +180,37 @@ class ExerciseSearchEngine {
           }
         });
 
-        const documentsToIndex = exercises.map(exercise => ({
-          id: exercise.id,
-          name: exercise.name,
-          description: exercise.description || '',
-          primary_muscle_groups: Array.isArray(exercise.primary_muscle_groups) 
-            ? exercise.primary_muscle_groups.join(' ') 
-            : '',
-          secondary_muscle_groups: Array.isArray(exercise.secondary_muscle_groups) 
-            ? exercise.secondary_muscle_groups.join(' ') 
-            : '',
-          equipment_type: Array.isArray(exercise.equipment_type) 
-            ? exercise.equipment_type.join(' ') 
-            : '',
-          difficulty: exercise.difficulty || '',
-          movement_pattern: exercise.movement_pattern || ''
-        }));
+        // Fixed: Properly transform exercise data for search indexing
+        const documentsToIndex = exercises.map(exercise => {
+          const doc = {
+            id: exercise.id,
+            name: exercise.name || '',
+            description: exercise.description || '',
+            primary_muscle_groups: Array.isArray(exercise.primary_muscle_groups) 
+              ? exercise.primary_muscle_groups.join(' ') 
+              : (exercise.primary_muscle_groups || ''),
+            secondary_muscle_groups: Array.isArray(exercise.secondary_muscle_groups) 
+              ? exercise.secondary_muscle_groups.join(' ') 
+              : (exercise.secondary_muscle_groups || ''),
+            equipment_type: Array.isArray(exercise.equipment_type) 
+              ? exercise.equipment_type.join(' ') 
+              : (exercise.equipment_type || ''),
+            difficulty: exercise.difficulty || '',
+            movement_pattern: exercise.movement_pattern || ''
+          };
+          
+          console.log('Indexing exercise:', doc.name, 'with fields:', {
+            name: doc.name,
+            primaryMuscles: doc.primary_muscle_groups,
+            equipment: doc.equipment_type
+          });
+          
+          return doc;
+        });
 
         this.miniSearch.addAll(documentsToIndex);
         this.isIndexed = true;
+        console.log('ExerciseSearchEngine: Main thread indexing complete for', documentsToIndex.length, 'exercises');
         resolve();
       }, 0);
     });
@@ -216,10 +221,13 @@ class ExerciseSearchEngine {
     filters: SearchFilters = {}, 
     options: SearchOptions = {}
   ): Promise<SearchResult> {
+    console.log('ExerciseSearchEngine: Starting search for query:', query, 'filters:', filters);
+    
     const cacheKey = `search:${query}:${JSON.stringify(filters)}:${JSON.stringify(options)}`;
     
     return networkOptimization.deduplicate(cacheKey, async () => {
       if (!this.isIndexed) {
+        console.log('ExerciseSearchEngine: Not indexed yet, returning all exercises');
         return { results: this.exercises, fromCache: false, fromWorker: false };
       }
 
@@ -227,7 +235,6 @@ class ExerciseSearchEngine {
       let fromWorker = false;
 
       if (this.worker && this.workerReady) {
-        // Use worker for search
         try {
           results = await this.searchWithWorker(query, filters, options);
           fromWorker = true;
@@ -236,10 +243,10 @@ class ExerciseSearchEngine {
           results = this.searchInMainThreadSync(query, filters, options);
         }
       } else {
-        // Use main thread search
         results = this.searchInMainThreadSync(query, filters, options);
       }
 
+      console.log('ExerciseSearchEngine: Search completed with', results.length, 'results');
       return { results, fromCache: false, fromWorker };
     });
   }
@@ -280,27 +287,43 @@ class ExerciseSearchEngine {
     options: SearchOptions = {}
   ): Exercise[] {
     if (!this.miniSearch) {
+      console.log('ExerciseSearchEngine: MiniSearch not initialized, returning original exercises');
       return this.exercises;
     }
+
+    console.log('ExerciseSearchEngine: Performing main thread search for:', query);
 
     let searchResults: any[] = [];
 
     if (query.trim()) {
-      searchResults = this.miniSearch.search(query, {
-        fuzzy: options.fuzzy ?? 0.2,
-        prefix: options.prefix ?? true,
-        combineWith: options.combineWith ?? 'AND',
-        boost: options.boost
-      });
+      try {
+        searchResults = this.miniSearch.search(query, {
+          fuzzy: options.fuzzy ?? 0.2,
+          prefix: options.prefix ?? true,
+          combineWith: options.combineWith ?? 'AND',
+          boost: options.boost
+        });
+        console.log('ExerciseSearchEngine: MiniSearch returned', searchResults.length, 'raw results');
+      } catch (error) {
+        console.error('ExerciseSearchEngine: Search error:', error);
+        return this.exercises;
+      }
     } else {
+      // Return all exercises if no query
       searchResults = this.exercises.map(exercise => ({ id: exercise.id }));
+      console.log('ExerciseSearchEngine: Empty query, returning all exercises');
     }
 
+    // Map search results back to full exercise objects
     let filteredResults = searchResults.map(result => {
       return this.exercises.find(exercise => exercise.id === result.id);
     }).filter(Boolean) as Exercise[];
 
+    console.log('ExerciseSearchEngine: Mapped to', filteredResults.length, 'exercise objects');
+
+    // Apply additional filters
     if (Object.keys(filters).length > 0) {
+      const preFilterCount = filteredResults.length;
       filteredResults = filteredResults.filter(exercise => {
         return Object.entries(filters).every(([key, value]) => {
           if (!value || value === 'all') return true;
@@ -320,6 +343,7 @@ class ExerciseSearchEngine {
           }
         });
       });
+      console.log('ExerciseSearchEngine: Filters applied, reduced from', preFilterCount, 'to', filteredResults.length);
     }
 
     return filteredResults;
