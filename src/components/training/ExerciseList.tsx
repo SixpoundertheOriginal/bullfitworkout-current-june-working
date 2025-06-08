@@ -1,9 +1,9 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { ExerciseSet } from "@/types/exercise";
-import ExerciseCard from '@/components/exercises/ExerciseCard';
+import { EnhancedExerciseTracker } from './EnhancedExerciseTracker';
+import { useEnhancedExerciseTracker } from '@/hooks/useEnhancedExerciseTracker';
 
 interface ExerciseListProps {
   exercises: Record<string, ExerciseSet[]>;
@@ -26,24 +26,38 @@ interface ExerciseListProps {
   setExercises: (exercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => void;
 }
 
+// Individual exercise tracker component
+const ExerciseTrackerWrapper: React.FC<{ exerciseName: string; onDeleteExercise: (name: string) => void }> = ({ 
+  exerciseName, 
+  onDeleteExercise 
+}) => {
+  const {
+    exercise,
+    isActive,
+    onUpdateSet,
+    onToggleCompletion,
+    onAddSet,
+    onDeleteSet,
+    onSetActive
+  } = useEnhancedExerciseTracker(exerciseName);
+
+  return (
+    <div onClick={onSetActive}>
+      <EnhancedExerciseTracker
+        exercise={exercise}
+        isActive={isActive}
+        onUpdateSet={onUpdateSet}
+        onToggleCompletion={onToggleCompletion}
+        onAddSet={onAddSet}
+        onDeleteSet={onDeleteSet}
+      />
+    </div>
+  );
+};
+
 export const ExerciseList: React.FC<ExerciseListProps> = ({
   exercises,
-  activeExercise,
-  onAddSet,
-  onCompleteSet,
   onDeleteExercise,
-  onRemoveSet,
-  onEditSet,
-  onSaveSet,
-  onWeightChange,
-  onRepsChange,
-  onRestTimeChange,
-  onWeightIncrement,
-  onRepsIncrement,
-  onRestTimeIncrement,
-  onShowRestTimer,
-  onResetRestTimer,
-  setExercises
 }) => {
   const exerciseList = Object.keys(exercises);
   
@@ -56,9 +70,9 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
         className="flex flex-col items-center justify-center py-16 px-6"
       >
         <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 mx-auto rounded-full bg-gray-800/50 flex items-center justify-center mb-6">
+          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-slate-800/50 to-purple-900/50 flex items-center justify-center mb-6 backdrop-blur-sm border border-slate-700/50">
             <svg 
-              className="w-8 h-8 text-gray-500" 
+              className="w-8 h-8 text-slate-400" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -71,8 +85,10 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-white">Ready to start training?</h3>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Ready to start training?
+          </h3>
+          <p className="text-slate-400 text-sm leading-relaxed">
             Add your first exercise to begin your workout session
           </p>
         </div>
@@ -80,54 +96,21 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     );
   }
 
-  // Function to handle adding a set that copies the previous set values
-  const handleAddSet = (exerciseName: string) => {
-    const existingSets = exercises[exerciseName];
-    const lastSet = existingSets.length > 0 ? existingSets[existingSets.length - 1] : null;
-    
-    // Call the onAddSet function that was passed as prop
-    // This lets the parent component handle the actual set creation
-    onAddSet(exerciseName);
-    
-    // If there's a last set, update the newly created set with its values
-    if (lastSet && existingSets.length > 0) {
-      // We need to access the new set that was just added
-      setTimeout(() => {
-        setExercises(prev => {
-          const updatedExercises = { ...prev };
-          const sets = [...updatedExercises[exerciseName]];
-          const newSetIndex = sets.length - 1;
-          
-          if (newSetIndex >= 0) {
-            // Clone the last set's values to the new set
-            sets[newSetIndex] = {
-              ...sets[newSetIndex],
-              weight: lastSet.weight,
-              reps: lastSet.reps,
-              restTime: lastSet.restTime || 60
-            };
-          }
-          
-          updatedExercises[exerciseName] = sets;
-          return updatedExercises;
-        });
-      }, 0);
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-6 mb-20">
+    <div className="space-y-4 pb-6 mb-20">
       {/* Enhanced Section Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white">Active Exercises</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Track your sets below
+          <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Active Exercises
+          </h2>
+          <p className="text-sm text-slate-400 mt-1">
+            Double-click sets to complete • Click values to edit
           </p>
         </div>
       </div>
 
-      {/* Exercise Cards with Enhanced Spacing */}
+      {/* Enhanced Exercise Cards */}
       <div className="space-y-4 mt-6">
         <AnimatePresence mode="popLayout">
           {exerciseList.map((exerciseName, index) => (
@@ -145,24 +128,9 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               }}
               className="transform-gpu will-change-transform"
             >
-              <ExerciseCard
-                exercise={exerciseName}
-                sets={exercises[exerciseName]}
-                isActive={activeExercise === exerciseName}
-                onAddSet={() => handleAddSet(exerciseName)}
-                onCompleteSet={(setIndex) => onCompleteSet(exerciseName, setIndex)}
-                onDeleteExercise={() => onDeleteExercise(exerciseName)}
-                onRemoveSet={(setIndex) => onRemoveSet(exerciseName, setIndex)}
-                onEditSet={(setIndex) => onEditSet(exerciseName, setIndex)}
-                onSaveSet={(setIndex) => onSaveSet(exerciseName, setIndex)}
-                onWeightChange={(setIndex, value) => onWeightChange(exerciseName, setIndex, value)}
-                onRepsChange={(setIndex, value) => onRepsChange(exerciseName, setIndex, value)}
-                onRestTimeChange={(setIndex, value) => onRestTimeChange(exerciseName, setIndex, value)}
-                onWeightIncrement={(setIndex, increment) => onWeightIncrement(exerciseName, setIndex, increment)}
-                onRepsIncrement={(setIndex, increment) => onRepsIncrement(exerciseName, setIndex, increment)}
-                onRestTimeIncrement={(setIndex, increment) => onRestTimeIncrement(exerciseName, setIndex, increment)}
-                onShowRestTimer={onShowRestTimer}
-                onResetRestTimer={onResetRestTimer}
+              <ExerciseTrackerWrapper
+                exerciseName={exerciseName}
+                onDeleteExercise={onDeleteExercise}
               />
             </motion.div>
           ))}
