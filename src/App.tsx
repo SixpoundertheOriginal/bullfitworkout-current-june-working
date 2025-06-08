@@ -13,7 +13,6 @@ import { LayoutProvider } from "./context/LayoutContext";
 import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
 import { DevOnly } from "@/components/debug/DevOnly";
 import { PerformanceDashboard } from "@/components/PerformanceDashboard";
-import { MemoryDebugPanel } from "@/components/debug/MemoryDebugPanel";
 import { serviceWorkerManager } from "@/utils/serviceWorker";
 import { cleanupManager } from "@/services/cleanupManager";
 
@@ -77,7 +76,6 @@ function App() {
                         <RouterProvider />
                         <DevOnly>
                           <PerformanceDashboard />
-                          <MemoryDebugPanel />
                         </DevOnly>
                       </TooltipProvider>
                     </LayoutProvider>
