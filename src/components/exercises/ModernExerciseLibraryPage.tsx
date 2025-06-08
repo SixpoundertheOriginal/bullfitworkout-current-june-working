@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { useLibraryExercises } from '@/hooks/useLibraryExercises';
 import { VirtualizedExerciseGrid } from './VirtualizedExerciseGrid';
 import { OptimizedExerciseSearchBar } from './OptimizedExerciseSearchBar';
-import { StreamlinedExerciseCreationModal } from './StreamlinedExerciseCreationModal';
+import { ModernExerciseCreator } from './ModernExerciseCreator';
 import { ExerciseFilters } from './ExerciseFilters';
 import { ExerciseLibraryPerformanceMonitor } from './ExerciseLibraryPerformanceMonitor';
 import { MuscleGroup, EquipmentType, Difficulty, MovementPattern } from '@/types/exercise';
@@ -120,10 +120,10 @@ export const ModernExerciseLibraryPage: React.FC = () => {
           
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-purple-500/25"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Exercise
+            <Sparkles className="w-4 h-4" />
+            Create Exercise
           </Button>
         </div>
       </div>
@@ -180,8 +180,8 @@ export const ModernExerciseLibraryPage: React.FC = () => {
         />
       </div>
 
-      {/* Enhanced Create Exercise Modal */}
-      <StreamlinedExerciseCreationModal
+      {/* Modern Exercise Creator Modal */}
+      <ModernExerciseCreator
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         onSubmit={handleCreateExercise}
