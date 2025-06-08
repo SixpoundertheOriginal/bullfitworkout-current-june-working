@@ -48,6 +48,9 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
   const { workouts } = useWorkoutHistory();
   const isOnline = useNetworkStatus();
   
+  // Constants
+  const exercisesPerPage = 8;
+
   // Memoized search filters to prevent unnecessary updates
   const searchFilters = useMemo(() => {
     const filters = {
@@ -82,9 +85,6 @@ export const ExerciseLibraryContainer: React.FC<ExerciseLibraryContainerProps> =
     enableMemoryMonitoring: true,
     enablePerformanceTracking: true
   });
-
-  // Constants
-  const exercisesPerPage = 8;
 
   // Sync search query with state
   useEffect(() => {
