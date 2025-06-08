@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
-import ExerciseCard from './ExerciseCard';
+import { CommonExerciseCard } from './CommonExerciseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface VirtualizedExerciseGridProps {
@@ -67,9 +68,10 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
           padding: gap / 2,
         }}
       >
-        <ExerciseCard
+        <CommonExerciseCard
           exercise={exercise}
-          onSelect={() => onSelectExercise?.(exercise)}
+          variant="library-manage"
+          onViewDetails={() => onSelectExercise?.(exercise)}
           onEdit={() => onEditExercise?.(exercise)}
           onDelete={() => onDeleteExercise?.(exercise)}
           className="h-full"
