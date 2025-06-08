@@ -1,10 +1,6 @@
 
 import { useState, useEffect } from 'react';
 
-/**
- * Hook that debounces a value for performance optimization
- * Useful for search queries and API calls
- */
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
