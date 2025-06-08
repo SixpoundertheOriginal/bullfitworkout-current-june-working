@@ -78,9 +78,10 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   // Virtualization toggle
   const [useVirtualization, setUseVirtualization] = useState(false);
 
-  // Extract recently used exercises from workout history
+  // Extract recently used exercises from workout history with Phase 1 crash fixes
   const recentExercises = useMemo(() => {
-    if (!workouts?.length) return [];
+    // Phase 1 Fix: Add comprehensive null guards to prevent crashes
+    if (!workouts?.length || !Array.isArray(exercises)) return [];
     
     const exerciseMap = new Map<string, Exercise>();
     
@@ -88,19 +89,25 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     workouts.slice(0, 8).forEach(workout => {
       const exerciseNames = new Set<string>();
       
-      workout.exerciseSets?.forEach(set => {
-        exerciseNames.add(set.exercise_name);
-      });
+      // Phase 1 Fix: Add null guard for exerciseSets
+      if (workout?.exerciseSets && Array.isArray(workout.exerciseSets)) {
+        workout.exerciseSets.forEach(set => {
+          if (set?.exercise_name) {
+            exerciseNames.add(set.exercise_name);
+          }
+        });
+      }
       
       exerciseNames.forEach(name => {
-        const exercise = exercises.find(e => e.name === name);
+        const exercise = exercises.find(e => e?.name === name);
         if (exercise && !exerciseMap.has(exercise.id)) {
           exerciseMap.set(exercise.id, exercise);
         }
       });
     });
     
-    return Array.from(exerciseMap.values());
+    // Phase 1 Fix: Safe Array.from with fallback to prevent iterator crashes
+    return exerciseMap.size > 0 ? Array.from(exerciseMap.values()) : [];
   }, [workouts, exercises]);
 
   // Update search filters when local filters change
@@ -127,35 +134,45 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     }
   }, [searchQuery, searchFilters]);
 
-  // Use search results when available, otherwise fallback to original exercises
-  const suggestedExercises = useMemo(() => 
-    searchQuery || Object.keys(searchFilters).length > 0 
-      ? searchResults.slice(0, 20) 
-      : exercises.slice(0, 20),
-    [searchQuery, searchFilters, searchResults, exercises]
-  );
+  // Use search results when available, otherwise fallback to original exercises with null guards
+  const suggestedExercises = useMemo(() => {
+    const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
+    const safeExercises = Array.isArray(exercises) ? exercises : [];
     
-  const filteredRecent = useMemo(() => 
-    searchQuery || Object.keys(searchFilters).length > 0 
-      ? searchResults.filter(exercise => 
-          recentExercises.some(recent => recent.id === exercise.id)
+    return searchQuery || Object.keys(searchFilters).length > 0 
+      ? safeSearchResults.slice(0, 20) 
+      : safeExercises.slice(0, 20);
+  }, [searchQuery, searchFilters, searchResults, exercises]);
+    
+  const filteredRecent = useMemo(() => {
+    const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
+    const safeRecentExercises = Array.isArray(recentExercises) ? recentExercises : [];
+    
+    return searchQuery || Object.keys(searchFilters).length > 0 
+      ? safeSearchResults.filter(exercise => 
+          safeRecentExercises.some(recent => recent?.id === exercise?.id)
         )
-      : recentExercises,
-    [searchQuery, searchFilters, searchResults, recentExercises]
-  );
+      : safeRecentExercises;
+  }, [searchQuery, searchFilters, searchResults, recentExercises]);
     
-  const filteredAll = useMemo(() => 
-    searchQuery || Object.keys(searchFilters).length > 0 
-      ? searchResults 
-      : exercises,
-    [searchQuery, searchFilters, searchResults, exercises]
-  );
+  const filteredAll = useMemo(() => {
+    const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
+    const safeExercises = Array.isArray(exercises) ? exercises : [];
+    
+    return searchQuery || Object.keys(searchFilters).length > 0 
+      ? safeSearchResults 
+      : safeExercises;
+  }, [searchQuery, searchFilters, searchResults, exercises]);
 
-  // Pagination logic
+  // Pagination logic with null guards
   const indexOfLastExercise = currentPage * exercisesPerPage;
   const indexOfFirstExercise = indexOfLastExercise - exercisesPerPage;
-  const currentExercises = filteredAll.slice(indexOfFirstExercise, indexOfLastExercise);
-  const totalPages = Math.ceil(filteredAll.length / exercisesPerPage);
+  const currentExercises = Array.isArray(filteredAll) 
+    ? filteredAll.slice(indexOfFirstExercise, indexOfLastExercise)
+    : [];
+  const totalPages = Array.isArray(filteredAll) 
+    ? Math.ceil(filteredAll.length / exercisesPerPage)
+    : 0;
 
   const paginate = useCallback((pageNumber: number) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
@@ -337,12 +354,12 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           isLoading={isSearching}
           fromCache={fromCache}
           isIndexed={isIndexed}
-          totalExercises={exercises.length}
+          totalExercises={Array.isArray(exercises) ? exercises.length : 0}
           className="mb-4"
         />
         
         {/* Virtualization toggle for large lists */}
-        {exercises.length > 50 && (
+        {Array.isArray(exercises) && exercises.length > 50 && (
           <div className="flex justify-end mb-4">
             <Button
               variant="ghost"
@@ -377,7 +394,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               selectedMovement={selectedMovement}
               onMovementChange={setSelectedMovement}
               onClearAll={clearFilters}
-              resultCount={filteredAll.length}
+              resultCount={Array.isArray(filteredAll) ? filteredAll.length : 0}
               className="mb-4"
             />
           )}
@@ -397,7 +414,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 <TabsContent value="suggested" className="mt-0 h-full">
                   <ExerciseTabsContent
                     exercises={suggestedExercises}
-                    isLoading={isLoading || (!isIndexed && exercises.length > 0)}
+                    isLoading={isLoading || (!isIndexed && Array.isArray(exercises) && exercises.length > 0)}
                     isSearching={isSearching}
                     variant={standalone ? 'library-manage' : 'workout-add'}
                     useVirtualization={useVirtualization}
@@ -415,7 +432,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 <TabsContent value="recent" className="mt-0 h-full">
                   <ExerciseTabsContent
                     exercises={filteredRecent}
-                    isLoading={isLoading || (!isIndexed && exercises.length > 0)}
+                    isLoading={isLoading || (!isIndexed && Array.isArray(exercises) && exercises.length > 0)}
                     isSearching={isSearching}
                     variant={standalone ? 'library-manage' : 'workout-add'}
                     useVirtualization={useVirtualization}
@@ -433,7 +450,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
                 <TabsContent value="browse" className="mt-0 h-full">
                   <ExerciseTabsContent
                     exercises={currentExercises}
-                    isLoading={isLoading || (!isIndexed && exercises.length > 0)}
+                    isLoading={isLoading || (!isIndexed && Array.isArray(exercises) && exercises.length > 0)}
                     isSearching={isSearching}
                     variant={standalone ? 'library-manage' : 'workout-add'}
                     useVirtualization={useVirtualization}

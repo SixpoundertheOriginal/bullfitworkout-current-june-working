@@ -34,9 +34,10 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   const { exercises: allExercises } = useExercises();
   const [showAllExercises, setShowAllExercises] = useState(false);
 
-  // Extract recently used exercises from workout history
+  // Extract recently used exercises from workout history with Phase 1 crash fixes
   const recentExercises = React.useMemo(() => {
-    if (!workouts?.length) return [];
+    // Phase 1 Fix: Add comprehensive null guards
+    if (!workouts?.length || !Array.isArray(allExercises)) return [];
     
     const exerciseMap = new Map<string, Exercise>();
     
@@ -44,42 +45,50 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
     workouts.slice(0, 8).forEach(workout => {
       const exerciseNames = new Set<string>();
       
-      workout.exerciseSets?.forEach(set => {
-        exerciseNames.add(set.exercise_name);
-      });
+      // Phase 1 Fix: Add null guard for exerciseSets
+      if (workout?.exerciseSets && Array.isArray(workout.exerciseSets)) {
+        workout.exerciseSets.forEach(set => {
+          if (set?.exercise_name) {
+            exerciseNames.add(set.exercise_name);
+          }
+        });
+      }
       
       exerciseNames.forEach(name => {
-        const exercise = allExercises.find(e => e.name === name);
+        const exercise = allExercises.find(e => e?.name === name);
         if (exercise && !exerciseMap.has(exercise.id)) {
           exerciseMap.set(exercise.id, exercise);
         }
       });
     });
     
-    return Array.from(exerciseMap.values());
+    // Phase 1 Fix: Safe Array.from with fallback
+    return exerciseMap.size > 0 ? Array.from(exerciseMap.values()) : [];
   }, [workouts, allExercises]);
 
-  // Filter exercises based on search query
+  // Filter exercises based on search query with null guards
   const filteredSuggested = React.useMemo(() => {
+    const safeSuggested = Array.isArray(suggestedExercises) ? suggestedExercises : [];
     return searchQuery
-      ? suggestedExercises.filter(e => 
-          e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.primary_muscle_groups.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()))
+      ? safeSuggested.filter(e => 
+          e?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (Array.isArray(e?.primary_muscle_groups) && e.primary_muscle_groups.some(m => m?.toLowerCase().includes(searchQuery.toLowerCase())))
         )
-      : suggestedExercises;
+      : safeSuggested;
   }, [suggestedExercises, searchQuery]);
 
   const filteredRecent = React.useMemo(() => {
+    const safeRecent = Array.isArray(recentExercises) ? recentExercises : [];
     return searchQuery
-      ? recentExercises.filter(e => 
-          e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.primary_muscle_groups.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()))
+      ? safeRecent.filter(e => 
+          e?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (Array.isArray(e?.primary_muscle_groups) && e.primary_muscle_groups.some(m => m?.toLowerCase().includes(searchQuery.toLowerCase())))
         )
-      : recentExercises;
+      : safeRecent;
   }, [recentExercises, searchQuery]);
 
   const handleAddExercise = (exercise: Exercise | string) => {
-    const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
+    const exerciseName = typeof exercise === 'string' ? exercise : exercise?.name || 'Unknown Exercise';
     onSelectExercise(exercise);
     
     // Close the sheet immediately after selecting an exercise
@@ -93,7 +102,11 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   };
 
   const renderExerciseCard = (exercise: Exercise) => {
-    const muscleGroups = exercise.primary_muscle_groups.slice(0, 2).join(', ');
+    if (!exercise) return null;
+    
+    const muscleGroups = Array.isArray(exercise.primary_muscle_groups) 
+      ? exercise.primary_muscle_groups.slice(0, 2).join(', ')
+      : 'Unknown';
     
     return (
       <div key={exercise.id} className="flex items-center justify-between p-3 mb-2 bg-gray-800/50 rounded-lg border border-gray-700/50">
@@ -170,7 +183,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
               <TabsContent value="suggested" className="mt-0 flex-1 overflow-auto">
                 <div className="overflow-y-auto max-h-[calc(80vh-170px)]">
                   {filteredSuggested.length > 0 ? (
-                    filteredSuggested.map(renderExerciseCard)
+                    filteredSuggested.map(exercise => exercise ? renderExerciseCard(exercise) : null).filter(Boolean)
                   ) : (
                     <div className="text-center py-6 text-gray-400">
                       No suggested exercises found
@@ -182,7 +195,7 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
               <TabsContent value="recent" className="mt-0 flex-1 overflow-auto">
                 <div className="overflow-y-auto max-h-[calc(80vh-170px)]">
                   {filteredRecent.length > 0 ? (
-                    filteredRecent.map(renderExerciseCard)
+                    filteredRecent.map(exercise => exercise ? renderExerciseCard(exercise) : null).filter(Boolean)
                   ) : (
                     <div className="text-center py-6 text-gray-400">
                       No recent exercises found

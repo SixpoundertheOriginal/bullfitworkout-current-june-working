@@ -37,9 +37,10 @@ export function ExerciseSelector({
   const { isActive } = useWorkoutState();
   const timeOfDay = getCurrentTimeOfDay();
   
-  // Extract recently used exercises from workout history
+  // Extract recently used exercises from workout history with null guards
   const recentExercises = React.useMemo(() => {
-    if (!workouts?.length) return [];
+    // Phase 1 Fix: Add null guards for crash prevention
+    if (!workouts?.length || !Array.isArray(allExercises)) return [];
     
     const exerciseMap = new Map<string, Exercise>();
     
@@ -47,31 +48,40 @@ export function ExerciseSelector({
     workouts.slice(0, 5).forEach(workout => {
       const exerciseNames = new Set<string>();
       
-      // Collect unique exercise names from the workout's exercise sets
-      workout.exerciseSets?.forEach(set => {
-        exerciseNames.add(set.exercise_name);
-      });
+      // Phase 1 Fix: Add null guard for exerciseSets
+      if (workout.exerciseSets && Array.isArray(workout.exerciseSets)) {
+        workout.exerciseSets.forEach(set => {
+          if (set?.exercise_name) {
+            exerciseNames.add(set.exercise_name);
+          }
+        });
+      }
       
       // For each unique exercise name, find the matching exercise from allExercises
       exerciseNames.forEach(name => {
-        const exercise = allExercises.find(e => e.name === name);
+        const exercise = allExercises.find(e => e?.name === name);
         if (exercise && !exerciseMap.has(exercise.id)) {
           exerciseMap.set(exercise.id, exercise);
         }
       });
     });
     
-    return Array.from(exerciseMap.values());
+    // Phase 1 Fix: Use Array.from with proper null guard
+    return exerciseMap.size > 0 ? Array.from(exerciseMap.values()) : [];
   }, [workouts, allExercises]);
 
-  // Process and rank exercises based on user preferences
+  // Process and rank exercises based on user preferences with null guards
   const rankedExercises = React.useMemo(() => {
+    // Phase 1 Fix: Add null guards for all arrays
+    const safeSuggestedExercises = Array.isArray(suggestedExercises) ? suggestedExercises : [];
+    const safeRecentExercises = Array.isArray(recentExercises) ? recentExercises : [];
+    
     // Combine recent and suggested exercises to be ranked
-    const combinedExercises = [...suggestedExercises];
+    const combinedExercises = [...safeSuggestedExercises];
     
     // Add recent exercises that aren't already in the suggested list
-    recentExercises.forEach(exercise => {
-      if (!combinedExercises.some(e => e.id === exercise.id)) {
+    safeRecentExercises.forEach(exercise => {
+      if (exercise && !combinedExercises.some(e => e?.id === exercise.id)) {
         combinedExercises.push(exercise);
       }
     });
@@ -79,14 +89,23 @@ export function ExerciseSelector({
     // Create ranking criteria from props
     const criteria: RankingCriteria = {
       trainingType,
-      bodyFocus: bodyFocus as any[],
-      movementPattern: movementPattern as any[],
+      bodyFocus: Array.isArray(bodyFocus) ? bodyFocus as any[] : [],
+      movementPattern: Array.isArray(movementPattern) ? movementPattern as any[] : [],
       timeOfDay,
       difficulty: difficulty
     };
     
-    // Apply ranking algorithm
-    return rankExercises(combinedExercises, criteria);
+    // Apply ranking algorithm with fallback
+    try {
+      return rankExercises(combinedExercises, criteria);
+    } catch (error) {
+      console.error('Error ranking exercises:', error);
+      return {
+        recommended: combinedExercises.slice(0, 10),
+        other: combinedExercises.slice(10),
+        matchData: {}
+      };
+    }
   }, [suggestedExercises, recentExercises, trainingType, bodyFocus, movementPattern, timeOfDay, difficulty]);
 
   // Render start button if requested and no active workout
@@ -105,10 +124,10 @@ export function ExerciseSelector({
     return (
       <ExerciseQuickSelect
         onSelectExercise={onSelectExercise}
-        suggestedExercises={rankedExercises.recommended}
+        suggestedExercises={rankedExercises.recommended || []}
         recentExercises={recentExercises}
-        otherExercises={rankedExercises.other}
-        matchData={rankedExercises.matchData}
+        otherExercises={rankedExercises.other || []}
+        matchData={rankedExercises.matchData || {}}
         className={className}
       />
     );
@@ -117,10 +136,10 @@ export function ExerciseSelector({
   return (
     <MinimalisticExerciseSelect
       onSelectExercise={onSelectExercise}
-      suggestedExercises={rankedExercises.recommended}
+      suggestedExercises={rankedExercises.recommended || []}
       recentExercises={recentExercises}
-      otherExercises={rankedExercises.other}
-      matchData={rankedExercises.matchData}
+      otherExercises={rankedExercises.other || []}
+      matchData={rankedExercises.matchData || {}}
       trainingType={trainingType}
       className={className}
     />
