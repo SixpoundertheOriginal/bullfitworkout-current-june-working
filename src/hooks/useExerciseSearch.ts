@@ -39,11 +39,18 @@ export interface UseExerciseSearchReturn {
 export function useExerciseSearch(options: UseExerciseSearchOptions = {}): UseExerciseSearchReturn {
   const { exercises } = useExercises();
   
-  // Ensure exercises is always an array
+  // Ensure exercises is always an array and add debug logging
   const safeExercises = exercises && Array.isArray(exercises) ? exercises : [];
   
-  return useExerciseSearchBase(safeExercises, {
+  console.log('useExerciseSearch: exercises available:', safeExercises.length);
+  
+  const searchHook = useExerciseSearchBase(safeExercises, {
     ...options,
     enableIndexing: true
   });
+
+  // Add debug logging for search results
+  console.log('useExerciseSearch: returning results:', searchHook.results.length);
+  
+  return searchHook;
 }

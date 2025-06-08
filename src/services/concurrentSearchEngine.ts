@@ -1,3 +1,4 @@
+
 import { Exercise } from '@/types/exercise';
 import { exerciseSearchEngine, SearchFilters, SearchResult } from './exerciseSearchEngine';
 import { concurrencyManager } from './concurrencyManager';
@@ -32,53 +33,42 @@ class ConcurrentSearchEngine {
     if (enableCache) {
       const cached = await this.getCachedResult(searchKey);
       if (cached) {
+        console.log('Search results from cache:', cached.results.length);
         return cached;
       }
     }
 
-    // Create search task
-    const taskId = `search-${searchKey}-${Date.now()}`;
-    
-    return new Promise((resolve, reject) => {
-      concurrencyManager.enqueue({
-        id: taskId,
-        priority,
-        tags: ['search', 'user-interaction'],
-        signal,
-        retryOnFail: false,
-        maxRetries: 0, // No retries for search tasks
-        run: async () => {
-          try {
-            // Check if request was cancelled
-            if (signal?.aborted) {
-              throw new Error('Search cancelled');
-            }
+    // For immediate search results, use synchronous search instead of task queue
+    try {
+      // Check if request was cancelled
+      if (signal?.aborted) {
+        throw new Error('Search cancelled');
+      }
 
-            const result = await exerciseSearchEngine.search(query, filters);
-            
-            // Cache the result
-            if (enableCache) {
-              this.setCachedResult(searchKey, result);
-            }
+      console.log('Executing search with query:', query, 'filters:', filters);
+      const result = await exerciseSearchEngine.search(query, filters);
+      console.log('Search engine returned:', result.results.length, 'results');
+      
+      // Cache the result
+      if (enableCache) {
+        this.setCachedResult(searchKey, result);
+      }
 
-            // Record for predictive caching
-            if (enablePredictive) {
-              predictiveCache.recordUserSearch(query, filters);
-            }
+      // Record for predictive caching
+      if (enablePredictive) {
+        predictiveCache.recordUserSearch(query, filters);
+      }
 
-            return result;
-          } catch (error) {
-            console.error('Concurrent search failed:', error);
-            throw error;
-          }
-        }
-      });
-
-      // Wait for task completion
-      this.waitForTask(taskId)
-        .then(resolve)
-        .catch(reject);
-    });
+      return result;
+    } catch (error) {
+      console.error('Concurrent search failed:', error);
+      // Return empty results instead of throwing
+      return {
+        results: [],
+        fromCache: false,
+        fromWorker: false
+      };
+    }
   }
 
   async preloadPopularSearches(): Promise<void> {
@@ -181,27 +171,6 @@ class ConcurrentSearchEngine {
     });
     
     return filters;
-  }
-
-  private async waitForTask(taskId: string): Promise<SearchResult> {
-    return new Promise((resolve, reject) => {
-      const checkTask = () => {
-        const stats = concurrencyManager.getStats();
-        
-        if (!stats.runningTaskIds.includes(taskId) && !stats.queuedTaskIds.includes(taskId)) {
-          // Task completed, check if it was successful
-          // Since we can't directly access task results, we need to handle this differently
-          // For now, we'll reject with a timeout error
-          reject(new Error('Task completed but result unavailable'));
-          return;
-        }
-
-        // Task still running or queued, check again
-        setTimeout(checkTask, 100);
-      };
-
-      checkTask();
-    });
   }
 
   getStats() {
