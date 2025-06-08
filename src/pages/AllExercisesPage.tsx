@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseCreationWizard } from "@/components/exercises/ExerciseCreationWizard";
 import { Exercise } from "@/types/exercise";
@@ -25,6 +25,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { user, loading: authLoading } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
     if (onSelectExercise) {
@@ -66,6 +67,8 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       await createExercise({
         ...exerciseData,
@@ -80,9 +83,11 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
       console.error('Failed to create exercise:', error);
       toast({
         title: "Failed to create exercise",
-        description: "Please try again or check your connection",
+        description: error instanceof Error ? error.message : "Please try again or check your connection",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }, [createExercise, toast, user?.id]);
 
@@ -100,6 +105,8 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
     return <div className="flex items-center justify-center h-full">Loading...</div>;
   }
 
+  const isLoading = isPending || isSubmitting;
+
   return (
     <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
       {standalone && <PageHeader title="Exercise Library" />}
@@ -112,7 +119,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
           suggestedExercises, 
           filteredRecent, 
           currentExercises,
-          isLoading,
+          isLoading: containerLoading,
           isSearching,
           isError,
           isIndexed,
@@ -126,7 +133,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               open={state.showCreateWizard}
               onOpenChange={actions.setShowCreateWizard}
               onSubmit={handleCreateExercise}
-              loading={isPending}
+              loading={isLoading}
             />
             
             {/* Delete Confirmation Dialog */}
@@ -187,7 +194,7 @@ export default function AllExercisesPage({ onSelectExercise, standalone = true, 
               suggestedExercises={suggestedExercises}
               filteredRecent={filteredRecent}
               currentExercises={currentExercises}
-              isLoading={isLoading}
+              isLoading={containerLoading}
               isSearching={isSearching}
               isIndexed={isIndexed}
               isError={isError}

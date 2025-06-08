@@ -19,6 +19,7 @@ export const ModernExerciseLibraryPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Filter states
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<MuscleGroup | 'all'>('all');
@@ -56,6 +57,8 @@ export const ModernExerciseLibraryPage: React.FC = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       await createExercise({
         ...exerciseData,
@@ -71,9 +74,11 @@ export const ModernExerciseLibraryPage: React.FC = () => {
       console.error('Failed to create exercise:', error);
       toast({
         title: "Failed to create exercise",
-        description: "Please try again or check your connection",
+        description: error instanceof Error ? error.message : "Please try again or check your connection",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -115,6 +120,8 @@ export const ModernExerciseLibraryPage: React.FC = () => {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
   }
 
+  const isProcessing = isCreating || isSubmitting;
+
   return (
     <div className="flex flex-col h-full max-w-7xl mx-auto p-4 space-y-6">
       {/* Enhanced Header */}
@@ -138,10 +145,11 @@ export const ModernExerciseLibraryPage: React.FC = () => {
           
           <Button
             onClick={() => setShowCreateWizard(true)}
+            disabled={isProcessing}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" />
-            Create Exercise
+            {isProcessing ? 'Creating...' : 'Create Exercise'}
           </Button>
         </div>
       </div>
@@ -203,7 +211,7 @@ export const ModernExerciseLibraryPage: React.FC = () => {
         open={showCreateWizard}
         onOpenChange={setShowCreateWizard}
         onSubmit={handleCreateExercise}
-        loading={isCreating}
+        loading={isProcessing}
       />
 
       {/* Performance Monitor (Development Only) */}

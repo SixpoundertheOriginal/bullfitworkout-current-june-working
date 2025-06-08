@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { MuscleGroup, EquipmentType } from '@/types/exercise';
 import { WizardProgressBar } from './wizard/WizardProgressBar';
 import { WizardStep1 } from './wizard/WizardStep1';
@@ -35,6 +35,7 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
 }) => {
   const { user, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<WizardFormData>({
     name: '',
     description: '',
@@ -61,7 +62,7 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
     }
   }, [currentStep]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     // Authentication guard
     if (!user?.id) {
       console.error("No authenticated user found");
@@ -73,26 +74,40 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
       return;
     }
 
-    const submitData = {
-      name: formData.name,
-      description: formData.description,
-      primary_muscle_groups: formData.primaryMuscles,
-      secondary_muscle_groups: formData.secondaryMuscles,
-      equipment_type: formData.equipment,
-      movement_pattern: 'push' as const,
-      difficulty: formData.difficulty,
-      instructions: { steps: '', form: '' },
-      is_compound: formData.primaryMuscles.length > 1,
-      tips: [],
-      variations: [],
-      user_id: user.id
-    };
+    setIsSubmitting(true);
     
-    onSubmit(submitData);
+    try {
+      const submitData = {
+        name: formData.name,
+        description: formData.description,
+        primary_muscle_groups: formData.primaryMuscles,
+        secondary_muscle_groups: formData.secondaryMuscles,
+        equipment_type: formData.equipment,
+        movement_pattern: 'push' as const,
+        difficulty: formData.difficulty,
+        instructions: { steps: '', form: '' },
+        is_compound: formData.primaryMuscles.length > 1,
+        tips: [],
+        variations: [],
+        user_id: user.id
+      };
+      
+      await onSubmit(submitData);
+    } catch (error) {
+      console.error('Failed to create exercise:', error);
+      toast({
+        title: "Failed to create exercise",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [formData, onSubmit, user?.id]);
 
   const resetWizard = useCallback(() => {
     setCurrentStep(1);
+    setIsSubmitting(false);
     setFormData({
       name: '',
       description: '',
@@ -119,9 +134,13 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
     return null;
   }
 
+  const isLoading = loading || isSubmitting;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] overflow-hidden p-0 bg-gray-900 border-gray-700 flex flex-col">
+        <DialogTitle className="sr-only">Create New Exercise</DialogTitle>
+        
         {/* Fixed Header with Progress */}
         <div className="flex-shrink-0">
           <WizardProgressBar 
@@ -165,11 +184,13 @@ export const ExerciseCreationWizard: React.FC<ExerciseCreationWizardProps> = ({
               formData={formData}
               onSubmit={handleSubmit}
               onPrev={prevStep}
-              onAddAnother={() => {
-                handleSubmit();
-                resetWizard();
+              onAddAnother={async () => {
+                await handleSubmit();
+                if (!isSubmitting) {
+                  resetWizard();
+                }
               }}
-              loading={loading}
+              loading={isLoading}
             />
           )}
         </div>
