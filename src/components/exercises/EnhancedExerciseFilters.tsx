@@ -119,11 +119,6 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
     onApplyPreset(typedFilters);
   };
 
-  // Convert typed values to strings for Select components - FIX: Use String() to ensure proper conversion
-  const movementPatternValue = String(selectedMovementPattern);
-  const trainingFocusValue = String(selectedTrainingFocus);
-  const complexityLevelValue = String(selectedComplexityLevel);
-
   return (
     <div className={className}>
       {/* Smart Filter Presets - Always visible for quick access */}
@@ -167,7 +162,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <Target className="w-3 h-3" />
                 Movement Pattern
               </label>
-              <Select value={movementPatternValue} onValueChange={handleMovementPatternChange}>
+              <Select value={selectedMovementPattern} onValueChange={handleMovementPatternChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select pattern" />
                 </SelectTrigger>
@@ -188,7 +183,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <BarChart3 className="w-3 h-3" />
                 Training Focus
               </label>
-              <Select value={trainingFocusValue} onValueChange={handleTrainingFocusChange}>
+              <Select value={selectedTrainingFocus} onValueChange={handleTrainingFocusChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select focus" />
                 </SelectTrigger>
@@ -209,7 +204,7 @@ export const EnhancedExerciseFilters: React.FC<EnhancedExerciseFiltersProps> = (
                 <TrendingUp className="w-3 h-3" />
                 Complexity Level
               </label>
-              <Select value={complexityLevelValue} onValueChange={handleComplexityLevelChange}>
+              <Select value={selectedComplexityLevel} onValueChange={handleComplexityLevelChange}>
                 <SelectTrigger className="bg-gray-900 border-gray-700">
                   <SelectValue placeholder="Select complexity" />
                 </SelectTrigger>
