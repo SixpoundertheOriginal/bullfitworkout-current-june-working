@@ -11,7 +11,14 @@ export interface EnhancedExercise {
     reps: number;
     daysAgo: number;
   };
-  sets: EnhancedExerciseSet[];
+  sets: Array<{
+    id: number;
+    weight: number;
+    reps: number;
+    duration: string;
+    completed: boolean;
+    volume: number;
+  }>;
 }
 
 export const useEnhancedExerciseTracker = (exerciseName: string) => {
@@ -38,21 +45,25 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
       name: exerciseName,
       lastWorkout: undefined, // TODO: Get from workout history
       sets: storeSets.map((set, index) => ({
-        id: set.id || `set-${index}`,
+        id: index, // Use index as numeric ID for display
         weight: set.weight || 0,
         reps: set.reps || 0,
-        restTime: set.restTime || 60,
+        duration: formatDuration(set.restTime || 60),
         completed: set.completed || false,
-        isEditing: set.isEditing || false,
-        volume: (set.weight || 0) * (set.reps || 0), // Computed volume
-        saveStatus: set.saveStatus,
-        retryCount: set.retryCount
+        volume: (set.weight || 0) * (set.reps || 0) // Computed volume
       }))
     };
-  }, [storeExercises, exerciseName]);
+  }, [storeExercises, exerciseName, formatDuration]);
 
   // Update set handler with volume recalculation
-  const handleUpdateSet = useCallback((setId: number, updates: Partial<EnhancedExerciseSet>) => {
+  const handleUpdateSet = useCallback((setId: number, updates: Partial<{
+    id: number;
+    weight: number;
+    reps: number;
+    duration: string;
+    completed: boolean;
+    volume: number;
+  }>) => {
     setStoreExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
       if (exerciseSets[setId]) {
@@ -62,8 +73,11 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
         if (updates.weight !== undefined) updatedSet.weight = updates.weight;
         if (updates.reps !== undefined) updatedSet.reps = updates.reps;
         if (updates.completed !== undefined) updatedSet.completed = updates.completed;
-        if (updates.restTime !== undefined) updatedSet.restTime = updates.restTime;
-        if (updates.isEditing !== undefined) updatedSet.isEditing = updates.isEditing;
+        if (updates.duration !== undefined) {
+          // Convert duration string back to seconds
+          const [mins, secs] = updates.duration.split(':').map(Number);
+          updatedSet.restTime = (mins * 60) + secs;
+        }
         
         exerciseSets[setId] = updatedSet;
       }
@@ -104,7 +118,8 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
         reps: lastSet?.reps || 0,
         restTime: lastSet?.restTime || 60,
         completed: false,
-        isEditing: false
+        isEditing: false,
+        volume: 0 // Will be calculated when weight/reps are set
       };
       
       return {
