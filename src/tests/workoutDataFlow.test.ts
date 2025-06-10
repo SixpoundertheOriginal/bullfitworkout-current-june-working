@@ -165,7 +165,8 @@ describe('Workout Data Flow Regression Tests', () => {
               reps: 10,
               restTime: 60,
               completed: true,
-              isEditing: false
+              isEditing: false,
+              volume: 1000 // Fixed: Added missing volume property
             }
           ]
         }
