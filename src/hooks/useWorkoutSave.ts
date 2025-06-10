@@ -91,7 +91,9 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
           
           if (saveResult.partialSave) {
             // Schedule auto-retry for partial saves
-            saveProgress.scheduleAutoRetry(() => performSave());
+            saveProgress.scheduleAutoRetry(async () => { 
+              await performSave(); 
+            });
             return savedWorkoutId;
           } else {
             saveProgress.markComplete();
@@ -111,7 +113,9 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
           
           // Schedule auto-retry for recoverable errors
           if (error.recoverable) {
-            saveProgress.scheduleAutoRetry(() => performSave());
+            saveProgress.scheduleAutoRetry(async () => { 
+              await performSave(); 
+            });
           }
           
           return null;
@@ -125,7 +129,9 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
         };
         
         saveProgress.markFailed(saveError);
-        saveProgress.scheduleAutoRetry(() => performSave());
+        saveProgress.scheduleAutoRetry(async () => { 
+          await performSave(); 
+        });
         
         return null;
       }
@@ -173,7 +179,9 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
   }, [user, saveProgress]);
 
   const retryCurrentSave = useCallback(() => {
-    saveProgress.retry(() => handleCompleteWorkout());
+    saveProgress.retry(async () => { 
+      await handleCompleteWorkout(); 
+    });
   }, [saveProgress]);
 
   const saveLater = useCallback(() => {
