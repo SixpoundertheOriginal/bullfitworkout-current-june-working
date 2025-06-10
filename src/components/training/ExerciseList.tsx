@@ -41,6 +41,14 @@ const ExerciseTrackerWrapper: React.FC<{ exerciseName: string; onDeleteExercise:
     onSetActive
   } = useEnhancedExerciseTracker(exerciseName);
 
+  // Set up the global delete function for the enhanced tracker
+  React.useEffect(() => {
+    window.onDeleteExercise = onDeleteExercise;
+    return () => {
+      delete window.onDeleteExercise;
+    };
+  }, [onDeleteExercise]);
+
   return (
     <div onClick={onSetActive}>
       <EnhancedExerciseTracker
@@ -105,7 +113,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
             Active Exercises
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Double-click sets to complete • Click values to edit
+            Double-click sets to complete • Click values to edit • Hover to delete exercise
           </p>
         </div>
       </div>

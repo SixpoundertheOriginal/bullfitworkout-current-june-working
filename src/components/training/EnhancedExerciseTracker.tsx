@@ -1,7 +1,6 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Check, Plus, Trash2, Clock } from 'lucide-react';
+import { ChevronDown, Check, Plus, Trash2, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -59,6 +58,7 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [editingField, setEditingField] = useState<{ setId: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Calculate progress metrics
   const { completedSets, totalSets, progressPercentage, totalVolume } = useMemo(() => {
@@ -130,13 +130,22 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
     onToggleCompletion(setId);
   }, [onToggleCompletion]);
 
+  // New function to handle exercise deletion
+  const handleDeleteExercise = useCallback(() => {
+    // This will be passed down from the parent component
+    if (window.onDeleteExercise) {
+      window.onDeleteExercise(exercise.name);
+    }
+    setShowDeleteConfirm(false);
+  }, [exercise.name]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={`
-        relative overflow-hidden rounded-xl backdrop-blur-md
+        relative overflow-hidden rounded-xl backdrop-blur-md group
         bg-gradient-to-br from-slate-900/80 via-purple-900/20 to-slate-900/80
         border border-slate-700/50 shadow-2xl
         ${isActive ? 'border-purple-500/50 shadow-purple-500/20' : ''}
@@ -144,7 +153,7 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
     >
       {/* Header Section */}
       <motion.div
-        className="p-4 cursor-pointer select-none"
+        className="p-4 cursor-pointer select-none relative"
         onClick={() => setIsCollapsed(!isCollapsed)}
         whileHover={{ backgroundColor: 'rgba(100, 116, 139, 0.1)' }}
         transition={{ duration: 0.2 }}
@@ -163,6 +172,42 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Delete Exercise Button */}
+            <div className="relative">
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-all duration-200 h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-full"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteExercise}
+                    className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded"
+                  >
+                    Delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="h-7 w-7 p-0 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            
             <div className="text-right">
               <div className="text-sm font-medium text-white">
                 {completedSets}/{totalSets} sets
@@ -348,3 +393,5 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
 });
 
 EnhancedExerciseTracker.displayName = 'EnhancedExerciseTracker';
+
+}
