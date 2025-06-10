@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check, Plus, Trash2, Clock, X } from 'lucide-react';
@@ -393,5 +394,3 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
 });
 
 EnhancedExerciseTracker.displayName = 'EnhancedExerciseTracker';
-
-}
