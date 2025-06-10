@@ -44,7 +44,7 @@ const Index = () => {
         {showLevelUp && <AnimatedLevelUp show={showLevelUp} />}
       </AnimatePresence>
 
-      {/* Active Workout Banner */}
+      {/* Active Workout Banner - Only show if not already in header */}
       <AnimatePresence>
         {isActive && (
           <motion.div
@@ -52,6 +52,7 @@ const Index = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="relative z-20"
           >
             <WorkoutBanner />
           </motion.div>
@@ -65,7 +66,7 @@ const Index = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="px-6 pt-safe-top"
+          className="px-6 pt-6"
         >
           <WelcomeHeader stats={stats} />
         </motion.div>

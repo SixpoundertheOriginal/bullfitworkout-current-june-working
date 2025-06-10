@@ -59,25 +59,46 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const title = getPageTitle(location.pathname);
   const useScrollResponsive = shouldUseScrollResponsiveHeader(location.pathname);
   
-  // Prevent layout shifts during route changes
+  // Enhanced layout optimization for App Store quality
   useLayoutEffect(() => {
-    const mainContent = document.querySelector('.content-container');
-    if (mainContent) {
-      mainContent.classList.add('force-no-transition');
-      setTimeout(() => mainContent.classList.remove('force-no-transition'), 100);
+    const pageContainer = document.querySelector('.page-container');
+    if (pageContainer) {
+      pageContainer.classList.add('layout-optimized');
+      
+      // Prevent layout shifts during route changes
+      const handleTransitionStart = () => {
+        pageContainer.classList.add('transition-lock');
+      };
+      
+      const handleTransitionEnd = () => {
+        setTimeout(() => {
+          pageContainer.classList.remove('transition-lock');
+        }, 100);
+      };
+      
+      handleTransitionStart();
+      handleTransitionEnd();
     }
+    
+    // Safe area handling for mobile devices
     if (location.pathname === '/overview') {
       document.body.style.overflow = 'hidden';
       setTimeout(() => { document.body.style.overflow = '' }, 50);
     }
-    return () => { document.body.style.overflow = '' };
+    
+    return () => { 
+      document.body.style.overflow = '';
+      if (pageContainer) {
+        pageContainer.classList.remove('transition-lock', 'layout-optimized');
+      }
+    };
   }, [location.pathname]);
 
-  // Simplified footer visibility logic - always show unless explicitly disabled
+  // Optimized footer visibility logic
   const shouldShowFooter = !noFooter;
 
   return (
-    <div className="page-container bg-gray-900 will-change-transform">
+    <div className="page-container bg-gray-900 will-change-transform min-h-screen">
       {!noHeader && (
         <div className="fixed top-0 left-0 right-0 z-header">
           <PageHeader 
@@ -96,8 +117,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       )}
       
-      <main className="flex-grow overflow-y-auto safe-header safe-nav will-change-transform">
-        <div className={`content-container w-full ${shouldShowFooter ? 'footer-content-clearance' : ''}`}>
+      <main className={`flex-grow will-change-transform ${noHeader ? '' : 'safe-header'} ${shouldShowFooter ? 'safe-nav' : ''}`}>
+        <div className={`content-container w-full min-h-full ${shouldShowFooter ? 'footer-content-clearance' : ''}`}>
           {children}
         </div>
       </main>
@@ -111,12 +132,48 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <DevOnly>
         <style>
           {`
+          .layout-optimized {
+            contain: layout style paint;
+          }
+          .transition-lock * {
+            transition: none !important;
+            animation: none !important;
+          }
           .force-no-transition * {
             transition: none !important;
             animation: none !important;
           }
           .content-container {
             min-height: calc(100vh - 48px);
+          }
+          
+          /* App Store quality optimizations */
+          .page-container {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+          }
+          
+          /* Safe area support for notched devices */
+          .safe-header {
+            padding-top: env(safe-area-inset-top);
+          }
+          
+          .safe-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+          }
+          
+          /* Battery-efficient scroll handling */
+          .content-container {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+          }
+          
+          /* Gesture-friendly navigation zones */
+          .footer-stable {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
           }
           `}
         </style>

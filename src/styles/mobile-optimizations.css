@@ -15,7 +15,7 @@
   -webkit-touch-callout: none;
 }
 
-/* Safe area handling */
+/* Enhanced safe area handling */
 .pt-safe-top {
   padding-top: env(safe-area-inset-top);
 }
@@ -28,7 +28,15 @@
   bottom: env(safe-area-inset-bottom);
 }
 
-/* High-performance animations */
+.safe-header {
+  padding-top: calc(env(safe-area-inset-top) + 64px);
+}
+
+.safe-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 64px);
+}
+
+/* High-performance animations with layout preservation */
 .will-change-transform {
   will-change: transform;
 }
@@ -39,13 +47,25 @@
   perspective: 1000px;
 }
 
+/* Layout optimization for universal router */
+.layout-optimized {
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.transition-lock,
+.transition-lock * {
+  transition: none !important;
+  animation: none !important;
+}
+
 /* Backdrop blur optimization */
 .backdrop-blur-optimized {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Touch feedback */
+/* Enhanced touch feedback */
 .touch-feedback {
   transition: transform 0.1s ease-out;
 }
@@ -54,19 +74,21 @@
   transform: scale(0.98);
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling with battery optimization */
 .smooth-scroll {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
-/* Mobile modal optimizations */
+/* Mobile modal optimizations with universal layout support */
 .mobile-modal-container {
   height: calc(100vh - 2rem);
   max-height: calc(100vh - 2rem);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  contain: layout style paint;
 }
 
 .mobile-scrollable-content {
@@ -75,11 +97,37 @@
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 .mobile-fixed-footer {
   flex-shrink: 0;
   background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* App Store quality layout fixes */
+.footer-content-clearance {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
+.header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.footer-stable {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -100,7 +148,7 @@
   }
 }
 
-/* Battery optimization */
+/* Battery optimization for layout operations */
 .battery-optimized {
   contain: layout style paint;
 }
@@ -110,4 +158,59 @@
   .high-contrast-optimized {
     border: 2px solid;
   }
+}
+
+/* Performance optimization for route transitions */
+.route-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.route-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.route-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.route-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+/* Layout preservation during navigation */
+.page-container {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.content-container {
+  width: 100%;
+  min-height: calc(100vh - 128px);
+  position: relative;
+}
+
+/* Gesture zones for enhanced UX */
+.navigation-zone {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Haptic feedback integration points */
+.haptic-light {
+  /* Integration point for haptic feedback */
+}
+
+.haptic-medium {
+  /* Integration point for haptic feedback */
+}
+
+.haptic-heavy {
+  /* Integration point for haptic feedback */
 }
