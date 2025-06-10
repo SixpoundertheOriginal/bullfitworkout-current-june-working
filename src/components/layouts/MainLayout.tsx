@@ -1,4 +1,3 @@
-
 import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
@@ -98,7 +97,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const shouldShowFooter = !noFooter;
 
   return (
-    <div className="page-container bg-gray-900 will-change-transform min-h-screen">
+    <div className="page-container bg-gray-900 will-change-transform min-h-screen flex flex-col">
       {!noHeader && (
         <div className="fixed top-0 left-0 right-0 z-header">
           <PageHeader 
@@ -117,14 +116,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       )}
       
-      <main className={`flex-grow will-change-transform ${noHeader ? '' : 'safe-header'} ${shouldShowFooter ? 'safe-nav' : ''}`}>
-        <div className={`content-container w-full min-h-full ${shouldShowFooter ? 'footer-content-clearance' : ''}`}>
+      <main className={`flex-1 will-change-transform ${noHeader ? '' : 'safe-header'} ${shouldShowFooter ? 'pb-16' : ''}`}>
+        <div className="content-container w-full min-h-full">
           {children}
         </div>
       </main>
       
       {shouldShowFooter && (
-        <div className="footer-stable">
+        <div className="fixed bottom-0 left-0 right-0 z-50">
           <BottomNav />
         </div>
       )}
@@ -155,11 +154,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           
           /* Safe area support for notched devices */
           .safe-header {
-            padding-top: env(safe-area-inset-top);
-          }
-          
-          .safe-nav {
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-top: calc(env(safe-area-inset-top) + 64px);
           }
           
           /* Battery-efficient scroll handling */
@@ -181,3 +176,5 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     </div>
   );
 };
+
+export default MainLayout;

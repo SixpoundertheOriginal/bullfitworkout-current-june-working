@@ -28,6 +28,10 @@
   bottom: env(safe-area-inset-bottom);
 }
 
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 .safe-header {
   padding-top: calc(env(safe-area-inset-top) + 64px);
 }
@@ -107,7 +111,7 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* App Store quality layout fixes */
+/* App Store quality layout fixes - FIXED FOOTER */
 .footer-content-clearance {
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }
@@ -122,12 +126,13 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
+/* CRITICAL: Fixed footer positioning */
 .footer-stable {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 40;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 50 !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }

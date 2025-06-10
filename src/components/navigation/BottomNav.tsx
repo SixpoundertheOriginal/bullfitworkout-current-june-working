@@ -23,7 +23,7 @@ export const BottomNav = () => {
   const isWorkoutActive = Object.keys(exercises).length > 0 && elapsedTime > 0;
   
   return (
-    <nav className="grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm h-16 items-center z-navigation">
+    <nav className="grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm h-16 items-center z-navigation safe-area-bottom">
       <NavButton 
         icon={<Clock size={20} />} 
         label="Home" 
