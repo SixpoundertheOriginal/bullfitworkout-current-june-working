@@ -1,4 +1,3 @@
-
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -7,16 +6,15 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WorkoutDetailsLoading } from "@/components/workouts/WorkoutDetailsLoading";
 import { WorkoutDetailsHeader } from "@/components/workouts/WorkoutDetailsHeader";
 import { WorkoutDetailsEnhanced } from "@/components/workouts/WorkoutDetailsEnhanced";
+import { WorkoutMetricCards } from "@/components/workouts/WorkoutMetricCards";
+import { WorkoutComposition } from "@/components/workouts/WorkoutComposition";
+import { WorkoutAnalysis } from "@/components/workouts/WorkoutAnalysis";
+import { ExerciseDetailsTable } from "@/components/workouts/ExerciseDetailsTable";
+import { WorkoutNotes } from "@/components/workouts/WorkoutNotes";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useExerciseManagement } from "@/hooks/useExerciseManagement";
 import { processWorkoutMetrics, ProcessedWorkoutMetrics } from "@/utils/workoutMetricsProcessor";
 import { useWeightUnit } from "@/context/WeightUnitContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { WorkoutDensityChart } from "@/components/metrics/WorkoutDensityChart";
-import { TimeOfDayChart } from "@/components/metrics/TimeOfDayChart";
-import { MuscleGroupChart } from "@/components/metrics/MuscleGroupChart";
-import { TopExercisesTable } from "@/components/metrics/TopExercisesTable";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { EditWorkoutModal } from "@/components/EditWorkoutModal";
 import { EditExerciseSetModal } from "@/components/EditExerciseSetModal";
@@ -164,29 +162,6 @@ const WorkoutDetailsPage: React.FC = () => {
   // Calculate max load and session max for new summary card
   const sessionMax = metricValues.intensityMetrics?.peakLoad || 0;
   
-  // Destructure with safe defaults - updating property names to match ProcessedWorkoutMetrics
-  const totalVolume = metricValues.totalVolume || 0;
-  
-  // These properties are in the timeDistribution object in ProcessedWorkoutMetrics
-  const activeTime = metricValues.timeDistribution?.activeTime || 0;
-  const restTime = metricValues.timeDistribution?.restTime || 0;
-  
-  // These properties are in densityMetrics in ProcessedWorkoutMetrics
-  const overallDensity = metricValues.densityMetrics?.overallDensity || 0;
-  const activeOnlyDensity = metricValues.densityMetrics?.activeOnlyDensity || 0;
-  
-  // For time patterns chart - use the durationByTimeOfDay data from metrics
-  const durationByTimeOfDay = metricValues.durationByTimeOfDay || {
-    morning: 0,
-    afternoon: 0,
-    evening: 0,
-    night: 0
-  };
-  
-  // Get intensity and efficiency values for display
-  const intensity = metricValues.intensity || 0;
-  const efficiency = metricValues.timeDistribution?.activeTimePercentage || 0;
-  
   // For exercise volume history chart - create from muscle focus data
   const exerciseVolumeHistory = metricValues.muscleFocus ? 
     Object.entries(metricValues.muscleFocus).map(([name, value]) => ({
@@ -195,8 +170,27 @@ const WorkoutDetailsPage: React.FC = () => {
       percentChange: 0
     })) : [];
 
-  // Helper function to check if any time of day data is available
-  const hasTimeOfDayData = Object.values(durationByTimeOfDay).some(value => value > 0);
+  // Prepare metrics for child components
+  const workoutMetrics = {
+    duration: metricValues.duration || 0,
+    exerciseCount: metricValues.exerciseCount || 0,
+    setCount: metricValues.setCount || { total: 0, completed: 0 },
+    totalVolume: metricValues.totalVolume || 0,
+    sessionMax
+  };
+
+  const analysisMetrics = {
+    duration: metricValues.duration || 0,
+    totalVolume: metricValues.totalVolume || 0,
+    timeDistribution: metricValues.timeDistribution || { activeTime: 0, restTime: 0 },
+    densityMetrics: metricValues.densityMetrics || { overallDensity: 0, activeOnlyDensity: 0 },
+    intensity: metricValues.intensity || 0,
+    efficiency: metricValues.timeDistribution?.activeTimePercentage || 0,
+    durationByTimeOfDay: metricValues.durationByTimeOfDay || {
+      morning: 0, afternoon: 0, evening: 0, night: 0
+    },
+    muscleFocus: metricValues.muscleFocus || {}
+  };
 
   return (
     <ErrorBoundary>
@@ -220,118 +214,38 @@ const WorkoutDetailsPage: React.FC = () => {
             onDeleteClick={() => setDeleteDialogOpen(true)}
           />
 
-          {/* Summary row - Added Max Load card */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-            {[
-              { label: "Date", value: new Date(workoutDetails.start_time).toLocaleDateString(), colSpan: "md:col-span-1" },
-              { label: "Duration", value: `${workoutDetails.duration} min`, colSpan: "md:col-span-1" },
-              { label: "Exercises", value: metricValues.exerciseCount, colSpan: "md:col-span-1" },
-              { label: "Sets", value: metricValues.setCount.total, colSpan: "md:col-span-1" },
-              { label: "Volume", value: `${Math.round(totalVolume).toLocaleString()} ${weightUnit}`, colSpan: "md:col-span-1" },
-              { label: "Max Load", value: `${Math.round(sessionMax)} ${weightUnit}`, colSpan: "md:col-span-1" },
-            ].map((item, idx) => (
-              <Card key={idx} className={`bg-gray-900 border-gray-800 ${item.colSpan}`}>
-                <CardHeader className="py-3"><CardTitle className="text-sm">{item.label}</CardTitle></CardHeader>
-                <CardContent className="py-1">
-                  <div className="text-lg">{item.value}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Workout Metrics Summary */}
+          <WorkoutMetricCards
+            workoutDetails={workoutDetails}
+            metrics={workoutMetrics}
+            weightUnit={weightUnit}
+          />
 
-          {/* Workout Density & Time Distribution */}
-          <Card className="bg-gray-900 border-gray-800 mb-6">
-            <CardHeader><CardTitle>Workout Density Analysis</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-60 mb-4" aria-label="Workout density analysis chart">
-                <WorkoutDensityChart
-                  totalTime={metricValues.duration || 0}
-                  activeTime={activeTime}
-                  restTime={restTime}
-                  totalVolume={totalVolume}
-                  weightUnit={weightUnit}
-                  overallDensity={overallDensity}
-                  activeOnlyDensity={activeOnlyDensity}
-                  height={220}
-                />
-              </div>
-              
-              {/* Intensity & Efficiency metrics */}
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700">
-                  <div className="text-sm text-gray-400 mb-1">Intensity</div>
-                  <div className="text-lg font-medium">{intensity.toFixed(1)}%</div>
-                </div>
-                <div className="p-4 rounded-md bg-gray-800/50 border border-gray-700">
-                  <div className="text-sm text-gray-400 mb-1">Efficiency</div>
-                  <div className="text-lg font-medium">{efficiency.toFixed(1)}%</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Workout Analysis Charts */}
+          <WorkoutAnalysis
+            metrics={analysisMetrics}
+            weightUnit={weightUnit}
+          />
 
-          {/* Time of Day and Workout Composition side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Time of Day Chart */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader><CardTitle>Time of Day</CardTitle></CardHeader>
-              <CardContent className="h-60">
-                {hasTimeOfDayData ? (
-                  <div aria-label="Time of Day distribution chart">
-                    <TimeOfDayChart
-                      durationByTimeOfDay={durationByTimeOfDay}
-                      height={200}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    No time-of-day data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Side by side: Composition and Exercise Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+            <WorkoutComposition composition={metricValues.composition || {
+              compound: { count: 0, percentage: 0 },
+              isolation: { count: 0, percentage: 0 },
+              bodyweight: { count: 0, percentage: 0 },
+              isometric: { count: 0, percentage: 0 },
+              totalExercises: 0
+            }} />
             
-            {/* Workout Composition Card - FIX HERE */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader><CardTitle>Workout Composition</CardTitle></CardHeader>
-              <CardContent className="h-60">
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(metricValues.composition || {})
-                    .filter(([key]) => key !== 'totalExercises')
-                    .map(([type, data]) => {
-                      // Check if data is an object with count and percentage properties
-                      const count = typeof data === 'object' && data !== null ? data.count || 0 : 0;
-                      const percentage = typeof data === 'object' && data !== null ? data.percentage || 0 : 0;
-                      
-                      return (
-                        <div key={type} className="flex flex-col p-3 rounded-md bg-gray-800/50 border border-gray-700">
-                          <div className="text-sm text-gray-400 mb-1 capitalize">{type}</div>
-                          <div className="text-lg font-medium">
-                            {count} <span className="text-sm text-gray-400">({Math.round(percentage)}%)</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </CardContent>
-            </Card>
+            <ExerciseDetailsTable exerciseVolumeHistory={exerciseVolumeHistory} />
           </div>
 
-          {/* Muscle Focus */}
-          <Card className="bg-gray-900 border-gray-800 mb-6">
-            <CardHeader><CardTitle>Muscle Group Focus</CardTitle></CardHeader>
-            <CardContent className="h-60" aria-label="Muscle Group Focus chart">
-              <MuscleGroupChart muscleFocus={metricValues.muscleFocus || {}} height={200} />
-            </CardContent>
-          </Card>
-
-          {/* Top Exercises */}
-          <Card className="bg-gray-900 border-gray-800 mb-6">
-            <CardHeader><CardTitle>Top Exercises</CardTitle></CardHeader>
-            <CardContent>
-              <TopExercisesTable exerciseVolumeHistory={exerciseVolumeHistory} />
-            </CardContent>
-          </Card>
+          {/* Workout Notes */}
+          <WorkoutNotes 
+            notes={workoutDetails.notes} 
+            workoutName={workoutDetails.name || "Workout"}
+            className="mb-6"
+          />
 
           {/* Raw exercise list & editing */}
           <WorkoutDetailsEnhanced
