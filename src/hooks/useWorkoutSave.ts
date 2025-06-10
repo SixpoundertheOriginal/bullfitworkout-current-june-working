@@ -117,12 +117,13 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       
       console.log("Saving workout with data:", workoutData);
       
-      // Convert ExerciseSet to EnhancedExerciseSet by ensuring isEditing is always defined
+      // Convert ExerciseSet to EnhancedExerciseSet with proper volume calculation
       const enhancedExercises: Record<string, EnhancedExerciseSet[]> = {};
       Object.entries(exercises).forEach(([exerciseName, sets]) => {
         enhancedExercises[exerciseName] = sets.map(set => ({
           ...set,
-          isEditing: set.isEditing === undefined ? false : set.isEditing
+          isEditing: set.isEditing === undefined ? false : set.isEditing,
+          volume: (set.weight || 0) * (set.reps || 0) // Calculate volume for save
         }));
       });
       
@@ -175,12 +176,11 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
       const { success, error } = await recoverPartiallyCompletedWorkout(workoutId);
       
       if (!success) {
-        // This is the problematic section - need to ensure we create a proper WorkoutError
         setSaveStatus(prev => ({
           ...prev,
           status: 'partial',
           errors: [...prev.errors, error || {
-            type: 'database' as const, // Use const assertion to ensure it's the right type
+            type: 'database' as const,
             message: 'Failed to recover workout data',
             timestamp: new Date().toISOString(),
             recoverable: false
@@ -215,7 +215,7 @@ export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsed
         ...prev,
         status: 'partial',
         errors: [...prev.errors, {
-          type: 'database' as const, // Use const assertion to ensure it's the right type
+          type: 'database' as const,
           message: 'Failed to recover workout data',
           details: error,
           timestamp: new Date().toISOString(),

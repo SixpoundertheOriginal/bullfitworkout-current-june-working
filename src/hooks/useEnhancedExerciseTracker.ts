@@ -1,14 +1,7 @@
+
 import { useCallback, useMemo } from 'react';
 import { useWorkoutStore } from '@/store/workoutStore';
-
-export interface EnhancedExerciseSet {
-  id: number;
-  weight: number;
-  reps: number;
-  duration: string;
-  completed: boolean;
-  volume: number;
-}
+import { EnhancedExerciseSet } from '@/types/workout';
 
 export interface EnhancedExercise {
   id: string;
@@ -29,14 +22,14 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
     setActiveExercise 
   } = useWorkoutStore();
 
-  // Format duration helper - moved before useMemo to avoid temporal dead zone
+  // Format duration helper
   const formatDuration = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Convert store format to enhanced format
+  // Convert store format to enhanced format with computed volume
   const enhancedExercise = useMemo((): EnhancedExercise => {
     const storeSets = storeExercises[exerciseName] || [];
     
@@ -45,31 +38,32 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
       name: exerciseName,
       lastWorkout: undefined, // TODO: Get from workout history
       sets: storeSets.map((set, index) => ({
-        id: index,
+        id: set.id || `set-${index}`,
         weight: set.weight || 0,
         reps: set.reps || 0,
-        duration: formatDuration(set.restTime || 60),
+        restTime: set.restTime || 60,
         completed: set.completed || false,
-        volume: (set.weight || 0) * (set.reps || 0)
+        isEditing: set.isEditing || false,
+        volume: (set.weight || 0) * (set.reps || 0), // Computed volume
+        saveStatus: set.saveStatus,
+        retryCount: set.retryCount
       }))
     };
-  }, [storeExercises, exerciseName, formatDuration]);
+  }, [storeExercises, exerciseName]);
 
-  // Update set handler
+  // Update set handler with volume recalculation
   const handleUpdateSet = useCallback((setId: number, updates: Partial<EnhancedExerciseSet>) => {
     setStoreExercises(prev => {
       const exerciseSets = [...(prev[exerciseName] || [])];
       if (exerciseSets[setId]) {
         const updatedSet = { ...exerciseSets[setId] };
         
+        // Apply updates
         if (updates.weight !== undefined) updatedSet.weight = updates.weight;
         if (updates.reps !== undefined) updatedSet.reps = updates.reps;
         if (updates.completed !== undefined) updatedSet.completed = updates.completed;
-        if (updates.volume !== undefined) {
-          // Recalculate weight/reps if volume is provided
-          updatedSet.weight = updates.weight || updatedSet.weight;
-          updatedSet.reps = updates.reps || updatedSet.reps;
-        }
+        if (updates.restTime !== undefined) updatedSet.restTime = updates.restTime;
+        if (updates.isEditing !== undefined) updatedSet.isEditing = updates.isEditing;
         
         exerciseSets[setId] = updatedSet;
       }

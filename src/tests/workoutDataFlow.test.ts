@@ -1,3 +1,4 @@
+
 // Automated regression testing for workout data flow
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { workoutDataValidator } from '@/services/workoutDataValidator';
@@ -246,7 +247,7 @@ describe('Workout Data Flow Regression Tests', () => {
     it('should handle complete workout save flow', async () => {
       const startTime = performance.now();
       
-      // Test the complete flow
+      // Test the complete flow with proper enhanced exercise data
       const exerciseData = {
         'Bench Press': [
           {
@@ -255,13 +256,13 @@ describe('Workout Data Flow Regression Tests', () => {
             reps: 10,
             restTime: 60,
             completed: true,
-            isEditing: false
+            isEditing: false,
+            volume: 1000 // Computed volume property
           }
         ]
       };
 
-      // This would normally call the actual save service
-      // For testing, we verify the data transformation
+      // Transform to contract format for validation
       const contractData = {
         workout: mockValidWorkout.workout,
         exerciseSets: Object.entries(exerciseData).flatMap(([exerciseName, sets]) => 

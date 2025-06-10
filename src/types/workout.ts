@@ -23,7 +23,7 @@ export interface SaveProgress {
   errors: WorkoutError[];
 }
 
-// Extending the existing LocalExerciseSet type
+// Enhanced exercise set that includes computed properties
 export interface EnhancedExerciseSet {
   id?: string;
   weight: number;
@@ -31,6 +31,7 @@ export interface EnhancedExerciseSet {
   restTime: number;
   completed: boolean;
   isEditing: boolean;
+  volume: number; // Computed property: weight * reps
   saveStatus?: 'pending' | 'saving' | 'saved' | 'failed';
   retryCount?: number;
 }
