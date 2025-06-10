@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExerciseSet } from "@/types/exercise";
@@ -27,7 +28,10 @@ interface ExerciseListProps {
 }
 
 // Individual exercise tracker component
-const ExerciseTrackerWrapper: React.FC<{ exerciseName: string; onDeleteExercise: (name: string) => void }> = ({ 
+const ExerciseTrackerWrapper: React.FC<{ 
+  exerciseName: string; 
+  onDeleteExercise: (name: string) => void 
+}> = ({ 
   exerciseName, 
   onDeleteExercise 
 }) => {
@@ -41,14 +45,6 @@ const ExerciseTrackerWrapper: React.FC<{ exerciseName: string; onDeleteExercise:
     onSetActive
   } = useEnhancedExerciseTracker(exerciseName);
 
-  // Set up the global delete function for the enhanced tracker
-  React.useEffect(() => {
-    window.onDeleteExercise = onDeleteExercise;
-    return () => {
-      delete window.onDeleteExercise;
-    };
-  }, [onDeleteExercise]);
-
   return (
     <div onClick={onSetActive}>
       <EnhancedExerciseTracker
@@ -58,6 +54,7 @@ const ExerciseTrackerWrapper: React.FC<{ exerciseName: string; onDeleteExercise:
         onToggleCompletion={onToggleCompletion}
         onAddSet={onAddSet}
         onDeleteSet={onDeleteSet}
+        onDeleteExercise={onDeleteExercise}
       />
     </div>
   );
@@ -147,3 +144,4 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     </div>
   );
 }
+

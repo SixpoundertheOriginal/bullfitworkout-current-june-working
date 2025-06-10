@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check, Plus, Trash2, Clock, X } from 'lucide-react';
@@ -32,6 +33,7 @@ interface EnhancedExerciseTrackerProps {
   onToggleCompletion: (setId: number) => void;
   onAddSet: () => void;
   onDeleteSet: (setId: number) => void;
+  onDeleteExercise?: (exerciseName: string) => void;
   isActive?: boolean;
 }
 
@@ -54,6 +56,7 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
   onToggleCompletion,
   onAddSet,
   onDeleteSet,
+  onDeleteExercise,
   isActive = false
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -131,14 +134,13 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
     onToggleCompletion(setId);
   }, [onToggleCompletion]);
 
-  // New function to handle exercise deletion
+  // Handle exercise deletion
   const handleDeleteExercise = useCallback(() => {
-    // This will be passed down from the parent component
-    if (window.onDeleteExercise) {
-      window.onDeleteExercise(exercise.name);
+    if (onDeleteExercise) {
+      onDeleteExercise(exercise.name);
     }
     setShowDeleteConfirm(false);
-  }, [exercise.name]);
+  }, [exercise.name, onDeleteExercise]);
 
   return (
     <motion.div
@@ -394,3 +396,4 @@ export const EnhancedExerciseTracker: React.FC<EnhancedExerciseTrackerProps> = R
 });
 
 EnhancedExerciseTracker.displayName = 'EnhancedExerciseTracker';
+
