@@ -161,7 +161,7 @@ describe('Workout Data Flow Regression Tests', () => {
         {
           'Bench Press': [
             {
-              id: 1,
+              id: 'set-1',
               weight: 100,
               reps: 10,
               restTime: 60,
@@ -252,7 +252,7 @@ describe('Workout Data Flow Regression Tests', () => {
       const exerciseData = {
         'Bench Press': [
           {
-            id: 1,
+            id: 'set-1',
             weight: 100,
             reps: 10,
             restTime: 60,
