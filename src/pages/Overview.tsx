@@ -1,4 +1,3 @@
-// src/pages/Overview.tsx
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { WorkoutDensityOverTimeChart } from '@/components/metrics/WorkoutDensity
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
 import { LazyLoadWrapper } from '@/components/common/LazyLoadWrapper';
+import { WorkoutRegressionPanel } from '@/components/dev/WorkoutRegressionPanel';
 
 const Overview: React.FC = () => {
   const { weightUnit } = useWeightUnit();
@@ -92,32 +92,30 @@ const Overview: React.FC = () => {
           <CardHeader><CardTitle>Total Volume</CardTitle></CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {Math.round(volumeStats.total).toLocaleString()} {weightUnit}
+              {(stats.totalVolume || 0).toLocaleString()} {weightUnit}
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gray-900 border-gray-800">
-          <CardHeader><CardTitle>Avg Volume Rate</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Average Duration</CardTitle></CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">
-              {densityStats.avgOverallDensity.toFixed(1)} {weightUnit}/min
-            </div>
+            <div className="text-4xl font-bold">{stats.averageDuration || 0} min</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Other charts with lazy loading */}
+      {/* Chart grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {chartConfigs.map(({ title, renderComponent, data }, idx) => (
-          <LazyLoadWrapper key={idx}>
-            <Card className="bg-gray-900 border-gray-800 min-h-[300px] overflow-hidden">
-              <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
-              <CardContent className="h-[250px] flex items-center justify-center">
+        {chartConfigs.map((config) => (
+          <LazyLoadWrapper key={config.title}>
+            <Card className="bg-card min-h-[300px] overflow-hidden">
+              <CardHeader><CardTitle>{config.title}</CardTitle></CardHeader>
+              <CardContent className="h-[300px]">
                 {loading
-                  ? <Skeleton className="w-3/4 h-3/4 rounded-lg" />
-                  : hasData(data)
-                    ? renderComponent(data)
-                    : <div className="text-gray-500">No data available</div>
+                  ? <Skeleton className="w-full h-full" />
+                  : hasData(config.data)
+                    ? config.renderComponent(config.data)
+                    : <div className="flex items-center justify-center h-full text-gray-500">No data available</div>
                 }
               </CardContent>
             </Card>
@@ -125,22 +123,10 @@ const Overview: React.FC = () => {
         ))}
       </div>
 
-      {/* Density over time with lazy loading */}
-      <LazyLoadWrapper>
-        <Card className="bg-card min-h-[250px] overflow-hidden">
-          <CardHeader><CardTitle>Volume Rate Over Time</CardTitle></CardHeader>
-          <CardContent className="h-[250px]">
-            {loading
-              ? <Skeleton className="w-full h-full" />
-              : hasData(densityOverTimeData)
-                ? <WorkoutDensityOverTimeChart data={densityOverTimeData} height={250} />
-                : <div className="flex items-center justify-center h-full text-gray-500">No density data available</div>
-            }
-          </CardContent>
-        </Card>
-      </LazyLoadWrapper>
+      {/* Development regression panel */}
+      <WorkoutRegressionPanel />
     </div>
   );
 };
 
-export default React.memo(Overview);
+export default Overview;
