@@ -20,6 +20,7 @@ import { WorkoutMotivation } from "@/components/training/WorkoutMotivation";
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
 import { WorkoutProgressTracker } from "@/components/training/WorkoutProgressTracker";
 import { InteractionFeedback, useFeedback } from "@/components/training/InteractionFeedback";
+import { useTrainingTimers } from "@/hooks/useTrainingTimers";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -34,11 +35,6 @@ const TrainingSessionPage = () => {
     setActiveExercise,
     elapsedTime,
     resetSession,
-    restTimerActive,
-    setRestTimerActive,
-    currentRestTime,
-    setCurrentRestTime,
-    handleCompleteSet,
     workoutStatus,
     markAsSaving,
     markAsFailed,
@@ -51,6 +47,9 @@ const TrainingSessionPage = () => {
     setTrainingConfig,
     setWorkoutStatus
   } = useWorkoutStore();
+  
+  // Use new unified timer system
+  const { workoutTimer, restTimer, handleSetCompletion } = useTrainingTimers();
   
   // Convert store exercises to the format expected by components
   const exercises = adaptExerciseSets(storeExercises);
@@ -79,11 +78,8 @@ const TrainingSessionPage = () => {
 
   useWorkoutTimer();
   const { play: playBell } = useSound('/sounds/bell.mp3');
-  const { play: playTick } = useSound('/sounds/tick.mp3');
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showRestTimerModal, setShowRestTimerModal] = useState(false);
-  const [restTimerResetSignal, setRestTimerResetSignal] = useState(0);
   const [pageLoaded, setPageLoaded] = useState(false);
 
   const exerciseCount = Object.keys(exercises).length;
@@ -145,11 +141,11 @@ const TrainingSessionPage = () => {
     }));
   };
 
-  // Enhanced set completion with feedback
+  // Enhanced set completion with unified timer system
   const handleCompleteSetWithFeedback = (exerciseName: string, setIndex: number) => {
-    handleCompleteSet(exerciseName, setIndex);
+    handleSetCompletion(exerciseName, setIndex);
     showFeedback(
-      `Set ${setIndex + 1} completed! Great work! 💪`,
+      `Set ${setIndex + 1} completed! Rest timer started 💪`,
       'success'
     );
   };
@@ -203,9 +199,6 @@ const TrainingSessionPage = () => {
     });
   };
 
-  const handleShowRestTimer = () => { setRestTimerActive(true); setShowRestTimerModal(true); playBell(); };
-  const handleRestTimerComplete = () => { setRestTimerActive(false); setShowRestTimerModal(false); playBell(); };
-
   const handleFinishWorkout = async () => {
     if (!hasExercises) {
       toast.error("Add at least one exercise before finishing your workout");
@@ -232,13 +225,13 @@ const TrainingSessionPage = () => {
         notes: "",
         metrics: {
           trainingConfig: trainingConfig || null,
-          performance: { completedSets, totalSets, restTimers: { defaultTime: currentRestTime, wasUsed: restTimerActive } },
+          performance: { completedSets, totalSets, restTimers: { defaultTime: 60, wasUsed: false } },
           progression: {
             timeOfDay: startTime.getHours() < 12 ? 'morning' :
                        startTime.getHours() < 17 ? 'afternoon' : 'evening',
             totalVolume: Object.values(storeExercises).flat().reduce((acc, s) => acc + (s.completed ? s.weight * s.reps : 0), 0)
           },
-          sessionDetails: { exerciseCount, averageRestTime: currentRestTime, workoutDensity: completedSets / (elapsedTime / 60) }
+          sessionDetails: { exerciseCount, averageRestTime: 60, workoutDensity: completedSets / (elapsedTime / 60) }
         }
       };
       navigate("/workout-complete", { state: { workoutData } });
@@ -385,51 +378,15 @@ const TrainingSessionPage = () => {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="space-y-6"
             >
-              {/* Session Header */}
+              {/* Updated Workout Metrics with Unified Timer */}
               <div className="relative">
-                <WorkoutSessionHeader
-                  elapsedTime={elapsedTime}
+                <WorkoutMetrics
                   exerciseCount={exerciseCount}
                   completedSets={completedSets}
                   totalSets={totalSets}
                   totalVolume={totalVolume}
                   totalReps={totalReps}
-                  workoutStatus={workoutStatus}
-                  isRecoveryMode={!!workoutId}
-                  saveProgress={0}
-                  onRetrySave={() => workoutId && attemptRecovery()}
-                  onResetWorkout={resetSession}
-                  restTimerActive={restTimerActive}
-                  onRestTimerComplete={handleRestTimerComplete}
-                  onShowRestTimer={handleShowRestTimer}
-                  onRestTimerReset={triggerRestTimerReset}
-                  restTimerResetSignal={restTimerResetSignal}
-                  currentRestTime={currentRestTime}
                 />
-                
-                {/* Enhanced Rest Timer Modal */}
-                <AnimatePresence>
-                  {showRestTimerModal && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                      transition={{ 
-                        type: "spring", 
-                        stiffness: 400, 
-                        damping: 25 
-                      }}
-                      className="absolute right-4 top-full z-50 mt-3 w-80"
-                    >
-                      <RestTimer
-                        isVisible={showRestTimerModal}
-                        onClose={() => { setShowRestTimerModal(false); setRestTimerActive(false); }}
-                        onComplete={handleRestTimerComplete}
-                        maxTime={currentRestTime || 60}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
 
               {/* Progress Tracker */}
@@ -500,8 +457,6 @@ const TrainingSessionPage = () => {
                       return { ...prev, [name]: prev[name].map((s, idx) => idx === i ? { ...s, restTime: Math.max(0, (set.restTime || 60) + inc) } : s) };
                     });
                   }}
-                  onShowRestTimer={handleShowRestTimer}
-                  onResetRestTimer={triggerRestTimerReset}
                   onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
                   setExercises={handleSetExercises}
                 />
