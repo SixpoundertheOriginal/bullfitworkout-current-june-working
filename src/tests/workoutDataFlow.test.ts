@@ -1,4 +1,3 @@
-
 // Automated regression testing for workout data flow
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { workoutDataValidator } from '@/services/workoutDataValidator';
@@ -166,8 +165,7 @@ describe('Workout Data Flow Regression Tests', () => {
               reps: 10,
               restTime: 60,
               completed: true,
-              isEditing: false,
-              volume: 1000
+              isEditing: false
             }
           ]
         }
@@ -257,8 +255,7 @@ describe('Workout Data Flow Regression Tests', () => {
             reps: 10,
             restTime: 60,
             completed: true,
-            isEditing: false,
-            volume: 1000
+            isEditing: false
           }
         ]
       };
