@@ -1,4 +1,5 @@
 
+
 import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
@@ -124,7 +125,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </main>
       
       {shouldShowFooter && (
-        <BottomNav />
+        <div 
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 60,
+            height: '64px'
+          }}
+        >
+          <BottomNav />
+        </div>
       )}
       
       <DevOnly>
@@ -177,3 +189,4 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 };
 
 export default MainLayout;
+
