@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,7 @@ import { useExercises } from "@/hooks/useExercises";
 import { WorkoutSessionHeader } from "@/components/training/WorkoutSessionHeader";
 import { ExerciseList } from "@/components/training/ExerciseList";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
+import { WorkoutMetrics } from "@/components/WorkoutMetrics";
 import { Loader2 } from "lucide-react";
 import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
@@ -130,8 +132,6 @@ const TrainingSessionPage = () => {
       console.log('Workout saved successfully');
     }
   }, [workoutStatus]);
-
-  const triggerRestTimerReset = () => setRestTimerResetSignal(x => x + 1);
 
   // Define the onAddSet function to add a basic set to an exercise
   const handleAddSet = (exerciseName: string) => {
@@ -458,6 +458,8 @@ const TrainingSessionPage = () => {
                     });
                   }}
                   onOpenAddExercise={() => setIsAddExerciseSheetOpen(true)}
+                  onShowRestTimer={() => restTimer.start()}
+                  onResetRestTimer={() => restTimer.reset()}
                   setExercises={handleSetExercises}
                 />
               </motion.div>

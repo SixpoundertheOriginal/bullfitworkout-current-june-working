@@ -64,18 +64,11 @@ export const WorkoutSessionHeader: React.FC<WorkoutSessionHeaderProps> = ({
     <>
       <div className="sticky top-16 z-10 bg-gray-900/80 backdrop-blur-lg">
         <WorkoutMetrics
-          time={elapsedTime}
           exerciseCount={exerciseCount}
           completedSets={completedSets}
           totalSets={totalSets}
           totalVolume={totalVolume}
           totalReps={totalReps}
-          showRestTimer={restTimerActive}
-          onRestTimerComplete={onRestTimerComplete}
-          onManualRestStart={onShowRestTimer}
-          onRestTimerReset={onRestTimerReset}
-          restTimerResetSignal={restTimerResetSignal}
-          currentRestTime={currentRestTime}
         />
       </div>
       
