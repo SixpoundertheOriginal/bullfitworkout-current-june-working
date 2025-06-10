@@ -113,7 +113,7 @@ export class WorkoutDataValidator {
       
     } catch (error) {
       workoutLogger.logError('Validation failed with exception', error, {
-        operation: 'validateWorkoutContract'
+        userId: 'unknown'
       });
       
       return {
@@ -163,7 +163,7 @@ export class WorkoutDataValidator {
       
     } catch (error) {
       workoutLogger.logError('Data sanitization failed', error, {
-        operation: 'sanitizeWorkoutData'
+        userId: 'unknown'
       });
       return null;
     }

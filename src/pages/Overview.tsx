@@ -99,7 +99,7 @@ const Overview: React.FC = () => {
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader><CardTitle>Average Duration</CardTitle></CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{stats.averageDuration || 0} min</div>
+            <div className="text-4xl font-bold">{stats.avgDuration || 0} min</div>
           </CardContent>
         </Card>
       </div>
