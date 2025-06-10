@@ -1,3 +1,4 @@
+
 import React, { useLayoutEffect } from "react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { PageHeader } from "@/components/navigation/PageHeader";
@@ -116,16 +117,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
       )}
       
-      <main className={`flex-1 will-change-transform ${noHeader ? '' : 'safe-header'} ${shouldShowFooter ? 'pb-16' : ''}`}>
+      <main className={`flex-1 will-change-transform ${noHeader ? '' : 'safe-header'} ${shouldShowFooter ? 'pb-20' : ''}`}>
         <div className="content-container w-full min-h-full">
           {children}
         </div>
       </main>
       
       {shouldShowFooter && (
-        <div className="fixed bottom-0 left-0 right-0 z-50">
-          <BottomNav />
-        </div>
+        <BottomNav />
       )}
       
       <DevOnly>
