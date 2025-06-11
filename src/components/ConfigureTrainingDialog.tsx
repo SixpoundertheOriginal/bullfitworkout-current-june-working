@@ -1,13 +1,10 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { TrainingTypeSelector } from "@/components/training/TrainingTypeSelector";
-import { WorkoutTagPicker } from "@/components/training/WorkoutTagPicker";
-import { DurationSelector } from "@/components/training/DurationSelector";
-import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
-import { QuickSetupTemplates } from "@/components/training/QuickSetupTemplates";
-import { motion } from "framer-motion";
+import { useTrainingConfiguration } from "@/hooks/useTrainingConfiguration";
+import { TrainingQuickSetup } from "@/components/training/TrainingQuickSetup";
+import { TrainingConfigurationForm } from "@/components/training/TrainingConfigurationForm";
+import { TrainingDialogActions } from "@/components/training/TrainingDialogActions";
 
 interface ConfigureTrainingDialogProps {
   open: boolean;
@@ -20,30 +17,26 @@ export const ConfigureTrainingDialog: React.FC<ConfigureTrainingDialogProps> = (
   onOpenChange,
   onStartTraining,
 }) => {
-  const [trainingType, setTrainingType] = useState<string>("Strength");
-  const [tags, setTags] = useState<string[]>([]);
-  const [duration, setDuration] = useState<number>(30);
-  const { stats } = useWorkoutStatsContext();
+  const {
+    configuration,
+    trainingType,
+    tags,
+    duration,
+    updateTrainingType,
+    toggleTag,
+    updateDuration,
+    handleQuickSetup
+  } = useTrainingConfiguration();
 
   const handleStart = () => {
-    onStartTraining({ trainingType, tags, duration });
+    onStartTraining(configuration);
     onOpenChange(false);
   };
 
-  const handleQuickSetupSelect = (config: { trainingType: string; tags: string[]; duration: number }) => {
-    setTrainingType(config.trainingType);
-    setTags(config.tags);
-    setDuration(config.duration);
+  const handleQuickSetupSelect = (config: any) => {
+    handleQuickSetup(config);
     onStartTraining(config);
     onOpenChange(false);
-  };
-
-  const handleToggleTag = (tag: string) => {
-    setTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
   };
 
   return (
@@ -53,22 +46,18 @@ export const ConfigureTrainingDialog: React.FC<ConfigureTrainingDialogProps> = (
           <DialogTitle>Configure Training</DialogTitle>
         </DialogHeader>
 
-        <QuickSetupTemplates onSelect={handleQuickSetupSelect} />
+        <TrainingQuickSetup onSelect={handleQuickSetupSelect} />
 
-        <div className="grid gap-4 py-4">
-          <TrainingTypeSelector selectedType={trainingType} onSelect={setTrainingType} />
-          <WorkoutTagPicker selectedTags={tags} onToggleTag={handleToggleTag} trainingType={trainingType} />
-          <DurationSelector value={duration} onChange={setDuration} />
-        </div>
+        <TrainingConfigurationForm
+          trainingType={trainingType}
+          tags={tags}
+          duration={duration}
+          onTrainingTypeChange={updateTrainingType}
+          onToggleTag={toggleTag}
+          onDurationChange={updateDuration}
+        />
 
-        <motion.div
-          className="flex justify-end"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Button onClick={handleStart}>Start Training</Button>
-        </motion.div>
+        <TrainingDialogActions onStart={handleStart} />
       </DialogContent>
     </Dialog>
   );
