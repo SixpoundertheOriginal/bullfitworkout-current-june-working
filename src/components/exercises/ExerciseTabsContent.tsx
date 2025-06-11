@@ -67,15 +67,12 @@ export const ExerciseTabsContent = React.memo<ExerciseTabsContentProps>(({
 
   // Empty state
   if (exercises.length === 0) {
-    const emptyStateType = isSearching ? 'no-results' : 
-                          !isOnline ? 'offline' : 
-                          'no-exercises';
-    
     return (
       <ExerciseEmptyState
-        type={emptyStateType}
-        onAddExercise={onAddExercise}
-        onClearFilters={onClearFilters}
+        hasFilters={isSearching || !isOnline}
+        onClearFilters={onClearFilters || (() => {})}
+        onCreateExercise={onAddExercise}
+        showCreateButton={!!onAddExercise}
         className={className}
       />
     );

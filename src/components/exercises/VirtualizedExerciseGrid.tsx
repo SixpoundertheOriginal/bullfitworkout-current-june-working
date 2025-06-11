@@ -11,6 +11,8 @@ interface VirtualizedExerciseGridProps {
   onSelectExercise?: (exercise: Exercise) => void;
   onEditExercise?: (exercise: Exercise) => void;
   onDeleteExercise?: (exercise: Exercise) => void;
+  onViewDetails?: (exercise: Exercise) => void;
+  onDuplicate?: (exercise: Exercise) => void;
   isLoading?: boolean;
   className?: string;
 }
@@ -20,6 +22,8 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   onSelectExercise,
   onEditExercise,
   onDeleteExercise,
+  onViewDetails,
+  onDuplicate,
   isLoading = false,
   className = ""
 }) => {
@@ -58,11 +62,13 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
             onSelectExercise={onSelectExercise}
             onEdit={onEditExercise}
             onDelete={onDeleteExercise}
+            onViewDetails={onViewDetails}
+            onDuplicate={onDuplicate}
           />
         </div>
       </div>
     );
-  }, [exercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, gridConfig.gap]);
+  }, [exercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, onViewDetails, onDuplicate, gridConfig.gap]);
 
   if (isLoading) {
     return (
@@ -125,6 +131,8 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
             onSelectExercise={onSelectExercise}
             onEdit={onEditExercise}
             onDelete={onDeleteExercise}
+            onViewDetails={onViewDetails}
+            onDuplicate={onDuplicate}
           />
         ))}
       </div>

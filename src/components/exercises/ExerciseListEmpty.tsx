@@ -13,25 +13,17 @@ interface ExerciseListEmptyProps {
 export const ExerciseListEmpty: React.FC<ExerciseListEmptyProps> = ({
   variant = 'library-manage',
   searchTerm,
-  hasFilters,
+  hasFilters = false,
   onAddExercise,
   onClearFilters
 }) => {
-  const getEmptyStateType = () => {
-    if (searchTerm || hasFilters) {
-      return 'no-results';
-    }
-    return 'no-exercises';
-  };
-
   return (
     <div className="flex items-center justify-center h-64">
       <ExerciseEmptyState
-        type={getEmptyStateType()}
-        searchTerm={searchTerm}
-        onAddExercise={onAddExercise}
-        onClearFilters={hasFilters ? onClearFilters : undefined}
-        className="border-dashed border-2 border-muted"
+        hasFilters={hasFilters || !!searchTerm}
+        onClearFilters={onClearFilters || (() => {})}
+        onCreateExercise={onAddExercise}
+        showCreateButton={!!onAddExercise}
       />
     </div>
   );
