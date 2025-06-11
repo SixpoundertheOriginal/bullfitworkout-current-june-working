@@ -1,221 +1,112 @@
 
-import { useState, useCallback } from 'react';
-import { useAuth } from "@/context/AuthContext";
-import { toast } from "@/hooks/use-toast";
-import { saveWorkout, processRetryQueue, recoverPartiallyCompletedWorkout } from "@/services/workoutSaveService";
-import { WorkoutError, EnhancedExerciseSet } from "@/types/workout";
-import { ExerciseSet } from '@/hooks/useWorkoutState';
-import { useWorkoutSaveProgress } from './useWorkoutSaveProgress';
-import { useWorkoutDraftSave } from './useWorkoutDraftSave';
+import { useMutation } from '@tanstack/react-query';
+import { saveWorkout } from '@/services/workoutService';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import type { ExerciseSet } from '@/store/workoutStore';
 
-export const useWorkoutSave = (exercises: Record<string, ExerciseSet[]>, elapsedTime: number, resetSession: () => void) => {
-  const [workoutId, setWorkoutId] = useState<string | null>(null);
+interface WorkoutData {
+  exercises: Record<string, ExerciseSet[]>;
+  duration: number;
+  startTime: Date;
+  endTime: Date;
+  trainingType: string;
+  name: string;
+  notes?: string;
+  metrics?: any;
+  trainingConfig?: any;
+}
+
+export const useWorkoutSave = () => {
   const { user } = useAuth();
   
-  const saveProgress = useWorkoutSaveProgress();
-  const draftSave = useWorkoutDraftSave(
-    // Convert to EnhancedExerciseSet format for draft saving
-    Object.fromEntries(
-      Object.entries(exercises).map(([name, sets]) => [
-        name, 
-        sets.map(set => ({
-          ...set,
-          volume: (set.weight || 0) * (set.reps || 0)
-        }))
-      ])
-    ),
-    elapsedTime
-  );
-
-  const handleCompleteWorkout = async (trainingConfig?: any): Promise<string | null> => {
-    if (!Object.keys(exercises).length) {
-      toast({
-        title: "No exercises added",
-        description: "Please add at least one exercise before completing your workout",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "You need to be logged in to save workouts",
-        variant: "destructive"
-      });
-      return null;
-    }
-
-    const performSave = async (): Promise<string | null> => {
-      try {
-        saveProgress.startSave();
-        
-        const now = new Date();
-        const startTime = new Date(now.getTime() - elapsedTime * 1000);
-        
-        // Format data for the workout save service
-        const workoutData = {
-          name: trainingConfig?.trainingType ? `${trainingConfig.trainingType} Workout` : `Workout ${now.toLocaleDateString()}`,
-          training_type: trainingConfig?.trainingType || 'strength',
-          start_time: startTime.toISOString(),
-          end_time: now.toISOString(),
-          duration: elapsedTime || 0,
-          notes: null,
-          metadata: trainingConfig ? JSON.stringify({ trainingConfig }) : null
-        };
-        
-        console.log("Saving workout with data:", workoutData);
-        
-        // Convert ExerciseSet to EnhancedExerciseSet with proper volume calculation
-        const enhancedExercises: Record<string, EnhancedExerciseSet[]> = {};
-        Object.entries(exercises).forEach(([exerciseName, sets]) => {
-          enhancedExercises[exerciseName] = sets.map(set => ({
-            ...set,
-            isEditing: set.isEditing === undefined ? false : set.isEditing,
-            volume: (set.weight || 0) * (set.reps || 0) // Calculate volume for save
-          }));
-        });
-        
-        saveProgress.markValidating();
-        
-        const saveResult = await saveWorkout({
-          userData: user,
-          workoutData,
-          exercises: enhancedExercises,
-          onProgressUpdate: saveProgress.updateProgress
-        });
-        
-        if (saveResult.success) {
-          const savedWorkoutId = saveResult.workoutId || '';
-          setWorkoutId(savedWorkoutId);
-          
-          if (saveResult.partialSave) {
-            // Schedule auto-retry for partial saves
-            saveProgress.scheduleAutoRetry(async () => { 
-              await performSave(); 
-            });
-            return savedWorkoutId;
-          } else {
-            saveProgress.markComplete();
-            draftSave.clearDraft(); // Clear draft on successful save
-            resetSession();
-            return savedWorkoutId;
-          }
-        } else {
-          const error = saveResult.error || {
-            type: 'unknown' as const,
-            message: 'Unknown error during save',
-            timestamp: new Date().toISOString(),
-            recoverable: false
-          };
-          
-          saveProgress.markFailed(error);
-          
-          // Schedule auto-retry for recoverable errors
-          if (error.recoverable) {
-            saveProgress.scheduleAutoRetry(async () => { 
-              await performSave(); 
-            });
-          }
-          
-          return null;
+  const saveMutation = useMutation({
+    mutationFn: async (workoutData: WorkoutData) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      console.log('Saving workout data:', workoutData);
+      
+      // Transform the workout data for database storage
+      const workoutRecord = {
+        user_id: user.id,
+        name: workoutData.name,
+        training_type: workoutData.trainingType,
+        start_time: workoutData.startTime.toISOString(),
+        end_time: workoutData.endTime.toISOString(),
+        duration: workoutData.duration,
+        notes: workoutData.notes || '',
+        metadata: {
+          trainingConfig: workoutData.trainingConfig,
+          metrics: workoutData.metrics
         }
-      } catch (error) {
-        const saveError: WorkoutError = {
-          type: 'unknown',
-          message: error instanceof Error ? error.message : 'Unknown error occurred',
-          timestamp: new Date().toISOString(),
-          recoverable: true
-        };
-        
-        saveProgress.markFailed(saveError);
-        saveProgress.scheduleAutoRetry(async () => { 
-          await performSave(); 
-        });
-        
-        return null;
-      }
-    };
-
-    return performSave();
-  };
-
-  const attemptRecovery = useCallback(async (recoveryWorkoutId: string) => {
-    try {
-      saveProgress.startSave();
-      
-      const { success, error } = await recoverPartiallyCompletedWorkout(recoveryWorkoutId);
-      
-      if (!success) {
-        const recoveryError = error || {
-          type: 'database' as const,
-          message: 'Failed to recover workout data',
-          timestamp: new Date().toISOString(),
-          recoverable: false
-        };
-        
-        saveProgress.markFailed(recoveryError);
-        return false;
-      }
-      
-      if (user?.id) {
-        await processRetryQueue(user.id);
-      }
-      
-      saveProgress.markComplete();
-      return true;
-    } catch (error) {
-      const recoveryError: WorkoutError = {
-        type: 'database',
-        message: 'Failed to recover workout data',
-        details: error,
-        timestamp: new Date().toISOString(),
-        recoverable: false
       };
+
+      // Save the workout session to get the workout ID
+      const { data: workout, error: workoutError } = await supabase
+        .from('workout_sessions')
+        .insert(workoutRecord)
+        .select()
+        .single();
+
+      if (workoutError) {
+        console.error('Error saving workout:', workoutError);
+        throw workoutError;
+      }
+
+      // Save exercise sets
+      const exerciseSets = [];
+      let setNumber = 1;
       
-      saveProgress.markFailed(recoveryError);
-      return false;
+      for (const [exerciseName, sets] of Object.entries(workoutData.exercises)) {
+        for (const set of sets) {
+          if (set.completed) {
+            exerciseSets.push({
+              workout_id: workout.id,
+              exercise_name: exerciseName,
+              set_number: setNumber++,
+              weight: set.weight,
+              reps: set.reps,
+              rest_time: set.restTime,
+              completed: set.completed
+            });
+          }
+        }
+      }
+
+      if (exerciseSets.length > 0) {
+        const { error: setsError } = await supabase
+          .from('exercise_sets')
+          .insert(exerciseSets);
+
+        if (setsError) {
+          console.error('Error saving exercise sets:', setsError);
+          throw setsError;
+        }
+      }
+
+      return workout;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Workout saved successfully!",
+        description: "Your workout has been recorded and your progress updated."
+      });
+    },
+    onError: (error) => {
+      console.error('Workout save error:', error);
+      toast({
+        title: "Error saving workout",
+        description: "There was a problem saving your workout. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, [user, saveProgress]);
-
-  const retryCurrentSave = useCallback(() => {
-    saveProgress.retry(async () => { 
-      await handleCompleteWorkout(); 
-    });
-  }, [saveProgress]);
-
-  const saveLater = useCallback(() => {
-    draftSave.saveDraft();
-    saveProgress.reset();
-    
-    toast({
-      title: "Workout saved as draft",
-      description: "You can complete the save later from your drafts",
-      variant: "default"
-    });
-  }, [draftSave, saveProgress]);
+  });
 
   return {
-    // Save progress state
-    saveStatus: saveProgress.status,
-    saveProgress: saveProgress.progress,
-    savingErrors: saveProgress.progress?.errors || [],
-    retryCount: saveProgress.retryCount,
-    canRetry: saveProgress.canRetry,
-    workoutId,
-    
-    // Save actions
-    handleCompleteWorkout,
-    attemptRecovery,
-    retryCurrentSave,
-    saveLater,
-    
-    // Draft functionality
-    ...draftSave,
-    
-    // Progress control
-    enableAutoRetry: saveProgress.enableAutoRetry,
-    disableAutoRetry: saveProgress.disableAutoRetry,
-    resetSaveProgress: saveProgress.reset
+    saveWorkout: saveMutation.mutate,
+    isSaving: saveMutation.isPending,
+    error: saveMutation.error,
+    isSuccess: saveMutation.isSuccess,
   };
 };

@@ -1,9 +1,10 @@
+
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useScroll } from "@/hooks/useScroll";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { useWorkoutStore } from "@/store/workoutStore";
 import useScrollHeader from "@/hooks/useScrollHeader";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +26,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { isScrolled, scrollDirection } = useScroll(20);
-  const { isActive } = useWorkoutState();
+  const { isActive } = useWorkoutStore();
   const { isHeaderVisible } = useScrollHeader();
   
   const handleBack = () => {

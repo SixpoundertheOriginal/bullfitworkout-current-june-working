@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { useWorkoutStore } from "@/store/workoutStore";
 import { useStableIntersectionObserver } from './useStableIntersectionObserver';
 import { toast } from "@/hooks/use-toast";
 
@@ -14,7 +14,7 @@ export function useIndexPageState() {
   const [hasShownActiveToast, setHasShownActiveToast] = useState(false);
   
   const { stats } = useWorkoutStatsContext();
-  const { isActive, lastActiveRoute } = useWorkoutState();
+  const { isActive, lastActiveRoute } = useWorkoutStore();
   
   // Stable intersection observer
   const { isIntersecting: isSectionVisible, targetRef: sectionRef } = useStableIntersectionObserver({

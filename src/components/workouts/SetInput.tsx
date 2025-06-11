@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Check, ChevronUp, ChevronDown } from 'lucide-react';
-import { ExerciseSet } from '@/hooks/useWorkoutState';
+import { ExerciseSet } from '@/store/workoutStore';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 
 interface SetInputProps {

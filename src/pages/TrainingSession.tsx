@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -209,12 +208,7 @@ const TrainingSessionPage = () => {
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
       const workoutData = {
-        exercises: Object.fromEntries(
-          Object.entries(storeExercises).map(([name, sets]) => [
-            name,
-            sets.map(s => ({ ...s, isEditing: s.isEditing || false }))
-          ])
-        ),
+        exercises: exercises, // Now using the correct store format directly
         duration: elapsedTime,
         startTime,
         endTime: now,

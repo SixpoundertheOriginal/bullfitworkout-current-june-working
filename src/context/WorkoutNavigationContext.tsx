@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useWorkoutState } from '@/hooks/useWorkoutState';
+import { useWorkoutStore } from '@/store/workoutStore';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ export function WorkoutNavigationContextProvider({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isActive, updateLastActiveRoute, persistWorkoutState } = useWorkoutState();
+  const { isActive, updateLastActiveRoute, persistWorkoutState } = useWorkoutStore();
   const { isVisible } = usePageVisibility();
   const [showDialog, setShowDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
