@@ -17,7 +17,11 @@ interface AllExercisesPageProps {
   onBack?: () => void;
 }
 
-export default function AllExercisesPage({ onSelectExercise, standalone = true, onBack }: AllExercisesPageProps) {
+export default function AllExercisesPage({ 
+  onSelectExercise, 
+  standalone = true, 
+  onBack 
+}: AllExercisesPageProps) {
   const { createExercise, isPending } = useOptimizedExercises();
   const { toast } = useToast();
   const isMobile = useIsMobile();

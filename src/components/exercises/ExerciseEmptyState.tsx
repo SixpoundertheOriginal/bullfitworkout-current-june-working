@@ -1,92 +1,64 @@
 
 import React from 'react';
-import { Search, Plus, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Search, Dumbbell } from 'lucide-react';
 
 interface ExerciseEmptyStateProps {
-  type: 'no-results' | 'no-exercises' | 'offline';
-  searchTerm?: string;
-  onAddExercise?: () => void;
-  onClearFilters?: () => void;
-  className?: string;
+  hasFilters: boolean;
+  onClearFilters: () => void;
+  onCreateExercise?: () => void;
+  showCreateButton?: boolean;
 }
 
-export const ExerciseEmptyState = React.memo<ExerciseEmptyStateProps>(({
-  type,
-  searchTerm,
-  onAddExercise,
+export const ExerciseEmptyState: React.FC<ExerciseEmptyStateProps> = React.memo(({
+  hasFilters,
   onClearFilters,
-  className = ""
+  onCreateExercise,
+  showCreateButton = false
 }) => {
-  const getContent = () => {
-    switch (type) {
-      case 'no-results':
-        return {
-          icon: <Search className="w-12 h-12 text-gray-400 mb-4" />,
-          title: searchTerm ? `No results for "${searchTerm}"` : 'No exercises match your filters',
-          description: 'Try adjusting your search terms or filters to find more exercises.',
-          actions: (
-            <div className="flex gap-2">
-              {onClearFilters && (
-                <Button variant="outline" onClick={onClearFilters}>
-                  Clear Filters
-                </Button>
-              )}
-              {onAddExercise && (
-                <Button onClick={onAddExercise}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Exercise
-                </Button>
-              )}
-            </div>
-          )
-        };
-      
-      case 'no-exercises':
-        return {
-          icon: <Dumbbell className="w-12 h-12 text-gray-400 mb-4" />,
-          title: 'No exercises in your library',
-          description: 'Start building your exercise library by adding your first exercise.',
-          actions: onAddExercise && (
-            <Button onClick={onAddExercise}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add First Exercise
-            </Button>
-          )
-        };
-      
-      case 'offline':
-        return {
-          icon: <Search className="w-12 h-12 text-amber-400 mb-4" />,
-          title: 'No cached exercises available',
-          description: 'You\'re currently offline. Exercises will be available when you reconnect.',
-          actions: null
-        };
-      
-      default:
-        return {
-          icon: <Search className="w-12 h-12 text-gray-400 mb-4" />,
-          title: 'No exercises found',
-          description: 'Try a different search or check back later.',
-          actions: null
-        };
-    }
-  };
-
-  const content = getContent();
+  if (hasFilters) {
+    return (
+      <Card className="bg-gray-900/50 border-gray-800">
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 bg-amber-900/20 rounded-full flex items-center justify-center mb-4">
+            <Search className="w-8 h-8 text-amber-400" />
+          </div>
+          <div className="space-y-2 mb-6">
+            <h3 className="text-lg font-medium text-gray-200">No exercises match your filters</h3>
+            <p className="text-sm text-gray-400">
+              Try adjusting your search criteria or clear all filters to see more results.
+            </p>
+          </div>
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear All Filters
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className={`${className}`}>
-      <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-        {content.icon}
-        <h3 className="text-lg font-semibold text-gray-300 mb-2">
-          {content.title}
-        </h3>
-        <p className="text-sm text-gray-400 mb-6 max-w-md">
-          {content.description}
-        </p>
-        {content.actions}
+    <Card className="bg-gray-900/50 border-gray-800">
+      <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-16 h-16 bg-purple-900/20 rounded-full flex items-center justify-center mb-4">
+          <Dumbbell className="w-8 h-8 text-purple-400" />
+        </div>
+        <div className="space-y-2 mb-6">
+          <h3 className="text-lg font-medium text-gray-200">No exercises found</h3>
+          <p className="text-sm text-gray-400">
+            Get started by creating your first exercise or browse the exercise library.
+          </p>
+        </div>
+        {showCreateButton && onCreateExercise && (
+          <Button 
+            onClick={onCreateExercise}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Your First Exercise
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
