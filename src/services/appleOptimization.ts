@@ -135,7 +135,7 @@ class AppleOptimizationService {
     iconSizes.forEach(size => {
       const link = document.createElement('link');
       link.rel = 'apple-touch-icon';
-      link.sizes = `${size}x${size}`;
+      link.setAttribute('sizes', `${size}x${size}`);
       link.href = `/icons/apple-touch-icon-${size}x${size}.png`;
       document.head.appendChild(link);
     });

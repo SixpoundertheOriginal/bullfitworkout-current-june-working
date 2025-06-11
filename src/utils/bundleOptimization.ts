@@ -4,7 +4,7 @@ import { lazy } from 'react';
 // Enhanced bundle splitting with Apple App Store optimization
 export const LazyTrainingSession = lazy(() => 
   import('@/pages/TrainingSession').then(module => ({
-    default: module.TrainingSession
+    default: module.default
   }))
 );
 
@@ -14,15 +14,15 @@ export const LazyExerciseLibrary = lazy(() =>
   }))
 );
 
-export const LazyWorkoutHistory = lazy(() => 
-  import('@/pages/WorkoutHistory').then(module => ({
-    default: module.WorkoutHistory
+export const LazyWorkoutDetails = lazy(() => 
+  import('@/pages/WorkoutDetailsPage').then(module => ({
+    default: module.default
   }))
 );
 
-export const LazyProfileSettings = lazy(() => 
-  import('@/pages/ProfileSettings').then(module => ({
-    default: module.ProfileSettings
+export const LazyProfilePage = lazy(() => 
+  import('@/pages/ProfilePage').then(module => ({
+    default: module.default
   }))
 );
 
