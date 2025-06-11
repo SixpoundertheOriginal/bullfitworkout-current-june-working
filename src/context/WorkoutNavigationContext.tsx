@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,35 +34,24 @@ export function WorkoutNavigationContextProvider({
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [lastPath, setLastPath] = useState<string>(location.pathname);
 
-  const isTrainingRoute = location.pathname === '/training-session';
+  // Debounce state updates to prevent excessive re-renders
+  const debouncedIsActive = useDebounce(isActive, 150);
+  const debouncedIsVisible = useDebounce(isVisible, 150);
   
-  // Update last active route if we're on the training session page
+  const isTrainingRoute = useMemo(() => 
+    location.pathname === '/training-session', 
+    [location.pathname]
+  );
+  
+  // Update last active route with debounced values
   useEffect(() => {
     if (isTrainingRoute) {
       updateLastActiveRoute(location.pathname);
-      console.log('Updated last active route:', location.pathname);
     }
     
     // Keep track of last path for recovery
     setLastPath(location.pathname);
-  }, [isTrainingRoute, location.pathname]);
-
-  // Log debug info for navigation context
-  useEffect(() => {
-    console.log('WorkoutNavigationContext state:', { 
-      isActive, 
-      currentPath: location.pathname,
-      isTrainingRoute,
-      isVisible
-    });
-  }, [isActive, location.pathname, isTrainingRoute, isVisible]);
-
-  // When tab becomes visible again, ensure we persist state
-  useEffect(() => {
-    if (isVisible && isActive) {
-      // No persistWorkoutState function available
-    }
-  }, [isVisible, isActive]);
+  }, [isTrainingRoute, location.pathname, updateLastActiveRoute]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
@@ -71,15 +61,25 @@ export function WorkoutNavigationContextProvider({
         return;
       }
       
-      if (isActive && isTrainingRoute) {
+      if (debouncedIsActive && isTrainingRoute) {
         setShowDialog(true);
         setPendingNavigation(to);
-        console.log('Confirming navigation from workout to:', to);
       } else {
         navigate(to);
       }
     }
-  }), [isActive, isTrainingRoute, navigate, location.pathname]);
+  }), [debouncedIsActive, isTrainingRoute, navigate, location.pathname]);
+
+  const handleDialogClose = useCallback(() => {
+    setShowDialog(false);
+  }, []);
+
+  const handleLeaveWorkout = useCallback(() => {
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+    }
+    setShowDialog(false);
+  }, [pendingNavigation, navigate]);
 
   return (
     <Provider value={contextValue}>
@@ -93,17 +93,10 @@ export function WorkoutNavigationContextProvider({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowDialog(false)}>
+            <AlertDialogCancel onClick={handleDialogClose}>
               Return to Workout
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (pendingNavigation) {
-                  navigate(pendingNavigation);
-                }
-                setShowDialog(false);
-              }}
-            >
+            <AlertDialogAction onClick={handleLeaveWorkout}>
               Leave Workout
             </AlertDialogAction>
           </AlertDialogFooter>

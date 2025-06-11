@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useDebounce } from './useDebounce';
 
 export function usePageVisibility() {
   const [isVisible, setIsVisible] = useState<boolean>(() =>
@@ -7,17 +8,17 @@ export function usePageVisibility() {
     document.visibilityState === 'visible'
   );
   
+  // Debounce visibility changes to prevent excessive updates
+  const debouncedIsVisible = useDebounce(isVisible, 150);
+  
+  // Memoize the visibility handler to prevent recreation
+  const handleVisibilityChange = useCallback(() => {
+    const visible = document.visibilityState === 'visible';
+    setIsVisible(visible);
+  }, []);
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
-
-    const handleVisibilityChange = () => {
-      const visible = document.visibilityState === 'visible';
-      console.log('Visibility changed:', {
-        isVisible: visible,
-        state: document.visibilityState
-      });
-      setIsVisible(visible);
-    };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -27,7 +28,7 @@ export function usePageVisibility() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [handleVisibilityChange]);
   
-  return { isVisible };
+  return { isVisible: debouncedIsVisible };
 }

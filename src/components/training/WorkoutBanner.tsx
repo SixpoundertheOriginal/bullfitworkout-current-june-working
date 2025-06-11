@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { cn } from '@/lib/utils';
@@ -7,8 +7,9 @@ import { Dumbbell, PlayCircle, Clock } from 'lucide-react';
 import { formatTime } from '@/utils/formatTime';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { toast } from "@/hooks/use-toast";
+import { useDebounce } from '@/hooks/useDebounce';
 
-export const WorkoutBanner: React.FC = () => {
+export const WorkoutBanner: React.FC = React.memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isVisible } = usePageVisibility();
@@ -21,51 +22,41 @@ export const WorkoutBanner: React.FC = () => {
   } = useWorkoutStore();
   const [visible, setVisible] = useState(false);
   
-  // Update banner visibility
+  // Memoize expensive calculations to prevent re-renders
+  const exerciseCount = useMemo(() => Object.keys(exercises).length, [exercises]);
+  const currentPath = useMemo(() => location.pathname, [location.pathname]);
+  const isTrainingRoute = useMemo(() => currentPath === '/training-session', [currentPath]);
+  
+  // Debounce visibility state to prevent excessive updates
+  const debouncedIsActive = useDebounce(isActive, 100);
+  const debouncedWorkoutStatus = useDebounce(workoutStatus, 100);
+  
+  // Memoize the visibility calculation
+  const shouldShow = useMemo(() => {
+    return debouncedIsActive && 
+           !explicitlyEnded && 
+           debouncedWorkoutStatus !== 'saved' &&
+           !isTrainingRoute && 
+           exerciseCount > 0;
+  }, [debouncedIsActive, explicitlyEnded, debouncedWorkoutStatus, isTrainingRoute, exerciseCount]);
+  
+  // Update banner visibility with debounced values
   useEffect(() => {
-    const currentPath = location.pathname;
-    const exerciseCount = Object.keys(exercises).length;
-    const shouldShow = isActive && 
-                     !explicitlyEnded && 
-                     workoutStatus !== 'saved' &&
-                     currentPath !== '/training-session' && 
-                     exerciseCount > 0;
-                     
-    // Debug info
-    console.log('WorkoutBanner evaluated:', { 
-      isActive, 
-      workoutStatus,
-      currentPath,
-      exerciseCount,
-      elapsedTime,
-      explicitlyEnded,
-      visible: shouldShow
-    });
-    
     setVisible(shouldShow);
-  }, [isActive, exercises, location, workoutStatus, explicitlyEnded]);
+  }, [shouldShow]);
   
-  // Handle visibility changes
-  useEffect(() => {
-    if (isVisible) {
-      console.log('Tab visible in WorkoutBanner, checking workout state');
-    }
-  }, [isVisible]);
-  
-  // Handle navigation to workout session
-  const handleResumeWorkout = () => {
+  // Memoized navigation handler
+  const handleResumeWorkout = useCallback(() => {
     navigate('/training-session');
     
-    if (Object.keys(exercises).length > 0) {
+    if (exerciseCount > 0) {
       toast({
         title: "Resuming your workout",
       });
     }
-  };
+  }, [navigate, exerciseCount]);
   
   if (!visible) return null;
-  
-  const exerciseCount = Object.keys(exercises).length;
   
   return (
     <div className={cn(
@@ -103,4 +94,6 @@ export const WorkoutBanner: React.FC = () => {
       </div>
     </div>
   );
-};
+});
+
+WorkoutBanner.displayName = 'WorkoutBanner';

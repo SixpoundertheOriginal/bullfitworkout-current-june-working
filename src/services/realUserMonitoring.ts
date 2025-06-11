@@ -19,6 +19,7 @@ class RealUserMonitoring {
   private frameRateMonitor: number | null = null;
   private lastFrameTime = performance.now();
   private frameCount = 0;
+  private isProduction = process.env.NODE_ENV === 'production';
 
   constructor() {
     this.initializeMonitoring();
@@ -35,11 +36,13 @@ class RealUserMonitoring {
 
   private observePerformanceEntries() {
     if ('PerformanceObserver' in window) {
-      // Monitor Long Tasks (>50ms)
+      // Monitor Long Tasks (>50ms) - throttled to prevent performance impact
       const longTaskObserver = new PerformanceObserver((list) => {
+        // Only process in production to avoid development overhead
+        if (!this.isProduction) return;
+        
         list.getEntries().forEach((entry: PerformanceEntry) => {
           if (entry.duration > 50) {
-            console.warn(`🐌 Long task detected: ${entry.name} (${entry.duration}ms)`);
             this.reportSlowTask(entry.name, entry.duration);
           }
         });
@@ -48,11 +51,13 @@ class RealUserMonitoring {
       try {
         longTaskObserver.observe({ entryTypes: ['longtask'] });
       } catch (e) {
-        console.warn('Long task observer not supported');
+        // Long task observer not supported
       }
 
-      // Monitor Layout Shifts
+      // Monitor Layout Shifts - throttled
       const layoutShiftObserver = new PerformanceObserver((list) => {
+        if (!this.isProduction) return;
+        
         let clsValue = 0;
         list.getEntries().forEach((entry: any) => {
           if (!entry.hadRecentInput) {
@@ -61,7 +66,6 @@ class RealUserMonitoring {
         });
         
         if (clsValue > 0.1) {
-          console.warn(`📐 Layout shift detected: ${clsValue}`);
           this.reportLayoutShift(clsValue);
         }
       });
@@ -69,12 +73,15 @@ class RealUserMonitoring {
       try {
         layoutShiftObserver.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
-        console.warn('Layout shift observer not supported');
+        // Layout shift observer not supported
       }
     }
   }
 
   private startFrameRateMonitoring() {
+    let consecutiveLowFrames = 0;
+    const maxConsecutiveReports = 3; // Limit consecutive reports
+    
     const measureFrameRate = () => {
       this.frameCount++;
       const currentTime = performance.now();
@@ -82,9 +89,14 @@ class RealUserMonitoring {
       if (currentTime >= this.lastFrameTime + 1000) {
         const fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastFrameTime));
         
+        // Only report if fps is consistently low and limit reporting frequency
         if (fps < 55) {
-          console.warn(`📉 Low frame rate detected: ${fps}fps`);
-          this.reportLowFrameRate(fps);
+          consecutiveLowFrames++;
+          if (consecutiveLowFrames <= maxConsecutiveReports) {
+            this.reportLowFrameRate(fps);
+          }
+        } else {
+          consecutiveLowFrames = 0; // Reset counter on good performance
         }
         
         this.frameCount = 0;
@@ -98,26 +110,35 @@ class RealUserMonitoring {
   }
 
   private monitorMemoryUsage() {
+    // Check memory less frequently to reduce overhead
     const checkMemory = () => {
-      if ('memory' in performance) {
+      if ('memory' in performance && this.isProduction) {
         const memInfo = (performance as any).memory;
         const usageMB = memInfo.usedJSHeapSize / 1024 / 1024;
         
         if (usageMB > 200) {
-          console.warn(`🧠 High memory usage: ${usageMB.toFixed(2)}MB`);
           this.reportHighMemoryUsage(usageMB);
         }
       }
     };
 
-    setInterval(checkMemory, 10000); // Check every 10 seconds
+    // Check every 30 seconds instead of 10 to reduce overhead
+    setInterval(checkMemory, 30000);
   }
 
   private trackNetworkQuality() {
     if ('connection' in navigator) {
       const connection = (navigator as any).connection;
       
+      // Throttle network quality updates
+      let lastUpdate = 0;
+      const updateThrottle = 5000; // 5 seconds
+      
       const updateNetworkQuality = () => {
+        const now = Date.now();
+        if (now - lastUpdate < updateThrottle) return;
+        lastUpdate = now;
+        
         let quality: 'fast' | 'slow' | 'offline' = 'fast';
         
         if (!navigator.onLine) {
@@ -139,56 +160,61 @@ class RealUserMonitoring {
   private setupErrorTracking() {
     // Enhanced error tracking for App Store quality
     window.addEventListener('error', (event) => {
-      console.error('🚨 JavaScript Error:', {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno
-      });
       this.reportError('javascript', event.message);
     });
 
     window.addEventListener('unhandledrejection', (event) => {
-      console.error('🚨 Unhandled Promise Rejection:', event.reason);
       this.reportError('promise', event.reason?.toString() || 'Unknown promise rejection');
     });
   }
 
-  // Reporting methods for analytics
+  // Reporting methods for analytics - optimized for performance
   private reportSlowTask(taskName: string, duration: number) {
-    // In production, send to analytics service
-    console.log(`📊 RUM: Slow task - ${taskName}: ${duration}ms`);
+    if (this.isProduction) {
+      // In production, send to analytics service
+      console.log(`📊 RUM: Slow task - ${taskName}: ${duration}ms`);
+    }
   }
 
   private reportLayoutShift(clsValue: number) {
-    console.log(`📊 RUM: Layout shift - CLS: ${clsValue}`);
+    if (this.isProduction) {
+      console.log(`📊 RUM: Layout shift - CLS: ${clsValue}`);
+    }
   }
 
   private reportLowFrameRate(fps: number) {
-    console.log(`📊 RUM: Low frame rate - ${fps}fps`);
+    if (this.isProduction) {
+      console.log(`📊 RUM: Low frame rate - ${fps}fps`);
+    }
   }
 
   private reportHighMemoryUsage(usageMB: number) {
-    console.log(`📊 RUM: High memory usage - ${usageMB.toFixed(2)}MB`);
+    if (this.isProduction) {
+      console.log(`📊 RUM: High memory usage - ${usageMB.toFixed(2)}MB`);
+    }
   }
 
   private reportNetworkQuality(quality: 'fast' | 'slow' | 'offline') {
-    console.log(`📊 RUM: Network quality - ${quality}`);
+    if (this.isProduction) {
+      console.log(`📊 RUM: Network quality - ${quality}`);
+    }
   }
 
   private reportError(type: string, message: string) {
-    console.log(`📊 RUM: Error - ${type}: ${message}`);
+    if (this.isProduction) {
+      console.log(`📊 RUM: Error - ${type}: ${message}`);
+    }
   }
 
-  // Public API for component performance tracking
+  // Public API for component performance tracking - optimized
   trackComponentRender(componentName: string, renderTime: number) {
-    if (renderTime > 16) {
+    if (renderTime > 16 && this.isProduction) {
       console.warn(`⚡ Slow component render: ${componentName} (${renderTime}ms)`);
     }
   }
 
   trackUserInteraction(interactionType: string, responseTime: number) {
-    if (responseTime > 100) {
+    if (responseTime > 100 && this.isProduction) {
       console.warn(`👆 Slow interaction: ${interactionType} (${responseTime}ms)`);
     }
   }
