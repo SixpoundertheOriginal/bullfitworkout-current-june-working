@@ -1,5 +1,5 @@
 
-import React, { useMemo, useCallback, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Exercise } from '@/types/exercise';
 import { ExerciseLibraryContainer } from './ExerciseLibraryContainer';
 import { PremiumSearchBar } from './PremiumSearchBar';
@@ -18,6 +18,13 @@ interface PerformanceOptimizedExerciseLibraryProps {
   showCreateButton?: boolean;
 }
 
+// Aggressive memoization for frame rate optimization
+const MemoizedPremiumSearchBar = React.memo(PremiumSearchBar);
+const MemoizedSmartFilterChips = React.memo(SmartFilterChips);
+const MemoizedVisualEquipmentFilter = React.memo(VisualEquipmentFilter);
+const MemoizedExerciseFilters = React.memo(ExerciseFilters);
+const MemoizedVirtualizedExerciseGrid = React.memo(VirtualizedExerciseGrid);
+
 export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedExerciseLibraryProps> = React.memo(({
   onSelectExercise,
   onCreateExercise,
@@ -25,6 +32,54 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const idleCallbackRef = useRef<number | null>(null);
+  const updateQueueRef = useRef<(() => void)[]>([]);
+
+  // Optimize non-critical updates with requestIdleCallback
+  const scheduleIdleUpdate = useCallback((updateFn: () => void) => {
+    updateQueueRef.current.push(updateFn);
+    
+    if (idleCallbackRef.current) return;
+    
+    if ('requestIdleCallback' in window) {
+      idleCallbackRef.current = requestIdleCallback(() => {
+        const updates = updateQueueRef.current.splice(0);
+        updates.forEach(update => update());
+        idleCallbackRef.current = null;
+      });
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      idleCallbackRef.current = setTimeout(() => {
+        const updates = updateQueueRef.current.splice(0);
+        updates.forEach(update => update());
+        idleCallbackRef.current = null;
+      }, 16); // Target 60fps
+    }
+  }, []);
+
+  // Memoized toggle handlers to prevent re-renders
+  const handleFiltersToggle = useCallback(() => {
+    scheduleIdleUpdate(() => setShowFilters(prev => !prev));
+  }, [scheduleIdleUpdate]);
+
+  const handleViewModeToggle = useCallback((mode: 'grid' | 'list') => {
+    if (mode !== viewMode) {
+      scheduleIdleUpdate(() => setViewMode(mode));
+    }
+  }, [viewMode, scheduleIdleUpdate]);
+
+  // Cleanup idle callbacks
+  useEffect(() => {
+    return () => {
+      if (idleCallbackRef.current) {
+        if ('requestIdleCallback' in window) {
+          cancelIdleCallback(idleCallbackRef.current);
+        } else {
+          clearTimeout(idleCallbackRef.current);
+        }
+      }
+    };
+  }, []);
 
   return (
     <ExerciseLibraryContainer>
@@ -38,14 +93,10 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
         isError,
         searchFilters
       }) => {
-        console.log('PerformanceOptimizedExerciseLibrary render:', {
-          totalExercises: exercises?.length || 0,
-          currentExercises: currentExercises?.length || 0,
-          searchQuery: state.searchQuery,
-          activeFilters: Object.keys(searchFilters).length,
-          isLoading,
-          isSearching
-        });
+        // Memoize expensive calculations
+        const memoizedExerciseCount = useMemo(() => exercises?.length || 0, [exercises?.length]);
+        const memoizedCurrentCount = useMemo(() => currentExercises?.length || 0, [currentExercises?.length]);
+        const memoizedActiveFilters = useMemo(() => Object.keys(searchFilters).length, [searchFilters]);
 
         if (isError) {
           return (
@@ -63,24 +114,21 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
 
         return (
           <div className="flex flex-col h-full space-y-8">
-            {/* Premium Header with improved spacing */}
+            {/* Optimized Header */}
             <div className="space-y-6">
-              {/* Top Row: Search Bar and Create Button */}
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                {/* Enhanced Search Bar */}
                 <div className="flex-1">
-                  <PremiumSearchBar
+                  <MemoizedPremiumSearchBar
                     searchTerm={state.searchQuery}
                     onSearchChange={actions.setSearchQuery}
-                    totalExercises={exercises?.length || 0}
-                    filteredCount={currentExercises?.length || 0}
-                    onFiltersToggle={() => setShowFilters(!showFilters)}
-                    hasActiveFilters={Object.keys(searchFilters).length > 0}
+                    totalExercises={memoizedExerciseCount}
+                    filteredCount={memoizedCurrentCount}
+                    onFiltersToggle={handleFiltersToggle}
+                    hasActiveFilters={memoizedActiveFilters > 0}
                     isLoading={isLoading || isSearching}
                   />
                 </div>
 
-                {/* Create Button - Prominently positioned */}
                 {showCreateButton && onCreateExercise && (
                   <div className="flex-shrink-0">
                     <Button 
@@ -94,9 +142,8 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                 )}
               </div>
 
-              {/* Smart Filter Chips Row - Better spacing */}
               <div className="py-2">
-                <SmartFilterChips
+                <MemoizedSmartFilterChips
                   selectedMuscleGroup={state.selectedMuscleGroup}
                   selectedEquipment={state.selectedEquipment}
                   selectedDifficulty={state.selectedDifficulty}
@@ -112,10 +159,9 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                 />
               </div>
 
-              {/* Toolbar Row - View controls and advanced filters */}
+              {/* Optimized Toolbar */}
               <div className="flex items-center justify-between pt-2 border-t border-gray-800/50">
                 <div className="flex items-center gap-4">
-                  {/* View Mode Toggle */}
                   <div className="flex items-center bg-gray-900/50 rounded-lg p-1 border border-gray-800">
                     <Button
                       variant="ghost"
@@ -126,7 +172,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                           ? "bg-purple-600 text-white"
                           : "text-gray-400 hover:text-gray-300"
                       )}
-                      onClick={() => setViewMode('grid')}
+                      onClick={() => handleViewModeToggle('grid')}
                     >
                       <LayoutGrid className="w-4 h-4" />
                     </Button>
@@ -139,13 +185,12 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                           ? "bg-purple-600 text-white"
                           : "text-gray-400 hover:text-gray-300"
                       )}
-                      onClick={() => setViewMode('list')}
+                      onClick={() => handleViewModeToggle('list')}
                     >
                       <List className="w-4 h-4" />
                     </Button>
                   </div>
 
-                  {/* Advanced Filters Toggle */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -155,14 +200,13 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                         ? "bg-purple-900/50 border-purple-500/50 text-purple-300"
                         : "border-gray-700 text-gray-400 hover:text-gray-300"
                     )}
-                    onClick={() => setShowFilters(!showFilters)}
+                    onClick={handleFiltersToggle}
                   >
                     <SlidersHorizontal className="w-4 h-4 mr-2" />
                     Advanced
                   </Button>
                 </div>
 
-                {/* Results Count */}
                 <div className="text-sm text-gray-400">
                   {isLoading || isSearching ? (
                     <span className="flex items-center gap-2">
@@ -171,27 +215,25 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                     </span>
                   ) : (
                     <span>
-                      {currentExercises?.length || 0} of {exercises?.length || 0} exercises
+                      {memoizedCurrentCount} of {memoizedExerciseCount} exercises
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Advanced Filters Panel */}
+            {/* Optimized Filters Panel */}
             {showFilters && (
               <Card className="bg-gray-900/50 border-gray-800 animate-in fade-in slide-in-from-top-2 duration-300">
                 <CardContent className="p-6 space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Visual Equipment Filter */}
-                    <VisualEquipmentFilter
+                    <MemoizedVisualEquipmentFilter
                       selectedEquipment={state.selectedEquipment}
                       onEquipmentChange={actions.setSelectedEquipment}
                     />
 
-                    {/* Traditional Filters */}
                     <div className="space-y-4">
-                      <ExerciseFilters
+                      <MemoizedExerciseFilters
                         isOpen={true}
                         onToggle={() => {}}
                         selectedMuscleGroup={state.selectedMuscleGroup}
@@ -208,7 +250,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                           actions.setSelectedDifficulty('all');
                           actions.setSelectedMovement('all');
                         }}
-                        resultCount={currentExercises?.length || 0}
+                        resultCount={memoizedCurrentCount}
                       />
                     </div>
                   </div>
@@ -216,9 +258,9 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
               </Card>
             )}
 
-            {/* Exercise Grid with visual separation */}
+            {/* Optimized Exercise Grid */}
             <div className="flex-1 min-h-0 pt-4 border-t border-gray-800/30">
-              <VirtualizedExerciseGrid
+              <MemoizedVirtualizedExerciseGrid
                 exercises={currentExercises || []}
                 onSelectExercise={onSelectExercise}
                 isLoading={isLoading}
@@ -229,6 +271,13 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
         );
       }}
     </ExerciseLibraryContainer>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return (
+    prevProps.showCreateButton === nextProps.showCreateButton &&
+    prevProps.onSelectExercise === nextProps.onSelectExercise &&
+    prevProps.onCreateExercise === nextProps.onCreateExercise
   );
 });
 
