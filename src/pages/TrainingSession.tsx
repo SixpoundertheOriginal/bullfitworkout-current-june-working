@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -209,9 +208,24 @@ const TrainingSessionPage = () => {
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
       
-      // Use the store's exercise format directly - convert to the format expected by WorkoutCompletePage
+      // Convert store exercise format to the format expected by WorkoutCompletePage
+      const convertedExercises: Record<string, any[]> = {};
+      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+        convertedExercises[exerciseName] = sets.map((set, index) => ({
+          id: `${exerciseName}_${index}`,
+          weight: set.weight,
+          reps: set.reps,
+          restTime: set.restTime,
+          completed: set.completed,
+          isEditing: set.isEditing,
+          set_number: index + 1,
+          exercise_name: exerciseName,
+          workout_id: workoutId || 'temp'
+        }));
+      });
+      
       const workoutData = {
-        exercises: exercises, // This is already in the correct store format
+        exercises: convertedExercises,
         duration: elapsedTime,
         startTime,
         endTime: now,
