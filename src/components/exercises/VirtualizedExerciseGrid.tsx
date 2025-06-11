@@ -1,8 +1,9 @@
+
 import React, { useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
-import { Skeleton } from '@/components/ui/skeleton';
 import { UnifiedExerciseCard } from './UnifiedExerciseCard';
+import { SkeletonScreen } from '@/components/performance/SkeletonScreen';
 import { useVirtualizedGrid } from '@/hooks/useVirtualizedGrid';
 
 interface VirtualizedExerciseGridProps {
@@ -66,33 +67,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   if (isLoading) {
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 animate-pulse">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-5 w-3/4 bg-gray-800" />
-                  <Skeleton className="h-4 w-full bg-gray-800" />
-                  <Skeleton className="h-4 w-2/3 bg-gray-800" />
-                </div>
-                <Skeleton className="h-8 w-8 bg-gray-800 rounded" />
-              </div>
-              
-              <div className="space-y-2">
-                <Skeleton className="h-2 w-full bg-gray-800 rounded-full" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-16 bg-gray-800 rounded-full" />
-                  <Skeleton className="h-6 w-20 bg-gray-800 rounded-full" />
-                </div>
-              </div>
-              
-              <div className="flex gap-2 pt-2">
-                <Skeleton className="h-8 flex-1 bg-gray-800 rounded" />
-                <Skeleton className="h-8 flex-1 bg-gray-800 rounded" />
-              </div>
-            </div>
-          </div>
-        ))}
+        <SkeletonScreen variant="exercise-card" count={8} />
       </div>
     );
   }

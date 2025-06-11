@@ -2,8 +2,9 @@
 import React from 'react';
 import { Exercise } from '@/types/exercise';
 import { VirtualizedExerciseList } from './VirtualizedExerciseList';
-import { LazyExerciseCard, ExerciseCardSkeleton } from './LazyExerciseCard';
+import { LazyExerciseCard } from './LazyExerciseCard';
 import { ExerciseEmptyState } from './ExerciseEmptyState';
+import { SkeletonScreen } from '@/components/performance/SkeletonScreen';
 import { 
   Pagination, 
   PaginationContent, 
@@ -54,13 +55,11 @@ export const ExerciseTabsContent = React.memo<ExerciseTabsContentProps>(({
   isOnline = true,
   className = ""
 }) => {
-  // Loading state with skeletons
+  // Loading state with enhanced skeleton screens
   if (isLoading) {
     return (
       <div className={`space-y-4 ${className}`}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <ExerciseCardSkeleton key={index} />
-        ))}
+        <SkeletonScreen variant="exercise-list" count={4} />
       </div>
     );
   }
@@ -114,7 +113,7 @@ export const ExerciseTabsContent = React.memo<ExerciseTabsContentProps>(({
         />
       ))}
       
-      {/* Pagination */}
+      {/* Pagination with enhanced navigation */}
       {showPagination && totalPages > 1 && onPageChange && (
         <Pagination className="mt-4">
           <PaginationContent>
