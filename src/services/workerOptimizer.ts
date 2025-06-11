@@ -101,8 +101,8 @@ class WorkerOptimizer {
         }
       }, { timeout: 16 }); // Max 16ms to maintain 60fps
     } else {
-      // Fallback with frame-rate consideration
-      this.batchTimeout = setTimeout(() => {
+      // Fallback with frame-rate consideration - use proper type casting
+      this.batchTimeout = window.setTimeout(() => {
         if (!this.processingBatch) {
           this.processQueue();
         }

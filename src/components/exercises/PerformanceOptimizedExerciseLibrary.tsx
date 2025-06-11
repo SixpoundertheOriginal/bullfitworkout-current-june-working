@@ -48,8 +48,8 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
         idleCallbackRef.current = null;
       });
     } else {
-      // Fallback for browsers without requestIdleCallback
-      idleCallbackRef.current = setTimeout(() => {
+      // Fallback for browsers without requestIdleCallback - use proper type casting
+      idleCallbackRef.current = window.setTimeout(() => {
         const updates = updateQueueRef.current.splice(0);
         updates.forEach(update => update());
         idleCallbackRef.current = null;
