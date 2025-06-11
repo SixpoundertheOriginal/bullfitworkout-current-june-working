@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -294,7 +295,7 @@ const TrainingSessionPage = () => {
   const currentExerciseIndex = activeExercise ? exerciseNames.indexOf(activeExercise) : 0;
   
   // Work directly with store format (no adapter function needed)
-  const handleSetExercises = (updatedExercises) => {
+  const handleSetExercises = (updatedExercises: any) => {
     if (typeof updatedExercises === 'function') {
       setStoreExercises(prev => updatedExercises(prev));
     } else {
