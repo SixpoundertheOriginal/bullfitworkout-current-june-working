@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,10 +51,23 @@ const TrainingSessionPage = () => {
   // Use new unified timer system
   const { workoutTimer, restTimer, handleSetCompletion } = useTrainingTimers();
   
-  // Work directly with store exercises format (no adapters needed)
-  const exercises = storeExercises;
+  // Convert store exercises format to the format expected by ExerciseList
+  const convertedExercises = Object.entries(storeExercises).reduce((acc, [exerciseName, sets]) => {
+    acc[exerciseName] = sets.map((set, index) => ({
+      id: `temp-${exerciseName}-${index}`,
+      weight: set.weight,
+      reps: set.reps,
+      restTime: set.restTime,
+      completed: set.completed,
+      isEditing: set.isEditing,
+      set_number: index + 1,
+      exercise_name: exerciseName,
+      workout_id: workoutId || 'temp'
+    }));
+    return acc;
+  }, {} as Record<string, any[]>);
   
-  const [completedSets, totalSets] = Object.entries(exercises).reduce(
+  const [completedSets, totalSets] = Object.entries(storeExercises).reduce(
     ([completed, total], [_, sets]) => [
       completed + sets.filter(s => s.completed).length,
       total + sets.length
@@ -64,7 +76,7 @@ const TrainingSessionPage = () => {
   );
 
   // Calculate total volume (tonnage) and total reps
-  const [totalVolume, totalReps] = Object.entries(exercises).reduce(
+  const [totalVolume, totalReps] = Object.entries(storeExercises).reduce(
     ([volume, reps], [_, sets]) => {
       const completedSets = sets.filter(s => s.completed);
       const exerciseVolume = completedSets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
@@ -83,17 +95,17 @@ const TrainingSessionPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
 
-  const exerciseCount = Object.keys(exercises).length;
+  const exerciseCount = Object.keys(storeExercises).length;
   const hasExercises = exerciseCount > 0;
   
   useEffect(() => { setPageLoaded(true); }, []);
 
   useEffect(() => {
-    if (Object.keys(exercises).length > 0 && workoutStatus === 'saving') {
+    if (Object.keys(storeExercises).length > 0 && workoutStatus === 'saving') {
       setIsSaving(false);
       if (isActive) setWorkoutStatus('active');
     }
-  }, [exercises, workoutStatus, isActive, setWorkoutStatus]);
+  }, [storeExercises, workoutStatus, isActive, setWorkoutStatus]);
 
   useEffect(() => {
     if (location.pathname === '/training-session') {
@@ -211,7 +223,7 @@ const TrainingSessionPage = () => {
       
       // Convert store exercise format to the format expected by WorkoutCompletePage
       const convertedExercises: Record<string, any[]> = {};
-      Object.entries(exercises).forEach(([exerciseName, sets]) => {
+      Object.entries(storeExercises).forEach(([exerciseName, sets]) => {
         convertedExercises[exerciseName] = sets.map((set, index) => ({
           id: `${exerciseName}_${index}`,
           weight: set.weight,
@@ -291,10 +303,10 @@ const TrainingSessionPage = () => {
   }
 
   // Calculate navigation state
-  const exerciseNames = Object.keys(exercises);
+  const exerciseNames = Object.keys(storeExercises);
   const currentExerciseIndex = activeExercise ? exerciseNames.indexOf(activeExercise) : 0;
   
-  // Work directly with store format (no adapter function needed)
+  // Function to handle exercise updates from ExerciseList component
   const handleSetExercises = (updatedExercises: any) => {
     if (typeof updatedExercises === 'function') {
       setStoreExercises(prev => updatedExercises(prev));
@@ -425,7 +437,7 @@ const TrainingSessionPage = () => {
                 transition={{ delay: 0.2, duration: 0.4 }}
               >
                 <ExerciseList
-                  exercises={exercises}
+                  exercises={convertedExercises}
                   activeExercise={activeExercise}
                   onAddSet={handleAddSet}
                   onCompleteSet={handleCompleteSetWithFeedback}
