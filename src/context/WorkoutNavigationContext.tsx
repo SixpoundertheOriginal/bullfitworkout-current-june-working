@@ -27,7 +27,7 @@ export function WorkoutNavigationContextProvider({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isActive, updateLastActiveRoute, persistWorkoutState } = useWorkoutStore();
+  const { isActive, updateLastActiveRoute } = useWorkoutStore();
   const { isVisible } = usePageVisibility();
   const [showDialog, setShowDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
@@ -59,9 +59,9 @@ export function WorkoutNavigationContextProvider({
   // When tab becomes visible again, ensure we persist state
   useEffect(() => {
     if (isVisible && isActive) {
-      persistWorkoutState?.();
+      // No persistWorkoutState function available
     }
-  }, [isVisible, isActive, persistWorkoutState]);
+  }, [isVisible, isActive]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
@@ -75,14 +75,11 @@ export function WorkoutNavigationContextProvider({
         setShowDialog(true);
         setPendingNavigation(to);
         console.log('Confirming navigation from workout to:', to);
-        
-        // Make sure state is persisted before potential navigation
-        persistWorkoutState?.();
       } else {
         navigate(to);
       }
     }
-  }), [isActive, isTrainingRoute, navigate, location.pathname, persistWorkoutState]);
+  }), [isActive, isTrainingRoute, navigate, location.pathname]);
 
   return (
     <Provider value={contextValue}>
@@ -101,9 +98,6 @@ export function WorkoutNavigationContextProvider({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                // Extra persistence before navigation
-                persistWorkoutState?.();
-                
                 if (pendingNavigation) {
                   navigate(pendingNavigation);
                 }

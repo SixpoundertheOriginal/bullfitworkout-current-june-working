@@ -209,9 +209,9 @@ const TrainingSessionPage = () => {
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
       
-      // Use the store's exercise format directly
+      // Use the store's exercise format directly - convert to the format expected by WorkoutCompletePage
       const workoutData = {
-        exercises: exercises, // Store format with { weight, reps, restTime, completed, isEditing }
+        exercises: exercises, // This is already in the correct store format
         duration: elapsedTime,
         startTime,
         endTime: now,
