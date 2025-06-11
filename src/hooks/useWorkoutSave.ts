@@ -1,6 +1,5 @@
 
 import { useMutation } from '@tanstack/react-query';
-import { saveWorkout } from '@/services/workoutService';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';

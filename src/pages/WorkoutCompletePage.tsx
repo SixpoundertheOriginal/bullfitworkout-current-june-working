@@ -61,17 +61,8 @@ export const WorkoutCompletePage = () => {
   const state = location.state as WorkoutPageState;
   const workoutData = state?.workoutData;
   
-  // Initialize the workout save hook with the proper data
-  const {
-    saveStatus,
-    savingErrors,
-    workoutId,
-    handleCompleteWorkout,
-  } = useWorkoutSave(
-    workoutData?.exercises || exercises,
-    workoutData?.duration || elapsedTime,
-    resetSession
-  );
+  // Initialize the workout save hook
+  const { saveWorkout, isSaving, error, isSuccess } = useWorkoutSave();
   
   // When page loads, validate if we have workout data
   useEffectState(() => {
@@ -79,7 +70,7 @@ export const WorkoutCompletePage = () => {
       hasWorkoutData: !!workoutData,
       exercises: Object.keys(workoutData?.exercises || {}).length,
       isActive,
-      saveStatus
+      isSaving
     });
     
     if (!workoutData && Object.keys(exercises).length === 0) {
@@ -128,14 +119,11 @@ export const WorkoutCompletePage = () => {
       
       console.log("Saving workout with data:", finalWorkoutData);
       
-      // Save workout and get the ID
-      const savedWorkoutId = await handleCompleteWorkout({
-        ...finalWorkoutData?.trainingConfig,
-        notes
-      });
+      // Save workout using the hook
+      saveWorkout(finalWorkoutData);
       
       // Handle template creation if requested
-      if (savedWorkoutId && saveAsTemplate) {
+      if (saveAsTemplate) {
         try {
           // Logic for saving template would go here
           console.log("Saving template:", {
@@ -157,18 +145,6 @@ export const WorkoutCompletePage = () => {
           });
         }
       }
-
-      // Success - show toast and delay navigation to allow it to be seen
-      console.log("Workout saved with ID:", savedWorkoutId);
-      toast({
-        title: "Workout saved!",
-        description: "Your workout has been successfully recorded"
-      });
-      
-      // Navigate after short delay to show the success message
-      setTimeout(() => {
-        navigate('/overview');
-      }, 1500);
       
     } catch (error) {
       console.error("Error saving workout:", error);
@@ -180,6 +156,30 @@ export const WorkoutCompletePage = () => {
       setIsLoading(false);
     }
   };
+
+  // Watch for successful save
+  useEffect(() => {
+    if (isSuccess) {
+      console.log("Workout saved successfully");
+      toast({
+        title: "Workout saved!",
+        description: "Your workout has been successfully recorded"
+      });
+      
+      // Navigate after short delay to show the success message
+      setTimeout(() => {
+        navigate('/overview');
+      }, 1500);
+    }
+  }, [isSuccess, navigate]);
+
+  // Watch for save errors
+  useEffect(() => {
+    if (error) {
+      console.error("Workout save error:", error);
+      setIsLoading(false);
+    }
+  }, [error]);
 
   // Discard workout handler
   const handleDiscard = () => {
@@ -214,18 +214,14 @@ export const WorkoutCompletePage = () => {
   };
 
   // Render error state
-  if (savingErrors.length > 0) {
+  if (error) {
     return (
       <div className="min-h-screen bg-black text-white p-6">
         <h1 className="text-2xl font-bold mb-4">Error Saving Workout</h1>
         <div className="bg-red-900/30 border border-red-800 p-4 rounded-lg mb-6">
           <p className="text-red-200 mb-2">There was an error saving your workout:</p>
           <p className="font-mono text-sm bg-black/50 p-2 rounded whitespace-pre-wrap">
-            {savingErrors.map((err, i) => (
-              <div key={i} className="mb-2">
-                <strong>{err.type}:</strong> {err.message}
-              </div>
-            ))}
+            {error.message}
           </p>
         </div>
         <div className="flex gap-4 justify-end">
@@ -241,7 +237,7 @@ export const WorkoutCompletePage = () => {
   }
 
   // Show loading state
-  if (isLoading || !workoutData) {
+  if (isLoading || isSaving || !workoutData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
         <Loader2 className="h-8 w-8 animate-spin mb-4" />
@@ -296,10 +292,10 @@ export const WorkoutCompletePage = () => {
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={isLoading}
+            disabled={isLoading || isSaving}
             className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
           >
-            {isLoading ? (
+            {isLoading || isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

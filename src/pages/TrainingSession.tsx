@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -207,8 +208,10 @@ const TrainingSessionPage = () => {
       markAsSaving();
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
+      
+      // Use the store's exercise format directly
       const workoutData = {
-        exercises: exercises, // Now using the correct store format directly
+        exercises: exercises, // Store format with { weight, reps, restTime, completed, isEditing }
         duration: elapsedTime,
         startTime,
         endTime: now,
