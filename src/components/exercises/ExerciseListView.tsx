@@ -66,8 +66,6 @@ export const ExerciseListView: React.FC<ExerciseListViewProps> = React.memo(({
         onSelectExercise={onSelectExercise}
         onEditExercise={onEditExercise}
         onDeleteExercise={onDeleteExercise}
-        onViewDetails={onViewDetails}
-        onDuplicate={onDuplicate}
         isLoading={false}
         className="h-full"
       />
