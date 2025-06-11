@@ -16,7 +16,6 @@ import { Exercise } from "@/types/exercise";
 import { useSound } from "@/hooks/useSound";
 import { RestTimer } from "@/components/RestTimer";
 import { WorkoutSessionFooter } from "@/components/training/WorkoutSessionFooter";
-import { adaptExerciseSets, adaptToStoreFormat } from "@/utils/exerciseAdapter";
 import { ReadyWorkoutState } from "@/components/training/ReadyWorkoutState";
 import { WorkoutMotivation } from "@/components/training/WorkoutMotivation";
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
@@ -53,8 +52,8 @@ const TrainingSessionPage = () => {
   // Use new unified timer system
   const { workoutTimer, restTimer, handleSetCompletion } = useTrainingTimers();
   
-  // Convert store exercises to the format expected by components
-  const exercises = adaptExerciseSets(storeExercises);
+  // Work directly with store exercises format (no adapters needed)
+  const exercises = storeExercises;
   
   const [completedSets, totalSets] = Object.entries(exercises).reduce(
     ([completed, total], [_, sets]) => [
@@ -283,12 +282,12 @@ const TrainingSessionPage = () => {
   const exerciseNames = Object.keys(exercises);
   const currentExerciseIndex = activeExercise ? exerciseNames.indexOf(activeExercise) : 0;
   
-  // Set up the adapter function to convert between the different exercise formats
+  // Work directly with store format (no adapter function needed)
   const handleSetExercises = (updatedExercises) => {
     if (typeof updatedExercises === 'function') {
-      setStoreExercises(prev => adaptToStoreFormat(updatedExercises(adaptExerciseSets(prev))));
+      setStoreExercises(prev => updatedExercises(prev));
     } else {
-      setStoreExercises(adaptToStoreFormat(updatedExercises));
+      setStoreExercises(updatedExercises);
     }
   };
 

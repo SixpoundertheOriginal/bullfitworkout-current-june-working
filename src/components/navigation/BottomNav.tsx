@@ -1,15 +1,13 @@
-
-
 import { Clock, User as UserIcon, Dumbbell, BarChart3, Zap } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
-import { useWorkoutState } from "@/hooks/useWorkoutState";
+import { useWorkoutStore } from "@/store/workoutStore";
 import { cn } from "@/lib/utils";
 
 export const BottomNav = () => {
   const location = useLocation();
   const { confirmNavigation } = useWorkoutNavigation();
-  const { exercises, elapsedTime } = useWorkoutState();
+  const { exercises, elapsedTime } = useWorkoutStore();
   
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
@@ -100,4 +98,3 @@ const NavButton = ({
     </button>
   );
 };
-
