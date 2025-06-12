@@ -69,7 +69,10 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     equipment_type: [],
     movement_pattern: "push",
     difficulty: "beginner",
-    instructions: {},
+    instructions: {
+      steps: "",
+      form: ""
+    },
     is_compound: false,
     tips: [],
     variations: [],
@@ -102,17 +105,36 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
 
   const handleCreateExercise = () => {
     if (!newExercise.name) {
-      toast.error("Exercise name required");
+      toast({
+        title: "Error",
+        description: "Exercise name required",
+        variant: "destructive"
+      });
       return;
     }
 
     if (!Array.isArray(newExercise.primary_muscle_groups) || newExercise.primary_muscle_groups.length === 0) {
-      toast.error("Please add at least one primary muscle group");
+      toast({
+        title: "Error", 
+        description: "Please add at least one primary muscle group",
+        variant: "destructive"
+      });
       return;
     }
     
     const exerciseToCreate = {
-      ...newExercise,
+      name: newExercise.name,
+      description: newExercise.description || "",
+      primary_muscle_groups: newExercise.primary_muscle_groups,
+      secondary_muscle_groups: newExercise.secondary_muscle_groups,
+      equipment_type: newExercise.equipment_type,
+      difficulty: newExercise.difficulty || "beginner",
+      movement_pattern: newExercise.movement_pattern || "push",
+      is_compound: newExercise.is_compound || false,
+      instructions: {
+        steps: newExercise.instructions?.steps || "",
+        form: newExercise.instructions?.form || ""
+      },
       user_id: user?.id || "",
     };
     
@@ -121,7 +143,10 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     createExercise(exerciseToCreate, {
       onSuccess: (data) => {
         console.log("Exercise created successfully:", data);
-        toast.success(`Exercise "${newExercise.name}" created successfully`);
+        toast({
+          title: "Success",
+          description: `Exercise "${newExercise.name}" created successfully`
+        });
         setDialogOpen(false);
         setNewExercise({
           name: "",
@@ -133,7 +158,10 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
           equipment_type: [],
           movement_pattern: "push",
           difficulty: "beginner",
-          instructions: {},
+          instructions: {
+            steps: "",
+            form: ""
+          },
           is_compound: false,
           tips: [],
           variations: [],
@@ -142,7 +170,11 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
       },
       onError: (error) => {
         console.error("Error creating exercise:", error);
-        toast.error(`Failed to create exercise: ${error.message}`);
+        toast({
+          title: "Error",
+          description: `Failed to create exercise: ${error.message}`,
+          variant: "destructive"
+        });
       }
     });
   };
@@ -484,7 +516,7 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
             <div className="space-y-2">
               <Label htmlFor="isCompound">Exercise Type</Label>
               <Select 
-                value={newExercise.is_compound.toString()}
+                value={newExercise.is_compound?.toString()}
                 onValueChange={(value) => setNewExercise({ ...newExercise, is_compound: value === "true" })}
               >
                 <SelectTrigger className="bg-gray-800 border-gray-700 text-white">

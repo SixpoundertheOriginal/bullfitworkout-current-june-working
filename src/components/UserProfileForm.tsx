@@ -1,3 +1,4 @@
+
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -49,7 +50,7 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
   });
 
   const handleSubmit = (data: UserProfileData) => {
-    setWeightUnit(data.weight_unit as "kg" | "lb");
+    setWeightUnit(data.weight_unit as "kg" | "lbs");
     onSubmit(data);
   };
 

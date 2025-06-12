@@ -12,9 +12,9 @@ export interface Exercise {
   id: string;
   name: string;
   description?: string;
-  primary_muscle_groups?: string[];
-  secondary_muscle_groups?: string[];
-  equipment_type?: string[];
+  primary_muscle_groups: string[];
+  secondary_muscle_groups: string[];
+  equipment_type: string[];
   difficulty?: string;
   movement_pattern?: string;
   is_compound?: boolean;
@@ -23,9 +23,14 @@ export interface Exercise {
     form: string;
   };
   sets?: ExerciseSet[];
+  user_id?: string;
+  created_at?: string;
+  tips?: string[];
+  variations?: string[];
+  metadata?: Record<string, any>;
 }
 
-export type ExerciseCardVariant = 'library-manage' | 'workout-add' | 'compact';
+export type ExerciseCardVariant = 'library-manage' | 'workout-add' | 'compact' | 'premium' | 'minimal';
 
 export interface ExerciseCardContextType {
   exercise: Exercise;
@@ -42,6 +47,9 @@ export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'co
 export type EquipmentType = 'barbell' | 'dumbbell' | 'kettlebell' | 'bodyweight' | 'resistance_band' | 'cable' | 'machine';
 export type MovementPattern = 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'carry' | 'rotation';
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
+
+// Weight unit type - standardize to use "lbs" consistently
+export type WeightUnit = 'kg' | 'lbs';
 
 // Constants
 export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [

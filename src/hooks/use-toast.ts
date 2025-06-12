@@ -1,95 +1,47 @@
 
-import * as React from "react"
-import { toast as sonnerToast, type ExternalToast } from "sonner"
+import { useState, useCallback } from 'react';
 
-// Define the toast message cache to prevent duplicates
-const recentToasts = new Map<string, number>();
-const TOAST_EXPIRY_TIME = 3000; // 3 seconds
-
-export interface ToastProps extends ExternalToast {
-  title?: React.ReactNode
-  description?: React.ReactNode
-  variant?: "default" | "destructive"
+interface ToastOptions {
+  title?: string;
+  description?: string;
+  variant?: 'default' | 'destructive';
+  duration?: number;
 }
 
-function toast(message: string | ToastProps) {
-  // If message is just a string, convert it to our ToastProps format
-  const props = typeof message === 'string' 
-    ? { title: message } as ToastProps
-    : message;
-  
-  const { title, description, ...options } = props;
-  
-  // Create a message key for duplicate detection
-  const messageKey = `${title || ''}-${description || ''}`;
-  
-  // Check if this exact toast was shown recently
-  const lastShownTime = recentToasts.get(messageKey);
-  const currentTime = Date.now();
-  
-  if (lastShownTime && currentTime - lastShownTime < TOAST_EXPIRY_TIME) {
-    // Skip this toast as it's a duplicate within the time window
-    return;
-  }
-  
-  // Record this toast message with current timestamp
-  recentToasts.set(messageKey, currentTime);
-  
-  // Clean up old entries from the cache to prevent memory leaks
-  setTimeout(() => {
-    if (recentToasts.has(messageKey)) {
-      recentToasts.delete(messageKey);
-    }
-  }, TOAST_EXPIRY_TIME);
-  
-  return sonnerToast(title as React.ReactNode, {
-    ...options,
-    description,
-  });
+interface Toast extends ToastOptions {
+  id: string;
 }
 
-// Add convenience methods
-toast.error = (title: string, options?: Omit<ToastProps, "title">) => {
-  return toast({
-    title,
-    variant: "destructive",
-    ...options,
-  });
-};
+export const useToast = () => {
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-toast.success = (title: string, options?: Omit<ToastProps, "title">) => {
-  return toast({
-    title,
-    ...options,
-  });
-};
+  const toast = useCallback((options: ToastOptions) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newToast: Toast = {
+      id,
+      ...options,
+      duration: options.duration || 5000,
+    };
 
-toast.info = (title: string, options?: Omit<ToastProps, "title">) => {
-  return toast({
-    title,
-    ...options,
-  });
-};
+    setToasts((prev) => [...prev, newToast]);
 
-toast.warning = (title: string, options?: Omit<ToastProps, "title">) => {
-  return toast({
-    title,
-    ...options,
-  });
-};
+    // Auto remove toast after duration
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, newToast.duration);
 
-// Forward these methods directly from sonner
-toast.dismiss = sonnerToast.dismiss;
-toast.promise = sonnerToast.promise;
-toast.custom = sonnerToast.custom;
-toast.loading = sonnerToast.loading;
-toast.message = sonnerToast.message;
+    return {
+      id,
+      dismiss: () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+    };
+  }, []);
 
-// Create a useToast hook that returns the toast function
-export function useToast() {
   return {
-    toast
+    toast,
+    toasts,
+    dismiss: (toastId: string) =>
+      setToasts((prev) => prev.filter((t) => t.id !== toastId)),
   };
-}
+};
 
-export { toast };
+export { toast } from './use-toast';

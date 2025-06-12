@@ -11,6 +11,9 @@ export interface UserProfileData {
   height?: number;
   weight?: number;
   fitness_goal?: string;
+  weight_unit?: string;
+  height_unit?: string;
+  experience_level?: string;
 }
 
 export const ProfilePage: React.FC = () => {
