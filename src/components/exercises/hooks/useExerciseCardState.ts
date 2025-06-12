@@ -20,7 +20,7 @@ export const useExerciseCardState = (
   const olderSession = useMemo(() => getOlderSessionData(exercise), [exercise]);
   
   const previousSessionWeight = useMemo(() => 
-    convertWeight(previousSession.weight, "lb", weightUnit), 
+    convertWeight(previousSession.weight, "lbs", weightUnit), 
     [previousSession.weight, weightUnit]
   );
   
@@ -44,7 +44,7 @@ export const useExerciseCardState = (
 
   const previousVolume = useMemo(() => {
     return previousSession.weight > 0 ? 
-      (convertWeight(previousSession.weight, "lb", weightUnit) * previousSession.reps * previousSession.sets) : 0;
+      (convertWeight(previousSession.weight, "lbs", weightUnit) * previousSession.reps * previousSession.sets) : 0;
   }, [previousSession, weightUnit]);
   
   const volumeProgress = useMemo(() => {

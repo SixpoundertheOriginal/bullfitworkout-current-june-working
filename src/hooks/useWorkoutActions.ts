@@ -41,7 +41,16 @@ export const useWorkoutActions = () => {
   const handleAddSet = (exerciseName: string) => {
     setStoreExercises(prev => ({
       ...prev,
-      [exerciseName]: [...prev[exerciseName], { weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }]
+      [exerciseName]: [...prev[exerciseName], { 
+        id: `${exerciseName}-${prev[exerciseName].length + 1}`,
+        weight: 0, 
+        reps: 0, 
+        restTime: 60, 
+        completed: false, 
+        isEditing: false,
+        volume: 0,
+        duration: '0:00'
+      }]
     }));
   };
 
@@ -61,7 +70,19 @@ export const useWorkoutActions = () => {
       toast({ title: "Exercise already added", description: `${name} is already in your workout` });
       return;
     }
-    setStoreExercises(prev => ({ ...prev, [name]: [{ weight: 0, reps: 0, restTime: 60, completed: false, isEditing: false }] }));
+    setStoreExercises(prev => ({ 
+      ...prev, 
+      [name]: [{ 
+        id: `${name}-1`,
+        weight: 0, 
+        reps: 0, 
+        restTime: 60, 
+        completed: false, 
+        isEditing: false,
+        volume: 0,
+        duration: '0:00'
+      }] 
+    }));
     setActiveExercise(name);
     if (workoutStatus === 'idle') startWorkout();
     setIsAddExerciseSheetOpen(false);

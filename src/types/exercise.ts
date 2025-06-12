@@ -1,4 +1,3 @@
-
 export interface ExerciseSet {
   id: string;
   weight: number;
@@ -76,6 +75,20 @@ export const EXERCISE_LOAD_FACTORS = {
   bodyweight: 0.8,
   machine: 1.1
 } as const;
+
+// Utility functions for weight calculations
+export const calculateEffectiveWeight = (weight: number, exerciseType: string): number => {
+  const loadFactor = EXERCISE_LOAD_FACTORS[exerciseType as keyof typeof EXERCISE_LOAD_FACTORS] || 1.0;
+  return weight * loadFactor;
+};
+
+export const getExerciseLoadFactor = (exerciseType: string): number => {
+  return EXERCISE_LOAD_FACTORS[exerciseType as keyof typeof EXERCISE_LOAD_FACTORS] || 1.0;
+};
+
+export const isBodyweightExercise = (equipmentTypes: string[]): boolean => {
+  return equipmentTypes.includes('bodyweight');
+};
 
 // Constants
 export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [

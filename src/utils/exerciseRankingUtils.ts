@@ -1,4 +1,3 @@
-
 import { Exercise, MuscleGroup, MovementPattern } from "@/types/exercise";
 
 export interface RankingCriteria {
@@ -238,3 +237,40 @@ export function estimateTimeOfDayScore(
   
   return 0.6; // Default score
 }
+
+export const calculateExerciseRank = (exercise: Exercise, preferences: any): number => {
+  let score = 0;
+  
+  // Base score
+  score += 10;
+  
+  // Movement pattern matching
+  if (exercise.movement_pattern && preferences.preferredPatterns) {
+    const movementPattern = exercise.movement_pattern as MovementPattern;
+    if (preferences.preferredPatterns.includes(movementPattern)) {
+      score += 20;
+    }
+  }
+  
+  // Equipment matching
+  if (exercise.equipment_type && preferences.availableEquipment) {
+    const hasRequiredEquipment = exercise.equipment_type.some(eq => 
+      preferences.availableEquipment.includes(eq)
+    );
+    if (hasRequiredEquipment) {
+      score += 15;
+    }
+  }
+  
+  // Muscle group matching
+  if (exercise.primary_muscle_groups && preferences.targetMuscles) {
+    const muscleMatch = exercise.primary_muscle_groups.some(muscle => 
+      preferences.targetMuscles.includes(muscle)
+    );
+    if (muscleMatch) {
+      score += 25;
+    }
+  }
+  
+  return score;
+};

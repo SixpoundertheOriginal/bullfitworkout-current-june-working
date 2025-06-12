@@ -9,7 +9,7 @@ export function useWorkoutTimer() {
   useEffect(() => {
     if (isActive) {
       const timer = setInterval(() => {
-        setElapsedTime(prev => {
+        setElapsedTime((prev: number) => {
           // Add validation to prevent timer corruption
           const newTime = prev + 1;
           const MAX_WORKOUT_HOURS = 24;

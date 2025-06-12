@@ -57,12 +57,41 @@ const ExerciseTrackerWrapper: React.FC<{
     }
   };
 
+  // Convert the exercise to match the expected interface
+  const convertedExercise = {
+    ...exercise,
+    sets: exercise.sets.map(set => ({
+      id: typeof set.id === 'string' ? parseInt(set.id.split('-')[1]) || 1 : set.id,
+      weight: set.weight,
+      reps: set.reps,
+      duration: set.duration,
+      completed: set.completed,
+      volume: set.volume
+    }))
+  };
+
+  const handleUpdateSet = (setId: number, updates: Partial<{
+    id: number;
+    weight: number;
+    reps: number;
+    duration: string;
+    completed: boolean;
+    volume: number;
+  }>) => {
+    // Convert back to the format expected by the hook
+    const convertedUpdates: Partial<ExerciseSet> = {
+      ...updates,
+      id: updates.id?.toString() || setId.toString()
+    };
+    onUpdateSet(setId, convertedUpdates);
+  };
+
   return (
     <div onClick={onSetActive}>
       <EnhancedExerciseTracker
-        exercise={exercise}
+        exercise={convertedExercise}
         isActive={isActive}
-        onUpdateSet={onUpdateSet}
+        onUpdateSet={handleUpdateSet}
         onToggleCompletion={handleToggleCompletion}
         onAddSet={onAddSet}
         onDeleteSet={onDeleteSet}
