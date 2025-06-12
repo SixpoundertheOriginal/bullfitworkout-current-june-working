@@ -33,6 +33,10 @@ export interface WorkoutState {
   // UI state
   activeExercise: string | null;
   
+  // Navigation state
+  lastActiveRoute?: string;
+  sessionId?: string;
+  
   // Training configuration
   trainingConfig: {
     trainingType: string;
@@ -49,6 +53,7 @@ export interface WorkoutState {
   startWorkout: (config?: any) => void;
   endWorkout: () => void;
   resetWorkout: () => void;
+  resetSession: () => void;
   addExercise: (exerciseName: string) => void;
   removeExercise: (exerciseName: string) => void;
   updateExerciseSet: (exerciseName: string, setIndex: number, updates: Partial<ExerciseSet>) => void;
@@ -56,11 +61,13 @@ export interface WorkoutState {
   removeSet: (exerciseName: string, setIndex: number) => void;
   setActiveExercise: (exerciseName: string | null) => void;
   incrementElapsedTime: () => void;
+  setElapsedTime: (time: number) => void;
   startRestTimer: (duration: number) => void;
   stopRestTimer: () => void;
   resetRestTimer: () => void;
   setTrainingConfig: (config: any) => void;
   setWorkoutStatus: (status: 'idle' | 'active' | 'saving' | 'saved' | 'failed') => void;
+  updateLastActiveRoute: (route: string) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -77,6 +84,8 @@ export const useWorkoutStore = create<WorkoutState>()(
       currentRestTime: 0,
       activeExercise: null,
       trainingConfig: null,
+      lastActiveRoute: undefined,
+      sessionId: undefined,
 
       // Actions
       startWorkout: (config) => set({
@@ -84,7 +93,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         explicitlyEnded: false,
         workoutStatus: 'active',
         elapsedTime: 0,
-        trainingConfig: config || null
+        trainingConfig: config || null,
+        sessionId: `workout_${Date.now()}`
       }),
 
       endWorkout: () => set({
@@ -104,7 +114,22 @@ export const useWorkoutStore = create<WorkoutState>()(
         restTimerResetSignal: 0,
         currentRestTime: 0,
         activeExercise: null,
-        trainingConfig: null
+        trainingConfig: null,
+        sessionId: undefined
+      }),
+
+      resetSession: () => set({
+        isActive: false,
+        explicitlyEnded: false,
+        workoutStatus: 'idle',
+        exercises: {},
+        elapsedTime: 0,
+        restTimerActive: false,
+        restTimerResetSignal: 0,
+        currentRestTime: 0,
+        activeExercise: null,
+        trainingConfig: null,
+        sessionId: undefined
       }),
 
       addExercise: (exerciseName) => set((state) => ({
@@ -171,6 +196,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         elapsedTime: state.elapsedTime + 1 
       })),
 
+      setElapsedTime: (time) => set({ elapsedTime: time }),
+
       startRestTimer: (duration) => set({
         restTimerActive: true,
         currentRestTime: duration
@@ -189,7 +216,9 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setTrainingConfig: (config) => set({ trainingConfig: config }),
 
-      setWorkoutStatus: (status) => set({ workoutStatus: status })
+      setWorkoutStatus: (status) => set({ workoutStatus: status }),
+
+      updateLastActiveRoute: (route) => set({ lastActiveRoute: route })
     }),
     {
       name: 'workout-storage',
@@ -198,7 +227,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: state.exercises,
         elapsedTime: state.elapsedTime,
         trainingConfig: state.trainingConfig,
-        workoutStatus: state.workoutStatus
+        workoutStatus: state.workoutStatus,
+        lastActiveRoute: state.lastActiveRoute,
+        sessionId: state.sessionId
       })
     }
   )

@@ -1,6 +1,6 @@
 
 export interface ExerciseSet {
-  id: number | string;
+  id: string;
   weight: number;
   reps: number;
   duration: string;
@@ -11,6 +11,7 @@ export interface ExerciseSet {
   workout_id?: string;
   restTime?: number;
   rest_time?: number;
+  created_at?: string;
 }
 
 export interface Exercise {

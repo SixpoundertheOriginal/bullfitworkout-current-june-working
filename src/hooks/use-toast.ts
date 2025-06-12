@@ -19,9 +19,9 @@ interface ToastReturn {
 
 interface UseToastReturn {
   toast: ((options: ToastOptions) => ToastReturn) & {
-    success: (options: Omit<ToastOptions, 'variant'>) => ToastReturn;
-    error: (options: Omit<ToastOptions, 'variant'>) => ToastReturn;
-    info: (options: Omit<ToastOptions, 'variant'>) => ToastReturn;
+    success: (options: ToastOptions | string) => ToastReturn;
+    error: (options: ToastOptions | string) => ToastReturn;
+    info: (options: ToastOptions | string) => ToastReturn;
   };
   toasts: Toast[];
   dismiss: (toastId: string) => void;
@@ -79,9 +79,18 @@ export const useToast = (): UseToastReturn => {
   }, [])();
 
   const toast = Object.assign(baseToast, {
-    success: (options: Omit<ToastOptions, 'variant'>) => baseToast({ ...options, variant: 'default' }),
-    error: (options: Omit<ToastOptions, 'variant'>) => baseToast({ ...options, variant: 'destructive' }),
-    info: (options: Omit<ToastOptions, 'variant'>) => baseToast({ ...options, variant: 'default' })
+    success: (options: ToastOptions | string) => {
+      const opts = typeof options === 'string' ? { title: options } : options;
+      return baseToast({ ...opts, variant: 'default' });
+    },
+    error: (options: ToastOptions | string) => {
+      const opts = typeof options === 'string' ? { title: options } : options;
+      return baseToast({ ...opts, variant: 'destructive' });
+    },
+    info: (options: ToastOptions | string) => {
+      const opts = typeof options === 'string' ? { title: options } : options;
+      return baseToast({ ...opts, variant: 'default' });
+    }
   });
 
   return {
@@ -96,7 +105,16 @@ export const useToast = (): UseToastReturn => {
 
 // Standalone toast function for direct imports
 export const toast = Object.assign(addToast, {
-  success: (options: Omit<ToastOptions, 'variant'>) => addToast({ ...options, variant: 'default' }),
-  error: (options: Omit<ToastOptions, 'variant'>) => addToast({ ...options, variant: 'destructive' }),
-  info: (options: Omit<ToastOptions, 'variant'>) => addToast({ ...options, variant: 'default' })
+  success: (options: ToastOptions | string) => {
+    const opts = typeof options === 'string' ? { title: options } : options;
+    return addToast({ ...opts, variant: 'default' });
+  },
+  error: (options: ToastOptions | string) => {
+    const opts = typeof options === 'string' ? { title: options } : options;
+    return addToast({ ...opts, variant: 'destructive' });
+  },
+  info: (options: ToastOptions | string) => {
+    const opts = typeof options === 'string' ? { title: options } : options;
+    return addToast({ ...opts, variant: 'default' });
+  }
 });
