@@ -12,10 +12,25 @@ interface Toast extends ToastOptions {
   id: string;
 }
 
-export const useToast = () => {
+interface ToastReturn {
+  id: string;
+  dismiss: () => void;
+}
+
+interface UseToastReturn {
+  toast: ((options: ToastOptions) => ToastReturn) & {
+    success: (options: Omit<ToastOptions, 'variant'>) => ToastReturn;
+    error: (options: Omit<ToastOptions, 'variant'>) => ToastReturn;
+    info: (options: Omit<ToastOptions, 'variant'>) => ToastReturn;
+  };
+  toasts: Toast[];
+  dismiss: (toastId: string) => void;
+}
+
+export const useToast = (): UseToastReturn => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = useCallback((options: ToastOptions) => {
+  const baseToast = useCallback((options: ToastOptions): ToastReturn => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast: Toast = {
       id,
@@ -36,6 +51,12 @@ export const useToast = () => {
     };
   }, []);
 
+  const toast = Object.assign(baseToast, {
+    success: (options: Omit<ToastOptions, 'variant'>) => baseToast({ ...options, variant: 'default' }),
+    error: (options: Omit<ToastOptions, 'variant'>) => baseToast({ ...options, variant: 'destructive' }),
+    info: (options: Omit<ToastOptions, 'variant'>) => baseToast({ ...options, variant: 'default' })
+  });
+
   return {
     toast,
     toasts,
@@ -43,8 +64,3 @@ export const useToast = () => {
       setToasts((prev) => prev.filter((t) => t.id !== toastId)),
   };
 };
-
-// Create a singleton instance for the toast function
-const { toast } = useToast();
-
-export { toast };

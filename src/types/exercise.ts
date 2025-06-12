@@ -6,6 +6,11 @@ export interface ExerciseSet {
   duration: string;
   completed: boolean;
   volume: number;
+  set_number?: number;
+  exercise_name?: string;
+  workout_id?: string;
+  restTime?: number;
+  rest_time?: number;
 }
 
 export interface Exercise {
@@ -50,6 +55,21 @@ export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
 // Weight unit type - standardize to use "lbs" consistently
 export type WeightUnit = 'kg' | 'lbs';
+
+// Weight calculation interfaces
+export interface WeightCalculation {
+  weight: number;
+  unit: WeightUnit;
+  converted?: number;
+}
+
+// Exercise load factors
+export const EXERCISE_LOAD_FACTORS = {
+  compound: 1.2,
+  isolation: 1.0,
+  bodyweight: 0.8,
+  machine: 1.1
+} as const;
 
 // Constants
 export const COMMON_MUSCLE_GROUPS: MuscleGroup[] = [
