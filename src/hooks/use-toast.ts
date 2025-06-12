@@ -18,7 +18,7 @@ interface ToastReturn {
 }
 
 interface UseToastReturn {
-  toast: ((options: ToastOptions) => ToastReturn) & {
+  toast: ((options: ToastOptions | string) => ToastReturn) & {
     success: (options: ToastOptions | string) => ToastReturn;
     error: (options: ToastOptions | string) => ToastReturn;
     info: (options: ToastOptions | string) => ToastReturn;
@@ -35,12 +35,13 @@ const notifyListeners = () => {
   globalListeners.forEach(listener => listener(globalToasts));
 };
 
-const addToast = (options: ToastOptions): ToastReturn => {
+const addToast = (options: ToastOptions | string): ToastReturn => {
   const id = Math.random().toString(36).substring(2, 9);
+  const opts = typeof options === 'string' ? { title: options } : options;
   const newToast: Toast = {
     id,
-    ...options,
-    duration: options.duration || 5000,
+    ...opts,
+    duration: opts.duration || 5000,
   };
 
   globalToasts = [...globalToasts, newToast];
@@ -64,7 +65,7 @@ const addToast = (options: ToastOptions): ToastReturn => {
 export const useToast = (): UseToastReturn => {
   const [toasts, setToasts] = useState<Toast[]>(globalToasts);
 
-  const baseToast = useCallback((options: ToastOptions): ToastReturn => {
+  const baseToast = useCallback((options: ToastOptions | string): ToastReturn => {
     return addToast(options);
   }, []);
 

@@ -3,16 +3,18 @@ import { useState } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 
 interface EnhancedExercise {
+  id: string;
   name: string;
   sets: ExerciseSet[];
 }
 
 export const useEnhancedExerciseTracker = (exerciseName: string) => {
   const [exercise, setExercise] = useState<EnhancedExercise>({
+    id: `exercise-${exerciseName}`,
     name: exerciseName,
     sets: [
       {
-        id: 1,
+        id: `${exerciseName}-1`,
         weight: 0,
         reps: 0,
         duration: '0',
@@ -47,7 +49,7 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
       sets: [
         ...prev.sets,
         {
-          id: prev.sets.length + 1,
+          id: `${exerciseName}-${prev.sets.length + 1}`,
           weight: 0,
           reps: 0,
           duration: '0',

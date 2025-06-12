@@ -26,7 +26,7 @@ const TrainingSessionPage: React.FC = () => {
       ...prev,
       [exerciseName]: [
         {
-          id: 1,
+          id: `${exerciseName}-1`,
           weight: 0,
           reps: 0,
           duration: '0',
@@ -51,7 +51,7 @@ const TrainingSessionPage: React.FC = () => {
       [exerciseName]: [
         ...prev[exerciseName],
         {
-          id: prev[exerciseName].length + 1,
+          id: `${exerciseName}-${prev[exerciseName].length + 1}`,
           weight: 0,
           reps: 0,
           duration: '0',
