@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { EquipmentType } from '@/types/exercise';
 import { cn } from '@/lib/utils';
@@ -64,14 +65,14 @@ const EQUIPMENT_CARDS: EquipmentCard[] = [
     description: 'Functional strength'
   },
   {
-    id: 'resistance band',
+    id: 'resistance_band',
     name: 'Resistance Band',
     icon: Cable,
     category: 'strength',
     description: 'Portable resistance'
   },
   {
-    id: 'smith machine',
+    id: 'smith_machine',
     name: 'Smith Machine',
     icon: Zap,
     category: 'strength',

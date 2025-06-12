@@ -58,14 +58,15 @@ export function BulkWorkoutActions({
     try {
       const result = await bulkDeleteWorkouts(selectedWorkoutIds);
       setIsDeleteDialogOpen(false);
-      toast.success(
-        `${result.count} workouts deleted successfully`, 
-        { description: "All selected workouts have been removed" }
-      );
+      toast.success({
+        title: `${result.count} workouts deleted successfully`,
+        description: "All selected workouts have been removed"
+      });
       onActionComplete();
     } catch (error) {
       console.error("Error deleting workouts:", error);
-      toast.error("Failed to delete workouts", {
+      toast.error({
+        title: "Failed to delete workouts",
         description: "An error occurred while deleting the selected workouts"
       });
     } finally {
@@ -83,7 +84,7 @@ export function BulkWorkoutActions({
     });
     
     if (Object.keys(updateData).length === 0) {
-      toast.info("No changes to apply");
+      toast.info({ title: "No changes to apply" });
       setIsEditDialogOpen(false);
       return;
     }
@@ -92,14 +93,15 @@ export function BulkWorkoutActions({
     try {
       const result = await bulkUpdateWorkouts(selectedWorkoutIds, updateData);
       setIsEditDialogOpen(false);
-      toast.success(
-        `${result.count} workouts updated successfully`, 
-        { description: "The selected workouts have been updated" }
-      );
+      toast.success({
+        title: `${result.count} workouts updated successfully`,
+        description: "The selected workouts have been updated"
+      });
       onActionComplete();
     } catch (error) {
       console.error("Error updating workouts:", error);
-      toast.error("Failed to update workouts", {
+      toast.error({
+        title: "Failed to update workouts",
         description: "An error occurred while updating the selected workouts"
       });
     } finally {
@@ -114,14 +116,15 @@ export function BulkWorkoutActions({
     try {
       const result = await bulkResetWorkoutSets(selectedWorkoutIds);
       setIsResetDialogOpen(false);
-      toast.success(
-        `Reset ${result.workoutCount} workouts`, 
-        { description: `${result.count} exercise sets have been reset to zero` }
-      );
+      toast.success({
+        title: `Reset ${result.workoutCount} workouts`,
+        description: `${result.count} exercise sets have been reset to zero`
+      });
       onActionComplete();
     } catch (error) {
       console.error("Error resetting workouts:", error);
-      toast.error("Failed to reset workouts", {
+      toast.error({
+        title: "Failed to reset workouts",
         description: "An error occurred while resetting the selected workouts"
       });
     } finally {
