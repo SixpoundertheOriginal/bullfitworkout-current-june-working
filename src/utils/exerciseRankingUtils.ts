@@ -83,9 +83,9 @@ export function rankExercises(
       }
     }
 
-    // Movement pattern match
-    if (criteria.movementPattern && criteria.movementPattern.length > 0) {
-      if (criteria.movementPattern.includes(exercise.movement_pattern)) {
+    // Movement pattern match - fix the casting issue
+    if (criteria.movementPattern && criteria.movementPattern.length > 0 && exercise.movement_pattern) {
+      if (criteria.movementPattern.includes(exercise.movement_pattern as MovementPattern)) {
         score += 20;
         matchReasons.push(`Uses ${exercise.movement_pattern} pattern`);
       }

@@ -122,7 +122,7 @@ export interface EnhancedExercise extends Exercise {
 // Exercise input interface for database operations
 export interface ExerciseInput {
   name: string;
-  description: string;
+  description?: string; // Make this optional
   primary_muscle_groups: string[];
   secondary_muscle_groups: string[];
   equipment_type: string[];

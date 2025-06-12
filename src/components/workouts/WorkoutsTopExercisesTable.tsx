@@ -51,8 +51,8 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
             </TableHeader>
             <TableBody>
               {exercises.map((exercise) => {
-                const avgWeight = convertWeight(exercise.averageWeight, "lb", weightUnit);
-                const volume = convertWeight(exercise.totalVolume, "lb", weightUnit);
+                const avgWeight = convertWeight(exercise.averageWeight, "lbs", weightUnit);
+                const volume = convertWeight(exercise.totalVolume, "lbs", weightUnit);
                 
                 return (
                   <TableRow 
@@ -94,7 +94,7 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
               <div className="bg-gray-800/50 p-4 rounded-lg">
                 <p className="text-sm text-gray-400">Average Weight</p>
                 <p className="text-2xl font-semibold">
-                  {Math.round(convertWeight(selectedExercise?.averageWeight || 0, "lb", weightUnit) * 10) / 10} {weightUnit}
+                  {Math.round(convertWeight(selectedExercise?.averageWeight || 0, "lbs", weightUnit) * 10) / 10} {weightUnit}
                 </p>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
             <div className="bg-gray-800/50 p-4 rounded-lg">
               <p className="text-sm text-gray-400 mb-1">Total Volume</p>
               <p className="text-2xl font-semibold">
-                {Math.round(convertWeight(selectedExercise?.totalVolume || 0, "lb", weightUnit))} {weightUnit}
+                {Math.round(convertWeight(selectedExercise?.totalVolume || 0, "lbs", weightUnit))} {weightUnit}
               </p>
             </div>
             
