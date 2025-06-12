@@ -43,5 +43,3 @@ export const useToast = () => {
       setToasts((prev) => prev.filter((t) => t.id !== toastId)),
   };
 };
-
-export { toast } from './use-toast';
