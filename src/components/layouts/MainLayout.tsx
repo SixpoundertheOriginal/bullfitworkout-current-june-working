@@ -16,7 +16,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {!isTrainingSession && <PageHeader />}
+      {!isTrainingSession && <PageHeader title="BullFit" />}
       <main className={cn(
         "flex-1",
         !isTrainingSession && "pt-16 pb-16"

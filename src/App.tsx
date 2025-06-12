@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { HomePage } from '@/pages/HomePage';
 import { ExerciseLibraryPage } from '@/pages/ExerciseLibraryPage';
-import { WorkoutDetailsPage } from '@/pages/WorkoutDetailsPage';
+import WorkoutDetailsPage from '@/pages/WorkoutDetailsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { OverviewPage } from '@/pages/Overview';
 import TrainingSessionPage from '@/pages/TrainingSession';

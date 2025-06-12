@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,11 +7,20 @@ import { useAuth } from '@/context/AuthContext';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { WorkoutTypeChart } from '@/components/metrics/WorkoutTypeChart';
-import { WorkoutDaysChart } from '@/components/metrics/WorkoutDaysChart';
-import { TopExercisesTable } from '@/components/metrics/TopExercisesTable';
-import { TonnageChart } from '@/components/metrics/TonnageChart';
 import { QuickStatsSection } from '@/components/metrics/QuickStatsSection';
+
+interface WorkoutSet {
+  weight: number;
+  reps: number;
+}
+
+interface Workout {
+  id: string;
+  name: string;
+  created_at: string;
+  duration?: number;
+  exercises?: Record<string, WorkoutSet[]>;
+}
 
 export const OverviewPage: React.FC = () => {
   const { user } = useAuth();
@@ -144,16 +154,8 @@ export const OverviewPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <WorkoutTypeChart workouts={workouts || []} />
-        <WorkoutDaysChart workouts={workouts || []} />
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <TopExercisesTable workouts={workouts || []} />
-        <TonnageChart workouts={workouts || []} />
-      </div>
     </div>
   );
 };
+
+export default OverviewPage;

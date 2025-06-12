@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExerciseSet } from "@/types/exercise";
@@ -148,10 +147,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               className="transform-gpu will-change-transform"
             >
               <ExerciseTrackerWrapper
-                exerc
-
-
-seName={exerciseName}
+                exerciseName={exerciseName}
                 onDeleteExercise={onDeleteExercise}
                 onCompleteSet={onCompleteSet}
               />
