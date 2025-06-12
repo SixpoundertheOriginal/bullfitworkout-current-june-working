@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer';
+import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useExercises } from "@/hooks/useExercises";
 import { AddExerciseSheet } from "@/components/training/AddExerciseSheet";
 import { Loader2 } from "lucide-react";
@@ -15,6 +16,7 @@ import { useWorkoutActions } from "@/hooks/useWorkoutActions";
 import { WorkoutFeedbackSystem } from "@/components/training/WorkoutFeedbackSystem";
 import { ReadyWorkoutSection } from "@/components/training/ReadyWorkoutSection";
 import { ActiveWorkoutSection } from "@/components/training/ActiveWorkoutSection";
+import { UnifiedTimerDisplay } from "@/components/timers/UnifiedTimerDisplay";
 
 const TrainingSessionPage = () => {
   const navigate = useNavigate();
@@ -38,6 +40,9 @@ const TrainingSessionPage = () => {
     setWorkoutStatus
   } = useWorkoutStore();
   
+  // Initialize unified timer system
+  const { workoutTimer, restTimer, handleSetCompletion } = useTrainingTimers();
+  
   // Use the extracted actions hook
   const {
     isAddExerciseSheetOpen,
@@ -45,7 +50,6 @@ const TrainingSessionPage = () => {
     isSaving,
     setIsSaving,
     handleAddSet,
-    handleCompleteSetWithFeedback,
     handleAddExerciseWithFeedback,
     handleDeleteExerciseWithFeedback,
     handleAutoPopulateWorkout,
@@ -55,6 +59,16 @@ const TrainingSessionPage = () => {
     hasExercises,
     exerciseCount
   } = useWorkoutActions();
+  
+  // Enhanced set completion that uses the unified timer system
+  const handleCompleteSetWithTimer = (exerciseName: string, setIndex: number) => {
+    console.log(`Set completion handler called for ${exerciseName}, set ${setIndex + 1}`);
+    handleSetCompletion(exerciseName, setIndex);
+    showFeedback(
+      `Set ${setIndex + 1} completed! Rest timer started 💪`,
+      'success'
+    );
+  };
   
   // Convert store exercises format to the format expected by ExerciseList
   const convertedExercises = Object.entries(storeExercises).reduce((acc, [exerciseName, sets]) => {
@@ -181,6 +195,22 @@ const TrainingSessionPage = () => {
       <main className="flex-1 overflow-auto pt-16 pb-20">
         <div className="mx-auto max-w-4xl px-4 py-6">
           
+          {/* Unified Timer Display - Always visible during active workout */}
+          {!showReadyState && hasExercises && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mb-6"
+            >
+              <UnifiedTimerDisplay
+                workoutTimer={workoutTimer}
+                restTimer={restTimer}
+                className="w-full"
+              />
+            </motion.div>
+          )}
+          
           {/* Ready State Section */}
           {showReadyState && (
             <ReadyWorkoutSection
@@ -203,7 +233,7 @@ const TrainingSessionPage = () => {
               activeExercise={activeExercise}
               convertedExercises={convertedExercises}
               onAddSet={handleAddSet}
-              onCompleteSet={handleCompleteSetWithFeedback}
+              onCompleteSet={handleCompleteSetWithTimer}
               onDeleteExercise={handleDeleteExerciseWithFeedback}
               onRemoveSet={(name, i) => {
                 setStoreExercises(prev => ({ ...prev, [name]: prev[name].filter((_, idx) => idx !== i) }));

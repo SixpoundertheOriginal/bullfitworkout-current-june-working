@@ -1,132 +1,159 @@
-
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
-import { WorkoutTypeChart } from "@/components/metrics/WorkoutTypeChart";
-import { MuscleGroupChart } from "@/components/metrics/MuscleGroupChart";
-import { TimeOfDayChart } from "@/components/metrics/TimeOfDayChart";
-import { WorkoutDaysChart } from "@/components/metrics/WorkoutDaysChart";
-import { TopExercisesTable } from "@/components/metrics/TopExercisesTable";
-import { WorkoutVolumeOverTimeChart } from '@/components/metrics/WorkoutVolumeOverTimeChart';
-import { WorkoutDensityOverTimeChart } from '@/components/metrics/WorkoutDensityOverTimeChart';
-import { useWeightUnit } from "@/context/WeightUnitContext";
-import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
-import { LazyLoadWrapper } from '@/components/common/LazyLoadWrapper';
-import { WorkoutRegressionPanel } from '@/components/dev/WorkoutRegressionPanel';
+import { PageHeader } from '@/components/navigation/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, Target, TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useWorkouts } from '@/hooks/useWorkouts';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { WorkoutTypeChart } from '@/components/metrics/WorkoutTypeChart';
+import { WorkoutDaysChart } from '@/components/metrics/WorkoutDaysChart';
+import { TopExercisesTable } from '@/components/metrics/TopExercisesTable';
+import { TonnageChart } from '@/components/metrics/TonnageChart';
+import { QuickStatsSection } from '@/components/metrics/QuickStatsSection';
 
-const Overview: React.FC = () => {
-  const { weightUnit } = useWeightUnit();
-  const { stats, loading } = useWorkoutStatsContext();
-  
-  // Process raw metrics using the centralized data
-  const {
-    volumeOverTimeData,
-    densityOverTimeData,
-    volumeStats,
-    densityStats
-  } = useProcessWorkoutMetrics(stats.workouts, weightUnit);
+export const OverviewPage: React.FC = () => {
+  const { user } = useAuth();
+  const { workouts, isLoading } = useWorkouts();
 
-  // Simple data‐exists guard
-  const hasData = (v: any) => v != null && ((Array.isArray(v) && v.length > 0) || (typeof v === 'object' && Object.keys(v).length > 0));
-
-  // Chart configurations - memoized for performance
-  const chartConfigs = useMemo(() => ([
-    {
-      title: "Workout Types",
-      renderComponent: (data: any) => <WorkoutTypeChart workoutTypes={data} height={250} />,
-      data: stats.workoutTypes || []
-    },
-    {
-      title: "Muscle Focus",
-      renderComponent: (data: any) => <MuscleGroupChart muscleFocus={data} height={250} />,
-      data: stats.muscleFocus || {}
-    },
-    {
-      title: "Workout Days",
-      renderComponent: (data: any) => <WorkoutDaysChart daysFrequency={data} height={250} />,
-      data: stats.timePatterns?.daysFrequency || {}
-    },
-    {
-      title: "Time of Day",
-      renderComponent: (data: any) => <TimeOfDayChart durationByTimeOfDay={data} height={250} />,
-      data: stats.timePatterns?.durationByTimeOfDay || {}
-    },
-    {
-      title: "Top Exercises",
-      renderComponent: (data: any) => <TopExercisesTable exerciseVolumeHistory={data} />,
-      data: stats.exerciseVolumeHistory || []
+  const stats = useMemo(() => {
+    if (!workouts || workouts.length === 0) {
+      return {
+        totalWorkouts: 0,
+        totalDuration: 0,
+        avgDuration: 0,
+        totalVolume: 0,
+        thisWeekWorkouts: 0,
+        weeklyGoal: 3
+      };
     }
-  ]), [stats, weightUnit]);
+
+    const totalWorkouts = workouts.length;
+    const totalDuration = workouts.reduce((sum, w) => sum + (w.duration || 0), 0);
+    const avgDuration = totalDuration / totalWorkouts;
+    
+    const totalVolume = workouts.reduce((sum, workout) => {
+      if (!workout.exercises) return sum;
+      return sum + Object.values(workout.exercises).flat().reduce((exerciseSum, set) => {
+        return exerciseSum + (set.weight * set.reps);
+      }, 0);
+    }, 0);
+
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const thisWeekWorkouts = workouts.filter(w => 
+      new Date(w.created_at) >= oneWeekAgo
+    ).length;
+
+    return {
+      totalWorkouts,
+      totalDuration,
+      avgDuration,
+      totalVolume,
+      thisWeekWorkouts,
+      weeklyGoal: 3
+    };
+  }, [workouts]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 bg-gray-800" />
+          ))}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64 bg-gray-800" />
+          <Skeleton className="h-64 bg-gray-800" />
+        </div>
+      </div>
+    );
+  }
+
+  const weeklyProgress = (stats.thisWeekWorkouts / stats.weeklyGoal) * 100;
 
   return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Workout Overview</h1>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Overview</h1>
+          <p className="text-muted-foreground">
+            Track your fitness journey and progress
+          </p>
+        </div>
       </div>
 
-      {/* Volume over time with lazy loading */}
-      <LazyLoadWrapper>
-        <Card className="bg-card min-h-[300px] overflow-hidden">
-          <CardHeader><CardTitle>Volume Over Time</CardTitle></CardHeader>
-          <CardContent className="h-[300px]">
-            {loading
-              ? <Skeleton className="w-full h-full" />
-              : hasData(volumeOverTimeData)
-                ? <WorkoutVolumeOverTimeChart data={volumeOverTimeData} height={300} />
-                : <div className="flex items-center justify-center h-full text-gray-500">No volume data available</div>
-            }
-          </CardContent>
-        </Card>
-      </LazyLoadWrapper>
+      <QuickStatsSection />
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader><CardTitle>Total Workouts</CardTitle></CardHeader>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{stats.totalWorkouts || 0}</div>
+            <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
+            <p className="text-xs text-muted-foreground">
+              All time
+            </p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader><CardTitle>Total Volume</CardTitle></CardHeader>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Weekly Goal</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">
-              {(stats.totalVolume || 0).toLocaleString()} {weightUnit}
+            <div className="text-2xl font-bold">{stats.thisWeekWorkouts}/{stats.weeklyGoal}</div>
+            <Progress value={weeklyProgress} className="mt-2" />
+            <p className="text-xs text-muted-foreground mt-1">
+              {Math.round(weeklyProgress)}% complete
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {Math.round(stats.avgDuration / 60)}m
             </div>
+            <p className="text-xs text-muted-foreground">
+              Per workout
+            </p>
           </CardContent>
         </Card>
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader><CardTitle>Average Duration</CardTitle></CardHeader>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{stats.avgDuration || 0} min</div>
+            <div className="text-2xl font-bold">
+              {(stats.totalVolume / 1000).toFixed(1)}k
+            </div>
+            <p className="text-xs text-muted-foreground">
+              lbs lifted
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Chart grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {chartConfigs.map((config) => (
-          <LazyLoadWrapper key={config.title}>
-            <Card className="bg-card min-h-[300px] overflow-hidden">
-              <CardHeader><CardTitle>{config.title}</CardTitle></CardHeader>
-              <CardContent className="h-[300px]">
-                {loading
-                  ? <Skeleton className="w-full h-full" />
-                  : hasData(config.data)
-                    ? config.renderComponent(config.data)
-                    : <div className="flex items-center justify-center h-full text-gray-500">No data available</div>
-                }
-              </CardContent>
-            </Card>
-          </LazyLoadWrapper>
-        ))}
+      <div className="grid gap-6 md:grid-cols-2">
+        <WorkoutTypeChart workouts={workouts || []} />
+        <WorkoutDaysChart workouts={workouts || []} />
       </div>
 
-      {/* Development regression panel */}
-      <WorkoutRegressionPanel />
+      <div className="grid gap-6 md:grid-cols-2">
+        <TopExercisesTable workouts={workouts || []} />
+        <TonnageChart workouts={workouts || []} />
+      </div>
     </div>
   );
 };
-
-export default Overview;

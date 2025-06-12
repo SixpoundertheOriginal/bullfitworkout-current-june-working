@@ -1,5 +1,4 @@
 
-
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExerciseSet } from "@/types/exercise";
@@ -27,13 +26,15 @@ interface ExerciseListProps {
   setExercises: (exercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => void;
 }
 
-// Individual exercise tracker component
+// Individual exercise tracker component with timer integration
 const ExerciseTrackerWrapper: React.FC<{ 
   exerciseName: string; 
-  onDeleteExercise: (name: string) => void 
+  onDeleteExercise: (name: string) => void;
+  onCompleteSet: (exerciseName: string, setIndex: number) => void;
 }> = ({ 
   exerciseName, 
-  onDeleteExercise 
+  onDeleteExercise,
+  onCompleteSet
 }) => {
   const {
     exercise,
@@ -45,13 +46,25 @@ const ExerciseTrackerWrapper: React.FC<{
     onSetActive
   } = useEnhancedExerciseTracker(exerciseName);
 
+  // Enhanced completion handler that triggers rest timer
+  const handleToggleCompletion = (setIndex: number) => {
+    const wasCompleted = exercise.sets[setIndex]?.completed;
+    onToggleCompletion(setIndex);
+    
+    // Auto-start rest timer when set is completed (not uncompleted)
+    if (!wasCompleted) {
+      console.log(`Set ${setIndex + 1} completed for ${exerciseName}, starting rest timer`);
+      onCompleteSet(exerciseName, setIndex);
+    }
+  };
+
   return (
     <div onClick={onSetActive}>
       <EnhancedExerciseTracker
         exercise={exercise}
         isActive={isActive}
         onUpdateSet={onUpdateSet}
-        onToggleCompletion={onToggleCompletion}
+        onToggleCompletion={handleToggleCompletion}
         onAddSet={onAddSet}
         onDeleteSet={onDeleteSet}
         onDeleteExercise={onDeleteExercise}
@@ -63,6 +76,7 @@ const ExerciseTrackerWrapper: React.FC<{
 export const ExerciseList: React.FC<ExerciseListProps> = ({
   exercises,
   onDeleteExercise,
+  onCompleteSet,
 }) => {
   const exerciseList = Object.keys(exercises);
   
@@ -134,8 +148,12 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               className="transform-gpu will-change-transform"
             >
               <ExerciseTrackerWrapper
-                exerciseName={exerciseName}
+                exerc
+
+
+seName={exerciseName}
                 onDeleteExercise={onDeleteExercise}
+                onCompleteSet={onCompleteSet}
               />
             </motion.div>
           ))}
@@ -144,4 +162,3 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     </div>
   );
 }
-

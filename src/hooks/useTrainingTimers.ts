@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useSound } from '@/hooks/useSound';
+import { toast } from "@/hooks/use-toast";
 
 export interface WorkoutTimer {
   elapsed: number;
@@ -19,6 +20,7 @@ export interface RestTimer {
   skip: () => void;
   reset: () => void;
   progress: number;
+  setDuration: (duration: number) => void;
 }
 
 export interface TrainingTimers {
@@ -39,7 +41,7 @@ export const useTrainingTimers = (): TrainingTimers => {
   const [workoutPaused, setWorkoutPaused] = useState(false);
   const [restRemaining, setRestRemaining] = useState(0);
   const [restActive, setRestActive] = useState(false);
-  const [restTarget, setRestTarget] = useState(120); // 2 minutes default
+  const [restTarget, setRestTarget] = useState(90); // 90 seconds default
   
   const workoutIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const restIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,14 +76,22 @@ export const useTrainingTimers = (): TrainingTimers => {
     };
   }, [workoutActive, workoutPaused, restActive, startTime, setElapsedTime]);
 
-  // Rest timer management
+  // Rest timer management with enhanced completion handling
   useEffect(() => {
     if (restActive && restRemaining > 0) {
       restIntervalRef.current = setInterval(() => {
         setRestRemaining(prev => {
           if (prev <= 1) {
             setRestActive(false);
+            setWorkoutPaused(false); // Resume workout when rest ends
             playBell();
+            
+            // Show completion toast
+            toast({
+              title: "Rest complete!",
+              description: "Time to crush your next set 💪",
+            });
+            
             return 0;
           }
           
@@ -121,20 +131,33 @@ export const useTrainingTimers = (): TrainingTimers => {
     setWorkoutPaused(false);
   }, [setElapsedTime]);
 
-  // Rest timer controls
-  const startRest = useCallback((duration: number = 120) => {
+  // Enhanced rest timer controls
+  const startRest = useCallback((duration: number = restTarget) => {
+    console.log(`Starting rest timer for ${duration} seconds`);
     setRestTarget(duration);
     setRestRemaining(duration);
     setRestActive(true);
     setWorkoutPaused(true); // Pause workout during rest
     playBell();
-  }, [playBell]);
+    
+    // Show start toast
+    toast({
+      title: "Rest timer started",
+      description: `${duration}s rest period began`,
+    });
+  }, [restTarget, playBell]);
 
   const skipRest = useCallback(() => {
+    console.log('Skipping rest timer');
     setRestActive(false);
     setRestRemaining(0);
     setWorkoutPaused(false); // Resume workout
     playBell();
+    
+    toast({
+      title: "Rest skipped",
+      description: "Back to work! 🔥",
+    });
   }, [playBell]);
 
   const resetRest = useCallback(() => {
@@ -146,12 +169,22 @@ export const useTrainingTimers = (): TrainingTimers => {
     }
   }, []);
 
-  // Enhanced set completion handler
+  const setRestDuration = useCallback((duration: number) => {
+    setRestTarget(duration);
+    // If timer is active, update remaining time too
+    if (restActive) {
+      setRestRemaining(duration);
+    }
+  }, [restActive]);
+
+  // Enhanced set completion handler with auto-start
   const handleSetCompletionWithRest = useCallback((exerciseName: string, setIndex: number) => {
+    console.log(`Set completion triggered for ${exerciseName}, set ${setIndex + 1}`);
+    
     // Complete the set first
     handleCompleteSet(exerciseName, setIndex);
     
-    // Start rest timer automatically
+    // Auto-start rest timer immediately
     startRest(restTarget);
   }, [handleCompleteSet, startRest, restTarget]);
 
@@ -173,7 +206,8 @@ export const useTrainingTimers = (): TrainingTimers => {
       start: startRest,
       skip: skipRest,
       reset: resetRest,
-      progress: restProgress
+      progress: restProgress,
+      setDuration: setRestDuration
     },
     handleSetCompletion: handleSetCompletionWithRest
   };

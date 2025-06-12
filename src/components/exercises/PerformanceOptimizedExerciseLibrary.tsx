@@ -237,7 +237,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
   );
 }, (prevProps, nextProps) => {
   return (
-    prevProps.showCreateButton ===
+    prevProps.showCreateButton === nextProps.showCreateButton &&
     prevProps.onSelectExercise === nextProps.onSelectExercise &&
     prevProps.onCreateExercise === nextProps.onCreateExercise
   );
