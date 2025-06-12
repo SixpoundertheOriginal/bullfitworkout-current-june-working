@@ -1,3 +1,4 @@
+
 interface WorkerMessage {
   id: string;
   type: string;
@@ -40,7 +41,6 @@ class WorkerOptimizer {
     }
   }
 
-  // Optimized message sending with batching and prioritization
   sendMessage<T>(type: string, payload: any, priority: 'critical' | 'high' | 'normal' | 'low' = 'normal'): Promise<T> {
     return new Promise((resolve, reject) => {
       const message: WorkerMessage = {
@@ -51,19 +51,13 @@ class WorkerOptimizer {
         priority
       };
 
-      // Store promise handlers
       this.pendingMessages.set(message.id, { resolve, reject, timestamp: message.timestamp });
-
-      // Add to queue with priority ordering
       this.addToQueue(message);
-
-      // Process queue with frame-rate awareness
       this.scheduleQueueProcessing();
     });
   }
 
   private addToQueue(message: WorkerMessage) {
-    // Insert message based on priority
     const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
     const insertIndex = this.messageQueue.findIndex(
       existing => priorityOrder[existing.priority] > priorityOrder[message.priority]
@@ -79,12 +73,10 @@ class WorkerOptimizer {
   }
 
   private scheduleQueueProcessing() {
-    // Cancel existing timeout
     if (this.batchTimeout) {
       clearTimeout(this.batchTimeout);
     }
 
-    // For critical messages, process immediately
     const hasCritical = this.messageQueue.some(msg => msg.priority === 'critical');
     
     if (hasCritical && !this.processingBatch) {
@@ -92,20 +84,18 @@ class WorkerOptimizer {
       return;
     }
 
-    // Batch non-critical messages using requestIdleCallback for 60fps maintenance
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => {
         if (!this.processingBatch) {
           this.processQueue();
         }
-      }, { timeout: 16 }); // Max 16ms to maintain 60fps
+      }, { timeout: 16 });
     } else {
-      // Fallback with frame-rate consideration
       this.batchTimeout = setTimeout(() => {
         if (!this.processingBatch) {
           this.processQueue();
         }
-      }, 8) as unknown as number; // Half frame time for safety
+      }, 8) as unknown as number;
     }
   }
 
@@ -115,28 +105,22 @@ class WorkerOptimizer {
     }
 
     this.processingBatch = true;
-
-    // Process in batches to reduce communication overhead
-    const batchSize = this.calculateOptimalBatchSize();
+    const batchSize = Math.min(this.messageQueue.length, 5);
     const batch = this.messageQueue.splice(0, batchSize);
 
-    // Use requestAnimationFrame to ensure smooth frame rate
     requestAnimationFrame(() => {
       try {
-        // Send messages in batch
         batch.forEach(message => {
           this.worker!.postMessage({
             id: message.id,
             type: message.type,
-            payload: message.payload,
-            batchMode: batch.length > 1
+            payload: message.payload
           });
           this.performanceMetrics.messagesSent++;
         });
 
         this.performanceMetrics.queueDepth = this.messageQueue.length;
         
-        // Schedule next batch if queue not empty
         if (this.messageQueue.length > 0) {
           requestAnimationFrame(() => {
             this.processingBatch = false;
@@ -149,7 +133,6 @@ class WorkerOptimizer {
         console.error('Worker message processing failed:', error);
         this.processingBatch = false;
         
-        // Reject pending messages
         batch.forEach(message => {
           const pending = this.pendingMessages.get(message.id);
           if (pending) {
@@ -161,37 +144,13 @@ class WorkerOptimizer {
     });
   }
 
-  private calculateOptimalBatchSize(): number {
-    // Adaptive batch size based on queue depth and performance
-    const queueDepth = this.messageQueue.length;
-    const avgLatency = this.performanceMetrics.averageLatency;
-
-    // Larger batches for high queue depth, smaller for low latency requirements
-    if (queueDepth > 50) return 10;
-    if (queueDepth > 20) return 5;
-    if (avgLatency > 10) return 2; // Reduce batch size if communication is slow
-    return Math.min(queueDepth, 3); // Default small batch for 60fps maintenance
-  }
-
   private handleWorkerMessage(event: MessageEvent) {
-    const { id, result, error, type } = event.data;
-
+    const { id, result, error } = event.data;
     this.performanceMetrics.messagesReceived++;
 
-    // Handle batch responses
-    if (type === 'batch_response' && Array.isArray(result)) {
-      result.forEach((item: any) => this.handleSingleResponse(item));
-      return;
-    }
-
-    this.handleSingleResponse({ id, result, error });
-  }
-
-  private handleSingleResponse({ id, result, error }: any) {
     const pending = this.pendingMessages.get(id);
     if (!pending) return;
 
-    // Calculate latency for performance monitoring
     const latency = performance.now() - pending.timestamp;
     this.updateLatencyMetrics(latency);
 
@@ -207,21 +166,14 @@ class WorkerOptimizer {
   private updateLatencyMetrics(latency: number) {
     const { averageLatency, messagesReceived } = this.performanceMetrics;
     
-    // Exponential moving average for responsiveness
     this.performanceMetrics.averageLatency = 
       messagesReceived === 1 ? latency : 
       (averageLatency * 0.9) + (latency * 0.1);
-
-    // Warn if communication is affecting 60fps target
-    if (latency > 5) {
-      console.warn(`Worker communication slow: ${latency.toFixed(2)}ms`);
-    }
   }
 
   private handleWorkerError(error: ErrorEvent) {
     console.error('Worker error:', error);
     
-    // Reject all pending messages
     this.pendingMessages.forEach(({ reject }) => {
       reject(new Error('Worker error occurred'));
     });
@@ -234,18 +186,15 @@ class WorkerOptimizer {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  // Performance monitoring API
   getPerformanceMetrics(): WorkerPerformanceMetrics {
     return { ...this.performanceMetrics };
   }
 
-  // Cleanup for optimal memory usage
   terminate() {
     if (this.batchTimeout) {
       clearTimeout(this.batchTimeout);
     }
 
-    // Reject pending messages
     this.pendingMessages.forEach(({ reject }) => {
       reject(new Error('Worker terminated'));
     });
@@ -260,24 +209,8 @@ class WorkerOptimizer {
   }
 }
 
-// Factory function for creating optimized workers
 export const createOptimizedWorker = (workerScript: string): WorkerOptimizer => {
   return new WorkerOptimizer(workerScript);
-};
-
-// Performance monitoring for worker communication
-export const monitorWorkerPerformance = (optimizer: WorkerOptimizer) => {
-  setInterval(() => {
-    const metrics = optimizer.getPerformanceMetrics();
-    
-    if (metrics.averageLatency > 5) {
-      console.warn('Worker communication affecting 60fps target:', metrics);
-    }
-    
-    if (metrics.queueDepth > 20) {
-      console.warn('Worker queue depth high:', metrics.queueDepth);
-    }
-  }, 5000);
 };
 
 export { WorkerOptimizer };

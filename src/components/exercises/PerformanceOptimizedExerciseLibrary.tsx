@@ -1,4 +1,5 @@
-import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
+
+import React, { useMemo, useCallback, useState } from 'react';
 import { Exercise } from '@/types/exercise';
 import { ExerciseLibraryContainer } from './ExerciseLibraryContainer';
 import { PremiumSearchBar } from './PremiumSearchBar';
@@ -17,7 +18,7 @@ interface PerformanceOptimizedExerciseLibraryProps {
   showCreateButton?: boolean;
 }
 
-// Aggressive memoization for frame rate optimization
+// Memoized components for performance
 const MemoizedPremiumSearchBar = React.memo(PremiumSearchBar);
 const MemoizedSmartFilterChips = React.memo(SmartFilterChips);
 const MemoizedVisualEquipmentFilter = React.memo(VisualEquipmentFilter);
@@ -31,54 +32,17 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const idleCallbackRef = useRef<number | null>(null);
-  const updateQueueRef = useRef<(() => void)[]>([]);
 
-  // Optimize non-critical updates with requestIdleCallback
-  const scheduleIdleUpdate = useCallback((updateFn: () => void) => {
-    updateQueueRef.current.push(updateFn);
-    
-    if (idleCallbackRef.current) return;
-    
-    if ('requestIdleCallback' in window) {
-      idleCallbackRef.current = requestIdleCallback(() => {
-        const updates = updateQueueRef.current.splice(0);
-        updates.forEach(update => update());
-        idleCallbackRef.current = null;
-      });
-    } else {
-      // Fallback for browsers without requestIdleCallback
-      idleCallbackRef.current = setTimeout(() => {
-        const updates = updateQueueRef.current.splice(0);
-        updates.forEach(update => update());
-        idleCallbackRef.current = null;
-      }, 16) as unknown as number; // Target 60fps
-    }
-  }, []);
-
-  // Memoized toggle handlers to prevent re-renders
+  // Memoized toggle handlers
   const handleFiltersToggle = useCallback(() => {
-    scheduleIdleUpdate(() => setShowFilters(prev => !prev));
-  }, [scheduleIdleUpdate]);
+    setShowFilters(prev => !prev);
+  }, []);
 
   const handleViewModeToggle = useCallback((mode: 'grid' | 'list') => {
     if (mode !== viewMode) {
-      scheduleIdleUpdate(() => setViewMode(mode));
+      setViewMode(mode);
     }
-  }, [viewMode, scheduleIdleUpdate]);
-
-  // Cleanup idle callbacks
-  useEffect(() => {
-    return () => {
-      if (idleCallbackRef.current) {
-        if ('requestIdleCallback' in window) {
-          cancelIdleCallback(idleCallbackRef.current);
-        } else {
-          clearTimeout(idleCallbackRef.current);
-        }
-      }
-    };
-  }, []);
+  }, [viewMode]);
 
   return (
     <ExerciseLibraryContainer>
@@ -113,7 +77,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
 
         return (
           <div className="flex flex-col h-full space-y-8">
-            {/* Optimized Header */}
+            {/* Header */}
             <div className="space-y-6">
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
                 <div className="flex-1">
@@ -158,7 +122,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
                 />
               </div>
 
-              {/* Optimized Toolbar */}
+              {/* Toolbar */}
               <div className="flex items-center justify-between pt-2 border-t border-gray-800/50">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center bg-gray-900/50 rounded-lg p-1 border border-gray-800">
@@ -221,7 +185,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
               </div>
             </div>
 
-            {/* Optimized Filters Panel */}
+            {/* Filters Panel */}
             {showFilters && (
               <Card className="bg-gray-900/50 border-gray-800 animate-in fade-in slide-in-from-top-2 duration-300">
                 <CardContent className="p-6 space-y-6">
@@ -257,7 +221,7 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
               </Card>
             )}
 
-            {/* Optimized Exercise Grid */}
+            {/* Exercise Grid */}
             <div className="flex-1 min-h-0 pt-4 border-t border-gray-800/30">
               <MemoizedVirtualizedExerciseGrid
                 exercises={currentExercises || []}
@@ -272,9 +236,8 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
     </ExerciseLibraryContainer>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison to prevent unnecessary re-renders
   return (
-    prevProps.showCreateButton === nextProps.showCreateButton &&
+    prevProps.showCreateButton ===
     prevProps.onSelectExercise === nextProps.onSelectExercise &&
     prevProps.onCreateExercise === nextProps.onCreateExercise
   );

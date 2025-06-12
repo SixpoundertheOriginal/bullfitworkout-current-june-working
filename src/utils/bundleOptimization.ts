@@ -1,7 +1,7 @@
 
 import { lazy } from 'react';
 
-// Enhanced bundle splitting with aggressive preloading for TTFB optimization
+// Optimized bundle splitting with performance focus
 export const LazyTrainingSession = lazy(() => 
   import('@/pages/TrainingSession').then(module => ({
     default: module.default
@@ -26,66 +26,37 @@ export const LazyProfilePage = lazy(() =>
   }))
 );
 
-// Aggressive preloading for <200ms TTFB target
+// Streamlined preloading for critical routes only
 export const preloadCriticalRoutes = () => {
-  // Use multiple strategies for maximum performance
-  const preloadStrategies = [
-    () => {
-      // Strategy 1: Immediate preload of critical routes
-      const criticalImports = [
-        () => import('@/pages/TrainingSession'),
-        () => import('@/components/exercises/PerformanceOptimizedExerciseLibrary'),
-        () => import('@/pages/WorkoutDetailsPage'),
-      ];
+  const criticalImports = [
+    () => import('@/pages/TrainingSession'),
+    () => import('@/components/exercises/PerformanceOptimizedExerciseLibrary'),
+  ];
 
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
       criticalImports.forEach(importFn => {
         importFn().catch(() => {}); // Silent fail for preloads
       });
-    },
-    () => {
-      // Strategy 2: RequestIdleCallback for non-critical
-      const nonCriticalImports = [
-        () => import('@/pages/ProfilePage'),
-        () => import('@/components/exercises/VirtualizedExerciseGrid'),
-      ];
-
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => {
-          nonCriticalImports.forEach(importFn => {
-            importFn().catch(() => {});
-          });
-        });
-      } else {
-        setTimeout(() => {
-          nonCriticalImports.forEach(importFn => {
-            importFn().catch(() => {});
-          });
-        }, 1000);
-      }
-    }
-  ];
-
-  // Execute all strategies
-  preloadStrategies.forEach(strategy => strategy());
+    });
+  } else {
+    setTimeout(() => {
+      criticalImports.forEach(importFn => {
+        importFn().catch(() => {});
+      });
+    }, 1000);
+  }
 };
 
-// Enhanced resource hints for TTFB optimization
+// Simplified resource hints
 export const addResourceHints = () => {
   const hints = [
-    // Critical DNS preconnects
     { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossOrigin: 'anonymous' },
     { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-    
-    // Critical resource preloads
-    { rel: 'preload', href: '/icons/icon-192x192.png', as: 'image' },
-    { rel: 'preload', href: '/icons/icon-512x512.png', as: 'image' },
-    
-    // Critical CSS preload
     { rel: 'preload', href: '/src/index.css', as: 'style' },
   ];
 
-  // Add cache-friendly headers
-  const addHint = (hint: any) => {
+  hints.forEach(hint => {
     const existing = document.querySelector(`link[rel="${hint.rel}"][href="${hint.href}"]`);
     if (existing) return;
 
@@ -98,30 +69,11 @@ export const addResourceHints = () => {
       }
     });
     document.head.appendChild(link);
-  };
-
-  hints.forEach(addHint);
-
-  // Add critical resource prefetch for next navigation
-  const prefetchAssets = [
-    '/src/pages/TrainingSession.tsx',
-    '/src/components/exercises/PerformanceOptimizedExerciseLibrary.tsx',
-  ];
-
-  // Delay prefetch to not interfere with critical loading
-  setTimeout(() => {
-    prefetchAssets.forEach(href => {
-      const link = document.createElement('link');
-      link.rel = 'prefetch';
-      link.href = href;
-      document.head.appendChild(link);
-    });
-  }, 2000);
+  });
 };
 
-// Performance optimization utilities with frame rate targeting
+// Optimized performance utilities
 export const performanceOptimizations = {
-  // Optimized image loading for 60fps
   optimizeImage: (src: string, width?: number, height?: number) => {
     const params = new URLSearchParams();
     if (width) params.append('w', width.toString());
@@ -132,15 +84,11 @@ export const performanceOptimizations = {
     return src.includes('?') ? `${src}&${params}` : `${src}?${params}`;
   },
 
-  // Enhanced lazy loading with frame rate consideration
   lazyLoadImage: (img: HTMLImageElement, src: string) => {
-    let frameId: number;
-    
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          // Use requestAnimationFrame to avoid blocking the main thread
-          frameId = requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
             img.src = src;
             img.onload = () => {
               requestAnimationFrame(() => {
@@ -158,38 +106,6 @@ export const performanceOptimizations = {
 
     observer.observe(img);
     
-    // Cleanup function
-    return () => {
-      if (frameId) {
-        cancelAnimationFrame(frameId);
-      }
-      observer.disconnect();
-    };
-  },
-
-  // Worker optimization for communication overhead
-  optimizeWorkerCommunication: () => {
-    const messageQueue: any[] = [];
-    let processingQueue = false;
-
-    return {
-      batchMessage: (message: any) => {
-        messageQueue.push(message);
-        
-        if (!processingQueue) {
-          processingQueue = true;
-          requestIdleCallback(() => {
-            // Process all queued messages in one batch
-            if (messageQueue.length > 0) {
-              self.postMessage({ 
-                type: 'batch', 
-                messages: messageQueue.splice(0) 
-              });
-            }
-            processingQueue = false;
-          });
-        }
-      }
-    };
+    return () => observer.disconnect();
   }
 };
