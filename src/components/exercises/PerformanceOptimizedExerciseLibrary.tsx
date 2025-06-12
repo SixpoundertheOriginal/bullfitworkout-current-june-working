@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Exercise } from '@/types/exercise';
 import { ExerciseLibraryContainer } from './ExerciseLibraryContainer';
@@ -48,12 +47,12 @@ export const PerformanceOptimizedExerciseLibrary: React.FC<PerformanceOptimizedE
         idleCallbackRef.current = null;
       });
     } else {
-      // Fallback for browsers without requestIdleCallback - use proper type casting
-      idleCallbackRef.current = window.setTimeout(() => {
+      // Fallback for browsers without requestIdleCallback
+      idleCallbackRef.current = setTimeout(() => {
         const updates = updateQueueRef.current.splice(0);
         updates.forEach(update => update());
         idleCallbackRef.current = null;
-      }, 16); // Target 60fps
+      }, 16) as unknown as number; // Target 60fps
     }
   }, []);
 

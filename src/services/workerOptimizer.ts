@@ -1,4 +1,3 @@
-
 interface WorkerMessage {
   id: string;
   type: string;
@@ -101,12 +100,12 @@ class WorkerOptimizer {
         }
       }, { timeout: 16 }); // Max 16ms to maintain 60fps
     } else {
-      // Fallback with frame-rate consideration - use proper type casting
-      this.batchTimeout = window.setTimeout(() => {
+      // Fallback with frame-rate consideration
+      this.batchTimeout = setTimeout(() => {
         if (!this.processingBatch) {
           this.processQueue();
         }
-      }, 8); // Half frame time for safety
+      }, 8) as unknown as number; // Half frame time for safety
     }
   }
 
