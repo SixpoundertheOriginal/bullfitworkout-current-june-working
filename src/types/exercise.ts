@@ -1,6 +1,6 @@
 
 export interface ExerciseSet {
-  id: number;
+  id: number | string;
   weight: number;
   reps: number;
   duration: string;
@@ -23,6 +23,8 @@ export interface Exercise {
   difficulty?: string;
   movement_pattern?: string;
   is_compound?: boolean;
+  is_bodyweight?: boolean;
+  load_factor?: number;
   tips?: string[];
   variations?: string[];
   instructions?: {
@@ -61,6 +63,9 @@ export interface WeightCalculation {
   weight: number;
   unit: WeightUnit;
   converted?: number;
+  value?: number;
+  isAuto?: boolean;
+  source?: string;
 }
 
 // Exercise load factors
@@ -98,4 +103,24 @@ export type VariantCategory = typeof VARIANT_CATEGORIES[number];
 // Enhanced exercise for training context
 export interface EnhancedExercise extends Exercise {
   id: string; // Make sure id is always present
+}
+
+// Exercise input interface for database operations
+export interface ExerciseInput {
+  name: string;
+  description: string;
+  primary_muscle_groups: string[];
+  secondary_muscle_groups: string[];
+  equipment_type: string[];
+  difficulty: string;
+  movement_pattern: string;
+  is_compound: boolean;
+  instructions: {
+    steps: string;
+    form: string;
+  };
+  tips?: string[];
+  variations?: string[];
+  user_id?: string;
+  metadata?: Record<string, any>;
 }
