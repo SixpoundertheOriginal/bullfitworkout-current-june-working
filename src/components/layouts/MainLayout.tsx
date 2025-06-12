@@ -1,30 +1,40 @@
-
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { BottomNav } from '@/components/navigation/BottomNav';
-import { PageHeader } from '@/components/navigation/PageHeader';
-import { MainMenu } from '@/components/navigation/MainMenu';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { WorkoutBanner } from '@/components/training/WorkoutBanner';
+import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  noHeader?: boolean;
+  noFooter?: boolean;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+export const MainLayout: React.FC<MainLayoutProps> = ({ 
+  children, 
+  noHeader = false, 
+  noFooter = false 
+}) => {
   const location = useLocation();
   const isTrainingSession = location.pathname === '/training-session';
-
+  
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {!isTrainingSession && <PageHeader title="BullFit" />}
+    <div className="min-h-screen bg-gray-900 text-white">
+      {!noHeader && !isTrainingSession && <Header />}
+      
       <main className={cn(
-        "flex-1",
-        !isTrainingSession && "pt-16 pb-16"
+        "flex-1 pb-16",
+        isTrainingSession ? "pt-0" : "pt-16"
       )}>
         {children}
       </main>
-      {!isTrainingSession && <BottomNav />}
-      <MainMenu />
+      
+      {!noFooter && !isTrainingSession && <Footer />}
+      
+      <WorkoutBanner />
+      <Toaster />
     </div>
   );
 };

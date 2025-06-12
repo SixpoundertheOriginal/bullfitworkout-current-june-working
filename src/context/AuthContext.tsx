@@ -1,57 +1,48 @@
-
-import React, { createContext, useContext, useState } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  user_metadata?: {
-    full_name?: string;
-    avatar_url?: string;
-  };
-}
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  signOut: () => void; // Add alias for backward compatibility
+  loading: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string) => {
-    // Mock login
-    setUser({ 
-      id: '1', 
-      email,
-      user_metadata: {
-        full_name: 'Test User',
-        avatar_url: ''
-      }
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
-  const logout = () => {
-    setUser(null);
-  };
-
-  const value: AuthContextType = {
+  const value = {
     user,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    signOut: logout // Alias
+    loading,
+    signOut,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

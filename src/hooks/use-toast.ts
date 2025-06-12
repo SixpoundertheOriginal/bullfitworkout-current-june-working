@@ -43,3 +43,8 @@ export const useToast = () => {
       setToasts((prev) => prev.filter((t) => t.id !== toastId)),
   };
 };
+
+// Create a singleton instance for the toast function
+const { toast } = useToast();
+
+export { toast };
