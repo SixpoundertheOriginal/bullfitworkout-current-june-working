@@ -4,6 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Settings, Activity } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
+export interface UserProfileData {
+  full_name?: string;
+  avatar_url?: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  fitness_goal?: string;
+}
+
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
 
@@ -59,3 +68,5 @@ export const ProfilePage: React.FC = () => {
     </div>
   );
 };
+
+export default ProfilePage;

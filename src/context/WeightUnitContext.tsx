@@ -5,7 +5,10 @@ type WeightUnit = 'lbs' | 'kg';
 
 interface WeightUnitContextType {
   unit: WeightUnit;
+  weightUnit: WeightUnit; // Add alias for backward compatibility
   setUnit: (unit: WeightUnit) => void;
+  setWeightUnit: (unit: WeightUnit) => void; // Add alias for backward compatibility
+  isDefaultUnit: boolean;
 }
 
 const WeightUnitContext = createContext<WeightUnitContextType | undefined>(undefined);
@@ -15,7 +18,10 @@ export const WeightUnitProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const value: WeightUnitContextType = {
     unit,
-    setUnit
+    weightUnit: unit, // Alias
+    setUnit,
+    setWeightUnit: setUnit, // Alias
+    isDefaultUnit: unit === 'lbs'
   };
 
   return (

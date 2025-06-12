@@ -4,6 +4,10 @@ import React, { createContext, useContext, useState } from 'react';
 interface User {
   id: string;
   email: string;
+  user_metadata?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
 }
 
 interface AuthContextType {
@@ -11,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  signOut: () => void; // Add alias for backward compatibility
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,7 +25,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     // Mock login
-    setUser({ id: '1', email });
+    setUser({ 
+      id: '1', 
+      email,
+      user_metadata: {
+        full_name: 'Test User',
+        avatar_url: ''
+      }
+    });
   };
 
   const logout = () => {
@@ -31,7 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     isAuthenticated: !!user,
     login,
-    logout
+    logout,
+    signOut: logout // Alias
   };
 
   return (
