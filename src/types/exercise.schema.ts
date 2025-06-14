@@ -11,7 +11,7 @@ const InstructionsSchema = z.object({
 // This schema is now stricter. Fields are required, matching a complete DB record.
 // Nullable/default values are handled by preprocess or at the point of creation.
 export const ExerciseSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1, "ID cannot be empty."), // Allow any non-empty string ID for broader compatibility
   name: z.string().min(1, "Exercise name cannot be empty."),
   description: z.string(),
   primary_muscle_groups: z.array(z.string()),

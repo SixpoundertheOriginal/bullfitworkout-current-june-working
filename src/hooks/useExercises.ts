@@ -1,9 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, ExerciseInput } from '@/types/exercise';
 import { useAuth } from '@/context/AuthContext';
-import { exerciseDatabase } from '@/data/exercises';
+import { exerciseDatabase as localRawExercises } from '@/data/exercises';
 import { ExerciseSchema, ExerciseInputSchema } from '@/types/exercise.schema';
 import { z } from 'zod';
 
@@ -48,7 +47,7 @@ const seedInitialExercises = async () => {
   }
 
   // Transform and validate local data before inserting it into Supabase.
-  const exercisesToSeed = exerciseDatabase.map((exercise) => {
+  const exercisesToSeed = localRawExercises.map((exercise) => {
     const { id, created_at, user_id, ...rest } = exercise;
     // Parse with ExerciseInputSchema to ensure it matches the shape for creation
     const parsedForInsert = ExerciseInputSchema.parse(rest);
@@ -74,6 +73,22 @@ const seedInitialExercises = async () => {
   
   return { message: 'Database seeded successfully!' };
 };
+
+// Validate the local exercise data against the schema on module load.
+// This ensures consistency between local and remote data sources.
+const validatedLocalExercises: Exercise[] = (() => {
+    try {
+        return ExerciseSchema.array().parse(localRawExercises);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error('Zod validation failed for local exercises:', e.issues);
+        } else {
+            console.error('An unexpected error occurred during local exercise parsing:', e);
+        }
+        // In case of validation failure, return an empty array to prevent app crash.
+        return [];
+    }
+})();
 
 
 export const useExercises = () => {
@@ -140,8 +155,8 @@ export const useExercises = () => {
     },
   });
 
-  // Hybrid logic: return Supabase data for logged-in users, otherwise local data.
-  const exercises = user ? supabaseExercises : exerciseDatabase;
+  // Hybrid logic: return Supabase data for logged-in users, otherwise the validated local data.
+  const exercises = user ? supabaseExercises : validatedLocalExercises;
   const isLoading = user ? isLoadingSupabase : false;
   const error = user ? supabaseError : null;
   const isError = user ? isSupabaseError : false;
