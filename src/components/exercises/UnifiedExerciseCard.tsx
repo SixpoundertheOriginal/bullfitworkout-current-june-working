@@ -10,6 +10,7 @@ import { PersonalStatsDisplay } from './PersonalStatsDisplay';
 import { MovementPatternBadge } from './MovementPatternBadge';
 import { usePersonalStats } from '@/hooks/usePersonalStats';
 import { getExerciseMovementPattern } from '@/utils/movementPatterns';
+import { ExerciseSchema } from '@/types/exercise.schema';
 
 export type ExerciseCardVariant = 'premium' | 'compact' | 'minimal';
 export type ExerciseCardContext = 'library' | 'selection' | 'workout';
@@ -43,35 +44,38 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   
-  // Guard against missing essential data.
-  if (!exercise?.name) {
+  // Validate the exercise data at the component boundary to ensure type safety.
+  const validation = ExerciseSchema.safeParse(exercise);
+  if (!validation.success) {
+    // This guard prevents rendering with incomplete or malformed data, fixing the type errors.
     return null;
   }
+  const validatedExercise = validation.data;
 
   // Fetch personal stats for this exercise
   const { data: personalStats, isLoading: isLoadingStats } = usePersonalStats({
-    exerciseId: exercise.name,
+    exerciseId: validatedExercise.name,
     enabled: showPersonalStats && context === 'library'
   });
 
-  // Get movement pattern for this exercise. Now safe due to the guard above.
-  const movementPattern = getExerciseMovementPattern(exercise);
+  // Get movement pattern for this exercise. Now safe due to validation.
+  const movementPattern = getExerciseMovementPattern(validatedExercise);
 
   const handleFavorite = () => {
-    onFavorite?.(exercise);
+    onFavorite?.(validatedExercise);
   };
 
   const handleCardClick = () => {
     if (context === 'selection' && onAdd) {
-      onAdd(exercise);
+      onAdd(validatedExercise);
     } else if (onSelectExercise) {
-      onSelectExercise(exercise);
+      onSelectExercise(validatedExercise);
     }
   };
 
   return (
     <ExerciseCardProvider
-      exercise={exercise}
+      exercise={validatedExercise}
       variant={variant}
       context={context}
       isFavorited={isFavorited}
@@ -124,10 +128,10 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
         {/* Actions */}
         <div className="mt-auto">
           <ExerciseCardActions
-            onSelectExercise={onSelectExercise}
-            onAdd={onAdd}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            onSelectExercise={onSelectExercise ? () => onSelectExercise(validatedExercise) : undefined}
+            onAdd={onAdd ? () => onAdd(validatedExercise) : undefined}
+            onEdit={onEdit ? () => onEdit(validatedExercise) : undefined}
+            onDelete={onDelete ? () => onDelete(validatedExercise) : undefined}
             isHovered={isHovered}
           />
         </div>
@@ -135,3 +139,4 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
     </ExerciseCardProvider>
   );
 };
+
