@@ -1,10 +1,8 @@
-
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { WelcomeHeader } from "@/components/home/WelcomeHeader";
 import { MobileWorkoutActionCenter } from "@/components/home/MobileWorkoutActionCenter";
 import { EnhancedWorkoutActionCenter } from "@/components/home/EnhancedWorkoutActionCenter";
-import { WorkoutHistory } from "@/components/WorkoutHistory";
 import { AnimatedLevelUp } from "@/components/home/AnimatedLevelUp";
 import { useIndexPageState } from "@/hooks/useIndexPageState";
 import { WorkoutBanner } from "@/components/training/WorkoutBanner";
@@ -13,6 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Eye, EyeOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy-load the WorkoutHistory component to speed up initial page load.
+const WorkoutHistory = lazy(() => import("@/components/WorkoutHistory").then(module => ({ default: module.WorkoutHistory })));
 
 const Index = () => {
   const {
@@ -137,19 +139,21 @@ const Index = () => {
 
           <Separator className="mb-6" />
 
-          <AnimatePresence mode="wait">
-            {showWorkouts && (
-              <motion.div
-                key="workout-history"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <WorkoutHistory />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg bg-gray-800" />}>
+            <AnimatePresence mode="wait">
+              {showWorkouts && (
+                <motion.div
+                  key="workout-history"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <WorkoutHistory />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Suspense>
         </motion.div>
       </div>
 
