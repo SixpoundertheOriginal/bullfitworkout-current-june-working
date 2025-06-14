@@ -2,18 +2,14 @@ import { useMemo } from 'react';
 import { useValidatedWorkoutHistory } from './useWorkoutHistory';
 import { useQuery } from '@tanstack/react-query';
 import { getWorkoutDetails } from '@/services/workoutHistoryService';
-
-interface WorkoutSet {
-  weight: number;
-  reps: number;
-}
+import type { ExerciseSet } from '@/types/exercise';
 
 export interface Workout {
   id: string;
   name: string;
   created_at: string;
   duration?: number;
-  exercises?: Record<string, WorkoutSet[]>;
+  exercises?: Record<string, ExerciseSet[]>;
 }
 
 export const useWorkouts = () => {
@@ -39,7 +35,7 @@ export const useWorkouts = () => {
         name: workout.name,
         created_at: workout.start_time,
         duration: workout.duration,
-        exercises: details?.exercises,
+        exercises: details?.exercises as Record<string, ExerciseSet[]> | undefined,
       };
     }).filter(w => w.created_at);
   }, [baseWorkouts, workoutDetails]);

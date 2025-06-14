@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Target, TrendingUp, Clock, BarChart3, Calendar, Zap } from 'lucide-react';
@@ -15,21 +14,6 @@ import { WorkoutTypeChart } from '@/components/metrics/WorkoutTypeChart';
 import { MuscleFocusChart } from '@/components/metrics/MuscleFocusChart';
 import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
 import { useWeightUnit } from '@/context/WeightUnitContext';
-
-interface WorkoutSet {
-  weight: number;
-  reps: number;
-  completed?: boolean;
-}
-
-interface Workout {
-  id: string;
-  name: string;
-  created_at: string;
-  start_time?: string;
-  duration?: number;
-  exercises?: Record<string, WorkoutSet[]>;
-}
 
 const OverviewPageComponent: React.FC = () => {
   const { user } = useAuth();

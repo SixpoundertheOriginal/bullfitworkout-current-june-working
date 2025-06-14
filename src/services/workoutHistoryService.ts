@@ -141,6 +141,7 @@ export const getWorkoutHistory = async (filters: WorkoutHistoryFilters = { limit
 interface WorkoutSet {
   weight: number;
   reps: number;
+  completed?: boolean;
 }
 
 export const getWorkoutDetails = async (workoutIds: string[]) => {
@@ -148,12 +149,12 @@ export const getWorkoutDetails = async (workoutIds: string[]) => {
 
   const { data: allSets, error } = await supabase
     .from('exercise_sets')
-    .select('workout_id, exercise_name, weight, reps')
+    .select('workout_id, exercise_name, weight, reps, completed')
     .in('workout_id', workoutIds);
   
   if (error) throw error;
 
-  const setsByWorkout: Record<string, { exercise_name: string | null; weight: number | null; reps: number | null }[]> = {};
+  const setsByWorkout: Record<string, { exercise_name: string | null; weight: number | null; reps: number | null; completed: boolean | null }[]> = {};
   (allSets || []).forEach(set => {
     if (!setsByWorkout[set.workout_id]) {
       setsByWorkout[set.workout_id] = [];
@@ -170,7 +171,7 @@ export const getWorkoutDetails = async (workoutIds: string[]) => {
       if (!exercises[exerciseName]) {
         exercises[exerciseName] = [];
       }
-      exercises[exerciseName].push({ weight: set.weight || 0, reps: set.reps || 0 });
+      exercises[exerciseName].push({ weight: set.weight || 0, reps: set.reps || 0, completed: set.completed ?? true });
     });
     workoutsWithDetails[id] = { exercises };
   });
