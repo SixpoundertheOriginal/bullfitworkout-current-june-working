@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { ExerciseSet } from '@/types/exercise';
 import { 
@@ -30,11 +29,7 @@ const EnhancedMetricsDisplayComponent = ({
   // Calculate muscle focus - now returns Record<string, number>
   const muscleFocus = useMemo(() => calculateMuscleFocus(exercises), [exercises]);
   
-  // Convert Record to array format for chart component
-  const muscleFocusArray = useMemo(() => 
-    Object.entries(muscleFocus).map(([name, value]) => ({ name, value })), 
-    [muscleFocus]
-  );
+  // Keep muscleFocus as Record<string, number> and pass directly to MuscleFocusChart
   
   // Analyze workout composition
   const composition = useMemo(() => analyzeWorkoutComposition(exercises), [exercises]);
@@ -54,7 +49,7 @@ const EnhancedMetricsDisplayComponent = ({
             </CardHeader>
             <CardContent className="overflow-hidden">
               <div className="h-64 overflow-hidden">
-                <MuscleFocusChart muscleGroups={muscleFocusArray} />
+                <MuscleFocusChart muscleGroups={muscleFocus} />
               </div>
             </CardContent>
           </Card>

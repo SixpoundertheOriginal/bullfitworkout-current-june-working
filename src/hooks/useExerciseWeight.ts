@@ -16,7 +16,7 @@ export const useExerciseWeight = ({
   const getInitialWeight = (): WeightCalculation => {
     if (!exercise) return { 
       weight: defaultWeight,
-      unit: 'lbs',
+      unit: 'lb',
       value: defaultWeight, 
       isAuto: false, 
       source: 'default' 
@@ -29,7 +29,7 @@ export const useExerciseWeight = ({
       const calculatedWeight = Math.round(userWeight * loadFactor * 10) / 10;
       return {
         weight: calculatedWeight,
-        unit: 'lbs',
+        unit: 'lb',
         value: calculatedWeight,
         isAuto: true,
         source: 'auto'
@@ -38,7 +38,7 @@ export const useExerciseWeight = ({
 
     return {
       weight: defaultWeight,
-      unit: 'lbs',
+      unit: 'lb',
       value: defaultWeight,
       isAuto: false,
       source: 'default'
@@ -56,7 +56,7 @@ export const useExerciseWeight = ({
   const updateWeight = (newWeight: number) => {
     setWeightCalc({
       weight: newWeight,
-      unit: 'lbs',
+      unit: 'lb',
       value: newWeight,
       isAuto: false,
       source: 'user'

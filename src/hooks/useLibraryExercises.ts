@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
@@ -93,6 +94,18 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     }
   });
 
+  // Add prefetchExerciseDetails function
+  const prefetchExerciseDetails = (exerciseId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ['exercise', exerciseId],
+      queryFn: async () => {
+        // This would typically fetch detailed exercise data
+        return libraryExercises?.find(ex => ex.id === exerciseId) || null;
+      },
+      staleTime: 10 * 60 * 1000, // 10 minutes
+    });
+  };
+
   return {
     exercises: libraryExercises || [],
     isLoading: isLoading || isLoadingAll,
@@ -100,6 +113,7 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     createExercise: createLibraryExercise,
     isCreating,
     totalCount: libraryExercises?.length || 0,
-    hasFilters: Object.values(filters).some(value => value && value !== 'all')
+    hasFilters: Object.values(filters).some(value => value && value !== 'all'),
+    prefetchExerciseDetails
   };
 };
