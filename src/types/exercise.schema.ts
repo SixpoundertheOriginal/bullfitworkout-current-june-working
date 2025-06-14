@@ -10,16 +10,16 @@ const InstructionsSchema = z.object({
 // Zod schema for the Exercise, aligning with the Supabase table and application needs.
 // This schema will validate data at runtime, preventing type-related errors.
 export const ExerciseSchema = z.object({
-  id: z.string(), // Supabase IDs are strings (uuids)
-  name: z.string(),
-  description: z.string().optional().nullable(),
+  id: z.string(), // Can be UUID from Supabase or string from local data
+  name: z.string().min(1, "Exercise name cannot be empty."),
+  description: z.string(),
   primary_muscle_groups: z.array(z.string()),
   secondary_muscle_groups: z.array(z.string()),
   equipment_type: z.array(z.string()),
-  difficulty: z.string().optional().nullable(),
-  movement_pattern: z.string().optional().nullable(),
-  is_compound: z.boolean().optional().nullable(),
-  is_bodyweight: z.boolean().optional().nullable().default(false),
+  difficulty: z.string(),
+  movement_pattern: z.string(),
+  is_compound: z.boolean(),
+  is_bodyweight: z.boolean().default(false),
   // This `preprocess` step safely parses the 'instructions' field from Supabase,
   // which might be a JSON string or an object, into the structure our app expects.
   instructions: z.preprocess(
@@ -42,6 +42,7 @@ export const ExerciseSchema = z.object({
   tips: z.array(z.string()).optional().nullable(),
   variations: z.array(z.string()).optional().nullable(),
   metadata: z.record(z.any()).optional().nullable(),
+  load_factor: z.number().optional().nullable(),
 });
 
 // This schema defines the shape of data required to create a new exercise.
@@ -56,16 +57,14 @@ export const ExerciseInputSchema = ExerciseSchema.pick({
     difficulty: true,
     movement_pattern: true,
     is_compound: true,
+    is_bodyweight: true,
     instructions: true,
     tips: true,
     variations: true,
     metadata: true
 }).extend({
-    // Make specific fields non-optional for creation
+    // Add more specific validations for creation
     name: z.string().min(1, "Exercise name cannot be empty."),
     primary_muscle_groups: z.array(z.string()).min(1, "At least one primary muscle group is required."),
-    difficulty: z.string(),
-    movement_pattern: z.string(),
-    is_compound: z.boolean(),
     instructions: InstructionsSchema,
 });

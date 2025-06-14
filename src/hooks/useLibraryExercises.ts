@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty, ExerciseInput } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
@@ -91,9 +90,9 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
         difficulty: exerciseData.difficulty || 'beginner',
         movement_pattern: exerciseData.movement_pattern || 'push',
         is_compound: exerciseData.is_compound || false, // Added missing required field
+        is_bodyweight: exerciseData.is_bodyweight || false,
         instructions: exerciseData.instructions || { steps: '', form: '' },
-        // Optional fields from ExerciseInput if needed, like tips, variations, user_id
-        user_id: exerciseData.user_id, 
+        // Optional fields from ExerciseInput if needed, like tips, variations
         tips: exerciseData.tips,
         variations: exerciseData.variations,
         metadata: exerciseData.metadata,
@@ -130,4 +129,3 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     prefetchExerciseDetails
   };
 };
-

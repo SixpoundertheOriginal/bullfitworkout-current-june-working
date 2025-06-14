@@ -80,10 +80,7 @@ export default function AllExercisesPage({
     setIsSubmitting(true);
 
     try {
-      await createExercise({
-        ...exerciseData,
-        user_id: user.id
-      });
+      await createExercise(exerciseData);
       
       setShowCreateWizard(false);
       toast({

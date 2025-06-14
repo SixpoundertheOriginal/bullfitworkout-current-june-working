@@ -12,6 +12,7 @@ export const exerciseDatabase: Exercise[] = [
     difficulty: 'intermediate',
     movement_pattern: 'push',
     is_compound: true,
+    is_bodyweight: false,
     instructions: {
       steps: "1. Lie on a flat bench with your feet flat on the floor. \n2. Grip the barbell with hands slightly wider than shoulder-width apart. \n3. Lift the bar off the rack and hold it straight over your chest. \n4. Lower the bar slowly to your chest, then push it back up to the starting position.",
       form: "Keep your back flat on the bench and avoid arching. Control the weight on the way down and explode on the way up."
@@ -28,6 +29,7 @@ export const exerciseDatabase: Exercise[] = [
     difficulty: 'intermediate',
     movement_pattern: 'squat',
     is_compound: true,
+    is_bodyweight: false,
     instructions: {
       steps: "1. Stand with your feet shoulder-width apart, with the barbell resting on your upper back. \n2. Keeping your chest up and back straight, lower your hips as if sitting in a chair. \n3. Go as low as you can comfortably, ideally until your thighs are parallel to the floor. \n4. Push through your heels to return to the starting position.",
       form: "Maintain a neutral spine throughout the movement. Your knees should track over your toes."
@@ -44,6 +46,7 @@ export const exerciseDatabase: Exercise[] = [
     difficulty: 'advanced',
     movement_pattern: 'hinge',
     is_compound: true,
+    is_bodyweight: false,
     instructions: {
       steps: "1. Stand with your mid-foot under the barbell. \n2. Hinge at your hips and grip the bar with hands just outside your shins. \n3. Keeping your back straight, chest up, and hips down, lift the weight by extending your hips and knees. \n4. Lower the bar with control by reversing the motion.",
       form: "Keep the bar close to your body. Do not round your lower back. Drive with your legs."
@@ -77,6 +80,7 @@ export const exerciseDatabase: Exercise[] = [
     difficulty: 'beginner',
     movement_pattern: 'push',
     is_compound: true,
+    is_bodyweight: false,
     instructions: {
       steps: "1. Sit on a bench with back support, holding a dumbbell in each hand at shoulder height. \n2. Your palms should be facing forward. \n3. Press the dumbbells overhead until your arms are fully extended. \n4. Lower the dumbbells back to the starting position.",
       form: "Keep your core tight and avoid arching your back. Don't let the dumbbells touch at the top."
@@ -93,6 +97,7 @@ export const exerciseDatabase: Exercise[] = [
     difficulty: 'beginner',
     movement_pattern: 'pull',
     is_compound: false,
+    is_bodyweight: false,
     instructions: {
       steps: "1. Stand or sit holding a dumbbell in each hand with an underhand grip. \n2. Curl the weights up towards your shoulders, keeping your elbows stationary. \n3. Squeeze your biceps at the top. \n4. Lower the weights back down with control.",
       form: "Avoid using momentum or swinging your body."
