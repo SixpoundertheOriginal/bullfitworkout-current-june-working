@@ -65,14 +65,17 @@ export const saveWorkout = async ({
     });
 
     // Format exercise sets for the function call
-    const formattedSets = Object.entries(exercises).flatMap(([exerciseName, sets], exerciseIndex) => {
+    const formattedSets = Object.entries(exercises).flatMap(([exerciseName, sets]) => {
       return sets.map((set, setIndex) => ({
         exercise_name: exerciseName,
         weight: set.weight || 0,
         reps: set.reps || 0,
         set_number: setIndex + 1,
         completed: set.completed || false,
-        rest_time: set.restTime || 60
+        rest_time: set.restTime || 60,
+        // Ensure duration and volume are not sent if not part of API schema
+        // duration: set.duration || '0:00', 
+        // volume: set.volume || 0,
       }));
     });
 
@@ -343,6 +346,8 @@ async function saveExerciseSetsWithRetry(
             set_number: i + batch.indexOf(set) + 1,
             completed: set.completed || false,
             rest_time: set.restTime || 60
+            // duration: set.duration, // Not typically stored in exercise_sets table
+            // volume: set.volume // Calculated, not stored
           })));
           
         if (batchError) {
@@ -392,7 +397,7 @@ async function saveExerciseSetsWithRetry(
               const retryQueue = saveRetryQueues.get(userId) || [];
               retryQueue.push({
                 exerciseName,
-                sets: batch,
+                sets: batch, // Store EnhancedExerciseSet
                 workoutId,
                 attempt: 1
               });
@@ -419,7 +424,7 @@ async function saveExerciseSetsWithRetry(
           const retryQueue = saveRetryQueues.get(userId) || [];
           retryQueue.push({
             exerciseName,
-            sets: batch,
+            sets: batch, // Store EnhancedExerciseSet
             workoutId,
             attempt: 1
           });
@@ -439,7 +444,7 @@ async function saveExerciseSetsWithRetry(
       onProgressUpdate?.({
         step: 'exercise-sets',
         total: 3,
-        completed: 1 + (successfulSets / totalSets),
+        completed: 1 + (totalSets > 0 ? (successfulSets / totalSets) : 0), // Avoid division by zero
         errors
       });
     }
@@ -467,18 +472,17 @@ export const processRetryQueue = async (userId: string): Promise<boolean> => {
       
       const { error: batchError } = await supabase
         .from('exercise_sets')
-        .insert(sets.map((set, index) => ({
+        .insert(sets.map((set, index) => ({ // 'sets' here are EnhancedExerciseSet
           workout_id: workoutId,
           exercise_name: exerciseName,
           weight: set.weight || 0,
           reps: set.reps || 0,
-          set_number: index + 1,
+          set_number: index + 1, // Assuming set_number should be relative to the batch
           completed: set.completed || false,
           rest_time: set.restTime || 60
         })));
         
       if (batchError && attempt < 3) {
-        // Add back to queue with increased attempt count
         newQueue.push({
           ...item,
           attempt: attempt + 1
@@ -538,7 +542,7 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
         
         return {
           success: true,
-          workoutId
+          workoutId // workoutId was missing here
         };
       } catch (dbError) {
         return {
@@ -554,7 +558,7 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
       }
     }
     
-    return { success: true };
+    return { success: true, workoutId: data?.workoutId || workoutId }; // Ensure workoutId is returned from function result
   } catch (error) {
     console.error("Error recovering workout:", error);
     return {
@@ -581,7 +585,7 @@ export const attemptImmediateRecovery = async (workoutId: string) => {
     if (result.success) {
       toast({
         title: "Workout data recovery successful",
-        variant: "success"
+        variant: "default" // Changed from "success"
       });
       return true;
     } else {
