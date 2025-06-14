@@ -1,3 +1,4 @@
+
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -57,7 +58,7 @@ const WorkoutDetailsPage: React.FC = () => {
     handleSaveExerciseSets, // Expects (updatedSets: Partial<ExerciseSet>[])
     handleAddExercise,
     handleDeleteExercise,
-    confirmDeleteExercise // Added this to hook return, assuming it sets exerciseToDelete
+    confirmDeleteExercise
   } = useExerciseManagement(workoutId, setExerciseSets);
 
   const deleteWorkoutOperation = useDeleteOperation(deleteWorkout, {
@@ -74,23 +75,29 @@ const WorkoutDetailsPage: React.FC = () => {
          Object.entries(exerciseSets).forEach(([name, setsArray]) => {
            map[name] = setsArray.map(s => ({
              ...s,
-             exercise_name: s.exercise_name || name,
+             exercise_name: s.exercise_name || name, // Ensure exercise_name
+             workout_id: s.workout_id || workoutId || '', // Ensure workout_id
              duration: s.duration || '0:00',
              volume: s.volume || (s.weight * s.reps),
              restTime: s.restTime || 60,
-             isEditing: typeof s.isEditing === 'boolean' ? s.isEditing : false, // Ensure boolean
+             isEditing: typeof s.isEditing === 'boolean' ? s.isEditing : false,
            } as ExerciseSet));
          });
       }
     }
     return map;
-  }, [workoutDetails, exerciseSets]);
+  }, [workoutDetails, exerciseSets, workoutId]);
 
   if (loadingDetails || !workoutDetails) {
     return <WorkoutDetailsLoading />;
   }
 
-  const metricValues = metrics as ProcessedWorkoutMetrics;
+  // Correctly define metricValues by calling processWorkoutMetrics
+  const metricValues: ProcessedWorkoutMetrics = processWorkoutMetrics(
+    workoutDetails,
+    exerciseSets, // exerciseSets is Record<string, ExerciseSet[]>
+    weightUnit as WeightUnit
+  );
   
   const sessionMax = metricValues.intensityMetrics?.peakLoad || 0;
   
@@ -181,9 +188,7 @@ const WorkoutDetailsPage: React.FC = () => {
             workout={workoutDetails}
             exercises={groupedExercises} 
             onEditClick={() => setEditModalOpen(true)}
-            onEditExercise={(exerciseName) => confirmDeleteExercise(exerciseName)} // confirmDeleteExercise now used with handleEditExercise for consistency
-            // Or, if onEditExercise is for opening the set editor:
-            // onEditExercise={(exerciseName) => handleEditExercise(exerciseName, groupedExercises)}
+            onEditExercise={(exerciseName) => handleEditExercise(exerciseName, groupedExercises)}
           />
         </main>
 
@@ -198,7 +203,7 @@ const WorkoutDetailsPage: React.FC = () => {
           }}
         />
         <EditExerciseSetModal
-          sets={exerciseSetsToEdit as Array<ExerciseSet & { exercise_name: string }>}
+          sets={exerciseSetsToEdit as ExerciseSet[]} // Simplified assertion
           exerciseName={currentExercise}
           open={exerciseSetModalOpen}
           onOpenChange={setExerciseSetModalOpen}
@@ -252,3 +257,4 @@ const WorkoutDetailsPage: React.FC = () => {
 };
 
 export default WorkoutDetailsPage;
+
