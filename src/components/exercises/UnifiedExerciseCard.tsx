@@ -58,8 +58,13 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
     enabled: showPersonalStats && context === 'library'
   });
 
-  // Get movement pattern for this exercise. Now safe due to validation.
-  const movementPattern = getExerciseMovementPattern(validatedExercise);
+  // Get movement pattern for this exercise.
+  // We explicitly pass the required properties to satisfy the function's signature
+  // and work around a persistent type inference issue.
+  const movementPattern = getExerciseMovementPattern({
+    name: validatedExercise.name,
+    movement_pattern: validatedExercise.movement_pattern
+  });
 
   const handleFavorite = () => {
     onFavorite?.(validatedExercise);
@@ -139,4 +144,3 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
     </ExerciseCardProvider>
   );
 };
-
