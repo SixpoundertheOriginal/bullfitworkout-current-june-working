@@ -20,8 +20,3 @@ export {
   recoverPartialWorkout,
   diagnoseAndFixWorkout
 } from './workoutRecoveryService';
-
-export {
-  getWorkoutHistory,
-  getWorkoutDetails,
-} from './workoutHistoryService';
