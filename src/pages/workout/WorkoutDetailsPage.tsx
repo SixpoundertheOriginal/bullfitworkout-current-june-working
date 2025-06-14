@@ -1,4 +1,3 @@
-
 // src/pages/workout/WorkoutDetailsPage.tsx
 
 import React, { useState, useMemo } from "react";
@@ -27,6 +26,19 @@ import { Loader2 } from "lucide-react";
 import { WeightUnit } from "@/utils/unitConversion";
 import { ExerciseSet } from "@/types/exercise"; // Canonical ExerciseSet
 
+// Define an interface for the workout details used in metrics processing
+interface WorkoutInfoForMetrics {
+  id: string;
+  name?: string | null;
+  notes?: string | null;
+  start_time: string;
+  end_time?: string | null;
+  duration: number; // Assuming duration is in minutes as typically used in metrics
+  training_type?: string | null;
+  metadata?: Record<string, any> | null;
+  // Add any other fields essential for processWorkoutMetrics from workoutDetails
+}
+
 const WorkoutDetailsPage: React.FC = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
@@ -34,7 +46,7 @@ const WorkoutDetailsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const {
-    workoutDetails,
+    workoutDetails, // This is 'any' from useWorkoutDetails
     exerciseSets,
     loading: loadingDetails,
     setWorkoutDetails,
@@ -58,7 +70,7 @@ const WorkoutDetailsPage: React.FC = () => {
     handleSaveExerciseSets, // Expects (updatedSets: Partial<ExerciseSet>[])
     handleAddExercise,
     handleDeleteExercise,
-    confirmDeleteExercise
+    // confirmDeleteExercise // This was not used in the JSX directly, but in the alert dialog action
   } = useExerciseManagement(workoutId, setExerciseSets);
 
   const deleteWorkoutOperation = useDeleteOperation(deleteWorkout, {
@@ -92,10 +104,12 @@ const WorkoutDetailsPage: React.FC = () => {
     return <WorkoutDetailsLoading />;
   }
 
-  // Correctly define metricValues by calling processWorkoutMetrics
+  // Cast workoutDetails to a more specific type before passing to processWorkoutMetrics
+  const typedWorkoutDetails = workoutDetails as WorkoutInfoForMetrics;
+
   const metricValues: ProcessedWorkoutMetrics = processWorkoutMetrics(
-    workoutDetails,
-    exerciseSets, // exerciseSets is Record<string, ExerciseSet[]>
+    typedWorkoutDetails, // Use the typed version
+    exerciseSets, 
     weightUnit as WeightUnit
   );
   
@@ -140,20 +154,20 @@ const WorkoutDetailsPage: React.FC = () => {
                 <BreadcrumbLink href="/training?tab=history">Workouts</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
-              <BreadcrumbItem>{workoutDetails.name || "Workout Details"}</BreadcrumbItem>
+              <BreadcrumbItem>{typedWorkoutDetails.name || "Workout Details"}</BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
           {/* Header card */}
           <WorkoutDetailsHeader
-            workoutDetails={workoutDetails}
+            workoutDetails={typedWorkoutDetails}
             onEditClick={() => setEditModalOpen(true)}
             onDeleteClick={() => setDeleteDialogOpen(true)}
           />
 
           {/* Workout Metrics Summary */}
           <WorkoutMetricCards
-            workoutDetails={workoutDetails}
+            workoutDetails={typedWorkoutDetails}
             metrics={workoutMetrics}
             weightUnit={weightUnit as WeightUnit}
           />
@@ -179,13 +193,13 @@ const WorkoutDetailsPage: React.FC = () => {
 
           {/* Workout Notes */}
           <WorkoutNotes 
-            notes={workoutDetails.notes} 
-            workoutName={workoutDetails.name || "Workout"}
+            notes={typedWorkoutDetails.notes} 
+            workoutName={typedWorkoutDetails.name || "Workout"}
             className="mb-6"
           />
 
           <WorkoutDetailsEnhanced
-            workout={workoutDetails}
+            workout={typedWorkoutDetails}
             exercises={groupedExercises} 
             onEditClick={() => setEditModalOpen(true)}
             onEditExercise={(exerciseName) => handleEditExercise(exerciseName, groupedExercises)}
@@ -194,16 +208,17 @@ const WorkoutDetailsPage: React.FC = () => {
 
         {/* Modals & dialogs */}
         <EditWorkoutModal
-          workout={workoutDetails}
+          workout={typedWorkoutDetails}
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
           onSave={async updated => {
             const saved = await handleSaveWorkoutEdit(updated);
-            if (saved) setWorkoutDetails(saved);
+            // workoutDetails is 'any', so casting 'saved' which is also likely 'any' from the service
+            if (saved) setWorkoutDetails(saved as WorkoutInfoForMetrics); 
           }}
         />
         <EditExerciseSetModal
-          sets={exerciseSetsToEdit as ExerciseSet[]} // Simplified assertion
+          sets={exerciseSetsToEdit} // Removed 'as ExerciseSet[]' cast
           exerciseName={currentExercise}
           open={exerciseSetModalOpen}
           onOpenChange={setExerciseSetModalOpen}
@@ -257,4 +272,3 @@ const WorkoutDetailsPage: React.FC = () => {
 };
 
 export default WorkoutDetailsPage;
-
