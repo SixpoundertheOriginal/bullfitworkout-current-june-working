@@ -1,73 +1,81 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Settings, Activity } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-export interface UserProfileData {
-  full_name?: string;
-  avatar_url?: string;
-  age?: number;
-  height?: number;
-  weight?: number;
-  fitness_goal?: string;
-  weight_unit?: string;
-  height_unit?: string;
-  experience_level?: string;
-}
+import { useWorkoutStatsContext } from '@/context/WorkoutStatsProvider';
+import { StatsSection } from '@/components/profile/StatsSection';
+import { ProfileLoadingSkeleton } from '@/components/profile/ProfileLoadingSkeleton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
+  const { stats, loading, error } = useWorkoutStatsContext();
+
+  const getInitials = (name?: string, email?: string) => {
+    if (name) {
+      return name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase();
+    }
+    return email?.substring(0, 2).toUpperCase() || 'U';
+  };
+
+  if (loading) {
+    return <ProfileLoadingSkeleton />;
+  }
+  
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-6 text-center">
+        <h1 className="text-3xl font-bold text-red-500">An Error Occurred</h1>
+        <p className="text-muted-foreground mt-2">
+          We couldn't load your profile stats. Please try again later.
+        </p>
+        <pre className="mt-4 text-xs text-left bg-gray-800 p-2 rounded">
+          {error.message}
+        </pre>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">
-          Manage your account and preferences
-        </p>
+    <div className="container mx-auto px-4 py-6 space-y-8">
+      {/* Profile Header */}
+      <div className="flex flex-col items-center space-y-4 text-center">
+        <Avatar className="h-24 w-24 border-4 border-purple-500">
+          <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || user?.email} />
+          <AvatarFallback className="bg-purple-800 text-3xl">
+            {getInitials(user?.user_metadata?.full_name, user?.email)}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h1 className="text-3xl font-bold">{user?.user_metadata?.full_name || 'Anonymous User'}</h1>
+          <p className="text-muted-foreground">{user?.email}</p>
+        </div>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Account</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{user?.email || 'User'}</div>
-            <p className="text-xs text-muted-foreground">
-              Your account details
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Settings</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Preferences</div>
-            <p className="text-xs text-muted-foreground">
-              App configuration
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Activity</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Total workouts
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      
+      {/* Stats Section */}
+      <ErrorBoundary>
+        <StatsSection
+          totalWorkouts={stats.totalWorkouts}
+          totalSets={stats.totalSets}
+          averageDuration={stats.avgDuration}
+          totalDuration={stats.totalDuration}
+        />
+      </ErrorBoundary>
+      
+      {/* Placeholder for future sections */}
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader>
+          <CardTitle>Settings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Manage your app preferences here. (Coming Soon)</p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
