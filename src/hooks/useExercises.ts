@@ -4,9 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Exercise, ExerciseInput } from '@/types/exercise';
 import { useAuth } from '@/context/AuthContext';
 import { exerciseDatabase } from '@/data/exercises';
+import { ExerciseSchema } from '@/types/exercise.schema';
+import { z } from 'zod';
 
-// Fetches all exercises from the Supabase 'exercises' table.
-const fetchExercisesFromSupabase = async () => {
+// Fetches and validates exercises from Supabase.
+const fetchExercisesFromSupabase = async (): Promise<Exercise[]> => {
     const { data, error } = await supabase
         .from('exercises')
         .select('*')
@@ -16,8 +18,19 @@ const fetchExercisesFromSupabase = async () => {
         console.error('Error fetching exercises from Supabase:', error);
         throw new Error(error.message);
     }
-    // Casting to unknown first resolves the type incompatibility for the 'instructions' JSON field.
-    return data as unknown as Exercise[];
+
+    try {
+        // Safely parse and validate the data against our schema.
+        // This replaces unsafe casting and correctly handles the 'instructions' field.
+        return ExerciseSchema.array().parse(data);
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error('Zod validation failed for exercises:', e.issues);
+        } else {
+            console.error('An unexpected error occurred during exercise parsing:', e);
+        }
+        throw new Error("Failed to parse exercises from the server.");
+    }
 };
 
 // Seeds the database with initial exercises if it's empty.
@@ -35,12 +48,16 @@ const seedInitialExercises = async () => {
     return { message: 'Database already seeded.' };
   }
 
-  // Remove local 'id' and 'created_at' to let Supabase auto-generate them.
-  const exercisesToSeed = exerciseDatabase.map(({ id, created_at, ...rest }) => rest);
+  // Transform local data to match what Supabase expects for insertion.
+  const exercisesToSeed = exerciseDatabase.map(({ id, created_at, instructions, ...rest }) => ({
+      ...rest,
+      // Supabase's JS client expects JSON objects to be stringified for 'json' columns.
+      instructions: JSON.stringify(instructions),
+  }));
 
   const { error: insertError } = await supabase
     .from('exercises')
-    .insert(exercisesToSeed as any); // Use `as any` to bypass strict type check mismatch.
+    .insert(exercisesToSeed); // No more `as any` needed.
 
   if (insertError) {
     console.error('Error seeding exercises:', insertError);
@@ -74,19 +91,28 @@ export const useExercises = () => {
         throw new Error('User must be authenticated to create exercises.');
       }
       
-      const exerciseToInsert = { ...newExercise, user_id: user.id };
+      const { instructions, ...restOfExercise } = newExercise;
+      
+      const exerciseToInsert = {
+        ...restOfExercise,
+        user_id: user.id,
+        // Stringify instructions to match Supabase's expected format for JSON columns.
+        instructions: JSON.stringify(instructions), 
+      };
       
       const { data, error } = await supabase
         .from('exercises')
-        .insert([exerciseToInsert] as any) // Use `as any` to bypass strict type check mismatch.
-        .select();
+        .insert(exerciseToInsert)
+        .select()
+        .single(); // Use .single() to expect and return a single object
 
       if (error) {
         console.error('Error creating exercise in Supabase:', error);
         throw error;
       }
       
-      return data[0] as Exercise; // Cast the return type to match the mutation definition.
+      // Safely parse the returned data to ensure it matches our app's types.
+      return ExerciseSchema.parse(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });

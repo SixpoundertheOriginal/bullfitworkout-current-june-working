@@ -1,3 +1,6 @@
+import { z } from 'zod';
+import { ExerciseSchema, ExerciseInputSchema } from './exercise.schema';
+
 export interface ExerciseSet {
   id: string;
   weight: number;
@@ -23,29 +26,11 @@ export interface ExerciseSet {
   };
 }
 
-export interface Exercise {
-  id: string;
-  name: string;
-  description?: string;
-  primary_muscle_groups: string[];
-  secondary_muscle_groups: string[];
-  equipment_type: string[];
-  difficulty?: string;
-  movement_pattern?: string;
-  is_compound?: boolean;
-  is_bodyweight?: boolean;
-  load_factor?: number;
-  tips?: string[];
-  variations?: string[];
-  instructions?: {
-    steps: string;
-    form: string;
-  };
-  sets?: ExerciseSet[];
-  user_id?: string;
-  created_at?: string;
-  metadata?: Record<string, any>;
-}
+// The main Exercise type is now inferred directly from our Zod schema.
+export type Exercise = z.infer<typeof ExerciseSchema>;
+
+// The ExerciseInput type is also inferred, ensuring type safety when creating exercises.
+export type ExerciseInput = z.infer<typeof ExerciseInputSchema>;
 
 export type ExerciseCardVariant = 'library-manage' | 'workout-add' | 'compact' | 'premium' | 'minimal';
 
