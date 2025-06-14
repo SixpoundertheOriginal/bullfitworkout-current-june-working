@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from "@/hooks/use-toast";
+import { toast as shadToast } from "@/hooks/use-toast"; // Renamed to avoid conflict
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useFeedback } from '@/components/training/InteractionFeedback';
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
+
+// Make sure to use shadToast for shadcn toasts
+const toast = (options: Parameters<typeof shadToast>[0]) => shadToast(options);
+
 
 export const useWorkoutActions = () => {
   const navigate = useNavigate();
@@ -40,19 +44,22 @@ export const useWorkoutActions = () => {
   const handleAddSet = (exerciseName: string) => {
     setStoreExercises(prev => {
       const currentSets = prev[exerciseName] || [];
+      const newSetNumber = currentSets.length + 1;
+      const newSet: ExerciseSet = { 
+        id: `${exerciseName}-set-${newSetNumber}-${Date.now()}`, // Unique ID
+        weight: 0, 
+        reps: 0, 
+        duration: '0:00', // Required
+        completed: false, 
+        volume: 0, // Required (0*0=0)
+        restTime: 60, 
+        isEditing: true, // Start in editing mode or ready to be filled
+        exercise_name: exerciseName,
+        set_number: newSetNumber,
+      };
       return {
         ...prev,
-        [exerciseName]: [...currentSets, { 
-          id: `${exerciseName}-${currentSets.length + 1}`,
-          weight: 0, 
-          reps: 0, 
-          duration: '0:00',
-          completed: false, 
-          volume: 0,
-          restTime: 60, 
-          isEditing: false,
-          // Optional fields like exercise_name, workout_id, set_number can be added if needed by backend
-        }]
+        [exerciseName]: [...currentSets, newSet]
       };
     });
   };
@@ -70,19 +77,21 @@ export const useWorkoutActions = () => {
   const handleAddExerciseWithFeedback = (exercise: Exercise | string) => {
     const name = typeof exercise === 'string' ? exercise : exercise.name;
     if (storeExercises[name]) {
-      toast({ title: "Exercise already added", description: `${name} is already in your workout` });
+      toast({ title: "Exercise already added", description: `${name} is already in your workout.` }); // Use object for toast
       return;
     }
     
     const newSet: ExerciseSet = { 
-      id: `${name}-1`,
+      id: `${name}-set-1-${Date.now()}`, // Unique ID
       weight: 0, 
       reps: 0, 
-      duration: '0:00',
+      duration: '0:00', // Required
       completed: false, 
-      volume: 0,
+      volume: 0, // Required
       restTime: 60, 
-      isEditing: false,
+      isEditing: true, // Start in editing mode
+      exercise_name: name,
+      set_number: 1,
     };
     
     setStoreExercises(prev => ({ 
@@ -112,19 +121,18 @@ export const useWorkoutActions = () => {
     if (!trainingConfig) return;
     
     const workoutTemplate = generateWorkoutTemplate(trainingConfig);
-    const autoExercises = convertTemplateToStoreFormat(workoutTemplate);
+    // convertTemplateToStoreFormat now returns Record<string, ExerciseSet[]>
+    const autoExercises: Record<string, ExerciseSet[]> = convertTemplateToStoreFormat(workoutTemplate);
     setStoreExercises(autoExercises);
     
-    // Set the first exercise as active
     const firstExercise = Object.keys(autoExercises)[0];
     if (firstExercise) {
       setActiveExercise(firstExercise);
     }
     
-    // Start the workout
     startWorkout();
     
-    toast({
+    toast({ // Use object for toast
       title: "Workout loaded!",
       description: `${Object.keys(autoExercises).length} exercises ready to go`
     });
@@ -141,25 +149,19 @@ export const useWorkoutActions = () => {
       const now = new Date();
       const startTime = new Date(now.getTime() - elapsedTime * 1000);
       
-      // Convert store exercise format to the format expected by WorkoutCompletePage
-      const convertedExercises: Record<string, any[]> = {};
+      // storeExercises is already Record<string, ExerciseSet[]>
+      // The structure for WorkoutCompletePage might need adjustment if it's different
+      // from the database schema. For now, we assume it matches ExerciseSet closely.
+      const convertedExercises: Record<string, ExerciseSet[]> = {};
       Object.entries(storeExercises).forEach(([exerciseName, sets]) => {
         convertedExercises[exerciseName] = sets.map((set, index) => ({
-          id: set.id, // Use existing ID
-          weight: set.weight,
-          reps: set.reps,
-          duration: set.duration,
-          completed: set.completed,
-          volume: set.volume,
-          restTime: set.restTime,
-          isEditing: set.isEditing,
-          set_number: index + 1, // Or use set.set_number if available
-          exercise_name: exerciseName, // Or use set.exercise_name
-          workout_id: workoutId || 'temp' // Or use set.workout_id
+          ...set, // Spread the full ExerciseSet object
+          set_number: set.set_number || index + 1, // Ensure set_number
+          exercise_name: set.exercise_name || exerciseName, // Ensure exercise_name
+          workout_id: set.workout_id || workoutId || 'temp' 
         }));
       });
       
-      // Calculate completed sets and total sets
       const [completedSets, totalSets] = Object.entries(storeExercises).reduce(
         ([completed, total], [_, sets]) => [
           completed + sets.filter(s => s.completed).length,
@@ -169,7 +171,7 @@ export const useWorkoutActions = () => {
       );
       
       const workoutData = {
-        exercises: convertedExercises,
+        exercises: convertedExercises, // This is now Record<string, ExerciseSet[]>
         duration: elapsedTime,
         startTime,
         endTime: now,
@@ -183,7 +185,7 @@ export const useWorkoutActions = () => {
           progression: {
             timeOfDay: startTime.getHours() < 12 ? 'morning' :
                        startTime.getHours() < 17 ? 'afternoon' : 'evening',
-            totalVolume: Object.values(storeExercises).flat().reduce((acc, s) => acc + (s.completed ? s.weight * s.reps : 0), 0)
+            totalVolume: Object.values(storeExercises).flat().reduce((acc, s) => acc + (s.completed ? s.volume : 0), 0) // Use s.volume
           },
           sessionDetails: { exerciseCount, averageRestTime: 60, workoutDensity: completedSets / (elapsedTime / 60) }
         }
@@ -198,7 +200,7 @@ export const useWorkoutActions = () => {
   };
 
   // Function to handle exercise updates from ExerciseList component
-  const handleSetExercises = (updatedExercises: any) => {
+  const handleSetExercises = (updatedExercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => {
     if (typeof updatedExercises === 'function') {
       setStoreExercises(prev => updatedExercises(prev));
     } else {
@@ -224,7 +226,7 @@ export const useWorkoutActions = () => {
     
     // Store state
     storeExercises,
-    setStoreExercises,
+    setStoreExercises, // Expose setStoreExercises if direct manipulation is needed elsewhere
     showFeedback,
     
     // Computed values

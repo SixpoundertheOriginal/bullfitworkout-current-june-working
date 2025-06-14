@@ -1,5 +1,5 @@
-
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
+import { ExerciseSet } from '@/types/exercise'; // Import ExerciseSet type
 
 export interface WorkoutTemplate {
   exercises: Array<{
@@ -118,17 +118,27 @@ export function generateWorkoutTemplate(trainingConfig: TrainingConfig | null): 
   return template;
 }
 
-export function convertTemplateToStoreFormat(template: WorkoutTemplate) {
-  const exercises: Record<string, Array<{ weight: number; reps: number; restTime: number; completed: boolean; isEditing: boolean }>> = {};
+export function convertTemplateToStoreFormat(template: WorkoutTemplate): Record<string, ExerciseSet[]> {
+  const exercises: Record<string, ExerciseSet[]> = {};
   
   template.exercises.forEach(exercise => {
-    exercises[exercise.name] = Array.from({ length: exercise.sets }, () => ({
-      weight: exercise.weight,
-      reps: exercise.reps,
-      restTime: exercise.restTime,
-      completed: false,
-      isEditing: false
-    }));
+    exercises[exercise.name] = Array.from({ length: exercise.sets }, (_, index) => {
+      const weight = exercise.weight;
+      const reps = exercise.reps;
+      return {
+        id: `template-${exercise.name}-${index}-${Date.now()}`, // Unique ID for template sets
+        weight: weight,
+        reps: reps,
+        duration: '0:00', // Default duration
+        completed: false,
+        volume: weight * reps, // Calculate volume
+        restTime: exercise.restTime,
+        isEditing: false,
+        exercise_name: exercise.name, // Ensure exercise_name is set
+        // workout_id will be set when workout is saved
+        set_number: index + 1,
+      };
+    });
   });
   
   return exercises;

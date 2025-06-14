@@ -1,7 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedExerciseSet, WorkoutError, SaveProgress } from "@/types/workout";
-import { ExerciseSet } from "@/types/exercise";
-import { toast } from "@/hooks/use-toast";
+import { toast as shadToast } from "@/hooks/use-toast";
+
+// Ensure toast calls use the object syntax
+const toast = (options: Parameters<typeof shadToast>[0]) => shadToast(options);
 
 interface SaveWorkoutParams {
   userData: {
@@ -570,23 +572,32 @@ export const recoverPartiallyCompletedWorkout = async (workoutId: string) => {
 // New helper function to perform immediate recovery
 export const attemptImmediateRecovery = async (workoutId: string) => {
   try {
-    toast("Attempting workout recovery...");
+    toast({
+      title: "Attempting workout recovery..."
+    });
     
     const result = await recoverPartiallyCompletedWorkout(workoutId);
     
     if (result.success) {
-      toast.success("Workout data recovery successful");
+      toast({
+        title: "Workout data recovery successful",
+        variant: "success"
+      });
       return true;
     } else {
-      toast.error("Recovery attempt failed", {
-        description: result.error?.message || "Unknown error"
+      toast({
+        title: "Recovery attempt failed", 
+        description: result.error?.message || "Unknown error",
+        variant: "destructive"
       });
       return false;
     }
   } catch (error) {
     console.error("Immediate recovery attempt failed:", error);
-    toast.error("Recovery attempt failed", {
-      description: error instanceof Error ? error.message : "Unknown error"
+    toast({
+      title: "Recovery attempt failed", 
+      description: error instanceof Error ? error.message : "Unknown error",
+      variant: "destructive"
     });
     return false;
   }
