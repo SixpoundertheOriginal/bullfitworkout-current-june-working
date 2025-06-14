@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu, Home, Dumbbell, BarChart3, User, Zap } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 export const MainMenu: React.FC = () => {
   const [open, setOpen] = useState(false);
