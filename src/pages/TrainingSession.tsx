@@ -31,7 +31,7 @@ const TrainingSessionPage: React.FC = () => {
   const { saveWorkout, isSaving } = useWorkoutSave();
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
-    addExercise(exercise);
+    addExercise(exercise.name);
     setAddExerciseSheetOpen(false);
     toast({
       title: `${exercise.name} added`,
@@ -45,7 +45,10 @@ const TrainingSessionPage: React.FC = () => {
   }, [completeSet, handleTimerOnComplete]);
 
   const handleFinishWorkout = async () => {
+    workoutTimer.pause();
+    restTimer.pause();
     await saveWorkout();
+    resetSession();
     navigate('/overview');
   };
 
@@ -53,7 +56,7 @@ const TrainingSessionPage: React.FC = () => {
     // TODO: Add a confirmation dialog before resetting
     resetSession();
     navigate('/overview');
-  }
+  };
 
   const hasExercises = Object.keys(exercises).length > 0;
 
@@ -98,10 +101,11 @@ const TrainingSessionPage: React.FC = () => {
         open={isAddExerciseSheetOpen}
         onOpenChange={setAddExerciseSheetOpen}
         onSelectExercise={handleSelectExercise}
-        trainingType={trainingConfig?.trainingType}
+        trainingType={trainingConfig?.trainingType || ''}
       />
     </div>
   );
 };
 
 export default TrainingSessionPage;
+

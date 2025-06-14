@@ -57,6 +57,7 @@ export interface WorkoutState {
   removeExercise: (exerciseName: string) => void;
   deleteExercise: (exerciseName: string) => void;
   updateExerciseSet: (exerciseName: string, setIndex: number, updates: Partial<ExerciseSet>) => void;
+  completeSet: (exerciseName: string, setIndex: number) => void;
   addSet: (exerciseName: string) => void;
   removeSet: (exerciseName: string, setIndex: number) => void;
   setActiveExercise: (exerciseName: string | null) => void;
@@ -199,6 +200,11 @@ export const useWorkoutStore = create<WorkoutState>()(
         }
         return { exercises };
       }),
+
+      completeSet: (exerciseName, setIndex) => {
+        const { updateExerciseSet } = get();
+        updateExerciseSet(exerciseName, setIndex, { completed: true });
+      },
 
       addSet: (exerciseName) => set((state) => {
         const exercises = { ...state.exercises };
