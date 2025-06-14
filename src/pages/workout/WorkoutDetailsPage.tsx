@@ -29,14 +29,13 @@ import { ExerciseSet } from "@/types/exercise"; // Canonical ExerciseSet
 // Define an interface for the workout details used in metrics processing
 interface WorkoutInfoForMetrics {
   id: string;
-  name?: string | null;
-  notes?: string | null;
+  name: string; // Changed from optional to required
+  notes: string | null; // Explicitly string | null
   start_time: string;
-  end_time?: string | null;
-  duration: number; // Assuming duration is in minutes as typically used in metrics
-  training_type?: string | null;
-  metadata?: Record<string, any> | null;
-  // Add any other fields essential for processWorkoutMetrics from workoutDetails
+  end_time: string | null; // Explicitly string | null
+  duration: number;
+  training_type: string | null; // Explicitly string | null
+  metadata: Record<string, any> | null; // Explicitly Record<string, any> | null
 }
 
 const WorkoutDetailsPage: React.FC = () => {
@@ -104,12 +103,21 @@ const WorkoutDetailsPage: React.FC = () => {
     return <WorkoutDetailsLoading />;
   }
 
-  // Cast workoutDetails to a more specific type before passing to processWorkoutMetrics
-  const typedWorkoutDetails = workoutDetails as WorkoutInfoForMetrics;
+  // Construct typedWorkoutDetails ensuring it conforms to WorkoutInfoForMetrics
+  const typedWorkoutDetails: WorkoutInfoForMetrics = {
+    id: workoutDetails.id || workoutId!, // workoutId is string | undefined, so workoutId! assumes it's defined
+    name: workoutDetails.name || "Unnamed Workout",
+    notes: workoutDetails.notes || null,
+    start_time: workoutDetails.start_time || new Date().toISOString(), // Provide a default if undefined
+    end_time: workoutDetails.end_time || null,
+    duration: workoutDetails.duration || 0,
+    training_type: workoutDetails.training_type || null,
+    metadata: workoutDetails.metadata || null,
+  };
 
   const metricValues: ProcessedWorkoutMetrics = processWorkoutMetrics(
-    typedWorkoutDetails, // Use the typed version
-    exerciseSets, 
+    exerciseSets, // Swapped: exerciseSets is first
+    typedWorkoutDetails, // Swapped: typedWorkoutDetails is second
     weightUnit as WeightUnit
   );
   
@@ -213,8 +221,9 @@ const WorkoutDetailsPage: React.FC = () => {
           onOpenChange={setEditModalOpen}
           onSave={async updated => {
             const saved = await handleSaveWorkoutEdit(updated);
-            // workoutDetails is 'any', so casting 'saved' which is also likely 'any' from the service
-            if (saved) setWorkoutDetails(saved as WorkoutInfoForMetrics); 
+            // The 'workoutDetails' state is 'any'.
+            // The conversion to WorkoutInfoForMetrics with defaults happens when 'typedWorkoutDetails' is derived.
+            if (saved) setWorkoutDetails(saved); 
           }}
         />
         <EditExerciseSetModal
