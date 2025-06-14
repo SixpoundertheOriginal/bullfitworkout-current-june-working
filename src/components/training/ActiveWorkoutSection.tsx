@@ -25,8 +25,8 @@ interface ActiveWorkoutSectionProps {
   onCompleteSet: (exerciseName: string, setIndex: number) => void;
   onDeleteExercise: (exerciseName: string) => void;
   onRemoveSet: (exerciseName: string, setIndex: number) => void;
-  onEditSet: (exerciseName: string, setIndex: number) => void;
-  onSaveSet: (exerciseName: string, setIndex: number) => void;
+  onEditSet: (exerciseName: string) => void;
+  onSaveSet: (exerciseName: string) => void;
   onWeightChange: (exerciseName: string, setIndex: number, value: string) => void;
   onRepsChange: (exerciseName: string, setIndex: number, value: string) => void;
   onRestTimeChange: (exerciseName: string, setIndex: number, value: string) => void;
@@ -110,7 +110,6 @@ export const ActiveWorkoutSection: React.FC<ActiveWorkoutSectionProps> = React.m
       >
         <ExerciseList
           exercises={convertedExercises}
-          onAddSet={onAddSet}
           onCompleteSet={onCompleteSet}
           onDeleteExercise={onDeleteExercise}
           onRemoveSet={(name, i) => {

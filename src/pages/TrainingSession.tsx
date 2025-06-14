@@ -46,7 +46,7 @@ const TrainingSessionPage: React.FC = () => {
 
   const handleFinishWorkout = async () => {
     workoutTimer.pause();
-    restTimer.pause();
+    restTimer.stop();
     await saveWorkout();
     resetSession();
     navigate('/overview');
@@ -108,4 +108,3 @@ const TrainingSessionPage: React.FC = () => {
 };
 
 export default TrainingSessionPage;
-
