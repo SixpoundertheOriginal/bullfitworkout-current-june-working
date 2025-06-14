@@ -1,5 +1,8 @@
 
-import { WeightUnit } from "@/types/exercise";
+import { WeightUnit as CanonicalWeightUnit } from "@/types/exercise";
+
+// Re-export the canonical WeightUnit type
+export type WeightUnit = CanonicalWeightUnit;
 
 /**
  * Converts weight values between kg and lb units
@@ -34,3 +37,4 @@ export function convertWeight(value: number, from: WeightUnit, to: WeightUnit): 
 export function formatWeightWithUnit(value: number, unit: WeightUnit, decimalPlaces: number = 1): string {
   return `${value.toFixed(decimalPlaces)} ${unit}`;
 }
+

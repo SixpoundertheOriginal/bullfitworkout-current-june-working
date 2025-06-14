@@ -1,6 +1,7 @@
 
 import { useMemo } from 'react';
-import { convertWeight, WeightUnit } from '@/utils/unitConversion';
+import { convertWeight } from '@/utils/unitConversion'; // WeightUnit will be resolved via re-export
+import { WeightUnit } from '@/types/exercise'; // Import directly for clarity if preferred, or rely on re-export
 import { getPreviousSessionData, getOlderSessionData } from '@/services/exerciseHistoryService';
 
 interface ExerciseSet {
@@ -20,7 +21,7 @@ export const useExerciseCardState = (
   const olderSession = useMemo(() => getOlderSessionData(exercise), [exercise]);
   
   const previousSessionWeight = useMemo(() => 
-    convertWeight(previousSession.weight, "lbs", weightUnit), 
+    convertWeight(previousSession.weight, "lb", weightUnit), // Changed "lbs" to "lb"
     [previousSession.weight, weightUnit]
   );
   
@@ -44,7 +45,7 @@ export const useExerciseCardState = (
 
   const previousVolume = useMemo(() => {
     return previousSession.weight > 0 ? 
-      (convertWeight(previousSession.weight, "lbs", weightUnit) * previousSession.reps * previousSession.sets) : 0;
+      (convertWeight(previousSession.weight, "lb", weightUnit) * previousSession.reps * previousSession.sets) : 0; // Changed "lbs" to "lb"
   }, [previousSession, weightUnit]);
   
   const volumeProgress = useMemo(() => {
@@ -82,3 +83,4 @@ export const useExerciseCardState = (
     hasSameGroupData
   };
 };
+

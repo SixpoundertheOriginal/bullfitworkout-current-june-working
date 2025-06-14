@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
+import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty, ExerciseInput } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
 import { exerciseDataTransform } from '@/utils/exerciseDataTransform';
 
@@ -178,8 +177,10 @@ const applyFiltersAndSort = (exercises: Exercise[], filters: LibraryExerciseStat
         comparison = new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
         break;
       case 'difficulty': {
-        const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
-        comparison = (difficultyOrder[a.difficulty] || 0) - (difficultyOrder[b.difficulty] || 0);
+        const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3 }; // Removed 'expert' as it's not in Difficulty type
+        const aDifficulty = a.difficulty as Difficulty;
+        const bDifficulty = b.difficulty as Difficulty;
+        comparison = (difficultyOrder[aDifficulty] || 0) - (difficultyOrder[bDifficulty] || 0);
         break;
       }
     }
@@ -214,7 +215,7 @@ const LibraryExerciseContext = createContext<LibraryExerciseContextType | undefi
 export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(libraryExerciseReducer, initialState);
   const queryClient = useQueryClient();
-  const { exercises, createExercise: createExerciseAPI, isPending } = useExercises();
+  const { exercises, createExercise: createExerciseAPI, isPending } = useExercises(); // createExerciseAPI expects 1 arg
 
   // Update exercises when data changes from useExercises hook with defensive programming
   useEffect(() => {
@@ -265,30 +266,32 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
       // Apply enterprise data transformation before submission
       const safeData = exerciseDataTransform.toDatabase(exerciseData);
       
-      await new Promise<void>((resolve, reject) => {
-        createExerciseAPI(
-          {
-            ...safeData,
-            user_id: safeData.user_id || '',
-          },
-          {
-            onSuccess: () => {
-              dispatch({ type: 'SET_CREATING', payload: false });
-              resolve();
-            },
-            onError: (error) => {
-              const errorMessage = error instanceof Error ? error.message : 'Failed to create exercise';
-              dispatch({ type: 'SET_ERROR', payload: errorMessage });
-              dispatch({ type: 'SET_CREATING', payload: false });
-              reject(error);
-            }
-          }
-        );
-      });
+      // Ensure safeData conforms to ExerciseInput, especially user_id
+      const exerciseInputData: ExerciseInput = {
+          ...safeData,
+          user_id: safeData.user_id || "", // Ensure user_id is a string
+          // Ensure all other required fields of ExerciseInput are present from safeData
+          name: safeData.name,
+          primary_muscle_groups: safeData.primary_muscle_groups,
+          secondary_muscle_groups: safeData.secondary_muscle_groups || [],
+          equipment_type: safeData.equipment_type || [],
+          difficulty: safeData.difficulty || 'beginner',
+          movement_pattern: safeData.movement_pattern || 'push',
+          is_compound: safeData.is_compound || false,
+          instructions: safeData.instructions || { steps: '', form: '' },
+      };
+
+      await createExerciseAPI(exerciseInputData); // Call with one argument, await promise
+
+      queryClient.invalidateQueries({ queryKey: ['exercises'] }); // Invalidate after success
+      dispatch({ type: 'SET_CREATING', payload: false });
     } catch (error) {
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create exercise';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      dispatch({ type: 'SET_CREATING', payload: false });
+      throw error; // Re-throw to allow calling component to catch
     }
-  }, [createExerciseAPI]);
+  }, [createExerciseAPI, queryClient]);
 
   const updateExercise = useCallback(async (id: string, exerciseData: Partial<Exercise>) => {
     dispatch({ type: 'SET_UPDATING', payload: true });
@@ -297,6 +300,12 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
     try {
       // TODO: Implement update API call when available
       console.log('Update exercise not yet implemented:', id, exerciseData);
+      // Simulating API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Assuming success, update local state and invalidate queries
+      // queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      // queryClient.invalidateQueries({ queryKey: ['exercises', 'library'] });
+      // queryClient.invalidateQueries({ queryKey: ['exercise', id] });
       dispatch({ type: 'SET_UPDATING', payload: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update exercise';
@@ -304,7 +313,7 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
       dispatch({ type: 'SET_UPDATING', payload: false });
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   const deleteExercise = useCallback(async (id: string) => {
     dispatch({ type: 'SET_DELETING', payload: true });
@@ -313,6 +322,11 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
     try {
       // TODO: Implement delete API call when available
       console.log('Delete exercise not yet implemented:', id);
+      // Simulating API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Assuming success, update local state and invalidate queries
+      // queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      // queryClient.invalidateQueries({ queryKey: ['exercises', 'library'] });
       dispatch({ type: 'SET_DELETING', payload: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete exercise';
@@ -320,7 +334,7 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
       dispatch({ type: 'SET_DELETING', payload: false });
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   // Query functions with defensive programming
   const getExerciseById = useCallback((id: string) => {
@@ -377,10 +391,10 @@ export const LibraryExerciseProvider: React.FC<{ children: React.ReactNode }> = 
 };
 
 // Hook to use library exercise context
-export const useLibraryExercises = () => {
+export const useLibraryExercisesContext = () => { // Renamed to avoid conflict with the other useLibraryExercises hook
   const context = useContext(LibraryExerciseContext);
   if (context === undefined) {
-    throw new Error('useLibraryExercises must be used within a LibraryExerciseProvider');
+    throw new Error('useLibraryExercisesContext must be used within a LibraryExerciseProvider');
   }
   return context;
 };

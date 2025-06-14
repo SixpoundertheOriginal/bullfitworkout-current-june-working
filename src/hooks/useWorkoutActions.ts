@@ -38,19 +38,23 @@ export const useWorkoutActions = () => {
 
   // Define the onAddSet function to add a basic set to an exercise
   const handleAddSet = (exerciseName: string) => {
-    setStoreExercises(prev => ({
-      ...prev,
-      [exerciseName]: [...prev[exerciseName], { 
-        id: `${exerciseName}-${prev[exerciseName].length + 1}`,
-        weight: 0, 
-        reps: 0, 
-        restTime: 60, 
-        completed: false, 
-        isEditing: false,
-        volume: 0,
-        duration: '0:00'
-      }]
-    }));
+    setStoreExercises(prev => {
+      const currentSets = prev[exerciseName] || [];
+      return {
+        ...prev,
+        [exerciseName]: [...currentSets, { 
+          id: `${exerciseName}-${currentSets.length + 1}`,
+          weight: 0, 
+          reps: 0, 
+          duration: '0:00',
+          completed: false, 
+          volume: 0,
+          restTime: 60, 
+          isEditing: false,
+          // Optional fields like exercise_name, workout_id, set_number can be added if needed by backend
+        }]
+      };
+    });
   };
 
   // Enhanced set completion with unified timer system
@@ -74,11 +78,11 @@ export const useWorkoutActions = () => {
       id: `${name}-1`,
       weight: 0, 
       reps: 0, 
-      restTime: 60, 
+      duration: '0:00',
       completed: false, 
-      isEditing: false,
       volume: 0,
-      duration: '0:00'
+      restTime: 60, 
+      isEditing: false,
     };
     
     setStoreExercises(prev => ({ 
@@ -128,7 +132,7 @@ export const useWorkoutActions = () => {
 
   const handleFinishWorkout = async () => {
     if (!hasExercises) {
-      toast.error("Add at least one exercise before finishing your workout");
+      toast({ title: "Error", description: "Add at least one exercise before finishing your workout", variant: "destructive" });
       return;
     }
     try {
@@ -141,15 +145,17 @@ export const useWorkoutActions = () => {
       const convertedExercises: Record<string, any[]> = {};
       Object.entries(storeExercises).forEach(([exerciseName, sets]) => {
         convertedExercises[exerciseName] = sets.map((set, index) => ({
-          id: `${exerciseName}_${index}`,
+          id: set.id, // Use existing ID
           weight: set.weight,
           reps: set.reps,
-          restTime: set.restTime,
+          duration: set.duration,
           completed: set.completed,
+          volume: set.volume,
+          restTime: set.restTime,
           isEditing: set.isEditing,
-          set_number: index + 1,
-          exercise_name: exerciseName,
-          workout_id: workoutId || 'temp'
+          set_number: index + 1, // Or use set.set_number if available
+          exercise_name: exerciseName, // Or use set.exercise_name
+          workout_id: workoutId || 'temp' // Or use set.workout_id
         }));
       });
       
@@ -186,7 +192,7 @@ export const useWorkoutActions = () => {
     } catch (err) {
       console.error("Error preparing workout data:", err);
       markAsFailed({ type: 'unknown', message: err instanceof Error ? err.message : 'Save failed', timestamp: new Date().toISOString(), recoverable: true });
-      toast.error("Failed to complete workout");
+      toast({ title: "Error", description: "Failed to complete workout", variant: "destructive" });
       setIsSaving(false);
     }
   };

@@ -1,5 +1,6 @@
+
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
+import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty, ExerciseInput } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
 
 export interface LibraryFilters {
@@ -80,18 +81,29 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
   const { mutate: createLibraryExercise, isPending: isCreating } = useMutation({
     mutationFn: async (exerciseData: Omit<Exercise, 'id' | 'created_at'>) => {
       // Ensure required fields are provided with defaults
-      const exerciseWithDefaults = {
-        ...exerciseData,
+      // And ensure it conforms to ExerciseInput by including all required fields.
+      const exerciseWithDefaults: ExerciseInput = {
+        name: exerciseData.name,
         description: exerciseData.description || `Custom exercise: ${exerciseData.name}`,
+        primary_muscle_groups: exerciseData.primary_muscle_groups,
+        secondary_muscle_groups: exerciseData.secondary_muscle_groups || [],
+        equipment_type: exerciseData.equipment_type || [],
         difficulty: exerciseData.difficulty || 'beginner',
         movement_pattern: exerciseData.movement_pattern || 'push',
-        instructions: exerciseData.instructions || { steps: '', form: '' }
+        is_compound: exerciseData.is_compound || false, // Added missing required field
+        instructions: exerciseData.instructions || { steps: '', form: '' },
+        // Optional fields from ExerciseInput if needed, like tips, variations, user_id
+        user_id: exerciseData.user_id, 
+        tips: exerciseData.tips,
+        variations: exerciseData.variations,
+        metadata: exerciseData.metadata,
       };
       
       return createExercise(exerciseWithDefaults);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises', 'library'] });
+      queryClient.invalidateQueries({ queryKey: ['exercises'] }); // Invalidate base exercises query too
     }
   });
 
@@ -118,3 +130,4 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     prefetchExerciseDetails
   };
 };
+

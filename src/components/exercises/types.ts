@@ -1,15 +1,12 @@
 
-export interface ExerciseSet {
-  weight: number;
-  reps: number;
-  restTime?: number;
-  completed: boolean;
-  isEditing?: boolean;
-}
+import type { ExerciseSet as CanonicalExerciseSet } from '@/types/exercise';
+
+// Re-export the canonical ExerciseSet type
+export type ExerciseSet = CanonicalExerciseSet;
 
 export interface ExerciseCardProps {
   exercise: string;
-  sets: ExerciseSet[];
+  sets: ExerciseSet[]; // This will now refer to the canonical ExerciseSet from @/types/exercise
   onAddSet: () => void;
   onCompleteSet: (setIndex: number) => void;
   onRemoveSet: (setIndex: number) => void;
@@ -26,3 +23,4 @@ export interface ExerciseCardProps {
   onResetRestTimer: () => void;
   onDeleteExercise: () => void;
 }
+
