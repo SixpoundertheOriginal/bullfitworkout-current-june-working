@@ -1,3 +1,4 @@
+
 import { Clock, User as UserIcon, Dumbbell, BarChart3, Zap } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useWorkoutNavigation } from "@/context/WorkoutNavigationContext";
@@ -13,9 +14,8 @@ export const BottomNav = () => {
     if (path === "/" && location.pathname === "/") return true;
     if (path === "/overview" && location.pathname === "/overview") return true;
     if (path === "/training-session" && location.pathname === "/training-session") return true;
-    if (path === "/workouts" && location.pathname === "/workouts") return true;
-    if (path === "/profile" && location.pathname === "/profile") return true;
     if (path === "/all-exercises" && location.pathname === "/all-exercises") return true;
+    if (path === "/profile" && location.pathname === "/profile") return true;
     return false;
   };
   
@@ -23,10 +23,16 @@ export const BottomNav = () => {
   
   return (
     <nav 
-      className="grid grid-cols-5 border-t border-gray-800/50 bg-gray-900/95 backdrop-blur-sm h-16 items-center z-navigation safe-area-bottom"
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50",
+        "grid grid-cols-5 border-t border-gray-800/50",
+        "bg-gray-900/95 backdrop-blur-sm",
+        "h-16 items-center",
+        // Safe area handling for iOS devices
+        "pb-safe-bottom"
+      )}
       style={{
-        width: '100%',
-        height: '64px'
+        paddingBottom: 'max(env(safe-area-inset-bottom), 0px)'
       }}
     >
       <NavButton 
@@ -81,19 +87,26 @@ const NavButton = ({
     <button 
       onClick={onClick} 
       className={cn(
-        "content-stack py-3 transition-all duration-200 ease-out h-full flex flex-col items-center justify-center",
+        "flex flex-col items-center justify-center py-2 transition-all duration-200 ease-out h-full",
         "active:scale-95 active:bg-gray-800/30",
         "hover:bg-gray-800/20",
+        "relative min-h-[48px]", // Ensure minimum touch target size
         active ? 'text-white' : 'text-gray-500',
         highlight && 'relative'
       )}
+      aria-label={label}
+      role="tab"
+      aria-selected={active}
     >
       <div className="transition-transform duration-200 ease-out">
         {icon}
       </div>
-      <span className="text-xs mt-1 transition-colors duration-200">{label}</span>
+      <span className="text-xs mt-1 transition-colors duration-200 leading-tight">{label}</span>
       {highlight && (
-        <span className="absolute top-2 right-1/4 h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+        <span className="absolute top-1 right-1/4 h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+      )}
+      {active && (
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-purple-500 rounded-full"></div>
       )}
     </button>
   );

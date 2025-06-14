@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { BottomNav } from '@/components/navigation/BottomNav';
 import { WorkoutBanner } from '@/components/training/WorkoutBanner';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
@@ -21,19 +23,33 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const isTrainingSession = location.pathname === '/training-session';
   
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      {/* Header */}
       {!noHeader && !isTrainingSession && <Header />}
       
+      {/* Main Content */}
       <main className={cn(
-        "flex-1 pb-16",
-        isTrainingSession ? "pt-0" : "pt-16"
+        "flex-1",
+        isTrainingSession ? "pt-0" : "pt-16",
+        "pb-20 lg:pb-16" // Extra padding bottom for mobile bottom nav
       )}>
         {children}
       </main>
       
-      {!noFooter && !isTrainingSession && <Footer />}
+      {/* Footer - Hidden on mobile when bottom nav is present */}
+      {!noFooter && !isTrainingSession && (
+        <Footer />
+      )}
       
+      {/* Bottom Navigation - Mobile only */}
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
+      
+      {/* Workout Banner */}
       <WorkoutBanner />
+      
+      {/* Toast Notifications */}
       <Toaster />
     </div>
   );
