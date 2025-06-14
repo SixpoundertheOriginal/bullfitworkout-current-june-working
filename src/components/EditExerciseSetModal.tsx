@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Dialog,
@@ -12,50 +11,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MinusCircle, PlusCircle, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast"; // Assuming this is shadcn toast via use-toast
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface ExerciseSet {
-  id: string;
-  exercise_name: string;
-  workout_id: string;
-  weight: number;
-  reps: number;
-  set_number: number;
-  completed: boolean;
-}
+import { ExerciseSet as CanonicalExerciseSet } from "@/types/exercise"; // Import canonical ExerciseSet
 
 interface EditExerciseSetModalProps {
-  sets: ExerciseSet[];
+  sets: CanonicalExerciseSet[]; // Use canonical ExerciseSet
   exerciseName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedSets: ExerciseSet[]) => Promise<void>;
+  onSave: (updatedSets: CanonicalExerciseSet[]) => Promise<void>; // Expects canonical ExerciseSet
 }
 
 export function EditExerciseSetModal({ 
-  sets, 
+  sets: initialSets, // Renamed to avoid conflict with props.sets in handleAddSet logic
   exerciseName,
   open, 
   onOpenChange, 
   onSave 
 }: EditExerciseSetModalProps) {
-  const [formSets, setFormSets] = useState<ExerciseSet[]>([]);
+  const [formSets, setFormSets] = useState<CanonicalExerciseSet[]>([]);
   const [saving, setSaving] = useState(false);
   const { weightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (sets) {
-      setFormSets([...sets].sort((a, b) => a.set_number - b.set_number));
+    if (initialSets) {
+      // Ensure set_number is correctly ordered if it's optional and might be missing/inconsistent
+      const sortedSets = [...initialSets].sort((a, b) => (a.set_number || 0) - (b.set_number || 0));
+      setFormSets(sortedSets.map((s, i) => ({ ...s, set_number: s.set_number || i + 1 })));
     }
-  }, [sets]);
+  }, [initialSets]);
 
   const handleWeightChange = (index: number, value: string) => {
     const updatedSets = [...formSets];
     const numValue = parseFloat(value);
     updatedSets[index].weight = !isNaN(numValue) ? Math.max(0, numValue) : 0;
+    // Also update volume if it's part of the ExerciseSet and should be dynamic
+    updatedSets[index].volume = updatedSets[index].weight * updatedSets[index].reps;
     setFormSets(updatedSets);
   };
 
@@ -63,6 +57,8 @@ export function EditExerciseSetModal({
     const updatedSets = [...formSets];
     const numValue = parseInt(value, 10);
     updatedSets[index].reps = !isNaN(numValue) ? Math.max(0, numValue) : 0;
+    // Also update volume
+    updatedSets[index].volume = updatedSets[index].weight * updatedSets[index].reps;
     setFormSets(updatedSets);
   };
 
@@ -70,6 +66,7 @@ export function EditExerciseSetModal({
     const updatedSets = [...formSets];
     const newWeight = Math.max(0, updatedSets[index].weight + increment);
     updatedSets[index].weight = newWeight;
+    updatedSets[index].volume = newWeight * updatedSets[index].reps;
     setFormSets(updatedSets);
   };
 
@@ -77,34 +74,44 @@ export function EditExerciseSetModal({
     const updatedSets = [...formSets];
     const newReps = Math.max(0, updatedSets[index].reps + increment);
     updatedSets[index].reps = newReps;
+    updatedSets[index].volume = updatedSets[index].weight * newReps;
     setFormSets(updatedSets);
   };
 
   const handleRemoveSet = (index: number) => {
-    // Filter out the set to remove
     const updatedSets = formSets.filter((_, i) => i !== index);
-    
-    // Recalculate set numbers
     updatedSets.forEach((set, i) => {
       set.set_number = i + 1;
     });
-    
     setFormSets(updatedSets);
   };
 
   const handleAddSet = () => {
-    // Clone the last set or create a new one if none exist
     const lastSet = formSets.length > 0 ? formSets[formSets.length - 1] : null;
     const newSetNumber = formSets.length + 1;
     
-    const newSet: ExerciseSet = {
-      id: `temp-${Date.now()}`, // Will be replaced when saved to database
-      exercise_name: exerciseName,
-      workout_id: lastSet?.workout_id || "",
-      weight: lastSet?.weight || 0,
-      reps: lastSet?.reps || 0,
+    const currentWorkoutId = formSets.length > 0 
+      ? formSets[0].workout_id 
+      : (initialSets.length > 0 ? initialSets[0].workout_id : undefined);
+
+    const newWeight = lastSet?.weight || 0;
+    const newReps = lastSet?.reps || 0;
+
+    const newSet: CanonicalExerciseSet = {
+      id: `temp-${Date.now()}-${newSetNumber}`, // Ensure unique ID
+      weight: newWeight, // required
+      reps: newReps, // required
+      duration: lastSet?.duration || '0:00', // required
+      completed: true, // required (modal's existing logic)
+      volume: newWeight * newReps, // required
+      restTime: lastSet?.restTime || 60, // required
+      isEditing: true, // required (new set starts as editable)
+
+      // Optional fields
       set_number: newSetNumber,
-      completed: true
+      exercise_name: exerciseName, // from props
+      workout_id: currentWorkoutId, // Can be undefined if not available
+      // metadata, created_at, etc., will be undefined or take default values
     };
     
     setFormSets([...formSets, newSet]);
@@ -113,14 +120,21 @@ export function EditExerciseSetModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Filter out any sets that might not be fully valid if needed, or ensure validation
+    const validSets = formSets.map((set, index) => ({
+      ...set,
+      set_number: set.set_number || index + 1, // Ensure set_number if somehow missing
+    }));
+
     try {
       setSaving(true);
-      await onSave(formSets);
+      await onSave(validSets); // Pass validSets
       onOpenChange(false);
-      toast.success("Exercise sets updated successfully");
+      // Use object syntax for shadcn toast
+      toast({ title: "Exercise sets updated successfully", variant: "default" }); // "success" variant might not exist
     } catch (error) {
       console.error("Error updating exercise sets:", error);
-      toast.error("Failed to update exercise sets");
+      toast({ title: "Failed to update exercise sets", variant: "destructive" });
     } finally {
       setSaving(false);
     }
