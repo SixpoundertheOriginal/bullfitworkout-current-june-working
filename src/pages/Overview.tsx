@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Target, TrendingUp, Clock, BarChart3, Calendar, Zap } from 'lucide-react';
@@ -25,7 +26,7 @@ interface Workout {
   id: string;
   name: string;
   created_at: string;
-  start_time: string;
+  start_time?: string;
   duration?: number;
   exercises?: Record<string, WorkoutSet[]>;
 }
