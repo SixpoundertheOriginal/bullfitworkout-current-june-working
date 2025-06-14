@@ -55,7 +55,7 @@ export const createRLSTestCases = (): RLSTestCase[] => [
           await supabase.from('workout_sessions').delete().eq('id', data.id);
         }
 
-        return !error && data;
+        return !error && !!data;
       } catch {
         return false;
       }
