@@ -1,36 +1,63 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// QueryClient and QueryClientProvider are now handled in AppProviders
 import { Toaster } from "@/components/ui/toaster";
-// AuthProvider, WeightUnitProvider, WorkoutNavigationContextProvider are now handled in AppProviders
-// ThemeProvider is now handled in AppProviders
-import { AppProviders } from '@/providers/AppProviders'; // Import the new AppProviders
+import { AppProviders } from '@/providers/AppProviders';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { HomePage } from '@/pages/HomePage';
 import { ExerciseLibraryPage } from '@/pages/ExerciseLibraryPage';
-import WorkoutDetailsPage from '@/pages/WorkoutDetailsPage'; // Corrected path
+import WorkoutDetailsPage from '@/pages/WorkoutDetailsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { OverviewPage } from '@/pages/Overview';
 import TrainingSessionPage from '@/pages/TrainingSession';
+import AuthPage from '@/pages/AuthPage'; // Import the new AuthPage
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'; // Import ProtectedRoute
 import { WorkoutBanner } from '@/components/training/WorkoutBanner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-
-// queryClient configuration is moved to AppProviders.tsx
 
 function App() {
   return (
     <ErrorBoundary>
-      <AppProviders> {/* Use the new AppProviders component */}
+      <AppProviders>
         <Router>
           <MainLayout>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/auth" element={<AuthPage />} /> {/* New Auth Route */}
               <Route path="/exercises" element={<ExerciseLibraryPage />} />
-              <Route path="/overview" element={<OverviewPage />} />
-              <Route path="/workout/:id" element={<WorkoutDetailsPage />} /> {/* Ensured path is correct, assuming it was src/pages/WorkoutDetailsPage.tsx */}
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/training-session" element={<TrainingSessionPage />} />
+              
+              <Route 
+                path="/overview" 
+                element={
+                  <ProtectedRoute>
+                    <OverviewPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/workout/:workoutId" // Ensure param name matches WorkoutDetailsPage
+                element={
+                  <ProtectedRoute>
+                    <WorkoutDetailsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/training-session" 
+                element={
+                  <ProtectedRoute>
+                    <TrainingSessionPage />
+                  </ProtectedRoute>
+                } 
+              />
             </Routes>
             <WorkoutBanner />
           </MainLayout>
