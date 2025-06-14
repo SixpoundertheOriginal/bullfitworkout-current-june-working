@@ -25,7 +25,7 @@ const TrainingSessionPage: React.FC = () => {
     addExercise, 
     completeSet,
     removeExercise,
-    resetSession,
+    resetWorkout,
   } = useWorkoutStore();
   
   const { saveWorkout, isSaving } = useWorkoutSave();
@@ -48,13 +48,13 @@ const TrainingSessionPage: React.FC = () => {
     workoutTimer.pause();
     restTimer.stop();
     await saveWorkout();
-    resetSession();
+    resetWorkout();
     navigate('/overview');
   };
 
   const handleCancelWorkout = () => {
     // TODO: Add a confirmation dialog before resetting
-    resetSession();
+    resetWorkout();
     navigate('/overview');
   };
 

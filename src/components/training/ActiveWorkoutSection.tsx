@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from "framer-motion";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
@@ -112,25 +113,6 @@ export const ActiveWorkoutSection: React.FC<ActiveWorkoutSectionProps> = React.m
           exercises={convertedExercises}
           onCompleteSet={onCompleteSet}
           onDeleteExercise={onDeleteExercise}
-          onRemoveSet={(name, i) => {
-            onRemoveSet(name, i);
-            showFeedback(`Set removed from ${name}`, 'info');
-          }}
-          onEditSet={onEditSet}
-          onSaveSet={(name, i) => {
-            onSaveSet(name, i);
-            showFeedback(`${name} set updated`, 'success');
-          }}
-          onWeightChange={onWeightChange}
-          onRepsChange={onRepsChange}
-          onRestTimeChange={onRestTimeChange}
-          onWeightIncrement={onWeightIncrement}
-          onRepsIncrement={onRepsIncrement}
-          onRestTimeIncrement={onRestTimeIncrement}
-          onOpenAddExercise={onOpenAddExercise}
-          onShowRestTimer={() => {}} // Will be handled by timer system
-          onResetRestTimer={() => {}} // Will be handled by timer system
-          setExercises={setExercises}
         />
       </motion.div>
     </motion.div>
