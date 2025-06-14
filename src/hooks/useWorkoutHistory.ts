@@ -1,9 +1,10 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getWorkoutHistory, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
-import type { WorkoutHistoryFilters } from '@/services/workoutHistoryService';
+import { workoutHistoryApi } from '@/services/DataService';
+import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/DataService';
+import { useAuth } from '@/context/AuthContext';
+import { calendarApi } from '@/services/DataService';
 
 // Define WorkoutHistoryFilters interface to use throughout the application
 export type { WorkoutHistoryFilters };
@@ -15,31 +16,14 @@ export interface WorkoutDates {
 
 // Hook to get workout dates for calendar view
 export function useWorkoutDates(year: number, month: number) {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['workout-dates', year, month],
+    queryKey: ['workout-dates', user?.id, year, month],
     queryFn: async () => {
-      // Create date range for the month
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      const { data, error } = await supabase
-        .from('workout_sessions')
-        .select('id, start_time')
-        .gte('start_time', startDate.toISOString())
-        .lte('start_time', endDate.toISOString());
-      
-      if (error) throw error;
-      
-      // Create a mapping of dates to workout counts
-      const workoutDates: WorkoutDates = {};
-      
-      (data || []).forEach(workout => {
-        const dateStr = workout.start_time.split('T')[0];
-        workoutDates[dateStr] = (workoutDates[dateStr] || 0) + 1;
-      });
-      
-      return workoutDates;
+      if (!user?.id) return {};
+      return calendarApi.fetchWorkoutDatesForMonth(user.id, year, month);
     },
+    enabled: !!user?.id,
   });
 }
 
@@ -55,7 +39,7 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
       filters.endDate, 
       filters.trainingTypes
     ],
-    queryFn: () => getWorkoutHistory(filters),
+    queryFn: () => workoutHistoryApi.fetch(filters),
     staleTime: 30000, // Consider data stale after 30 seconds
   });
   

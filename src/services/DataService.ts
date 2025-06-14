@@ -8,6 +8,39 @@ import { User } from '@supabase/supabase-js';
 import { getExerciseGroup } from '@/utils/exerciseUtils';
 import { WorkoutStats } from '@/types/workout-metrics';
 import { performanceMonitor } from '@/services/performanceMonitor';
+import { PersonalStats, PersonalMilestone } from '@/types/personal-analytics';
+import { subDays, differenceInDays, parseISO } from 'date-fns';
+
+// --- START: Types from workoutHistoryService ---
+export interface WorkoutHistoryFilters {
+  limit?: number;
+  offset?: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  trainingTypes?: string[];
+}
+
+export interface EnhancedWorkoutSession {
+  id: string;
+  name: string;
+  start_time: string;
+  duration: number;
+  training_type: string;
+  created_at: string;
+  end_time: string;
+  is_historical: boolean;
+  logged_at: string;
+  metadata: any;
+  notes: string;
+  updated_at: string;
+  user_id: string;
+  exerciseSets: Array<{
+    exercise_name: string;
+    id: string;
+  }>;
+}
+// --- END: Types from workoutHistoryService ---
+
 
 // --- Exercise API ---
 
@@ -266,4 +299,417 @@ const fetchWorkoutStatsFromSupabase = async (
 
 export const workoutStatsApi = {
   fetch: fetchWorkoutStatsFromSupabase,
+};
+
+// --- Workout History API ---
+
+const getWorkoutHistory = async (filters: WorkoutHistoryFilters = { limit: 30 }) => {
+  try {
+    const countQuery = supabase
+      .from('workout_sessions')
+      .select('id', { count: 'exact', head: true });
+      
+    if (filters.startDate) {
+      countQuery.gte('start_time', filters.startDate);
+    }
+    
+    if (filters.endDate) {
+      countQuery.lte('start_time', filters.endDate);
+    }
+    
+    if (filters.trainingTypes && filters.trainingTypes.length > 0) {
+      countQuery.in('training_type', filters.trainingTypes);
+    }
+    
+    const { count, error: countError } = await countQuery;
+    
+    if (countError) throw countError;
+    
+    let query = supabase
+      .from('workout_sessions')
+      .select('*')
+      .order('start_time', { ascending: false });
+      
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters.offset) {
+      query = query.range(filters.offset, filters.offset + (filters.limit || 30) - 1);
+    }
+    
+    if (filters.startDate) {
+      query = query.gte('start_time', filters.startDate);
+    }
+    
+    if (filters.endDate) {
+      query = query.lte('start_time', filters.endDate);
+    }
+    
+    if (filters.trainingTypes && filters.trainingTypes.length > 0) {
+      query = query.in('training_type', filters.trainingTypes);
+    }
+    
+    const { data, error: workoutsError } = await query;
+    
+    if (workoutsError) throw workoutsError;
+    
+    const exerciseCountData: Record<string, { exercises: number; sets: number }> = {};
+    
+    if (data) {
+      // Fetch exercise sets for all workouts in one batch
+      const workoutIds = data.map(w => w.id);
+      const { data: allExerciseSets, error: exerciseSetsError } = await supabase
+        .from('exercise_sets')
+        .select('workout_id, exercise_name, id')
+        .in('workout_id', workoutIds);
+        
+      if (exerciseSetsError) throw exerciseSetsError;
+      
+      // Group exercise sets by workout
+      const exerciseSetsByWorkout: Record<string, Array<{exercise_name: string, id: string}>> = {};
+      (allExerciseSets || []).forEach(set => {
+        if (!exerciseSetsByWorkout[set.workout_id]) {
+          exerciseSetsByWorkout[set.workout_id] = [];
+        }
+        exerciseSetsByWorkout[set.workout_id].push({
+          exercise_name: set.exercise_name,
+          id: set.id
+        });
+      });
+      
+      // Create enhanced workout objects with exercise sets
+      const enhancedWorkouts: EnhancedWorkoutSession[] = data.map(workout => ({
+        ...workout,
+        exerciseSets: exerciseSetsByWorkout[workout.id] || []
+      }));
+      
+      // Calculate exercise counts
+      enhancedWorkouts.forEach(workout => {
+        const exerciseNames = new Set(workout.exerciseSets.map(set => set.exercise_name));
+        exerciseCountData[workout.id] = {
+          exercises: exerciseNames.size,
+          sets: workout.exerciseSets.length
+        };
+      });
+      
+      return {
+        workouts: enhancedWorkouts,
+        exerciseCounts: exerciseCountData,
+        totalCount: count || 0
+      };
+    }
+    
+    return {
+      workouts: [] as EnhancedWorkoutSession[],
+      exerciseCounts: exerciseCountData,
+      totalCount: count || 0
+    };
+  } catch (err) {
+    console.error('Error fetching workout history:', err);
+    throw err;
+  }
+};
+
+interface WorkoutSet {
+  weight: number;
+  reps: number;
+  completed?: boolean;
+}
+
+const getWorkoutDetails = async (workoutIds: string[]) => {
+  if (workoutIds.length === 0) return {};
+
+  const { data: allSets, error } = await supabase
+    .from('exercise_sets')
+    .select('workout_id, exercise_name, weight, reps, completed')
+    .in('workout_id', workoutIds);
+  
+  if (error) throw error;
+
+  const setsByWorkout: Record<string, { exercise_name: string | null; weight: number | null; reps: number | null; completed: boolean | null }[]> = {};
+  (allSets || []).forEach(set => {
+    if (!setsByWorkout[set.workout_id]) {
+      setsByWorkout[set.workout_id] = [];
+    }
+    setsByWorkout[set.workout_id].push(set);
+  });
+  
+  const workoutsWithDetails: Record<string, { exercises: Record<string, WorkoutSet[]> }> = {};
+  workoutIds.forEach(id => {
+    const workoutSets = setsByWorkout[id] || [];
+    const exercises: Record<string, WorkoutSet[]> = {};
+    workoutSets.forEach(set => {
+      const exerciseName = set.exercise_name || 'Unknown Exercise';
+      if (!exercises[exerciseName]) {
+        exercises[exerciseName] = [];
+      }
+      exercises[exerciseName].push({ weight: set.weight || 0, reps: set.reps || 0, completed: set.completed ?? true });
+    });
+    workoutsWithDetails[id] = { exercises };
+  });
+
+  return workoutsWithDetails;
+};
+
+export const workoutHistoryApi = {
+  fetch: getWorkoutHistory,
+  fetchDetails: getWorkoutDetails,
+};
+
+// --- Personal Stats API ---
+
+function calculateTrend(exerciseSets: any[]): 'increasing' | 'decreasing' | 'stable' | 'new' {
+  if (exerciseSets.length < 3) return 'new';
+
+  const recentSets = exerciseSets.slice(-6);
+  if (recentSets.length < 6) return 'stable';
+
+  const firstHalf = recentSets.slice(0, 3);
+  const secondHalf = recentSets.slice(3, 6);
+
+  const firstHalfAvg = firstHalf.reduce((sum, set) => sum + (set.weight * set.reps), 0) / firstHalf.length;
+  const secondHalfAvg = secondHalf.reduce((sum, set) => sum + (set.weight * set.reps), 0) / secondHalf.length;
+
+  const improvement = ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100;
+
+  if (improvement > 5) return 'increasing';
+  if (improvement < -5) return 'decreasing';
+  return 'stable';
+}
+
+function calculateProgressPercentage(exerciseSets: any[]): number {
+  if (exerciseSets.length < 2) return 0;
+
+  const thirtyDaysAgo = subDays(new Date(), 30);
+  const recentSets = exerciseSets.filter(set => 
+    parseISO(set.created_at) >= thirtyDaysAgo
+  );
+
+  if (recentSets.length < 2) return 0;
+
+  const firstVolume = recentSets[0].weight * recentSets[0].reps;
+  const lastVolume = recentSets[recentSets.length - 1].weight * recentSets[recentSets.length - 1].reps;
+
+  return Math.round(((lastVolume - firstVolume) / firstVolume) * 100);
+}
+
+function determineReadyToProgress(exerciseSets: any[], daysSinceLastPerformed: number): boolean {
+  if (exerciseSets.length < 3) return false;
+  if (daysSinceLastPerformed > 14) return false;
+
+  const lastThreeSets = exerciseSets.slice(-3);
+  const volumes = lastThreeSets.map(set => set.weight * set.reps);
+  const avgVolume = volumes.reduce((sum, vol) => sum + vol, 0) / volumes.length;
+  
+  return volumes.every(vol => Math.abs((vol - avgVolume) / avgVolume) < 0.05);
+}
+
+function generateMilestones(exerciseSets: any[]): PersonalMilestone[] {
+  const milestones: PersonalMilestone[] = [];
+
+  if (exerciseSets.length === 1) {
+    milestones.push({
+      type: 'first_time',
+      value: 1,
+      date: exerciseSets[0].created_at,
+      description: 'First time performing this exercise'
+    });
+  }
+
+  const totalVolume = exerciseSets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+  const volumeMilestones = [1000, 5000, 10000, 25000, 50000, 100000];
+  
+  volumeMilestones.forEach(milestone => {
+    if (totalVolume >= milestone) {
+      milestones.push({
+        type: 'volume_milestone',
+        value: milestone,
+        date: new Date().toISOString(),
+        description: `Reached ${milestone.toLocaleString()} total volume`
+      });
+    }
+  });
+
+  const sessions = new Set(exerciseSets.map(set => set.workout_id)).size;
+  const consistencyMilestones = [5, 10, 25, 50, 100];
+  
+  consistencyMilestones.forEach(milestone => {
+    if (sessions >= milestone) {
+      milestones.push({
+        type: 'consistency',
+        value: milestone,
+        date: new Date().toISOString(),
+        description: `Completed ${milestone} sessions`
+      });
+    }
+  });
+
+  return milestones.slice(-5);
+}
+
+async function fetchPersonalStats(userId: string, exerciseId: string): Promise<PersonalStats | null> {
+  if (!userId || !exerciseId) return null;
+
+  const { data: exerciseSets, error: setsError } = await supabase
+    .from('exercise_sets')
+    .select(`
+      *,
+      workout_sessions!inner(*)
+    `)
+    .eq('exercise_name', exerciseId)
+    .eq('workout_sessions.user_id', userId)
+    .order('created_at', { ascending: true });
+
+  if (setsError) throw setsError;
+
+  if (!exerciseSets || exerciseSets.length === 0) {
+    return {
+      exerciseId,
+      userId,
+      totalSessions: 0,
+      totalVolume: 0,
+      personalBest: null,
+      lastPerformed: null,
+      averageWeight: 0,
+      averageReps: 0,
+      trend: 'new',
+      progressPercentage: 0,
+      daysSinceLastPerformed: 0,
+      isReadyToProgress: false,
+      milestones: []
+    };
+  }
+
+  const totalSessions = new Set(exerciseSets.map(set => set.workout_id)).size;
+  const totalVolume = exerciseSets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+  const averageWeight = exerciseSets.reduce((sum, set) => sum + set.weight, 0) / exerciseSets.length;
+  const averageReps = exerciseSets.reduce((sum, set) => sum + set.reps, 0) / exerciseSets.length;
+
+  const personalBest = exerciseSets.reduce((best, set) => {
+    const volume = set.weight * set.reps;
+    const bestVolume = best ? best.weight * best.reps : 0;
+    
+    if (volume > bestVolume) {
+      return {
+        weight: set.weight,
+        reps: set.reps,
+        date: set.created_at
+      };
+    }
+    return best;
+  }, null as { weight: number; reps: number; date: string } | null);
+
+  const lastPerformed = exerciseSets[exerciseSets.length - 1]?.created_at || null;
+  const daysSinceLastPerformed = lastPerformed 
+    ? differenceInDays(new Date(), parseISO(lastPerformed))
+    : 0;
+
+  const trend = calculateTrend(exerciseSets);
+  const progressPercentage = calculateProgressPercentage(exerciseSets);
+  const isReadyToProgress = determineReadyToProgress(exerciseSets, daysSinceLastPerformed);
+  const milestones = generateMilestones(exerciseSets);
+
+  return {
+    exerciseId,
+    userId,
+    totalSessions,
+    totalVolume,
+    personalBest,
+    lastPerformed,
+    averageWeight,
+    averageReps,
+    trend,
+    progressPercentage,
+    daysSinceLastPerformed,
+    isReadyToProgress,
+    milestones
+  };
+}
+
+async function fetchMultiplePersonalStats(userId: string, exerciseIds: string[]): Promise<Record<string, PersonalStats | null>> {
+  if (!userId || exerciseIds.length === 0) return {};
+
+  const statsPromises = exerciseIds.map(async (exerciseId) => {
+    const stats = await fetchPersonalStats(userId, exerciseId);
+    return [exerciseId, stats] as const;
+  });
+
+  const results = await Promise.all(statsPromises);
+  return Object.fromEntries(results.filter(([_, stats]) => stats !== null));
+}
+
+export const personalStatsApi = {
+  fetch: fetchPersonalStats,
+  fetchMultiple: fetchMultiplePersonalStats
+};
+
+// --- Calendar API ---
+
+const fetchWorkoutDatesForMonth = async (userId: string, year: number, month: number) => {
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0);
+  
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('id, start_time')
+    .eq('user_id', userId)
+    .gte('start_time', startDate.toISOString())
+    .lte('start_time', endDate.toISOString());
+  
+  if (error) throw error;
+  
+  const workoutDates: { [date: string]: number; } = {};
+  
+  (data || []).forEach(workout => {
+    const dateStr = workout.start_time.split('T')[0];
+    workoutDates[dateStr] = (workoutDates[dateStr] || 0) + 1;
+  });
+  
+  return workoutDates;
+};
+
+const fetchWorkoutsForDayWithSets = async (userId: string, date: Date) => {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const { data: workouts, error: workoutsError } = await supabase
+        .from('workout_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('start_time', startOfDay.toISOString())
+        .lte('start_time', endOfDay.toISOString())
+        .order('start_time', { ascending: false });
+
+    if (workoutsError) throw workoutsError;
+    if (!workouts || workouts.length === 0) {
+        return { workouts: [], setsByWorkout: {} };
+    }
+
+    const workoutIds = workouts.map(w => w.id);
+      
+    const { data: sets, error: setsError } = await supabase
+        .from('exercise_sets')
+        .select('*')
+        .in('workout_id', workoutIds);
+    
+    if (setsError) throw setsError;
+
+    const setsByWorkout: Record<string, any[]> = {};
+    (sets || []).forEach(set => {
+        if (!setsByWorkout[set.workout_id]) {
+            setsByWorkout[set.workout_id] = [];
+        }
+        setsByWorkout[set.workout_id].push(set);
+    });
+
+    return { workouts, setsByWorkout };
+};
+
+export const calendarApi = {
+  fetchWorkoutDatesForMonth,
+  fetchWorkoutsForDayWithSets,
 };

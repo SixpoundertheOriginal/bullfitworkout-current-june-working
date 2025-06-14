@@ -1,7 +1,8 @@
+
 import { useMemo } from 'react';
 import { useValidatedWorkoutHistory } from './useWorkoutHistory';
 import { useQuery } from '@tanstack/react-query';
-import { getWorkoutDetails } from '@/services/workoutHistoryService';
+import { workoutHistoryApi } from '@/services/DataService';
 import type { ExerciseSet } from '@/types/exercise';
 
 export interface Workout {
@@ -21,7 +22,7 @@ export const useWorkouts = () => {
 
   const { data: workoutDetails, isLoading: detailsLoading, error: detailsError } = useQuery({
     queryKey: ['workoutDetails', workoutIds],
-    queryFn: () => getWorkoutDetails(workoutIds),
+    queryFn: () => workoutHistoryApi.fetchDetails(workoutIds),
     enabled: !!workoutIds && workoutIds.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

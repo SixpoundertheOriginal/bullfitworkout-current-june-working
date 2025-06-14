@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +22,8 @@ import { useWorkoutStatsContext } from '@/context/WorkoutStatsProvider';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useWorkoutDates } from '@/hooks/useWorkoutHistory';
+import { calendarApi } from '@/services/DataService';
 
 interface ExerciseSet {
   id: string;
@@ -40,81 +40,31 @@ export function WorkoutCalendarTab() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date>(new Date());
   
-  const { data: workouts, isLoading: loadingWorkouts } = useQuery({
-    queryKey: ['calendar-workouts', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('workout_sessions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('start_time', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user,
-  });
+  const { data: workoutDatesData } = useWorkoutDates(month.getFullYear(), month.getMonth());
   
   const selectedDateISO = date ? format(date, 'yyyy-MM-dd') : '';
   
-  const { data: selectedDayWorkouts, isLoading: loadingDayWorkouts } = useQuery({
-    queryKey: ['day-workouts', user?.id, selectedDateISO],
+  const { data: dayData, isLoading: loadingDayData } = useQuery({
+    queryKey: ['day-workouts-with-sets', user?.id, selectedDateISO],
     queryFn: async () => {
-      if (!date) return [];
-      
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      const { data, error } = await supabase
-        .from('workout_sessions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .gte('start_time', startOfDay.toISOString())
-        .lte('start_time', endOfDay.toISOString())
-        .order('start_time', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+      if (!date || !user?.id) return { workouts: [], setsByWorkout: {} };
+      return calendarApi.fetchWorkoutsForDayWithSets(user.id, date);
     },
     enabled: !!user && !!date,
   });
   
-  const { data: exerciseSets, isLoading: loadingSets } = useQuery({
-    queryKey: ['selected-day-exercise-sets', selectedDayWorkouts],
-    queryFn: async () => {
-      if (!selectedDayWorkouts || selectedDayWorkouts.length === 0) return {};
-      
-      const workoutIds = selectedDayWorkouts.map(w => w.id);
-      
-      const { data, error } = await supabase
-        .from('exercise_sets')
-        .select('*')
-        .in('workout_id', workoutIds);
-      
-      if (error) throw error;
-      
-      const setsByWorkout: Record<string, ExerciseSet[]> = {};
-      data?.forEach(set => {
-        if (!setsByWorkout[set.workout_id]) {
-          setsByWorkout[set.workout_id] = [];
-        }
-        setsByWorkout[set.workout_id].push(set as ExerciseSet);
-      });
-      
-      return setsByWorkout || {};
-    },
-    enabled: !!selectedDayWorkouts && selectedDayWorkouts.length > 0,
-  });
+  const selectedDayWorkouts = dayData?.workouts;
+  const exerciseSets = dayData?.setsByWorkout;
+  const loadingDayWorkouts = loadingDayData;
   
-  const workoutDates: Record<string, boolean> = {};
-  workouts?.forEach(workout => {
-    const date = parseISO(workout.start_time);
-    const dateString = format(date, 'yyyy-MM-dd');
-    workoutDates[dateString] = true;
-  });
+  const workoutDates: Record<string, boolean> = useMemo(() => {
+    if (!workoutDatesData) return {};
+    const dates: Record<string, boolean> = {};
+    Object.keys(workoutDatesData).forEach(dateString => {
+        dates[dateString] = true;
+    });
+    return dates;
+  }, [workoutDatesData]);
   
   const handlePreviousMonth = () => {
     const previousMonth = new Date(month);
