@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -24,7 +23,7 @@ export interface WorkoutState {
   workoutStatus: 'idle' | 'active' | 'saving' | 'saved' | 'failed';
   exercises: Record<string, ExerciseSet[]>;
   
-  // Timer state
+  // Timer state with validation
   elapsedTime: number;
   restTimerActive: boolean;
   restTimerResetSignal: number;
@@ -77,6 +76,23 @@ export interface WorkoutState {
   startTime?: number;
 }
 
+// Validation helpers
+const validateElapsedTime = (time: number): number => {
+  const MAX_WORKOUT_TIME = 86400; // 24 hours
+  const validatedTime = Math.max(0, Math.min(Math.floor(time), MAX_WORKOUT_TIME));
+  
+  if (time > MAX_WORKOUT_TIME) {
+    console.warn('[WorkoutStore] Timer reset due to excessive value:', time);
+  }
+  
+  return validatedTime;
+};
+
+const validateRestTime = (time: number): number => {
+  const MAX_REST_TIME = 3600; // 1 hour max rest
+  return Math.max(0, Math.min(Math.floor(time), MAX_REST_TIME));
+};
+
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set, get) => ({
@@ -96,7 +112,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       workoutId: undefined,
       startTime: undefined,
 
-      // Actions
+      // Actions with enhanced validation
       startWorkout: (config) => set({
         isActive: true,
         explicitlyEnded: false,
@@ -216,11 +232,11 @@ export const useWorkoutStore = create<WorkoutState>()(
         elapsedTime: state.elapsedTime + 1 
       })),
 
-      setElapsedTime: (time) => set({ elapsedTime: time }),
+      setElapsedTime: (time) => set({ elapsedTime: validateElapsedTime(time) }),
 
       startRestTimer: (duration) => set({
         restTimerActive: true,
-        currentRestTime: duration
+        currentRestTime: validateRestTime(duration)
       }),
 
       stopRestTimer: () => set({
@@ -259,7 +275,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       partialize: (state) => ({
         isActive: state.isActive,
         exercises: state.exercises,
-        elapsedTime: state.elapsedTime,
+        elapsedTime: validateElapsedTime(state.elapsedTime), // Validate on persist
         trainingConfig: state.trainingConfig,
         workoutStatus: state.workoutStatus,
         lastActiveRoute: state.lastActiveRoute,
