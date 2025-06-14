@@ -74,22 +74,8 @@ const seedInitialExercises = async () => {
   return { message: 'Database seeded successfully!' };
 };
 
-// Validate the local exercise data against the schema on module load.
-// This ensures consistency between local and remote data sources.
-const validatedLocalExercises: Exercise[] = (() => {
-    try {
-        return ExerciseSchema.array().parse(localRawExercises);
-    } catch (e) {
-        if (e instanceof z.ZodError) {
-            console.error('Zod validation failed for local exercises:', e.issues);
-        } else {
-            console.error('An unexpected error occurred during local exercise parsing:', e);
-        }
-        // In case of validation failure, return an empty array to prevent app crash.
-        return [];
-    }
-})();
-
+// The local exercise data and its validation have been removed to enforce
+// Supabase as the single source of truth for a scalable architecture.
 
 export const useExercises = () => {
   const queryClient = useQueryClient();
@@ -98,9 +84,9 @@ export const useExercises = () => {
   // Fetch exercises from Supabase, but only if the user is logged in.
   const { 
     data: supabaseExercises, 
-    isLoading: isLoadingSupabase, 
-    error: supabaseError,
-    isError: isSupabaseError,
+    isLoading, 
+    error,
+    isError,
   } = useQuery({
     queryKey: ['exercises'],
     queryFn: fetchExercisesFromSupabase,
@@ -155,14 +141,9 @@ export const useExercises = () => {
     },
   });
 
-  // Hybrid logic: return Supabase data for logged-in users, otherwise the validated local data.
-  const exercises = user ? supabaseExercises : validatedLocalExercises;
-  const isLoading = user ? isLoadingSupabase : false;
-  const error = user ? supabaseError : null;
-  const isError = user ? isSupabaseError : false;
-
+  // Data now comes exclusively from Supabase. No more local fallback.
   return {
-    exercises: exercises || [],
+    exercises: supabaseExercises || [],
     isLoading,
     createExercise,
     isPending,
