@@ -2,7 +2,7 @@
 import React from 'react';
 import { PerformanceOptimizedExerciseLibrary } from '@/components/exercises/PerformanceOptimizedExerciseLibrary';
 
-export const ExerciseLibraryPage: React.FC = () => {
+const ExerciseLibraryPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
@@ -21,3 +21,5 @@ export const ExerciseLibraryPage: React.FC = () => {
     </div>
   );
 };
+
+export default ExerciseLibraryPage;
