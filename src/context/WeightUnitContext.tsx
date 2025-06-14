@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type WeightUnit = 'kg' | 'lbs';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { WeightUnit } from '@/types/exercise';
 
 interface WeightUnitContextType {
   weightUnit: WeightUnit;
@@ -11,7 +11,7 @@ interface WeightUnitContextType {
 const WeightUnitContext = createContext<WeightUnitContextType | undefined>(undefined);
 
 export const WeightUnitProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [weightUnit, setWeightUnitState] = useState<WeightUnit>('lbs');
+  const [weightUnit, setWeightUnitState] = useState<WeightUnit>('lb');
 
   const setWeightUnit = (unit: WeightUnit) => {
     setWeightUnitState(unit);
@@ -19,12 +19,12 @@ export const WeightUnitProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const isDefaultUnit = (unit: WeightUnit) => {
-    return unit === 'lbs'; // Default to lbs
+    return unit === 'lb'; // Default to lb
   };
 
   useEffect(() => {
     const stored = localStorage.getItem('preferredWeightUnit') as WeightUnit;
-    if (stored && (stored === 'kg' || stored === 'lbs')) {
+    if (stored && (stored === 'kg' || stored === 'lb')) {
       setWeightUnitState(stored);
     }
   }, []);

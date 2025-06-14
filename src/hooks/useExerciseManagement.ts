@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { updateWorkout, updateExerciseSets, addExerciseToWorkout, removeExerciseFromWorkout } from "@/services/workoutService";
@@ -56,7 +55,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
       const updated = await updateExerciseSets(workoutId, currentExercise, apiSets);
       toast.success("Exercise sets updated");
       
-      // Convert back to ExerciseSet format
+      // Convert back to ExerciseSet format with all required fields
       const convertedSets: ExerciseSet[] = updated.map(set => ({
         id: set.id,
         weight: set.weight,
@@ -67,7 +66,9 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         set_number: set.set_number,
         exercise_name: set.exercise_name,
         workout_id: set.workout_id,
-        rest_time: set.rest_time
+        rest_time: set.rest_time,
+        restTime: set.rest_time,
+        isEditing: false
       }));
       
       // Create a new object first, then pass it to onUpdate
@@ -90,7 +91,7 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
     try {
       const newSets = await addExerciseToWorkout(workoutId, exerciseName, 3);
       
-      // Convert to ExerciseSet format
+      // Convert to ExerciseSet format with all required fields
       const convertedSets: ExerciseSet[] = newSets.map(set => ({
         id: set.id,
         weight: set.weight,
@@ -101,7 +102,9 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         set_number: set.set_number,
         exercise_name: set.exercise_name,
         workout_id: set.workout_id,
-        rest_time: set.rest_time
+        rest_time: set.rest_time,
+        restTime: set.rest_time,
+        isEditing: false
       }));
       
       // Create a new object first, then pass it to onUpdate

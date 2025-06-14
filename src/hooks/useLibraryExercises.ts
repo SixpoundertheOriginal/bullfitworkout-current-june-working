@@ -80,10 +80,11 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
   // Create exercise mutation with library-specific validation
   const { mutate: createLibraryExercise, isPending: isCreating } = useMutation({
     mutationFn: async (exerciseData: Omit<Exercise, 'id' | 'created_at'>) => {
-      // Ensure description is provided with a default value
+      // Ensure required fields are provided with defaults
       const exerciseWithDefaults = {
         ...exerciseData,
         description: exerciseData.description || `Custom exercise: ${exerciseData.name}`,
+        difficulty: exerciseData.difficulty || 'beginner',
         instructions: exerciseData.instructions || { steps: '', form: '' }
       };
       

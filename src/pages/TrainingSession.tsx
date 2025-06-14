@@ -29,9 +29,11 @@ const TrainingSessionPage: React.FC = () => {
           id: `${exerciseName}-1`,
           weight: 0,
           reps: 0,
-          duration: '0',
+          duration: '0:00',
           completed: false,
-          volume: 0
+          volume: 0,
+          restTime: 60,
+          isEditing: false
         }
       ]
     }));
@@ -54,9 +56,11 @@ const TrainingSessionPage: React.FC = () => {
           id: `${exerciseName}-${prev[exerciseName].length + 1}`,
           weight: 0,
           reps: 0,
-          duration: '0',
+          duration: '0:00',
           completed: false,
-          volume: 0
+          volume: 0,
+          restTime: 60,
+          isEditing: false
         }
       ]
     }));

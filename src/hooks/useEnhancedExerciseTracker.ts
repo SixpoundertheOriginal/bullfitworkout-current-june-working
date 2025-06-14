@@ -17,9 +17,11 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
         id: `${exerciseName}-1`,
         weight: 0,
         reps: 0,
-        duration: '0',
+        duration: '0:00',
         completed: false,
-        volume: 0
+        volume: 0,
+        restTime: 60,
+        isEditing: false
       }
     ]
   });
@@ -52,9 +54,11 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
           id: `${exerciseName}-${prev.sets.length + 1}`,
           weight: 0,
           reps: 0,
-          duration: '0',
+          duration: '0:00',
           completed: false,
-          volume: 0
+          volume: 0,
+          restTime: 60,
+          isEditing: false
         }
       ]
     }));
