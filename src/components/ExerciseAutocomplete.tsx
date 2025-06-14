@@ -140,8 +140,8 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
     
     console.log("Creating exercise with data:", exerciseToCreate);
 
-    createExercise(exerciseToCreate, {
-      onSuccess: (data) => {
+    createExercise(exerciseToCreate)
+      .then((data) => {
         console.log("Exercise created successfully:", data);
         toast({
           title: "Success",
@@ -167,16 +167,15 @@ export function ExerciseAutocomplete({ onSelectExercise, className }: ExerciseAu
           variations: [],
           metadata: {}
         });
-      },
-      onError: (error) => {
+      })
+      .catch((error) => {
         console.error("Error creating exercise:", error);
         toast({
           title: "Error",
           description: `Failed to create exercise: ${error.message}`,
           variant: "destructive"
         });
-      }
-    });
+      });
   };
 
   const addPrimaryMuscleGroup = (muscleGroup: MuscleGroup) => {

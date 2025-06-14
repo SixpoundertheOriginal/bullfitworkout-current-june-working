@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
@@ -85,6 +84,7 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
         ...exerciseData,
         description: exerciseData.description || `Custom exercise: ${exerciseData.name}`,
         difficulty: exerciseData.difficulty || 'beginner',
+        movement_pattern: exerciseData.movement_pattern || 'push',
         instructions: exerciseData.instructions || { steps: '', form: '' }
       };
       

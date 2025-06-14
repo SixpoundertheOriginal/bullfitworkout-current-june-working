@@ -1,11 +1,11 @@
 
-export type WeightUnit = "kg" | "lbs";
+import { WeightUnit } from "@/types/exercise";
 
 /**
- * Converts weight values between kg and lbs units
+ * Converts weight values between kg and lb units
  * @param value The weight value to convert
- * @param from The source unit ('kg' or 'lbs')
- * @param to The target unit ('kg' or 'lbs')
+ * @param from The source unit ('kg' or 'lb')
+ * @param to The target unit ('kg' or 'lb')
  * @returns The converted weight value, rounded to 1 decimal place
  */
 export function convertWeight(value: number, from: WeightUnit, to: WeightUnit): number {
@@ -13,10 +13,10 @@ export function convertWeight(value: number, from: WeightUnit, to: WeightUnit): 
   
   // Convert to target unit
   let result: number;
-  if (from === "kg" && to === "lbs") {
+  if (from === "kg" && to === "lb") {
     result = value * 2.20462;
   } else {
-    // from === "lbs" && to === "kg"
+    // from === "lb" && to === "kg"
     result = value / 2.20462;
   }
   
@@ -27,7 +27,7 @@ export function convertWeight(value: number, from: WeightUnit, to: WeightUnit): 
 /**
  * Formats a weight value with its unit for display
  * @param value The weight value
- * @param unit The weight unit ('kg' or 'lbs')
+ * @param unit The weight unit ('kg' or 'lb')
  * @param decimalPlaces Optional number of decimal places (default: 1)
  * @returns Formatted string like "100.0 kg"
  */

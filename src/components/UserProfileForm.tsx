@@ -1,4 +1,3 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfileData } from "@/pages/ProfilePage";
 import { useWeightUnit } from "@/context/WeightUnitContext";
+import { WeightUnit } from "@/types/exercise";
 
 const profileFormSchema = z.object({
   full_name: z.string().nullable().optional(),
@@ -50,7 +50,7 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
   });
 
   const handleSubmit = (data: UserProfileData) => {
-    setWeightUnit(data.weight_unit as "kg" | "lbs");
+    setWeightUnit(data.weight_unit as WeightUnit);
     onSubmit(data);
   };
 
@@ -149,7 +149,7 @@ export function UserProfileForm({ initialData, onSubmit }: UserProfileFormProps)
                   </FormControl>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
                     <SelectItem value="kg">kg</SelectItem>
-                    <SelectItem value="lbs">lbs</SelectItem>
+                    <SelectItem value="lb">lb</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
