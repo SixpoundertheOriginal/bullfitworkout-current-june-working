@@ -1,9 +1,10 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, ExerciseInput } from '@/types/exercise';
 import { useAuth } from '@/context/AuthContext';
 import { exerciseDatabase } from '@/data/exercises';
-import { ExerciseSchema, ExerciseDataSchema } from '@/types/exercise.schema';
+import { ExerciseSchema, ExerciseInputSchema } from '@/types/exercise.schema';
 import { z } from 'zod';
 
 // Fetches and validates exercises from Supabase.
@@ -19,9 +20,8 @@ const fetchExercisesFromSupabase = async (): Promise<Exercise[]> => {
     }
 
     try {
-        // Use the new data schema to parse potentially incomplete data from Supabase
-        // and transform it into our strict client-side Exercise type.
-        return ExerciseDataSchema.array().parse(data);
+        // Use the strict ExerciseSchema to parse data from Supabase.
+        return ExerciseSchema.array().parse(data);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error('Zod validation failed for exercises:', e.issues);
@@ -47,13 +47,18 @@ const seedInitialExercises = async () => {
     return { message: 'Database already seeded.' };
   }
 
-  // Transform local data to match what Supabase expects for insertion.
-  // We omit client-only or auto-generated fields.
-  const exercisesToSeed = exerciseDatabase.map(({ id, created_at, user_id, ...rest }) => ({
-      ...rest,
-      // Supabase's JS client expects JSON objects to be stringified for 'json' columns.
-      instructions: JSON.stringify(rest.instructions),
-  }));
+  // Transform and validate local data before inserting it into Supabase.
+  const exercisesToSeed = exerciseDatabase.map((exercise) => {
+    const { id, created_at, user_id, ...rest } = exercise;
+    // Parse with ExerciseInputSchema to ensure it matches the shape for creation
+    const parsedForInsert = ExerciseInputSchema.parse(rest);
+
+    return {
+        ...parsedForInsert,
+        // Supabase's JS client expects JSON objects to be stringified for 'json' columns.
+        instructions: JSON.stringify(parsedForInsert.instructions),
+    };
+  });
 
   const { error: insertError } = await supabase
     .from('exercises')
@@ -91,7 +96,9 @@ export const useExercises = () => {
         throw new Error('User must be authenticated to create exercises.');
       }
       
-      const { instructions, ...restOfExercise } = newExercise;
+      // Validate and apply defaults using the schema before preparing for insert.
+      const parsedExercise = ExerciseInputSchema.parse(newExercise);
+      const { instructions, ...restOfExercise } = parsedExercise;
       
       const exerciseToInsert = {
         ...restOfExercise,
@@ -112,7 +119,7 @@ export const useExercises = () => {
       }
       
       // Safely parse the returned data to ensure it matches our app's types.
-      return ExerciseDataSchema.parse(data);
+      return ExerciseSchema.parse(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
