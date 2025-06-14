@@ -12,8 +12,8 @@ interface GlobalProvidersProps {
   children: React.ReactNode;
 }
 
-// Configure QueryClient
-const queryClient = new QueryClient({
+// Configure and export QueryClient
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
