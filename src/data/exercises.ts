@@ -1,8 +1,31 @@
 
 import { Exercise } from '@/types/exercise';
 
+// This is a workaround to make local data conform to the strict Exercise type.
+// The proper fix is to ensure data from all sources (local, API) is validated and transformed.
+const toExercise = (data: Omit<Exercise, 'id' | 'created_at' | 'user_id'> & { id: string }): Exercise => ({
+  ...{
+    description: '',
+    primary_muscle_groups: [],
+    secondary_muscle_groups: [],
+    equipment_type: [],
+    difficulty: 'beginner',
+    movement_pattern: 'custom',
+    is_compound: false,
+    is_bodyweight: false,
+    instructions: { steps: '', form: '' },
+    tips: [],
+    variations: [],
+    metadata: {},
+    load_factor: 1.0,
+    ...data,
+  },
+  created_at: new Date().toISOString(),
+  user_id: null,
+});
+
 export const exerciseDatabase: Exercise[] = [
-  {
+  toExercise({
     id: '1',
     name: 'Bench Press',
     description: 'A classic upper body exercise that targets the chest, shoulders, and triceps.',
@@ -17,14 +40,10 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Lie on a flat bench with your feet flat on the floor. \n2. Grip the barbell with hands slightly wider than shoulder-width apart. \n3. Lift the bar off the rack and hold it straight over your chest. \n4. Lower the bar slowly to your chest, then push it back up to the starting position.",
       form: "Keep your back flat on the bench and avoid arching. Control the weight on the way down and explode on the way up."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
-    tips: [],
     variations: ['Incline Bench Press', 'Dumbbell Bench Press'],
-    metadata: {},
     load_factor: 1.2,
-  },
-  {
+  }),
+  toExercise({
     id: '2',
     name: 'Squat',
     description: 'A fundamental lower body exercise that works the quads, hamstrings, and glutes.',
@@ -39,14 +58,11 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Stand with your feet shoulder-width apart, with the barbell resting on your upper back. \n2. Keeping your chest up and back straight, lower your hips as if sitting in a chair. \n3. Go as low as you can comfortably, ideally until your thighs are parallel to the floor. \n4. Push through your heels to return to the starting position.",
       form: "Maintain a neutral spine throughout the movement. Your knees should track over your toes."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
     tips: ['Keep your weight on your heels.', 'Engage your core.'],
     variations: ['Front Squat', 'Goblet Squat'],
-    metadata: {},
     load_factor: 1.2,
-  },
-  {
+  }),
+  toExercise({
     id: '3',
     name: 'Deadlift',
     description: 'A full-body compound exercise that builds strength in the posterior chain.',
@@ -61,14 +77,10 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Stand with your mid-foot under the barbell. \n2. Hinge at your hips and grip the bar with hands just outside your shins. \n3. Keeping your back straight, chest up, and hips down, lift the weight by extending your hips and knees. \n4. Lower the bar with control by reversing the motion.",
       form: "Keep the bar close to your body. Do not round your lower back. Drive with your legs."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
-    tips: [],
     variations: ['Sumo Deadlift', 'Romanian Deadlift'],
-    metadata: {},
     load_factor: 1.2,
-  },
-  {
+  }),
+  toExercise({
     id: '4',
     name: 'Pull Up',
     description: 'An upper-body exercise that primarily works the back and biceps.',
@@ -83,14 +95,11 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Grab the pull-up bar with an overhand grip, slightly wider than shoulder-width. \n2. Hang with your arms fully extended. \n3. Pull your body up until your chin is over the bar. \n4. Lower yourself back down with control.",
       form: "Engage your core and avoid swinging. Squeeze your shoulder blades together at the top of the movement."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
     tips: ['Use a resistance band for assistance if needed.'],
     variations: ['Chin Up', 'Wide Grip Pull Up'],
-    metadata: {},
     load_factor: 0.8,
-  },
-  {
+  }),
+  toExercise({
     id: '5',
     name: 'Dumbbell Shoulder Press',
     description: 'An exercise for building shoulder strength and size.',
@@ -105,14 +114,10 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Sit on a bench with back support, holding a dumbbell in each hand at shoulder height. \n2. Your palms should be facing forward. \n3. Press the dumbbells overhead until your arms are fully extended. \n4. Lower the dumbbells back to the starting position.",
       form: "Keep your core tight and avoid arching your back. Don't let the dumbbells touch at the top."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
-    tips: [],
     variations: ['Arnold Press', 'Barbell Shoulder Press'],
-    metadata: {},
     load_factor: 1.2,
-  },
-   {
+  }),
+  toExercise({
     id: '6',
     name: 'Bicep Curl',
     description: 'An isolation exercise for the biceps.',
@@ -127,14 +132,11 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Stand or sit holding a dumbbell in each hand with an underhand grip. \n2. Curl the weights up towards your shoulders, keeping your elbows stationary. \n3. Squeeze your biceps at the top. \n4. Lower the weights back down with control.",
       form: "Avoid using momentum or swinging your body."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
     tips: ['Rotate your wrists at the top for a better contraction.'],
     variations: ['Hammer Curl', 'Zottman Curl'],
-    metadata: {},
     load_factor: 1.0,
-  },
-  {
+  }),
+  toExercise({
     id: '7',
     name: 'Plank',
     description: 'A core stability exercise that strengthens the abs, back, and shoulders.',
@@ -149,11 +151,7 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Get into a push-up position, but rest on your forearms instead of your hands. \n2. Keep your body in a straight line from head to heels. \n3. Engage your core and glutes. \n4. Hold this position for the desired amount of time.",
       form: "Don't let your hips sag or rise too high."
     },
-    created_at: new Date().toISOString(),
-    user_id: null,
-    tips: [],
     variations: ['Side Plank', 'High Plank'],
-    metadata: {},
     load_factor: 0.8,
-  },
+  }),
 ];

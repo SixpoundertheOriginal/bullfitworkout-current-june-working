@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty, ExerciseInput } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
+import { ExerciseInputSchema } from '@/types/exercise.schema';
 
 export interface LibraryFilters {
   search?: string;
@@ -78,27 +79,11 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
 
   // Create exercise mutation with library-specific validation
   const { mutate: createLibraryExercise, isPending: isCreating } = useMutation({
-    mutationFn: async (exerciseData: Omit<Exercise, 'id' | 'created_at'>) => {
-      // Ensure required fields are provided with defaults
-      // And ensure it conforms to ExerciseInput by including all required fields.
-      const exerciseWithDefaults: ExerciseInput = {
-        name: exerciseData.name,
-        description: exerciseData.description || `Custom exercise: ${exerciseData.name}`,
-        primary_muscle_groups: exerciseData.primary_muscle_groups,
-        secondary_muscle_groups: exerciseData.secondary_muscle_groups || [],
-        equipment_type: exerciseData.equipment_type || [],
-        difficulty: exerciseData.difficulty || 'beginner',
-        movement_pattern: exerciseData.movement_pattern || 'push',
-        is_compound: exerciseData.is_compound || false, // Added missing required field
-        is_bodyweight: exerciseData.is_bodyweight || false,
-        instructions: exerciseData.instructions || { steps: '', form: '' },
-        // Optional fields from ExerciseInput if needed, like tips, variations
-        tips: exerciseData.tips,
-        variations: exerciseData.variations,
-        metadata: exerciseData.metadata,
-      };
+    mutationFn: async (exerciseData: Omit<Exercise, 'id' | 'created_at' | 'user_id'>) => {
+      // Validate and provide defaults using the ExerciseInputSchema
+      const exerciseToCreate = ExerciseInputSchema.parse(exerciseData);
       
-      return createExercise(exerciseWithDefaults);
+      return createExercise(exerciseToCreate);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises', 'library'] });

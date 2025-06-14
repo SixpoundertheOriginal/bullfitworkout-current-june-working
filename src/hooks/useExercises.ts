@@ -1,10 +1,9 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise, ExerciseInput } from '@/types/exercise';
 import { useAuth } from '@/context/AuthContext';
 import { exerciseDatabase } from '@/data/exercises';
-import { ExerciseSchema } from '@/types/exercise.schema';
+import { ExerciseSchema, ExerciseDataSchema } from '@/types/exercise.schema';
 import { z } from 'zod';
 
 // Fetches and validates exercises from Supabase.
@@ -20,9 +19,9 @@ const fetchExercisesFromSupabase = async (): Promise<Exercise[]> => {
     }
 
     try {
-        // Safely parse and validate the data against our schema.
-        // This replaces unsafe casting and correctly handles the 'instructions' field.
-        return ExerciseSchema.array().parse(data);
+        // Use the new data schema to parse potentially incomplete data from Supabase
+        // and transform it into our strict client-side Exercise type.
+        return ExerciseDataSchema.array().parse(data);
     } catch (e) {
         if (e instanceof z.ZodError) {
             console.error('Zod validation failed for exercises:', e.issues);
@@ -49,15 +48,16 @@ const seedInitialExercises = async () => {
   }
 
   // Transform local data to match what Supabase expects for insertion.
-  const exercisesToSeed = exerciseDatabase.map(({ id, created_at, instructions, ...rest }) => ({
+  // We omit client-only or auto-generated fields.
+  const exercisesToSeed = exerciseDatabase.map(({ id, created_at, user_id, ...rest }) => ({
       ...rest,
       // Supabase's JS client expects JSON objects to be stringified for 'json' columns.
-      instructions: JSON.stringify(instructions),
+      instructions: JSON.stringify(rest.instructions),
   }));
 
   const { error: insertError } = await supabase
     .from('exercises')
-    .insert(exercisesToSeed); // No more `as any` needed.
+    .insert(exercisesToSeed);
 
   if (insertError) {
     console.error('Error seeding exercises:', insertError);
@@ -112,7 +112,7 @@ export const useExercises = () => {
       }
       
       // Safely parse the returned data to ensure it matches our app's types.
-      return ExerciseSchema.parse(data);
+      return ExerciseDataSchema.parse(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
