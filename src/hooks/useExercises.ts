@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Exercise, ExerciseInput } from '@/types/exercise';
+import { exerciseDatabase } from '@/data/exercises';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -10,11 +11,11 @@ export const useExercises = () => {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    // Mock loading exercises
+    // Mock loading exercises from our new data file
     const timer = setTimeout(() => {
-      setExercises([]);
+      setExercises(exerciseDatabase);
       setIsLoading(false);
-    }, 1000);
+    }, 500); // Slightly faster load time
 
     return () => clearTimeout(timer);
   }, []);
@@ -35,7 +36,8 @@ export const useExercises = () => {
             difficulty: exerciseData.difficulty,
             movement_pattern: exerciseData.movement_pattern,
             is_compound: exerciseData.is_compound,
-            instructions: exerciseData.instructions
+            instructions: exerciseData.instructions,
+            created_at: new Date().toISOString(),
           };
           
           setExercises(prev => [...prev, newExercise]);
@@ -43,7 +45,7 @@ export const useExercises = () => {
           resolve(newExercise);
         } catch (err) {
           setIsPending(false);
-          reject(err);
+          reject(err as Error);
         }
       }, 1000);
     });
