@@ -20,11 +20,11 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
     
     try {
       const updated = await updateWorkout(workoutId, updatedWorkout);
-      toast.success("Workout updated successfully");
+      toast({title: "Workout updated successfully"}); // use toast object
       return updated;
     } catch (error) {
       console.error("Error updating workout:", error);
-      toast.error("Failed to update workout");
+      toast({title: "Failed to update workout", variant: "destructive"}); // use toast object
       throw error;
     }
   };
@@ -47,40 +47,40 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         workout_id: set.workout_id || workoutId,
         weight: set.weight,
         reps: set.reps,
-        set_number: set.set_number || 1,
+        set_number: set.set_number || updatedSets.findIndex(s => s.id === set.id) + 1, // ensure set_number
         completed: set.completed,
-        rest_time: set.rest_time || set.restTime || 60
+        rest_time: set.restTime || 60, // use canonical restTime
+        duration: set.duration || '0:00', // ensure duration
+        // volume is usually calculated, not sent
       }));
       
-      const updated = await updateExerciseSets(workoutId, currentExercise, apiSets);
-      toast.success("Exercise sets updated");
+      const updatedFromApi = await updateExerciseSets(workoutId, currentExercise, apiSets); // renamed 'updated' to avoid conflict
+      toast({title: "Exercise sets updated"}); // use toast object
       
       // Convert back to ExerciseSet format with all required fields
-      const convertedSets: ExerciseSet[] = updated.map(set => ({
-        id: set.id,
-        weight: set.weight,
-        reps: set.reps,
-        duration: '0:00',
-        completed: set.completed,
-        volume: set.weight * set.reps,
-        set_number: set.set_number,
-        exercise_name: set.exercise_name,
-        workout_id: set.workout_id,
-        rest_time: set.rest_time,
-        restTime: set.rest_time,
-        isEditing: false
+      const convertedSets: ExerciseSet[] = updatedFromApi.map((apiSet, index) => ({
+        id: apiSet.id,
+        weight: apiSet.weight,
+        reps: apiSet.reps,
+        duration: apiSet.duration || '0:00', // Default if not from API
+        completed: apiSet.completed,
+        volume: (apiSet.weight || 0) * (apiSet.reps || 0), // Calculate volume
+        set_number: apiSet.set_number || index + 1,
+        exercise_name: apiSet.exercise_name || currentExercise,
+        workout_id: apiSet.workout_id || workoutId,
+        restTime: apiSet.rest_time || 60, // Map rest_time from API to restTime
+        isEditing: false, // Default after save
+        // rest_time: apiSet.rest_time, // Keep if needed, but canonical is restTime
       }));
       
-      // Create a new object first, then pass it to onUpdate
-      onUpdate((prev: Record<string, ExerciseSet[]>) => {
-        const newSets = { ...prev };
-        newSets[currentExercise] = convertedSets;
-        return newSets;
-      });
+      onUpdate((prev: Record<string, ExerciseSet[]>) => ({
+        ...prev,
+        [currentExercise]: convertedSets,
+      }));
       
     } catch (error) {
       console.error("Error updating exercise sets:", error);
-      toast.error("Failed to update exercise sets");
+      toast({title: "Failed to update exercise sets", variant: "destructive"}); // use toast object
       throw error;
     }
   };
@@ -89,35 +89,31 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
     if (!workoutId) return;
     
     try {
-      const newSets = await addExerciseToWorkout(workoutId, exerciseName, 3);
+      const newSetsFromApi = await addExerciseToWorkout(workoutId, exerciseName, 3); // renamed 'newSets'
       
-      // Convert to ExerciseSet format with all required fields
-      const convertedSets: ExerciseSet[] = newSets.map(set => ({
-        id: set.id,
-        weight: set.weight,
-        reps: set.reps,
-        duration: '0:00',
-        completed: set.completed,
-        volume: set.weight * set.reps,
-        set_number: set.set_number,
-        exercise_name: set.exercise_name,
-        workout_id: set.workout_id,
-        rest_time: set.rest_time,
-        restTime: set.rest_time,
-        isEditing: false
+      const convertedSets: ExerciseSet[] = newSetsFromApi.map((apiSet, index) => ({
+        id: apiSet.id,
+        weight: apiSet.weight,
+        reps: apiSet.reps,
+        duration: apiSet.duration || '0:00',
+        completed: apiSet.completed || false,
+        volume: (apiSet.weight || 0) * (apiSet.reps || 0),
+        set_number: apiSet.set_number || index + 1,
+        exercise_name: apiSet.exercise_name || exerciseName,
+        workout_id: apiSet.workout_id || workoutId,
+        restTime: apiSet.rest_time || 60,
+        isEditing: true, // New sets start in editing mode or ready to be filled
       }));
       
-      // Create a new object first, then pass it to onUpdate
-      onUpdate((prev: Record<string, ExerciseSet[]>) => {
-        const newSetsRecord = { ...prev };
-        newSetsRecord[exerciseName] = convertedSets;
-        return newSetsRecord;
-      });
+      onUpdate((prev: Record<string, ExerciseSet[]>) => ({
+        ...prev,
+        [exerciseName]: convertedSets,
+      }));
       
-      toast.success(`Added ${exerciseName} to workout`);
+      toast({title: `Added ${exerciseName} to workout`}); // use toast object
     } catch (error) {
       console.error("Error adding exercise:", error);
-      toast.error("Failed to add exercise");
+      toast({title: "Failed to add exercise", variant: "destructive"}); // use toast object
       throw error;
     }
   };
@@ -135,12 +131,12 @@ export function useExerciseManagement(workoutId: string | undefined, onUpdate: U
         return newSets;
       });
       
-      toast.success(`Removed ${exerciseToDelete} from workout`);
+      toast({title: `Removed ${exerciseToDelete} from workout`});
       setDeleteAlertOpen(false);
       setExerciseToDelete("");
     } catch (error) {
       console.error("Error removing exercise:", error);
-      toast.error("Failed to remove exercise");
+      toast({title: "Failed to remove exercise", variant: "destructive"});
     }
   };
 

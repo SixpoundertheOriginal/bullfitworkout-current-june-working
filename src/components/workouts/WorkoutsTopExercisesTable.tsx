@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dumbbell, ChevronDown, ChevronRight } from "lucide-react";
 import { TopExerciseStats } from "@/types/workout-metrics";
 import { useWeightUnit } from "@/context/WeightUnitContext";
-import { convertWeight } from "@/utils/unitConversion";
+import { convertWeight, WeightUnit } from "@/utils/unitConversion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TopExercisesTableProps {
@@ -51,8 +50,9 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
             </TableHeader>
             <TableBody>
               {exercises.map((exercise) => {
-                const avgWeight = convertWeight(exercise.averageWeight, "lbs", weightUnit);
-                const volume = convertWeight(exercise.totalVolume, "lbs", weightUnit);
+                const displayUnit = weightUnit as WeightUnit;
+                const avgWeight = convertWeight(exercise.averageWeight, "lb", displayUnit);
+                const volume = convertWeight(exercise.totalVolume, "lb", displayUnit);
                 
                 return (
                   <TableRow 
@@ -66,10 +66,10 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
                     </TableCell>
                     <TableCell className="text-right">{exercise.totalSets}</TableCell>
                     <TableCell className="text-right">
-                      {Math.round(avgWeight * 10) / 10} {weightUnit}
+                      {Math.round(avgWeight * 10) / 10} {displayUnit}
                     </TableCell>
                     <TableCell className="text-right">
-                      {Math.round(volume)} {weightUnit}
+                      {Math.round(volume)} {displayUnit}
                     </TableCell>
                   </TableRow>
                 );
@@ -94,7 +94,7 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
               <div className="bg-gray-800/50 p-4 rounded-lg">
                 <p className="text-sm text-gray-400">Average Weight</p>
                 <p className="text-2xl font-semibold">
-                  {Math.round(convertWeight(selectedExercise?.averageWeight || 0, "lbs", weightUnit) * 10) / 10} {weightUnit}
+                  {Math.round(convertWeight(selectedExercise?.averageWeight || 0, "lb", weightUnit as WeightUnit) * 10) / 10} {weightUnit}
                 </p>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function TopExercisesTable({ exercises, className = "" }: TopExercisesTab
             <div className="bg-gray-800/50 p-4 rounded-lg">
               <p className="text-sm text-gray-400 mb-1">Total Volume</p>
               <p className="text-2xl font-semibold">
-                {Math.round(convertWeight(selectedExercise?.totalVolume || 0, "lbs", weightUnit))} {weightUnit}
+                {Math.round(convertWeight(selectedExercise?.totalVolume || 0, "lb", weightUnit as WeightUnit))} {weightUnit}
               </p>
             </div>
             

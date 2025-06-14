@@ -24,6 +24,7 @@ import { useDeleteOperation } from "@/hooks/useAsyncOperation";
 import { deleteWorkout } from "@/services/workoutService";
 import { Loader2 } from "lucide-react";
 import { WeightUnit } from "@/utils/unitConversion";
+import { ExerciseSet } from "@/types/exercise";
 
 const WorkoutDetailsPage: React.FC = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
@@ -33,7 +34,7 @@ const WorkoutDetailsPage: React.FC = () => {
 
   const {
     workoutDetails,
-    exerciseSets,
+    exerciseSets, // This is Record<string, ExerciseSet[]> from useWorkoutDetails
     loading: loadingDetails,
     setWorkoutDetails,
     setExerciseSets
@@ -45,7 +46,7 @@ const WorkoutDetailsPage: React.FC = () => {
     exerciseSetModalOpen,
     setExerciseSetModalOpen,
     currentExercise,
-    exerciseSetsToEdit,
+    exerciseSetsToEdit, // This should be ExerciseSet[] from useExerciseManagement
     deleteAlertOpen,
     setDeleteAlertOpen,
     exerciseToDelete,
@@ -53,7 +54,7 @@ const WorkoutDetailsPage: React.FC = () => {
     setShowAddDialog,
     handleSaveWorkoutEdit,
     handleEditExercise,
-    handleSaveExerciseSets,
+    handleSaveExerciseSets, // (updatedSets: ExerciseSet[]) => Promise<void> from useExerciseManagement
     handleAddExercise,
     handleDeleteExercise
   } = useExerciseManagement(workoutId, setExerciseSets);
@@ -67,20 +68,29 @@ const WorkoutDetailsPage: React.FC = () => {
 
   // Initialize metrics with safe defaults outside the conditional rendering
   const groupedExercises = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    // Ensure exerciseSets (Record<string, ExerciseSet[]>) is correctly typed
+    const map: Record<string, ExerciseSet[]> = {};
     if (workoutDetails && exerciseSets) {
-      if (Array.isArray(exerciseSets)) {
-        exerciseSets.forEach(set => {
-          const name = set.exercise_name || "Unknown";
-          if (!map[name]) map[name] = [];
-          map[name].push(set);
-        });
-      } else if (typeof exerciseSets === "object" && exerciseSets !== null) {
-        Object.assign(map, exerciseSets);
+      // The exerciseSets from useWorkoutDetails is already Record<string, ExerciseSet[]>
+      // where ExerciseSet is the canonical one.
+      // The issue might be if any set within this structure is incomplete.
+      // The loop below assumes exercise_name exists on each set if it's an array of raw sets.
+      // However, `exerciseSets` is already grouped.
+      if (typeof exerciseSets === "object" && exerciseSets !== null) {
+         Object.entries(exerciseSets).forEach(([name, setsArray]) => {
+           map[name] = setsArray.map(s => ({
+             ...s, // Spread the existing set
+             exercise_name: s.exercise_name || name, // Ensure exercise_name
+             duration: s.duration || '0:00',
+             volume: s.volume || (s.weight * s.reps),
+             restTime: s.restTime || 60,
+             isEditing: s.isEditing || false,
+           } as ExerciseSet)); // Cast to ensure all fields for canonical ExerciseSet
+         });
       }
     }
     return map;
-  }, [exerciseSets]);
+  }, [workoutDetails, exerciseSets]);
 
   // Calculate metrics safely - ensure this runs unconditionally
   const metrics = useMemo(() => {
@@ -144,7 +154,7 @@ const WorkoutDetailsPage: React.FC = () => {
     } : undefined;
 
     return processWorkoutMetrics(
-      groupedExercises,
+      groupedExercises, // Use the sanitized groupedExercises
       workoutDetails.duration || 0,
       weightUnit as WeightUnit,
       undefined, // userBodyInfo
@@ -167,14 +177,16 @@ const WorkoutDetailsPage: React.FC = () => {
     Object.entries(metricValues.muscleFocus).map(([name, value]) => ({
       exercise_name: name,
       trend: 'stable' as 'increasing' | 'decreasing' | 'stable' | 'fluctuating',
-      percentChange: 0
+      percentChange: 0,
+      // Adding missing properties for ExerciseVolumeHistoryData if needed by ExerciseDetailsTable
+      // Assuming ExerciseDetailsTable can handle this structure
     })) : [];
 
   // Prepare metrics for child components
   const workoutMetrics = {
     duration: metricValues.duration || 0,
     exerciseCount: metricValues.exerciseCount || 0,
-    setCount: metricValues.setCount || { total: 0, completed: 0 },
+    setCount: metricValues.setCount || { total: 0, completed: 0, failed: 0 },
     totalVolume: metricValues.totalVolume || 0,
     sessionMax
   };
@@ -182,8 +194,8 @@ const WorkoutDetailsPage: React.FC = () => {
   const analysisMetrics = {
     duration: metricValues.duration || 0,
     totalVolume: metricValues.totalVolume || 0,
-    timeDistribution: metricValues.timeDistribution || { activeTime: 0, restTime: 0 },
-    densityMetrics: metricValues.densityMetrics || { overallDensity: 0, activeOnlyDensity: 0 },
+    timeDistribution: metricValues.timeDistribution || { activeTime: 0, restTime: 0, activeTimePercentage: 0, restTimePercentage: 0 },
+    densityMetrics: metricValues.densityMetrics || { overallDensity: 0, activeOnlyDensity: 0, formattedOverallDensity: "0.0 kg/min", formattedActiveOnlyDensity: "0.0 kg/min" },
     intensity: metricValues.intensity || 0,
     efficiency: metricValues.timeDistribution?.activeTimePercentage || 0,
     durationByTimeOfDay: metricValues.durationByTimeOfDay || {
@@ -218,13 +230,13 @@ const WorkoutDetailsPage: React.FC = () => {
           <WorkoutMetricCards
             workoutDetails={workoutDetails}
             metrics={workoutMetrics}
-            weightUnit={weightUnit}
+            weightUnit={weightUnit as WeightUnit}
           />
 
           {/* Workout Analysis Charts */}
           <WorkoutAnalysis
             metrics={analysisMetrics}
-            weightUnit={weightUnit}
+            weightUnit={weightUnit as WeightUnit}
           />
 
           {/* Side by side: Composition and Exercise Details */}
@@ -248,9 +260,11 @@ const WorkoutDetailsPage: React.FC = () => {
           />
 
           {/* Raw exercise list & editing */}
+          {/* The 'exercises' prop for WorkoutDetailsEnhanced expects Record<string, ExerciseSet[]>
+              where ExerciseSet is the canonical one. groupedExercises should match this. */}
           <WorkoutDetailsEnhanced
             workout={workoutDetails}
-            exercises={exerciseSets}
+            exercises={groupedExercises} 
             onEditClick={() => setEditModalOpen(true)}
             onEditExercise={handleEditExercise}
           />
@@ -263,20 +277,20 @@ const WorkoutDetailsPage: React.FC = () => {
           onOpenChange={setEditModalOpen}
           onSave={async updated => {
             const saved = await handleSaveWorkoutEdit(updated);
-            if (saved) setWorkoutDetails(saved);
+            if (saved) setWorkoutDetails(saved); // Ensure 'saved' matches 'workoutDetails' structure
           }}
         />
         <EditExerciseSetModal
-          sets={exerciseSetsToEdit}
+          sets={exerciseSetsToEdit} // ExerciseSet[] from useExerciseManagement
           exerciseName={currentExercise}
           open={exerciseSetModalOpen}
           onOpenChange={setExerciseSetModalOpen}
-          onSave={handleSaveExerciseSets}
+          onSave={handleSaveExerciseSets} // (updatedSets: ExerciseSet[]) => Promise<void>
         />
         <ExerciseDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
-          onSubmit={async ex => ex.name && handleAddExercise(ex.name)}
+          onSubmit={async ex => ex.name && handleAddExercise(ex.name)} // handleAddExercise takes string
           mode="add"
         />
         <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
