@@ -18,17 +18,35 @@ const fetchExercisesFromSupabase = async (): Promise<Exercise[]> => {
         throw new Error(error.message);
     }
 
-    try {
-        // Use the strict ExerciseSchema to parse data from Supabase.
-        return ExerciseSchema.array().parse(data);
-    } catch (e) {
-        if (e instanceof z.ZodError) {
-            console.error('Zod validation failed for exercises:', e.issues);
-        } else {
-            console.error('An unexpected error occurred during exercise parsing:', e);
-        }
-        throw new Error("Failed to parse exercises from the server.");
+    if (!data) return [];
+
+    // Enterprise-grade validation: parse each exercise individually using safeParse.
+    // This prevents one malformed record from causing the entire fetch to fail.
+    const validatedExercises: Exercise[] = [];
+    const validationErrors: { data: any, error: z.ZodError }[] = [];
+
+    for (const exerciseData of data) {
+      const result = ExerciseSchema.safeParse(exerciseData);
+      if (result.success) {
+        validatedExercises.push(result.data);
+      } else {
+        validationErrors.push({ data: exerciseData, error: result.error });
+      }
     }
+
+    // For enterprise monitoring, log any data quality issues without crashing the app.
+    if (validationErrors.length > 0) {
+      console.warn(
+        `[Data Quality Alert] ${validationErrors.length}/${data.length} exercises failed validation.`,
+        validationErrors.map(e => ({ 
+            name: e.data.name, 
+            id: e.data.id,
+            issues: e.error.flatten().fieldErrors 
+        }))
+      );
+    }
+    
+    return validatedExercises;
 };
 
 // Seeds the database with initial exercises if it's empty.

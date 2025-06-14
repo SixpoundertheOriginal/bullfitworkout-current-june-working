@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 // Schema for the 'instructions' JSON object, ensuring it has the correct shape.
@@ -8,19 +7,19 @@ const InstructionsSchema = z.object({
 });
 
 // Zod schema for the Exercise, aligning with the Supabase table and application needs.
-// This schema is now stricter. Fields are required, matching a complete DB record.
-// Nullable/default values are handled by preprocess or at the point of creation.
+// This schema is now more robust, using `preprocess` to handle null/undefined values
+// from the database, preventing validation failures for incomplete records.
 export const ExerciseSchema = z.object({
-  id: z.string().min(1, "ID cannot be empty."), // Allow any non-empty string ID for broader compatibility
+  id: z.preprocess((val) => String(val ?? ''), z.string().min(1, "ID cannot be empty.")),
   name: z.string().min(1, "Exercise name cannot be empty."),
-  description: z.string(),
-  primary_muscle_groups: z.array(z.string()),
-  secondary_muscle_groups: z.array(z.string()),
-  equipment_type: z.array(z.string()),
-  difficulty: z.string(),
-  movement_pattern: z.string(),
-  is_compound: z.boolean(),
-  is_bodyweight: z.boolean(),
+  description: z.preprocess((val) => val ?? '', z.string()),
+  primary_muscle_groups: z.preprocess((val) => val ?? [], z.array(z.string())),
+  secondary_muscle_groups: z.preprocess((val) => val ?? [], z.array(z.string())),
+  equipment_type: z.preprocess((val) => val ?? [], z.array(z.string())),
+  difficulty: z.preprocess((val) => val ?? 'beginner', z.string()),
+  movement_pattern: z.preprocess((val) => val ?? 'custom', z.string()),
+  is_compound: z.preprocess((val) => val ?? false, z.boolean()),
+  is_bodyweight: z.preprocess((val) => val ?? false, z.boolean()),
   // This `preprocess` step safely parses the 'instructions' field from Supabase,
   // which might be a JSON string or an object, into the structure our app expects.
   instructions: z.preprocess(
@@ -41,10 +40,10 @@ export const ExerciseSchema = z.object({
   ),
   user_id: z.string().uuid().nullable(),
   created_at: z.string().datetime().nullable(),
-  tips: z.array(z.string()),
-  variations: z.array(z.string()),
-  metadata: z.record(z.any()),
-  load_factor: z.number().nullable(),
+  tips: z.preprocess((val) => val ?? [], z.array(z.string())),
+  variations: z.preprocess((val) => val ?? [], z.array(z.string())),
+  metadata: z.preprocess((val) => val ?? {}, z.record(z.any())),
+  load_factor: z.number().nullable().default(1.0),
 });
 
 // This schema defines the shape of data required to create a new exercise.
