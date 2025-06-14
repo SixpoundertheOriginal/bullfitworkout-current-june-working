@@ -1,8 +1,7 @@
-
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Target, TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
+import { Activity, Target, TrendingUp, Clock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -40,7 +39,7 @@ export const OverviewPage: React.FC = () => {
 
     const totalWorkouts = workouts.length;
     const totalDuration = workouts.reduce((sum, w) => sum + (w.duration || 0), 0);
-    const avgDuration = totalDuration / totalWorkouts;
+    const avgDuration = totalWorkouts > 0 ? totalDuration / totalWorkouts : 0;
     
     const totalVolume = workouts.reduce((sum, workout) => {
       if (!workout.exercises) return sum;
@@ -81,7 +80,7 @@ export const OverviewPage: React.FC = () => {
     );
   }
 
-  const weeklyProgress = (stats.thisWeekWorkouts / stats.weeklyGoal) * 100;
+  const weeklyProgress = stats.weeklyGoal > 0 ? (stats.thisWeekWorkouts / stats.weeklyGoal) * 100 : 0;
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -131,7 +130,7 @@ export const OverviewPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(stats.avgDuration / 60)}m
+              {stats.avgDuration > 0 ? `${Math.round(stats.avgDuration / 60)}m` : '0m'}
             </div>
             <p className="text-xs text-muted-foreground">
               Per workout
