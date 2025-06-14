@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExerciseSchema, ExerciseInputSchema } from './exercise.schema';
+import { ExerciseSchema, ExerciseInputSchema, SupabaseExerciseSchema } from './exercise.schema';
 
 export interface ExerciseSet {
   id: string;
@@ -25,6 +25,9 @@ export interface ExerciseSet {
     source?: string;
   };
 }
+
+// Type for raw exercise data from Supabase, before transformation.
+export type SupabaseExercise = z.infer<typeof SupabaseExerciseSchema>;
 
 // The main Exercise type is now inferred directly from our Zod schema.
 export type Exercise = z.infer<typeof ExerciseSchema>;

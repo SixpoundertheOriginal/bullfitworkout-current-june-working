@@ -1,54 +1,107 @@
+
 import { z } from 'zod';
 
-// Schema for the 'instructions' JSON object, ensuring it has the correct shape.
+// Consistent schema for the 'instructions' JSON object.
 const InstructionsSchema = z.object({
   steps: z.string().default(''),
   form: z.string().default(''),
 });
 
-// Zod schema for the Exercise, aligning with the Supabase table and application needs.
-// This schema is now more robust, using `preprocess` to handle null/undefined values
-// from the database, preventing validation failures for incomplete records.
-export const ExerciseSchema = z.object({
-  id: z.preprocess((val) => String(val ?? ''), z.string().min(1, "ID cannot be empty.")),
-  name: z.string().min(1, "Exercise name cannot be empty."),
-  description: z.preprocess((val) => val ?? '', z.string()),
-  primary_muscle_groups: z.preprocess((val) => val ?? [], z.array(z.string())),
-  secondary_muscle_groups: z.preprocess((val) => val ?? [], z.array(z.string())),
-  equipment_type: z.preprocess((val) => val ?? [], z.array(z.string())),
-  difficulty: z.preprocess((val) => val ?? 'beginner', z.string()),
-  movement_pattern: z.preprocess((val) => val ?? 'custom', z.string()),
-  is_compound: z.preprocess((val) => val ?? false, z.boolean()),
-  is_bodyweight: z.preprocess((val) => val ?? false, z.boolean()),
-  // This `preprocess` step safely parses the 'instructions' field from Supabase,
-  // which might be a JSON string or an object, into the structure our app expects.
-  instructions: z.preprocess(
+// A schema to safely parse the 'instructions' field from Supabase, which could be
+// a JSON string or already an object.
+const SupabaseInstructionsSchema = z.preprocess(
     (val) => {
       if (typeof val === 'string') {
         try {
-          // Attempt to parse if it's a string, providing a default on failure or null.
           const parsed = JSON.parse(val);
           return parsed ?? { steps: '', form: '' };
         } catch (e) {
           console.error("Failed to parse instructions JSON:", e);
-          return { steps: '', form: '' }; // On failure, return default to maintain shape
+          return { steps: '', form: '' };
         }
       }
-      return val ?? { steps: '', form: '' }; // If not a string, return val or default
+      return val ?? { steps: '', form: '' };
     },
     InstructionsSchema
-  ),
+);
+
+// Schema representing the raw data structure directly from the 'exercises' table in Supabase.
+// This schema is forgiving and mirrors the database's actual structure, including legacy field names.
+export const SupabaseExerciseSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    primary_muscle_groups: z.array(z.string()).nullable(),
+    secondary_muscle_groups: z.array(z.string()).nullable(),
+    equipment_type: z.array(z.string()).nullable(),
+    difficulty: z.string().nullable(),
+    movement_pattern: z.string().nullable(),
+    is_compound: z.boolean().nullable(),
+    instructions: SupabaseInstructionsSchema,
+    created_by: z.string().uuid().nullable(), // This is the user_id from the 'users' table.
+    created_at: z.string(), // The raw timestamp string from the DB.
+    tips: z.array(z.string()).nullable(),
+    variations: z.array(z.string()).nullable(),
+    metadata: z.record(z.any()).nullable(),
+}).passthrough(); // Use passthrough to allow other fields from DB without failing validation.
+
+export type SupabaseExercise = z.infer<typeof SupabaseExerciseSchema>;
+
+// The canonical, strict Exercise schema used throughout the BullFit application.
+// This is the "ideal" state of an exercise object after transformation and validation.
+export const ExerciseSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string(),
+  primary_muscle_groups: z.array(z.string()),
+  secondary_muscle_groups: z.array(z.string()),
+  equipment_type: z.array(z.string()),
+  difficulty: z.string(),
+  movement_pattern: z.string(),
+  is_compound: z.boolean(),
+  is_bodyweight: z.boolean(),
+  instructions: InstructionsSchema,
   user_id: z.string().uuid().nullable(),
   created_at: z.string().datetime().nullable(),
-  tips: z.preprocess((val) => val ?? [], z.array(z.string())),
-  variations: z.preprocess((val) => val ?? [], z.array(z.string())),
-  metadata: z.preprocess((val) => val ?? {}, z.record(z.any())),
-  load_factor: z.number().nullable().default(1.0),
+  tips: z.array(z.string()),
+  variations: z.array(z.string()),
+  metadata: z.record(z.any()),
+  load_factor: z.number().nullable(),
 });
 
-// This schema defines the shape of data required to create a new exercise.
-// It is derived from the base schema, omitting auto-generated fields and making
-// essential fields required, while providing safe defaults for optional ones.
+// Transformation function to map raw Supabase data to our clean application model.
+// This is the core of the Anti-Corruption Layer.
+export function transformSupabaseExerciseToAppExercise(supabaseExercise: SupabaseExercise): z.input<typeof ExerciseSchema> {
+    const isBodyweight = supabaseExercise.equipment_type?.includes('bodyweight') ?? false;
+    
+    // Safely attempt to parse created_at, defaulting to null if format is invalid.
+    const createdAtResult = z.string().datetime().nullable().safeParse(supabaseExercise.created_at);
+
+    return {
+        id: supabaseExercise.id,
+        name: supabaseExercise.name,
+        description: supabaseExercise.description ?? '',
+        primary_muscle_groups: supabaseExercise.primary_muscle_groups ?? [],
+        secondary_muscle_groups: supabaseExercise.secondary_muscle_groups ?? [],
+        equipment_type: supabaseExercise.equipment_type ?? [],
+        difficulty: supabaseExercise.difficulty ?? 'beginner',
+        movement_pattern: supabaseExercise.movement_pattern ?? 'custom',
+        is_compound: supabaseExercise.is_compound ?? false,
+        is_bodyweight,
+        instructions: supabaseExercise.instructions ?? { steps: '', form: '' },
+        user_id: supabaseExercise.created_by, // Directly maps created_by to user_id
+        created_at: createdAtResult.success ? createdAtResult.data : null,
+        tips: supabaseExercise.tips ?? [],
+        variations: supabaseExercise.variations ?? [],
+        metadata: supabaseExercise.metadata ?? {},
+        // Extract load_factor from metadata if it exists, otherwise default.
+        load_factor: (supabaseExercise.metadata as any)?.load_factor ?? 1.0,
+    };
+}
+
+
+// This schema defines the shape for creating a new exercise. It's derived from the
+// strict ExerciseSchema, ensuring new exercises conform to our application model.
 export const ExerciseInputSchema = ExerciseSchema.pick({
     name: true,
     primary_muscle_groups: true,

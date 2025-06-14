@@ -1,12 +1,13 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Exercise, ExerciseInput } from '@/types/exercise';
+import { Exercise, ExerciseInput, SupabaseExercise } from '@/types/exercise';
 import { useAuth } from '@/context/AuthContext';
 import { exerciseDatabase as localRawExercises } from '@/data/exercises';
-import { ExerciseSchema, ExerciseInputSchema } from '@/types/exercise.schema';
+import { ExerciseSchema, ExerciseInputSchema, SupabaseExerciseSchema, transformSupabaseExerciseToAppExercise } from '@/types/exercise.schema';
 import { z } from 'zod';
 
-// Fetches and validates exercises from Supabase.
+// Fetches exercises, validates against Supabase schema, transforms, and validates against app schema.
 const fetchExercisesFromSupabase = async (): Promise<Exercise[]> => {
     const { data, error } = await supabase
         .from('exercises')
@@ -19,25 +20,35 @@ const fetchExercisesFromSupabase = async (): Promise<Exercise[]> => {
     }
 
     if (!data) return [];
-
-    // Enterprise-grade validation: parse each exercise individually using safeParse.
-    // This prevents one malformed record from causing the entire fetch to fail.
+    
     const validatedExercises: Exercise[] = [];
     const validationErrors: { data: any, error: z.ZodError }[] = [];
 
     for (const exerciseData of data) {
-      const result = ExerciseSchema.safeParse(exerciseData);
-      if (result.success) {
-        validatedExercises.push(result.data);
+      // Step 1: Parse with the forgiving Supabase schema
+      const supabaseParseResult = SupabaseExerciseSchema.safeParse(exerciseData);
+      
+      if (!supabaseParseResult.success) {
+        validationErrors.push({ data: exerciseData, error: supabaseParseResult.error });
+        continue; // Skip to next exercise if initial parsing fails
+      }
+
+      // Step 2: Transform the valid Supabase data into our app's data model
+      const appExerciseInput = transformSupabaseExerciseToAppExercise(supabaseParseResult.data);
+
+      // Step 3: Validate the transformed data against our strict app schema
+      const appParseResult = ExerciseSchema.safeParse(appExerciseInput);
+
+      if (appParseResult.success) {
+        validatedExercises.push(appParseResult.data);
       } else {
-        validationErrors.push({ data: exerciseData, error: result.error });
+        validationErrors.push({ data: exerciseData, error: appParseResult.error });
       }
     }
 
-    // For enterprise monitoring, log any data quality issues without crashing the app.
     if (validationErrors.length > 0) {
       console.warn(
-        `[Data Quality Alert] ${validationErrors.length}/${data.length} exercises failed validation.`,
+        `[Data Quality Alert] ${validationErrors.length}/${data.length} exercises failed validation or transformation.`,
         validationErrors.map(e => ({ 
             name: e.data.name, 
             id: e.data.id,
@@ -118,33 +129,43 @@ export const useExercises = () => {
         throw new Error('User must be authenticated to create exercises.');
       }
       
-      // Validate and apply defaults using the schema before preparing for insert.
+      // Validate and apply defaults using the input schema.
       const parsedExercise = ExerciseInputSchema.parse(newExercise);
-      const { instructions, ...restOfExercise } = parsedExercise;
+      // Destructure to separate client-only fields and prepare for Supabase.
+      const { is_bodyweight, load_factor, ...restOfExercise } = parsedExercise;
       
       const exerciseToInsert = {
         ...restOfExercise,
-        user_id: user.id,
-        // Stringify instructions to match Supabase's expected format for JSON columns.
-        instructions: JSON.stringify(instructions), 
+        created_by: user.id, // Correct field name for Supabase.
+        // Stringify instructions for Supabase's JSON column.
+        instructions: JSON.stringify(restOfExercise.instructions), 
+        // Embed load_factor into metadata for persistence.
+        metadata: {
+            ...restOfExercise.metadata,
+            load_factor: load_factor ?? 1.0,
+        }
       };
       
       const { data, error } = await supabase
         .from('exercises')
-        // Using `as any` here to bypass a TypeScript error. Zod's `parse` above ensures
-        // the data has the correct shape with defaults, but `z.infer` doesn't reflect this
-        // in the type, causing a mismatch with Supabase's strict insert types.
         .insert(exerciseToInsert as any)
         .select()
-        .single(); // Use .single() to expect and return a single object
+        .single(); // Expect and return a single object.
 
       if (error) {
         console.error('Error creating exercise in Supabase:', error);
         throw error;
       }
       
-      // Safely parse the returned data to ensure it matches our app's types.
-      return ExerciseSchema.parse(data);
+      // Use the same robust pipeline to parse the newly created exercise.
+      const supabaseParseResult = SupabaseExerciseSchema.safeParse(data);
+      if (!supabaseParseResult.success) {
+          console.error("Failed to parse created exercise from Supabase:", supabaseParseResult.error);
+          throw new Error("Created exercise has invalid format.");
+      }
+      const transformed = transformSupabaseExerciseToAppExercise(supabaseParseResult.data);
+      // This final parse ensures the returned object is safe for app use.
+      return ExerciseSchema.parse(transformed);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
