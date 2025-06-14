@@ -5,6 +5,7 @@ import App from './App.tsx';
 import './index.css';
 import { addResourceHints, preloadCriticalRoutes } from './utils/bundleOptimization';
 import { appleOptimization } from './services/appleOptimization';
+import { GlobalProviders } from '@/providers/GlobalProviders'; // Updated import
 
 // Essential performance optimizations only
 addResourceHints();
@@ -50,6 +51,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 root.render(
   <React.StrictMode>
-    <App />
+    <GlobalProviders> {/* Replaced AppProviders with GlobalProviders */}
+      <App />
+    </GlobalProviders>
   </React.StrictMode>
 );
+
