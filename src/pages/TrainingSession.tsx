@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
@@ -52,12 +51,6 @@ const TrainingSessionPage: React.FC = () => {
     navigate('/overview');
   };
 
-  const handleCancelWorkout = () => {
-    // TODO: Add a confirmation dialog before resetting
-    resetWorkout();
-    navigate('/overview');
-  };
-
   const hasExercises = Object.keys(exercises).length > 0;
 
   return (
@@ -65,9 +58,22 @@ const TrainingSessionPage: React.FC = () => {
       <PageHeader 
         title={trainingConfig?.trainingType || 'Training Session'}
         showBackButton
-        onBack={handleCancelWorkout}
+        onBack={() => {
+          // TODO: Add a confirmation dialog before resetting
+          resetWorkout();
+          navigate('/overview');
+        }}
       >
-        <Button variant="ghost" size="icon" onClick={handleCancelWorkout} aria-label="Cancel Workout">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => {
+            // TODO: Add a confirmation dialog before resetting
+            resetWorkout();
+            navigate('/overview');
+          }} 
+          aria-label="Cancel Workout"
+        >
           <X className="h-6 w-6" />
         </Button>
       </PageHeader>
