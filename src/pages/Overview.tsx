@@ -41,12 +41,12 @@ const OverviewPageComponent: React.FC = () => {
     if (!workouts || workouts.length === 0) return [];
     
     return workouts.map(workout => ({
-      start_time: workout.start_time || workout.created_at,
+      start_time: workout.created_at, // Use created_at instead of start_time
       duration: workout.duration || 0,
       exercises: workout.exercises ? Object.entries(workout.exercises).map(([exerciseName, sets]) => 
         sets.map(set => ({
           exercise_name: exerciseName,
-          completed: set.completed,
+          completed: set.completed ?? true, // Provide default value for completed
           weight: set.weight,
           reps: set.reps,
           restTime: 0
@@ -88,10 +88,10 @@ const OverviewPageComponent: React.FC = () => {
       if (workout.exercises) {
         Object.keys(workout.exercises).forEach(exerciseName => {
           // Simple muscle group mapping - could be enhanced with exercise database
-          const muscleGroup = exerciseName.toLowerCase().includes('bench') ? 'Chest' :
-                             exerciseName.toLowerCase().includes('squat') ? 'Legs' :
-                             exerciseName.toLowerCase().includes('deadlift') ? 'Back' :
-                             exerciseName.toLowerCase().includes('curl') ? 'Arms' : 'Other';
+          const muscleGroup = exerciseName.toLowerCase().includes('bench') ? 'chest' :
+                             exerciseName.toLowerCase().includes('squat') ? 'legs' :
+                             exerciseName.toLowerCase().includes('deadlift') ? 'back' :
+                             exerciseName.toLowerCase().includes('curl') ? 'arms' : 'core';
           
           muscleFocus[muscleGroup] = (muscleFocus[muscleGroup] || 0) + 1;
         });
@@ -269,7 +269,7 @@ const OverviewPageComponent: React.FC = () => {
             <Card className="h-64">
               <CardContent className="p-4">
                 <MuscleFocusChart 
-                  data={muscleFocusData}
+                  muscleGroups={muscleFocusData}
                   height={200}
                 />
               </CardContent>
