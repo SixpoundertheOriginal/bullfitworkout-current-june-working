@@ -7,6 +7,20 @@ import { StatsSection } from '@/components/profile/StatsSection';
 import { ProfileLoadingSkeleton } from '@/components/profile/ProfileLoadingSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { z } from 'zod';
+
+export const profileFormSchema = z.object({
+  full_name: z.string().nullable().optional(),
+  age: z.union([z.number().positive().int().nullable(), z.string().transform(v => v === "" ? null : parseInt(v))]),
+  weight: z.union([z.number().positive().nullable(), z.string().transform(v => v === "" ? null : parseFloat(v))]),
+  weight_unit: z.string().default("kg"),
+  height: z.union([z.number().positive().nullable(), z.string().transform(v => v === "" ? null : parseFloat(v))]),
+  height_unit: z.string().default("cm"),
+  fitness_goal: z.string().nullable().optional(),
+  experience_level: z.string().nullable().optional(),
+});
+
+export type UserProfileData = z.infer<typeof profileFormSchema>;
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();

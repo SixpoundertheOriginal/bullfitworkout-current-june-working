@@ -1,7 +1,6 @@
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,20 +12,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserProfileData } from "@/pages/ProfilePage";
+import { UserProfileData, profileFormSchema } from "@/pages/ProfilePage";
 import { useWeightUnit } from "@/context/WeightUnitContext";
 import { WeightUnit } from "@/types/exercise";
-
-const profileFormSchema = z.object({
-  full_name: z.string().nullable().optional(),
-  age: z.union([z.number().positive().int().nullable(), z.string().transform(v => v === "" ? null : parseInt(v))]),
-  weight: z.union([z.number().positive().nullable(), z.string().transform(v => v === "" ? null : parseFloat(v))]),
-  weight_unit: z.string().default("kg"),
-  height: z.union([z.number().positive().nullable(), z.string().transform(v => v === "" ? null : parseFloat(v))]),
-  height_unit: z.string().default("cm"),
-  fitness_goal: z.string().nullable().optional(),
-  experience_level: z.string().nullable().optional(),
-});
 
 interface UserProfileFormProps {
   initialData: UserProfileData;
