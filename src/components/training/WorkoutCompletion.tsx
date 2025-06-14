@@ -34,7 +34,7 @@ export const WorkoutCompletion = ({
   onComplete
 }: WorkoutCompletionProps) => {
   const { weightUnit } = useWeightUnit();
-  const { resetSession } = useWorkoutStore();
+  const { resetWorkout } = useWorkoutStore();
   const navigate = useNavigate();
 
   // Convert LocalExerciseSet to ExerciseSet for the chart components
@@ -54,7 +54,7 @@ export const WorkoutCompletion = ({
   
   const handleDiscard = () => {
     // Fully terminate the workout session
-    resetSession();
+    resetWorkout();
     
     // Show confirmation toast
     toast({

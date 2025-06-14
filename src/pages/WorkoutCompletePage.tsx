@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { TrainingConfig } from "@/hooks/useTrainingSetupPersistence";
@@ -42,7 +41,7 @@ export const WorkoutCompletePage = () => {
   
   // Access the workout store
   const { 
-    resetSession, 
+    resetWorkout, 
     exercises, 
     elapsedTime,
     isActive,
@@ -185,7 +184,7 @@ export const WorkoutCompletePage = () => {
   const handleDiscard = () => {
     console.log("Discarding workout");
     // Reset state related to the workout
-    resetSession();
+    resetWorkout();
     
     // Close the dialog
     setShowDiscardDialog(false);
