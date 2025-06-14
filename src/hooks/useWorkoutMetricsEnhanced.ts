@@ -80,7 +80,7 @@ export const useWorkoutMetricsEnhanced = (
       ? userBodyweight / 2.20462 
       : userBodyweight;
 
-    // Calculate standard metrics
+    // Calculate standard metrics using fixed function signature
     const updatedMetrics = calculateWorkoutMetrics(exercises, time, weightUnit, userWeightInKg);
     setMetrics(updatedMetrics);
     
@@ -112,11 +112,12 @@ export const useWorkoutMetricsEnhanced = (
       // Track exercise type
       if (isIsometricExercise(exerciseName)) {
         isometricCount++;
-      } else if (isBodyweightExercise(exerciseName)) {
+      } else if (isBodyweightExercise([exerciseName])) {
         bodyweightCount++;
       } else {
         weightedCount++;
       }
+      
       // Calculate volume for this exercise using our enhanced volume calculation
       let exerciseVolume = 0;
       sets.forEach(set => {
@@ -128,11 +129,11 @@ export const useWorkoutMetricsEnhanced = (
       groupsMap[group].totalVolume += exerciseVolume;
     });
     
-    // Calculate muscle focus
+    // Calculate muscle focus - returns Record<string, number>
     const focus = calculateMuscleFocus(exercises);
     setMuscleFocus(focus);
     
-    // Calculate workout composition
+    // Calculate workout composition - include totalExercises
     const comp = analyzeWorkoutComposition(exercises);
     setComposition(comp);
     

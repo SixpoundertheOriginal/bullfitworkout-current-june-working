@@ -27,8 +27,14 @@ const EnhancedMetricsDisplayComponent = ({
   efficiency,
   className = '' 
 }: EnhancedMetricsDisplayProps) => {
-  // Calculate muscle focus
+  // Calculate muscle focus - now returns Record<string, number>
   const muscleFocus = useMemo(() => calculateMuscleFocus(exercises), [exercises]);
+  
+  // Convert Record to array format for chart component
+  const muscleFocusArray = useMemo(() => 
+    Object.entries(muscleFocus).map(([name, value]) => ({ name, value })), 
+    [muscleFocus]
+  );
   
   // Analyze workout composition
   const composition = useMemo(() => analyzeWorkoutComposition(exercises), [exercises]);
@@ -48,7 +54,7 @@ const EnhancedMetricsDisplayComponent = ({
             </CardHeader>
             <CardContent className="overflow-hidden">
               <div className="h-64 overflow-hidden">
-                <MuscleFocusChart muscleGroups={muscleFocus} />
+                <MuscleFocusChart muscleGroups={muscleFocusArray} />
               </div>
             </CardContent>
           </Card>

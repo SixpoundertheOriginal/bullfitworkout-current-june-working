@@ -7,7 +7,12 @@ export const calculateVolume = (set: ExerciseSet): number => {
   return weight * reps;
 };
 
-export const calculateSetVolume = (set: ExerciseSet, exerciseName?: string): number => {
+export const calculateSetVolume = (set: ExerciseSet, exerciseName?: string, userBodyWeight?: number): number => {
+  // If this is a bodyweight exercise with auto-calculated weight
+  if (set.weightCalculation?.isAuto && userBodyWeight) {
+    return set.weightCalculation.value * set.reps;
+  }
+  
   return calculateVolume(set);
 };
 
@@ -75,7 +80,8 @@ export const getExerciseGroup = (exerciseName: string): string => {
   return 'other';
 };
 
-export const calculateMuscleFocus = (exercises: Record<string, ExerciseSet[]>): Array<{name: string, value: number}> => {
+// Fixed function to return Record<string, number> instead of array
+export const calculateMuscleFocus = (exercises: Record<string, ExerciseSet[]>): Record<string, number> => {
   const muscleGroups: Record<string, number> = {};
   
   Object.entries(exercises).forEach(([exerciseName, sets]) => {
@@ -84,7 +90,7 @@ export const calculateMuscleFocus = (exercises: Record<string, ExerciseSet[]>): 
     muscleGroups[group] = (muscleGroups[group] || 0) + volume;
   });
   
-  return Object.entries(muscleGroups).map(([name, value]) => ({ name, value }));
+  return muscleGroups;
 };
 
 export const analyzeWorkoutComposition = (exercises: Record<string, ExerciseSet[]>) => {
@@ -108,10 +114,11 @@ export const analyzeWorkoutComposition = (exercises: Record<string, ExerciseSet[
   });
   
   return {
-    compound: { count: compound, percentage: (compound / totalExercises) * 100 },
-    isolation: { count: isolation, percentage: (isolation / totalExercises) * 100 },
-    bodyweight: { count: bodyweight, percentage: (bodyweight / totalExercises) * 100 },
-    isometric: { count: isometric, percentage: (isometric / totalExercises) * 100 }
+    compound: { count: compound, percentage: totalExercises > 0 ? (compound / totalExercises) * 100 : 0 },
+    isolation: { count: isolation, percentage: totalExercises > 0 ? (isolation / totalExercises) * 100 : 0 },
+    bodyweight: { count: bodyweight, percentage: totalExercises > 0 ? (bodyweight / totalExercises) * 100 : 0 },
+    isometric: { count: isometric, percentage: totalExercises > 0 ? (isometric / totalExercises) * 100 : 0 },
+    totalExercises
   };
 };
 
@@ -134,18 +141,39 @@ export const getTrendIndicator = (currentValue: number, previousValue: number): 
   return percentChange > 0 ? 'increasing' : 'decreasing';
 };
 
-export const calculateWorkoutMetrics = (exercises: Record<string, ExerciseSet[]>) => {
+// Fixed function signature to match expected parameters
+export const calculateWorkoutMetrics = (
+  exercises: Record<string, ExerciseSet[]>,
+  time: number = 0,
+  weightUnit: string = 'kg',
+  userBodyWeight: number = 70
+) => {
   const totalVolume = Object.values(exercises).flat().reduce((sum, set) => 
-    set.completed ? sum + calculateVolume(set) : sum, 0
+    set.completed ? sum + calculateSetVolume(set, undefined, userBodyWeight) : sum, 0
   );
   
   const totalSets = Object.values(exercises).flat().length;
   const completedSets = Object.values(exercises).flat().filter(set => set.completed).length;
+  const exerciseCount = Object.keys(exercises).length;
+  
+  // Calculate performance metrics
+  const intensity = userBodyWeight > 0 && completedSets > 0 
+    ? ((totalVolume / completedSets) / userBodyWeight) * 100 
+    : 0;
+    
+  const efficiency = time > 0 ? Math.min(100, (completedSets / time) * 60) : 0;
+  const density = time > 0 ? (totalVolume / time) : 0;
   
   return {
-    totalVolume,
-    totalSets,
+    time,
+    exerciseCount,
     completedSets,
-    completionRate: totalSets > 0 ? (completedSets / totalSets) * 100 : 0
+    totalSets,
+    performance: {
+      volume: totalVolume,
+      intensity: Math.round(intensity),
+      density: Math.round(density),
+      efficiency: Math.round(efficiency)
+    }
   };
 };

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise } from '@/types/exercise';
@@ -39,7 +38,13 @@ export const useOptimizedExercises = () => {
           equipment_type: transformed.equipment_type as any[],
           movement_pattern: (exercise.movement_pattern || 'push') as any,
           difficulty: (exercise.difficulty || 'beginner') as any,
-          instructions: transformed.instructions as Record<string, any>,
+          // Fix instructions type issue
+          instructions: exercise.instructions && typeof exercise.instructions === 'object' && !Array.isArray(exercise.instructions)
+            ? { 
+                steps: (exercise.instructions as any).steps || '',
+                form: (exercise.instructions as any).form || ''
+              }
+            : { steps: '', form: '' },
           is_compound: transformed.is_compound,
           tips: transformed.tips,
           variations: transformed.variations,
@@ -77,7 +82,7 @@ export const useOptimizedExercises = () => {
         .from('exercises')
         .insert([{
           name: safeData.name,
-          description: safeData.description,
+          description: safeData.description || '', // Provide default empty string
           primary_muscle_groups: safeData.primary_muscle_groups,
           secondary_muscle_groups: safeData.secondary_muscle_groups,
           equipment_type: safeData.equipment_type,

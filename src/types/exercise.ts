@@ -1,3 +1,4 @@
+
 export interface ExerciseSet {
   id: string;
   weight: number;
@@ -11,6 +12,16 @@ export interface ExerciseSet {
   restTime?: number;
   rest_time?: number;
   created_at?: string;
+  isEditing?: boolean;
+  metadata?: Record<string, any>;
+  weightCalculation?: {
+    weight: number;
+    unit: WeightUnit;
+    converted?: number;
+    value?: number;
+    isAuto?: boolean;
+    source?: string;
+  };
 }
 
 export interface Exercise {
@@ -55,8 +66,8 @@ export type EquipmentType = 'barbell' | 'dumbbell' | 'kettlebell' | 'bodyweight'
 export type MovementPattern = 'push' | 'pull' | 'squat' | 'hinge' | 'lunge' | 'carry' | 'rotation' | 'core';
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
-// Weight unit type - standardize to use "lbs" consistently
-export type WeightUnit = 'kg' | 'lbs';
+// Weight unit type - standardize to use "lb" consistently (not "lbs")
+export type WeightUnit = 'kg' | 'lb';
 
 // Weight calculation interfaces
 export interface WeightCalculation {
@@ -119,10 +130,10 @@ export interface EnhancedExercise extends Exercise {
   id: string; // Make sure id is always present
 }
 
-// Exercise input interface for database operations
+// Exercise input interface for database operations - make description optional
 export interface ExerciseInput {
   name: string;
-  description?: string; // Make this optional
+  description?: string;
   primary_muscle_groups: string[];
   secondary_muscle_groups: string[];
   equipment_type: string[];

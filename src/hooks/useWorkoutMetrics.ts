@@ -50,7 +50,6 @@ export const useWorkoutMetrics = (
 
   useEffect(() => {
     if (!exercises || Object.keys(exercises).length === 0) {
-      // Return early with default values if no exercises
       return;
     }
 
@@ -62,7 +61,7 @@ export const useWorkoutMetrics = (
       ? userBodyweight / 2.20462 
       : userBodyweight;
 
-    // Calculate standard metrics
+    // Calculate standard metrics using fixed function signature
     const updatedMetrics = calculateWorkoutMetrics(exercises, time, weightUnit, userWeightInKg);
     setMetrics(updatedMetrics);
     
@@ -94,11 +93,12 @@ export const useWorkoutMetrics = (
       // Track exercise type
       if (isIsometricExercise(exerciseName)) {
         isometricCount++;
-      } else if (isBodyweightExercise(exerciseName)) {
+      } else if (isBodyweightExercise([exerciseName])) {
         bodyweightCount++;
       } else {
         weightedCount++;
       }
+      
       // Calculate volume for this exercise using our enhanced volume calculation
       let exerciseVolume = 0;
       sets.forEach(set => {

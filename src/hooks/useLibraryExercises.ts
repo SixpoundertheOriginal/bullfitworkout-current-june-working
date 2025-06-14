@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Exercise, MuscleGroup, EquipmentType, MovementPattern, Difficulty } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
@@ -26,134 +25,81 @@ export const useLibraryExercises = (filters: LibraryFilters = {}) => {
     queryFn: async (): Promise<Exercise[]> => {
       if (!allExercises || !Array.isArray(allExercises)) return [];
       
-      let filtered = [...allExercises];
-
-      // Apply search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter(exercise =>
-          exercise?.name?.toLowerCase().includes(searchLower) ||
-          exercise?.description?.toLowerCase().includes(searchLower) ||
-          exercise?.primary_muscle_groups?.some(muscle => 
-            muscle?.toLowerCase().includes(searchLower)
-          )
-        );
-      }
-
-      // Apply muscle group filter
-      if (filters.muscleGroup && filters.muscleGroup !== 'all') {
-        filtered = filtered.filter(exercise =>
-          exercise?.primary_muscle_groups?.includes(filters.muscleGroup as MuscleGroup) ||
-          exercise?.secondary_muscle_groups?.includes(filters.muscleGroup as MuscleGroup)
-        );
-      }
-
-      // Apply equipment filter
-      if (filters.equipment && filters.equipment !== 'all') {
-        filtered = filtered.filter(exercise =>
-          exercise?.equipment_type?.includes(filters.equipment as EquipmentType)
-        );
-      }
-
-      // Apply difficulty filter
-      if (filters.difficulty && filters.difficulty !== 'all') {
-        filtered = filtered.filter(exercise =>
-          exercise?.difficulty === filters.difficulty
-        );
-      }
-
-      // Apply movement pattern filter
-      if (filters.movement && filters.movement !== 'all') {
-        filtered = filtered.filter(exercise =>
-          exercise?.movement_pattern === filters.movement
-        );
-      }
-
-      // Apply user created filter
-      if (filters.userCreated !== undefined) {
-        filtered = filtered.filter(exercise =>
-          filters.userCreated ? exercise?.user_id : !exercise?.user_id
-        );
-      }
-
-      return filtered;
-    },
-    enabled: !!allExercises,
-    staleTime: 10 * 60 * 1000, // 10 minutes for library data
-    gcTime: 60 * 60 * 1000, // 1 hour (replaced cacheTime)
-    refetchOnWindowFocus: true,
-    placeholderData: keepPreviousData // New React Query v5 API
-  });
-
-  // Optimistic create exercise for library
-  const createLibraryExercise = useMutation({
-    mutationFn: async (exerciseData: Omit<Exercise, 'id' | 'created_at'>) => {
-      // Optimistic update
-      const tempId = `temp-${Date.now()}`;
-      const optimisticExercise: Exercise = {
-        ...exerciseData,
-        id: tempId,
-        created_at: new Date().toISOString()
-      };
-
-      queryClient.setQueryData(['exercises'], (old: Exercise[] = []) => [
-        ...old,
-        optimisticExercise
-      ]);
-
-      // Invalidate library cache to show new exercise
-      queryClient.invalidateQueries({ queryKey: ['exercises', 'library'] });
-
-      // Call actual API
-      return new Promise<void>((resolve, reject) => {
-        createExercise(
-          {
-            ...exerciseData,
-            user_id: exerciseData.user_id || '',
-          },
-          {
-            onSuccess: () => {
-              // Remove optimistic update and let real data flow through
-              queryClient.invalidateQueries({ queryKey: ['exercises'] });
-              resolve();
-            },
-            onError: (error) => {
-              // Rollback optimistic update
-              queryClient.setQueryData(['exercises'], (old: Exercise[] = []) =>
-                old.filter(e => e.id !== tempId)
-              );
-              reject(error);
-            }
+      return allExercises.filter(exercise => {
+        // Search filter
+        if (filters.search && !exercise.name.toLowerCase().includes(filters.search.toLowerCase())) {
+          return false;
+        }
+        
+        // Muscle group filter
+        if (filters.muscleGroup && filters.muscleGroup !== 'all') {
+          if (!exercise.primary_muscle_groups.includes(filters.muscleGroup) && 
+              !exercise.secondary_muscle_groups.includes(filters.muscleGroup)) {
+            return false;
           }
-        );
+        }
+        
+        // Equipment filter
+        if (filters.equipment && filters.equipment !== 'all') {
+          if (!exercise.equipment_type.includes(filters.equipment)) {
+            return false;
+          }
+        }
+        
+        // Difficulty filter
+        if (filters.difficulty && filters.difficulty !== 'all') {
+          if (exercise.difficulty !== filters.difficulty) {
+            return false;
+          }
+        }
+        
+        // Movement pattern filter
+        if (filters.movement && filters.movement !== 'all') {
+          if (exercise.movement_pattern !== filters.movement) {
+            return false;
+          }
+        }
+        
+        // User created filter
+        if (filters.userCreated !== undefined) {
+          const isUserCreated = !!exercise.user_id;
+          if (isUserCreated !== filters.userCreated) {
+            return false;
+          }
+        }
+        
+        return true;
       });
     },
+    enabled: !!allExercises,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Create exercise mutation with library-specific validation
+  const { mutate: createLibraryExercise, isPending: isCreating } = useMutation({
+    mutationFn: async (exerciseData: Omit<Exercise, 'id' | 'created_at'>) => {
+      // Ensure description is provided with a default value
+      const exerciseWithDefaults = {
+        ...exerciseData,
+        description: exerciseData.description || `Custom exercise: ${exerciseData.name}`,
+        instructions: exerciseData.instructions || { steps: '', form: '' }
+      };
+      
+      return createExercise(exerciseWithDefaults);
+    },
     onSuccess: () => {
-      // Ensure all related queries are fresh
       queryClient.invalidateQueries({ queryKey: ['exercises', 'library'] });
-      queryClient.invalidateQueries({ queryKey: ['exercises', 'search'] });
     }
   });
 
-  // Prefetch related data for performance
-  const prefetchExerciseDetails = async (exerciseId: string) => {
-    const safeLibraryExercises = libraryExercises && Array.isArray(libraryExercises) ? libraryExercises : [];
-    await queryClient.prefetchQuery({
-      queryKey: ['exercise', exerciseId],
-      queryFn: () => safeLibraryExercises.find(e => e.id === exerciseId),
-      staleTime: 5 * 60 * 1000
-    });
-  };
-
-  const safeLibraryExercises = libraryExercises && Array.isArray(libraryExercises) ? libraryExercises : [];
-
   return {
-    exercises: safeLibraryExercises,
+    exercises: libraryExercises || [],
     isLoading: isLoading || isLoadingAll,
     error,
-    createExercise: createLibraryExercise.mutate,
-    isCreating: createLibraryExercise.isPending || isPending,
-    prefetchExerciseDetails,
-    totalCount: safeLibraryExercises.length
+    createExercise: createLibraryExercise,
+    isCreating,
+    totalCount: libraryExercises?.length || 0,
+    hasFilters: Object.values(filters).some(value => value && value !== 'all')
   };
 };
