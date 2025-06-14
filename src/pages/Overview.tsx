@@ -10,23 +10,96 @@ import WorkoutErrorBoundary from '@/components/ui/WorkoutErrorBoundary';
 import { DashboardGrid, DashboardSection } from '@/components/layouts/DashboardGrid';
 import { ChartPlaceholder } from '@/components/layouts/ChartPlaceholder';
 import { SkeletonScreen } from '@/components/performance/SkeletonScreen';
+import { WorkoutVolumeOverTimeChart } from '@/components/metrics/WorkoutVolumeOverTimeChart';
+import { WorkoutTypeChart } from '@/components/metrics/WorkoutTypeChart';
+import { MuscleFocusChart } from '@/components/metrics/MuscleFocusChart';
+import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
+import { useWeightUnit } from '@/context/WeightUnitContext';
 
 interface WorkoutSet {
   weight: number;
   reps: number;
+  completed?: boolean;
 }
 
 interface Workout {
   id: string;
   name: string;
   created_at: string;
+  start_time: string;
   duration?: number;
   exercises?: Record<string, WorkoutSet[]>;
 }
 
-export const OverviewPage: React.FC = () => {
+const OverviewPageComponent: React.FC = () => {
   const { user } = useAuth();
   const { workouts, isLoading } = useWorkouts();
+  const { weightUnit } = useWeightUnit();
+
+  // Transform workouts for metrics processing
+  const workoutsForMetrics = useMemo(() => {
+    if (!workouts || workouts.length === 0) return [];
+    
+    return workouts.map(workout => ({
+      start_time: workout.start_time || workout.created_at,
+      duration: workout.duration || 0,
+      exercises: workout.exercises ? Object.entries(workout.exercises).map(([exerciseName, sets]) => 
+        sets.map(set => ({
+          exercise_name: exerciseName,
+          completed: set.completed,
+          weight: set.weight,
+          reps: set.reps,
+          restTime: 0
+        }))
+      ).flat() : []
+    }));
+  }, [workouts]);
+
+  // Get processed metrics
+  const {
+    volumeOverTimeData,
+    volumeStats,
+    hasVolumeData
+  } = useProcessWorkoutMetrics(workoutsForMetrics, weightUnit);
+
+  // Calculate workout type data
+  const workoutTypeData = useMemo(() => {
+    if (!workouts || workouts.length === 0) return [];
+    
+    const typeCount: Record<string, number> = {};
+    workouts.forEach(workout => {
+      const type = 'Strength'; // Default type - could be enhanced with actual training types
+      typeCount[type] = (typeCount[type] || 0) + 1;
+    });
+    
+    return Object.entries(typeCount).map(([type, count]) => ({
+      type,
+      count,
+      percentage: Math.round((count / workouts.length) * 100)
+    }));
+  }, [workouts]);
+
+  // Calculate muscle focus data
+  const muscleFocusData = useMemo(() => {
+    if (!workouts || workouts.length === 0) return {};
+    
+    const muscleFocus: Record<string, number> = {};
+    workouts.forEach(workout => {
+      if (workout.exercises) {
+        Object.keys(workout.exercises).forEach(exerciseName => {
+          // Simple muscle group mapping - could be enhanced with exercise database
+          const muscleGroup = exerciseName.toLowerCase().includes('bench') ? 'Chest' :
+                             exerciseName.toLowerCase().includes('squat') ? 'Legs' :
+                             exerciseName.toLowerCase().includes('deadlift') ? 'Back' :
+                             exerciseName.toLowerCase().includes('curl') ? 'Arms' : 'Other';
+          
+          muscleFocus[muscleGroup] = (muscleFocus[muscleGroup] || 0) + 1;
+        });
+      }
+    });
+    
+    return muscleFocus;
+  }, [workouts]);
 
   const stats = useMemo(() => {
     if (!workouts || workouts.length === 0) {
@@ -178,33 +251,40 @@ export const OverviewPage: React.FC = () => {
                 <div className="text-2xl font-bold">
                   {(stats.totalVolume / 1000).toFixed(1)}k
                 </div>
-                <p className="text-xs text-muted-foreground">lbs lifted</p>
+                <p className="text-xs text-muted-foreground">{weightUnit} lifted</p>
               </CardContent>
             </Card>
           </DashboardSection>
 
-          {/* Chart Placeholders - Ready for Phase 2 Integration */}
+          {/* Integrated Charts */}
           <DashboardSection span="half" title="Workout Volume Trend">
-            <ChartPlaceholder 
-              type="area" 
-              height="lg" 
+            <WorkoutVolumeOverTimeChart 
+              data={volumeOverTimeData}
+              height={250}
               className="h-64"
             />
           </DashboardSection>
 
           <DashboardSection span="half" title="Muscle Focus Distribution">
-            <ChartPlaceholder 
-              type="pie" 
-              height="lg" 
-              className="h-64"
-            />
+            <Card className="h-64">
+              <CardContent className="p-4">
+                <MuscleFocusChart 
+                  data={muscleFocusData}
+                  height={200}
+                />
+              </CardContent>
+            </Card>
           </DashboardSection>
 
           <DashboardSection span="third" title="Workout Types">
-            <ChartPlaceholder 
-              type="bar" 
-              height="md"
-            />
+            <Card className="h-48">
+              <CardContent className="p-4">
+                <WorkoutTypeChart 
+                  workoutTypes={workoutTypeData}
+                  height={150}
+                />
+              </CardContent>
+            </Card>
           </DashboardSection>
 
           <DashboardSection span="third" title="Training Consistency">
@@ -275,4 +355,5 @@ export const OverviewPage: React.FC = () => {
   );
 };
 
+export const OverviewPage = React.memo(OverviewPageComponent);
 export default OverviewPage;
