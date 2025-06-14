@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { PageHeader } from '@/components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { useWorkouts } from '@/hooks/useWorkouts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { QuickStatsSection } from '@/components/metrics/QuickStatsSection';
+import WorkoutErrorBoundary from '@/components/ui/WorkoutErrorBoundary';
 
 interface WorkoutSet {
   weight: number;
@@ -83,77 +85,79 @@ export const OverviewPage: React.FC = () => {
   const weeklyProgress = stats.weeklyGoal > 0 ? (stats.thisWeekWorkouts / stats.weeklyGoal) * 100 : 0;
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Overview</h1>
-          <p className="text-muted-foreground">
-            Track your fitness journey and progress
-          </p>
+    <WorkoutErrorBoundary>
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Overview</h1>
+            <p className="text-muted-foreground">
+              Track your fitness journey and progress
+            </p>
+          </div>
+        </div>
+
+        <QuickStatsSection />
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
+              <p className="text-xs text-muted-foreground">
+                All time
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Weekly Goal</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.thisWeekWorkouts}/{stats.weeklyGoal}</div>
+              <Progress value={weeklyProgress} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {Math.round(weeklyProgress)}% complete
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.avgDuration > 0 ? `${Math.round(stats.avgDuration / 60)}m` : '0m'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Per workout
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {(stats.totalVolume / 1000).toFixed(1)}k
+              </div>
+              <p className="text-xs text-muted-foreground">
+                lbs lifted
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
-
-      <QuickStatsSection />
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
-            <p className="text-xs text-muted-foreground">
-              All time
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Weekly Goal</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.thisWeekWorkouts}/{stats.weeklyGoal}</div>
-            <Progress value={weeklyProgress} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              {Math.round(weeklyProgress)}% complete
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.avgDuration > 0 ? `${Math.round(stats.avgDuration / 60)}m` : '0m'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Per workout
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(stats.totalVolume / 1000).toFixed(1)}k
-            </div>
-            <p className="text-xs text-muted-foreground">
-              lbs lifted
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </WorkoutErrorBoundary>
   );
 };
 
