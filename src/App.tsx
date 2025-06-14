@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { HomePage } from '@/pages/HomePage';
 import { ExerciseLibraryPage } from '@/pages/ExerciseLibraryPage';
+import AllExercisesPage from '@/pages/AllExercisesPage';
 import WorkoutDetailsPage from '@/pages/WorkoutDetailsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { OverviewPage } from '@/pages/Overview';
@@ -27,6 +28,14 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/exercises" element={<ExerciseLibraryPage />} />
+              <Route 
+                path="/all-exercises" 
+                element={
+                  <ProtectedRoute>
+                    <AllExercisesPage />
+                  </ProtectedRoute>
+                } 
+              />
               
               <Route 
                 path="/overview" 
