@@ -8,14 +8,14 @@ const InstructionsSchema = z.object({
 });
 
 // Zod schema for the Exercise, aligning with the Supabase table and application needs.
-// This schema will validate data at runtime, preventing type-related errors.
+// This schema is now stricter, using defaults and nullables to ensure a consistent object shape.
 export const ExerciseSchema = z.object({
   id: z.string(), // Can be UUID from Supabase or string from local data
   name: z.string().min(1, "Exercise name cannot be empty."),
-  description: z.string(),
-  primary_muscle_groups: z.array(z.string()),
-  secondary_muscle_groups: z.array(z.string()),
-  equipment_type: z.array(z.string()),
+  description: z.string().default(''),
+  primary_muscle_groups: z.preprocess((val) => val ?? [], z.array(z.string())),
+  secondary_muscle_groups: z.preprocess((val) => val ?? [], z.array(z.string())),
+  equipment_type: z.preprocess((val) => val ?? [], z.array(z.string())),
   difficulty: z.string(),
   movement_pattern: z.string(),
   is_compound: z.boolean(),
@@ -26,23 +26,24 @@ export const ExerciseSchema = z.object({
     (val) => {
       if (typeof val === 'string') {
         try {
-          // Attempt to parse if it's a string
-          return JSON.parse(val);
+          // Attempt to parse if it's a string, providing a default on failure or null.
+          const parsed = JSON.parse(val);
+          return parsed ?? { steps: '', form: '' };
         } catch (e) {
           console.error("Failed to parse instructions JSON:", e);
-          return null; // On failure, return null to trigger validation error
+          return { steps: '', form: '' }; // On failure, return default to maintain shape
         }
       }
-      return val; // If already an object, pass it through
+      return val ?? { steps: '', form: '' }; // If not a string, return val or default
     },
-    InstructionsSchema.nullable()
+    InstructionsSchema
   ),
-  user_id: z.string().uuid().optional().nullable(),
-  created_at: z.string().optional().nullable(),
-  tips: z.array(z.string()).optional().nullable(),
-  variations: z.array(z.string()).optional().nullable(),
-  metadata: z.record(z.any()).optional().nullable(),
-  load_factor: z.number().optional().nullable(),
+  user_id: z.string().uuid().nullable(),
+  created_at: z.string().nullable(),
+  tips: z.preprocess((val) => val ?? [], z.array(z.string())),
+  variations: z.preprocess((val) => val ?? [], z.array(z.string())),
+  metadata: z.preprocess((val) => val ?? {}, z.record(z.any())),
+  load_factor: z.number().nullable().default(1.0),
 });
 
 // This schema defines the shape of data required to create a new exercise.
@@ -61,7 +62,8 @@ export const ExerciseInputSchema = ExerciseSchema.pick({
     instructions: true,
     tips: true,
     variations: true,
-    metadata: true
+    metadata: true,
+    load_factor: true,
 }).extend({
     // Add more specific validations for creation
     name: z.string().min(1, "Exercise name cannot be empty."),

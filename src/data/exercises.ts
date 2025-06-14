@@ -18,6 +18,11 @@ export const exerciseDatabase: Exercise[] = [
       form: "Keep your back flat on the bench and avoid arching. Control the weight on the way down and explode on the way up."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: [],
+    variations: ['Incline Bench Press', 'Dumbbell Bench Press'],
+    metadata: {},
+    load_factor: 1.2,
   },
   {
     id: '2',
@@ -35,6 +40,11 @@ export const exerciseDatabase: Exercise[] = [
       form: "Maintain a neutral spine throughout the movement. Your knees should track over your toes."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: ['Keep your weight on your heels.', 'Engage your core.'],
+    variations: ['Front Squat', 'Goblet Squat'],
+    metadata: {},
+    load_factor: 1.2,
   },
   {
     id: '3',
@@ -52,6 +62,11 @@ export const exerciseDatabase: Exercise[] = [
       form: "Keep the bar close to your body. Do not round your lower back. Drive with your legs."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: [],
+    variations: ['Sumo Deadlift', 'Romanian Deadlift'],
+    metadata: {},
+    load_factor: 1.2,
   },
   {
     id: '4',
@@ -69,6 +84,11 @@ export const exerciseDatabase: Exercise[] = [
       form: "Engage your core and avoid swinging. Squeeze your shoulder blades together at the top of the movement."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: ['Use a resistance band for assistance if needed.'],
+    variations: ['Chin Up', 'Wide Grip Pull Up'],
+    metadata: {},
+    load_factor: 0.8,
   },
   {
     id: '5',
@@ -86,6 +106,11 @@ export const exerciseDatabase: Exercise[] = [
       form: "Keep your core tight and avoid arching your back. Don't let the dumbbells touch at the top."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: [],
+    variations: ['Arnold Press', 'Barbell Shoulder Press'],
+    metadata: {},
+    load_factor: 1.2,
   },
    {
     id: '6',
@@ -103,6 +128,11 @@ export const exerciseDatabase: Exercise[] = [
       form: "Avoid using momentum or swinging your body."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: ['Rotate your wrists at the top for a better contraction.'],
+    variations: ['Hammer Curl', 'Zottman Curl'],
+    metadata: {},
+    load_factor: 1.0,
   },
   {
     id: '7',
@@ -120,5 +150,10 @@ export const exerciseDatabase: Exercise[] = [
       form: "Don't let your hips sag or rise too high."
     },
     created_at: new Date().toISOString(),
+    user_id: null,
+    tips: [],
+    variations: ['Side Plank', 'High Plank'],
+    metadata: {},
+    load_factor: 0.8,
   },
 ];
