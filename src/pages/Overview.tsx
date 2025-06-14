@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Target, TrendingUp, Clock, BarChart3, Calendar, Zap } from 'lucide-react';
@@ -270,7 +269,6 @@ const OverviewPageComponent: React.FC = () => {
               <CardContent className="p-4">
                 <MuscleFocusChart 
                   muscleGroups={muscleFocusData}
-                  height={200}
                 />
               </CardContent>
             </Card>
