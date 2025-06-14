@@ -16,7 +16,8 @@ const fetchExercisesFromSupabase = async () => {
         console.error('Error fetching exercises from Supabase:', error);
         throw new Error(error.message);
     }
-    return data as Exercise[];
+    // Casting to unknown first resolves the type incompatibility for the 'instructions' JSON field.
+    return data as unknown as Exercise[];
 };
 
 // Seeds the database with initial exercises if it's empty.
@@ -34,12 +35,12 @@ const seedInitialExercises = async () => {
     return { message: 'Database already seeded.' };
   }
 
-  // Remove local 'id' to let Supabase auto-generate it.
-  const exercisesToSeed = exerciseDatabase.map(({ id, ...rest }) => rest);
+  // Remove local 'id' and 'created_at' to let Supabase auto-generate them.
+  const exercisesToSeed = exerciseDatabase.map(({ id, created_at, ...rest }) => rest);
 
   const { error: insertError } = await supabase
     .from('exercises')
-    .insert(exercisesToSeed);
+    .insert(exercisesToSeed as any); // Use `as any` to bypass strict type check mismatch.
 
   if (insertError) {
     console.error('Error seeding exercises:', insertError);
@@ -77,7 +78,7 @@ export const useExercises = () => {
       
       const { data, error } = await supabase
         .from('exercises')
-        .insert([exerciseToInsert])
+        .insert([exerciseToInsert] as any) // Use `as any` to bypass strict type check mismatch.
         .select();
 
       if (error) {
@@ -85,7 +86,7 @@ export const useExercises = () => {
         throw error;
       }
       
-      return data[0];
+      return data[0] as Exercise; // Cast the return type to match the mutation definition.
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exercises'] });
