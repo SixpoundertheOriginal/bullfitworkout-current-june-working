@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CalendarDays, Clock, Dumbbell, ArrowLeft, ArrowRight } from "lucide-react";
 import { WorkoutCard } from "@/components/WorkoutCard";
-import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
+import { useValidatedWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { TrainingStartButton } from '@/components/training/TrainingStartButton';
@@ -16,12 +16,16 @@ interface DailyWorkoutSummaryProps {
 }
 
 export const DailyWorkoutSummary = ({ date, onClose, preview = false }: DailyWorkoutSummaryProps) => {
-  const { workouts, exerciseCounts, isLoading } = useWorkoutHistory({
+  const { data, isLoading } = useValidatedWorkoutHistory({
     startDate: date,
     endDate: date
   });
   
   const navigate = useNavigate();
+  
+  // Safely destructure data with fallbacks
+  const workouts = data?.workouts || [];
+  const exerciseCounts = data?.exerciseCounts || {};
   
   const formattedDate = format(new Date(date), 'MMMM d, yyyy');
   

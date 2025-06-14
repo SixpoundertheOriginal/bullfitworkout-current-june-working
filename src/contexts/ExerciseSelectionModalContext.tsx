@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { Exercise } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
-import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { useValidatedWorkoutHistory } from '@/hooks/useWorkoutHistory';
 import { useUnifiedExerciseFiltering } from '@/hooks/useUnifiedExerciseFiltering';
 import { useSearchableList } from '@/hooks/useSearchableList';
 import { useTabs, TabItem } from '@/hooks/useTabs';
@@ -41,7 +41,10 @@ export const ExerciseSelectionModalProvider: React.FC<ExerciseSelectionModalProv
   trainingType = ""
 }) => {
   const { exercises: allExercises = [] } = useExercises();
-  const { workouts } = useWorkoutHistory();
+  const { data } = useValidatedWorkoutHistory();
+
+  // Safely get workouts from validated data
+  const workouts = data?.workouts || [];
 
   // Generate suggested exercises based on training type
   const suggestedExercises = useMemo(() => {

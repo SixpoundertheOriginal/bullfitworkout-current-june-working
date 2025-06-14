@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { Exercise } from '@/types/exercise';
 import { useTrainingExercises } from '@/hooks/useTrainingExercises';
-import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { useValidatedWorkoutHistory } from '@/hooks/useWorkoutHistory';
 import { MinimalisticExerciseSelect } from '@/components/exercises/MinimalisticExerciseSelect';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,7 +28,10 @@ export const TrainingExerciseSelector: React.FC<TrainingExerciseSelectorProps> =
   difficulty
 }) => {
   const { exercises: trainingExercises, isLoading, error } = useTrainingExercises();
-  const { workouts } = useWorkoutHistory();
+  const { data } = useValidatedWorkoutHistory();
+
+  // Safely get workouts from validated data
+  const workouts = data?.workouts || [];
 
   // Extract recent exercises with performance optimization
   const recentExercises = useMemo(() => {

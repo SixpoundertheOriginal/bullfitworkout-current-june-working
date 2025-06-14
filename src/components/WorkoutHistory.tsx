@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format, parseISO } from "date-fns";
-import { useWorkoutHistory, WorkoutHistoryFilters } from "@/hooks/useWorkoutHistory";
+import { useValidatedWorkoutHistory, WorkoutHistoryFilters } from "@/hooks/useWorkoutHistory";
 import { trainingTypes } from "@/constants/trainingTypes";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { deleteWorkout } from "@/services/workoutService";
@@ -29,9 +29,14 @@ export function WorkoutHistory({
   onWorkoutSelected,
   onPageChange
 }: WorkoutHistoryProps) {
-  const { workouts, exerciseCounts, totalCount, isLoading, refetch } = useWorkoutHistory(filters);
+  const { data, isLoading, refetch } = useValidatedWorkoutHistory(filters);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [fixingId, setFixingId] = React.useState<string | null>(null);
+  
+  // Safely destructure data with fallbacks
+  const workouts = data?.workouts || [];
+  const exerciseCounts = data?.exerciseCounts || {};
+  const totalCount = data?.totalCount || 0;
   
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this workout?")) {

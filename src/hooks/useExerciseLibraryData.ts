@@ -2,7 +2,7 @@
 import { useMemo, useCallback } from 'react';
 import { Exercise } from '@/types/exercise';
 import { useExercises } from '@/hooks/useExercises';
-import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { useValidatedWorkoutHistory } from '@/hooks/useWorkoutHistory';
 
 export interface ExerciseLibraryData {
   allExercises: Exercise[];
@@ -25,7 +25,10 @@ export const useExerciseLibraryData = ({
   trainingType = ""
 }: UseExerciseLibraryDataOptions = {}): ExerciseLibraryData => {
   const { exercises: allExercises, isLoading, isError } = useExercises();
-  const { workouts } = useWorkoutHistory();
+  const { data } = useValidatedWorkoutHistory();
+
+  // Safely get workouts from validated data
+  const workouts = data?.workouts || [];
 
   // Extract recently used exercises with error handling
   const recentExercises = useMemo(() => {
