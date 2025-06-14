@@ -42,6 +42,11 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
   className
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Guard against missing essential data.
+  if (!exercise?.name) {
+    return null;
+  }
 
   // Fetch personal stats for this exercise
   const { data: personalStats, isLoading: isLoadingStats } = usePersonalStats({
@@ -49,8 +54,8 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
     enabled: showPersonalStats && context === 'library'
   });
 
-  // Get movement pattern for this exercise, checking for name to avoid errors.
-  const movementPattern = exercise.name ? getExerciseMovementPattern(exercise) : undefined;
+  // Get movement pattern for this exercise. Now safe due to the guard above.
+  const movementPattern = getExerciseMovementPattern(exercise);
 
   const handleFavorite = () => {
     onFavorite?.(exercise);

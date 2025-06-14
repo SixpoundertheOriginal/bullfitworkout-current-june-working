@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Exercise } from '@/types/exercise';
@@ -23,8 +22,11 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   isLoading = false,
   className = ""
 }) => {
-  // Filter out exercises that are missing an ID to prevent runtime errors.
-  const validExercises = useMemo(() => (exercises || []).filter(e => e?.id), [exercises]);
+  // Filter out exercises that are missing an ID to prevent runtime errors and satisfy type constraints.
+  const validExercises = useMemo(() => 
+    (exercises || []).filter((e): e is Exercise & { id: string } => !!e?.id), 
+    [exercises]
+  );
 
   const { containerRef, gridDimensions, gridConfig } = useVirtualizedGrid({
     items: validExercises,
