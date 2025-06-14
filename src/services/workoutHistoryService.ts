@@ -63,23 +63,38 @@ export const getWorkoutHistory = async (filters: WorkoutHistoryFilters = { limit
     const exerciseCountData: Record<string, { exercises: number; sets: number }> = {};
     
     if (data) {
-      await Promise.all(
-        data.map(async (workout) => {
-          const { data: exerciseSets, error: exerciseSetsError } = await supabase
-            .from('exercise_sets')
-            .select('exercise_name, id')
-            .eq('workout_id', workout.id);
-            
-          if (exerciseSetsError) throw exerciseSetsError;
-          
-          const exerciseNames = new Set(exerciseSets?.map(set => set.exercise_name));
-          
-          exerciseCountData[workout.id] = {
-            exercises: exerciseNames.size,
-            sets: exerciseSets?.length || 0
-          };
-        })
-      );
+      // Fetch exercise sets for all workouts in one batch
+      const workoutIds = data.map(w => w.id);
+      const { data: allExerciseSets, error: exerciseSetsError } = await supabase
+        .from('exercise_sets')
+        .select('workout_id, exercise_name, id')
+        .in('workout_id', workoutIds);
+        
+      if (exerciseSetsError) throw exerciseSetsError;
+      
+      // Group exercise sets by workout
+      const exerciseSetsByWorkout: Record<string, Array<{exercise_name: string, id: string}>> = {};
+      (allExerciseSets || []).forEach(set => {
+        if (!exerciseSetsByWorkout[set.workout_id]) {
+          exerciseSetsByWorkout[set.workout_id] = [];
+        }
+        exerciseSetsByWorkout[set.workout_id].push({
+          exercise_name: set.exercise_name,
+          id: set.id
+        });
+      });
+      
+      // Add exercise sets to workout data and calculate counts
+      data.forEach(workout => {
+        const exerciseSets = exerciseSetsByWorkout[workout.id] || [];
+        workout.exerciseSets = exerciseSets;
+        
+        const exerciseNames = new Set(exerciseSets.map(set => set.exercise_name));
+        exerciseCountData[workout.id] = {
+          exercises: exerciseNames.size,
+          sets: exerciseSets.length
+        };
+      });
     }
     
     return {

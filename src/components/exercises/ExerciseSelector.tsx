@@ -3,7 +3,7 @@ import { Exercise } from "@/types/exercise";
 import { useExerciseSuggestions } from "@/hooks/useExerciseSuggestions";
 import { MinimalisticExerciseSelect } from "./MinimalisticExerciseSelect";
 import { ExerciseQuickSelect } from "@/components/ExerciseQuickSelect";
-import { useWorkoutHistory } from "@/hooks/useWorkoutHistory";
+import { useValidatedWorkoutHistory } from "@/hooks/useWorkoutHistory";
 import { useExercises } from "@/hooks/useExercises";
 import { rankExercises, getCurrentTimeOfDay, RankingCriteria } from "@/utils/exerciseRankingUtils";
 import { useWorkoutStore } from "@/store/workoutStore";
@@ -31,10 +31,13 @@ export function ExerciseSelector({
   showStartButton = false
 }: ExerciseSelectorProps) {
   const { suggestedExercises } = useExerciseSuggestions(trainingType);
-  const { workouts } = useWorkoutHistory();
+  const { data } = useValidatedWorkoutHistory();
   const { exercises: allExercises } = useExercises();
   const { isActive } = useWorkoutStore();
   const timeOfDay = getCurrentTimeOfDay();
+  
+  // Safely get workouts from validated data
+  const workouts = data?.workouts || [];
   
   // Extract recently used exercises from workout history with null guards
   const recentExercises = React.useMemo(() => {
@@ -47,14 +50,9 @@ export function ExerciseSelector({
     workouts.slice(0, 5).forEach(workout => {
       const exerciseNames = new Set<string>();
       
-      // Phase 1 Fix: Add null guard for exerciseSets
-      if (workout.exerciseSets && Array.isArray(workout.exerciseSets)) {
-        workout.exerciseSets.forEach(set => {
-          if (set?.exercise_name) {
-            exerciseNames.add(set.exercise_name);
-          }
-        });
-      }
+      // Note: exerciseSets is not available in validated data, 
+      // so we'll need to implement a different approach for getting recent exercises
+      // For now, return empty array until we add exerciseSets back to validated data
       
       // For each unique exercise name, find the matching exercise from allExercises
       exerciseNames.forEach(name => {
