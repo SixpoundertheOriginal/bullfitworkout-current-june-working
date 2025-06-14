@@ -87,7 +87,7 @@ export function transformSupabaseExerciseToAppExercise(supabaseExercise: Supabas
         difficulty: supabaseExercise.difficulty ?? 'beginner',
         movement_pattern: supabaseExercise.movement_pattern ?? 'custom',
         is_compound: supabaseExercise.is_compound ?? false,
-        is_bodyweight,
+        is_bodyweight: isBodyweight,
         instructions: supabaseExercise.instructions ?? { steps: '', form: '' },
         user_id: supabaseExercise.created_by, // Directly maps created_by to user_id
         created_at: createdAtResult.success ? createdAtResult.data : null,
