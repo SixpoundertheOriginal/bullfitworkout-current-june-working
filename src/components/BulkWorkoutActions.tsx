@@ -1,14 +1,5 @@
-
 import React, { useState } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
+import { AccessibleDialog } from "@/components/ui/AccessibleDialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -137,30 +128,25 @@ export function BulkWorkoutActions({
   return (
     <div className="flex gap-2">
       {/* Delete Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogTrigger asChild>
+      <AccessibleDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        trigger={
           <Button 
             variant="outline" 
             className="border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-950/30"
             disabled={selectionCount === 0 || disabled || isProcessing}
+            aria-label={`Delete ${selectionCount} selected workouts`}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete ({selectionCount})
           </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white">Delete {selectionCount} Workouts</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Are you sure you want to delete {selectionCount} workouts? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-red-400">
-              This will permanently delete {selectionCount} workouts and all their exercise sets.
-            </p>
-          </div>
-          <DialogFooter>
+        }
+        title={`Delete ${selectionCount} Workouts`}
+        description={`Are you sure you want to permanently delete ${selectionCount} selected workouts? This action cannot be undone.`}
+        contentClassName="bg-gray-900 border-gray-800 text-white"
+        footerContent={
+          <>
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
@@ -186,78 +172,36 @@ export function BulkWorkoutActions({
                 </>
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="py-4">
+          <p className="text-red-400">
+            This will permanently delete {selectionCount} workouts and all their exercise sets.
+          </p>
+        </div>
+      </AccessibleDialog>
       
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogTrigger asChild>
+      <AccessibleDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        trigger={
           <Button 
             variant="outline" 
             className="border-purple-500/20 text-purple-400 hover:text-purple-300 hover:bg-purple-950/30"
             disabled={selectionCount === 0 || disabled || isProcessing}
+            aria-label={`Edit ${selectionCount} selected workouts`}
           >
             <Check className="h-4 w-4 mr-2" />
             Edit ({selectionCount})
           </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white">Edit {selectionCount} Workouts</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Make changes to apply to all {selectionCount} selected workouts. Leave fields empty to keep their current values.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name" className="text-white">Workout Name</Label>
-              <Input
-                id="name"
-                name="name"
-                value={editFormData.name}
-                onChange={handleInputChange}
-                placeholder="Leave empty to keep current names"
-                className="bg-gray-800 border-gray-700 text-white"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="training_type" className="text-white">Training Type</Label>
-              <Select 
-                value={editFormData.training_type} 
-                onValueChange={handleTrainingTypeChange}
-              >
-                <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                  <SelectValue placeholder="Keep current training types" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                  {trainingTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      <div className="flex items-center">
-                        <TrainingTypeTag type={type} size="sm" />
-                        <span className="ml-2">{type}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="notes" className="text-white">Notes</Label>
-              <Textarea
-                id="notes"
-                name="notes"
-                value={editFormData.notes}
-                onChange={handleInputChange}
-                placeholder="Leave empty to keep current notes"
-                className="bg-gray-800 border-gray-700 text-white"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
+        }
+        title={`Edit ${selectionCount} Workouts`}
+        description={`Make changes to apply to all ${selectionCount} selected workouts. Leave fields empty to keep their current values.`}
+        contentClassName="bg-gray-900 border-gray-800 text-white"
+        footerContent={
+          <>
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
@@ -283,35 +227,79 @@ export function BulkWorkoutActions({
                 </>
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name" className="text-white">Workout Name</Label>
+            <Input
+              id="name"
+              name="name"
+              value={editFormData.name}
+              onChange={handleInputChange}
+              placeholder="Leave empty to keep current names"
+              className="bg-gray-800 border-gray-700 text-white"
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="training_type" className="text-white">Training Type</Label>
+            <Select 
+              value={editFormData.training_type} 
+              onValueChange={handleTrainingTypeChange}
+            >
+              <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                <SelectValue placeholder="Keep current training types" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                {trainingTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    <div className="flex items-center">
+                      <TrainingTypeTag type={type} size="sm" />
+                      <span className="ml-2">{type}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="notes" className="text-white">Notes</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={editFormData.notes}
+              onChange={handleInputChange}
+              placeholder="Leave empty to keep current notes"
+              className="bg-gray-800 border-gray-700 text-white"
+              rows={3}
+            />
+          </div>
+        </div>
+      </AccessibleDialog>
       
       {/* Reset Dialog */}
-      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-        <DialogTrigger asChild>
+      <AccessibleDialog
+        open={isResetDialogOpen}
+        onOpenChange={setIsResetDialogOpen}
+        trigger={
           <Button 
             variant="outline" 
             className="border-blue-500/20 text-blue-400 hover:text-blue-300 hover:bg-blue-950/30"
             disabled={selectionCount === 0 || disabled || isProcessing}
+            aria-label={`Reset ${selectionCount} selected workouts`}
           >
             <RefreshCcw className="h-4 w-4 mr-2" />
             Reset ({selectionCount})
           </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white">Reset {selectionCount} Workouts</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Reset all exercise sets in {selectionCount} workouts to zero weight and reps.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-amber-400">
-              This will reset all exercise sets in the selected workouts to 0 weight, 0 reps, and mark them as incomplete.
-            </p>
-          </div>
-          <DialogFooter>
+        }
+        title={`Reset ${selectionCount} Workouts`}
+        description={`Reset all exercise sets in ${selectionCount} workouts to zero weight and reps.`}
+        contentClassName="bg-gray-900 border-gray-800 text-white"
+        footerContent={
+          <>
             <Button
               variant="outline"
               onClick={() => setIsResetDialogOpen(false)}
@@ -338,9 +326,15 @@ export function BulkWorkoutActions({
                 </>
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="py-4">
+          <p className="text-amber-400">
+            This will reset all exercise sets in the selected workouts to 0 weight, 0 reps, and mark them as incomplete.
+          </p>
+        </div>
+      </AccessibleDialog>
     </div>
   );
 }
