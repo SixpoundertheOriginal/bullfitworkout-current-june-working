@@ -5,7 +5,8 @@ import { toast } from "@/hooks/use-toast";
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useFeedback } from '@/components/training/InteractionFeedback';
-import { Exercise, ExerciseSet } from "@/types/exercise";
+import { Exercise } from "@/types/exercise";
+import { ExerciseSet } from '@/store/workoutStore'; // Use store version
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
 
 export const useWorkoutActions = () => {
@@ -50,7 +51,7 @@ export const useWorkoutActions = () => {
         isEditing: false,
         volume: 0,
         duration: '0:00'
-      } as ExerciseSet]
+      }]
     }));
   };
 
@@ -81,7 +82,7 @@ export const useWorkoutActions = () => {
         isEditing: false,
         volume: 0,
         duration: '0:00'
-      } as ExerciseSet] 
+      }] 
     }));
     setActiveExercise(name);
     if (workoutStatus === 'idle') startWorkout();
