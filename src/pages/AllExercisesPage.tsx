@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseCreationWizard } from "@/components/exercises/ExerciseCreationWizard";
@@ -10,6 +9,7 @@ import { PageHeader } from "@/components/navigation/PageHeader";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useOptimizedExercises } from "@/hooks/useOptimizedExercises";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
 
 interface AllExercisesPageProps {
   onSelectExercise?: (exercise: string | Exercise) => void;
@@ -22,7 +22,7 @@ export default function AllExercisesPage({
   standalone = true, 
   onBack 
 }: AllExercisesPageProps) {
-  const { createExercise, isPending } = useOptimizedExercises();
+  const { createExercise, isPending, seedDatabase, isSeeding } = useOptimizedExercises();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { user, loading: authLoading } = useAuth();
@@ -113,6 +113,26 @@ export default function AllExercisesPage({
     setExerciseToDelete(null);
   }, [toast]);
 
+  const handleSeedDatabase = useCallback(async () => {
+    toast({
+      title: "Seeding database...",
+      description: "This may take a moment.",
+    });
+    try {
+      const result = await seedDatabase();
+      toast({
+        title: "Database Seeding Complete",
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        title: "Error Seeding Database",
+        description: error instanceof Error ? error.message : "An unknown error occurred. Please check your Supabase RLS policies for the 'exercises' table.",
+        variant: "destructive",
+      });
+    }
+  }, [seedDatabase, toast]);
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -124,13 +144,20 @@ export default function AllExercisesPage({
     );
   }
 
-  const isLoading = isPending || isSubmitting;
+  const isLoading = isPending || isSubmitting || isSeeding;
 
   return (
     <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
       {standalone && <PageHeader title="Exercise Library" />}
       
       <div className={`flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-4xl px-4 ${standalone ? 'py-4' : 'pt-0'}`}>
+        {user && standalone && (
+          <div className="mb-4 flex justify-end">
+            <Button onClick={handleSeedDatabase} disabled={isLoading}>
+              {isSeeding ? 'Seeding...' : 'Seed Initial Exercises'}
+            </Button>
+          </div>
+        )}
         {/* Use the optimized exercise library component */}
         <PerformanceOptimizedExerciseLibrary
           onSelectExercise={handleSelectExercise}

@@ -1,62 +1,119 @@
 
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Exercise, ExerciseInput } from '@/types/exercise';
+import { useAuth } from '@/context/AuthContext';
 import { exerciseDatabase } from '@/data/exercises';
 
+// Fetches all exercises from the Supabase 'exercises' table.
+const fetchExercisesFromSupabase = async () => {
+    const { data, error } = await supabase
+        .from('exercises')
+        .select('*')
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching exercises from Supabase:', error);
+        throw new Error(error.message);
+    }
+    return data as Exercise[];
+};
+
+// Seeds the database with initial exercises if it's empty.
+const seedInitialExercises = async () => {
+  const { count, error: countError } = await supabase
+    .from('exercises')
+    .select('*', { count: 'exact', head: true });
+
+  if (countError) {
+    console.error('Error counting exercises:', countError);
+    throw countError;
+  }
+  
+  if (count !== null && count > 0) {
+    return { message: 'Database already seeded.' };
+  }
+
+  // Remove local 'id' to let Supabase auto-generate it.
+  const exercisesToSeed = exerciseDatabase.map(({ id, ...rest }) => rest);
+
+  const { error: insertError } = await supabase
+    .from('exercises')
+    .insert(exercisesToSeed);
+
+  if (insertError) {
+    console.error('Error seeding exercises:', insertError);
+    throw insertError;
+  }
+  
+  return { message: 'Database seeded successfully!' };
+};
+
+
 export const useExercises = () => {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPending, setIsPending] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [isError, setIsError] = useState(false);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    // Mock loading exercises from our new data file
-    const timer = setTimeout(() => {
-      setExercises(exerciseDatabase);
-      setIsLoading(false);
-    }, 500); // Slightly faster load time
+  // Fetch exercises from Supabase, but only if the user is logged in.
+  const { 
+    data: supabaseExercises, 
+    isLoading: isLoadingSupabase, 
+    error: supabaseError,
+    isError: isSupabaseError,
+  } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: fetchExercisesFromSupabase,
+    enabled: !!user,
+  });
 
-    return () => clearTimeout(timer);
-  }, []);
+  // Mutation for creating a new exercise in Supabase.
+  const { mutateAsync: createExercise, isPending } = useMutation<Exercise, Error, ExerciseInput>({
+    mutationFn: async (newExercise: ExerciseInput) => {
+      if (!user) {
+        throw new Error('User must be authenticated to create exercises.');
+      }
+      
+      const exerciseToInsert = { ...newExercise, user_id: user.id };
+      
+      const { data, error } = await supabase
+        .from('exercises')
+        .insert([exerciseToInsert])
+        .select();
 
-  const createExercise = async (exerciseData: ExerciseInput): Promise<Exercise> => {
-    setIsPending(true);
-    
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        try {
-          const newExercise: Exercise = {
-            id: Date.now().toString(),
-            name: exerciseData.name,
-            description: exerciseData.description,
-            primary_muscle_groups: exerciseData.primary_muscle_groups,
-            secondary_muscle_groups: exerciseData.secondary_muscle_groups,
-            equipment_type: exerciseData.equipment_type,
-            difficulty: exerciseData.difficulty,
-            movement_pattern: exerciseData.movement_pattern,
-            is_compound: exerciseData.is_compound,
-            instructions: exerciseData.instructions,
-            created_at: new Date().toISOString(),
-          };
-          
-          setExercises(prev => [...prev, newExercise]);
-          setIsPending(false);
-          resolve(newExercise);
-        } catch (err) {
-          setIsPending(false);
-          reject(err as Error);
-        }
-      }, 1000);
-    });
-  };
+      if (error) {
+        console.error('Error creating exercise in Supabase:', error);
+        throw error;
+      }
+      
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+  });
+
+  // Mutation for seeding the database.
+  const { mutateAsync: seedDatabase, isPending: isSeeding } = useMutation({
+    mutationFn: seedInitialExercises,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+  });
+
+  // Hybrid logic: return Supabase data for logged-in users, otherwise local data.
+  const exercises = user ? supabaseExercises : exerciseDatabase;
+  const isLoading = user ? isLoadingSupabase : false;
+  const error = user ? supabaseError : null;
+  const isError = user ? isSupabaseError : false;
 
   return {
-    exercises,
+    exercises: exercises || [],
     isLoading,
     createExercise,
     isPending,
     error,
-    isError
+    isError,
+    seedDatabase,
+    isSeeding,
   };
 };

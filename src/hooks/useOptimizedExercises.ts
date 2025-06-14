@@ -1,41 +1,30 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useExercises } from './useExercises';
-import { Exercise, ExerciseInput } from '@/types/exercise';
 
 /**
- * Modified hook to use local exercise data source instead of Supabase.
- * This allows the exercise library to function without a backend connection.
+ * A wrapper around useExercises for specific components that might need
+ * additional optimizations or transformations in the future.
+ * Currently, it passes through the results from useExercises.
  */
 export const useOptimizedExercises = () => {
-  const queryClient = useQueryClient();
   const { 
     exercises, 
     isLoading, 
     error, 
-    createExercise: createExerciseLocal,
-    isPending: isLocalCreatePending,
+    createExercise, 
+    isPending, 
+    seedDatabase,
+    isSeeding 
   } = useExercises();
-
-  // The create mutation will wrap the local create function.
-  // We use mutateAsync so it can be awaited in components.
-  const { mutateAsync: createExercise, isPending } = useMutation<Exercise, Error, ExerciseInput>({
-    mutationFn: (newExercise: ExerciseInput) => {
-      return createExerciseLocal(newExercise);
-    },
-    onSuccess: () => {
-      // Invalidation isn't strictly necessary since useExercises updates its own state,
-      // but it's good practice for potential future react-query integration.
-      queryClient.invalidateQueries({ queryKey: ['exercises'] });
-    },
-  });
 
   return {
     exercises: exercises || [],
     isLoading,
     error,
     createExercise,
-    isPending: isPending || isLocalCreatePending,
+    isPending,
     totalCount: exercises?.length || 0,
+    seedDatabase,
+    isSeeding,
   };
 };
