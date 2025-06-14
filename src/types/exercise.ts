@@ -113,23 +113,3 @@ export type VariantCategory = typeof VARIANT_CATEGORIES[number];
 export interface EnhancedExercise extends Exercise {
   id: string; // Make sure id is always present
 }
-
-// Exercise input interface for database operations - make description optional
-export interface ExerciseInput {
-  name: string;
-  description?: string;
-  primary_muscle_groups: string[];
-  secondary_muscle_groups: string[];
-  equipment_type: string[];
-  difficulty: string;
-  movement_pattern: string;
-  is_compound: boolean;
-  instructions: {
-    steps: string;
-    form: string;
-  };
-  tips?: string[];
-  variations?: string[];
-  user_id?: string;
-  metadata?: Record<string, any>;
-}

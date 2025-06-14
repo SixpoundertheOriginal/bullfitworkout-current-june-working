@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 // Schema for the 'instructions' JSON object, ensuring it has the correct shape.
 const InstructionsSchema = z.object({
-  steps: z.string(),
-  form: z.string(),
+  steps: z.string().default(''),
+  form: z.string().default(''),
 });
 
 // Zod schema for the Exercise, aligning with the Supabase table and application needs.
