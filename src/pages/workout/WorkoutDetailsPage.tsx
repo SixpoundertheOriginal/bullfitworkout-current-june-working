@@ -116,9 +116,11 @@ const WorkoutDetailsPage: React.FC = () => {
   };
 
   const metricValues: ProcessedWorkoutMetrics = processWorkoutMetrics(
-    exerciseSets, // Swapped: exerciseSets is first
-    typedWorkoutDetails, // Swapped: typedWorkoutDetails is second
-    weightUnit as WeightUnit
+    exerciseSets,
+    typedWorkoutDetails.duration, // Pass duration as a number
+    weightUnit as WeightUnit,
+    undefined, // Placeholder for userBodyInfo, which is optional
+    typedWorkoutDetails // Pass the full workout details for workoutTiming
   );
   
   const sessionMax = metricValues.intensityMetrics?.peakLoad || 0;
