@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
@@ -25,6 +26,8 @@ const TrainingSessionPage: React.FC = () => {
     completeSet,
     removeExercise,
     resetWorkout,
+    elapsedTime,
+    startTime,
   } = useWorkoutStore();
   
   const { saveWorkout, isSaving } = useWorkoutSave();
@@ -46,7 +49,27 @@ const TrainingSessionPage: React.FC = () => {
   const handleFinishWorkout = async () => {
     workoutTimer.pause();
     restTimer.stop();
-    await saveWorkout();
+    
+    if (!startTime || !trainingConfig) {
+      toast({
+        title: "Could Not Finish Workout",
+        description: "Workout data is incomplete. Cannot save.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const workoutData = {
+      exercises,
+      duration: elapsedTime,
+      startTime: new Date(startTime),
+      endTime: new Date(),
+      trainingType: trainingConfig.trainingType,
+      name: trainingConfig.trainingType ? `${trainingConfig.trainingType} Workout` : 'Workout',
+      trainingConfig,
+    };
+
+    await saveWorkout(workoutData);
     resetWorkout();
     navigate('/overview');
   };
