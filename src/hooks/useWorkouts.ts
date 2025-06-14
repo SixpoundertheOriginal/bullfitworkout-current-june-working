@@ -1,8 +1,7 @@
-
 import { useMemo } from 'react';
 import { useWorkoutHistory } from './useWorkoutHistory';
-import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { getWorkoutDetails } from '@/services/workoutHistoryService';
 
 interface WorkoutSet {
   weight: number;
@@ -17,41 +16,6 @@ export interface Workout {
   exercises?: Record<string, WorkoutSet[]>;
 }
 
-const fetchWorkoutDetails = async (workoutIds: string[]) => {
-  if (workoutIds.length === 0) return {};
-
-  const { data: allSets, error } = await supabase
-    .from('exercise_sets')
-    .select('workout_id, exercise_name, weight, reps')
-    .in('workout_id', workoutIds);
-  
-  if (error) throw error;
-
-  const setsByWorkout: Record<string, { exercise_name: string | null; weight: number | null; reps: number | null }[]> = {};
-  (allSets || []).forEach(set => {
-    if (!setsByWorkout[set.workout_id]) {
-      setsByWorkout[set.workout_id] = [];
-    }
-    setsByWorkout[set.workout_id].push(set);
-  });
-  
-  const workoutsWithDetails: Record<string, { exercises: Record<string, WorkoutSet[]> }> = {};
-  workoutIds.forEach(id => {
-    const workoutSets = setsByWorkout[id] || [];
-    const exercises: Record<string, WorkoutSet[]> = {};
-    workoutSets.forEach(set => {
-      const exerciseName = set.exercise_name || 'Unknown Exercise';
-      if (!exercises[exerciseName]) {
-        exercises[exerciseName] = [];
-      }
-      exercises[exerciseName].push({ weight: set.weight || 0, reps: set.reps || 0 });
-    });
-    workoutsWithDetails[id] = { exercises };
-  });
-
-  return workoutsWithDetails;
-};
-
 export const useWorkouts = () => {
   const { workouts: baseWorkouts, isLoading: historyLoading, error: historyError } = useWorkoutHistory({ limit: 365 });
 
@@ -59,7 +23,7 @@ export const useWorkouts = () => {
 
   const { data: workoutDetails, isLoading: detailsLoading, error: detailsError } = useQuery({
     queryKey: ['workoutDetails', workoutIds],
-    queryFn: () => fetchWorkoutDetails(workoutIds),
+    queryFn: () => getWorkoutDetails(workoutIds),
     enabled: !!workoutIds && workoutIds.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
