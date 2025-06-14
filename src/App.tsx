@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/AuthContext';
 import { WeightUnitProvider } from '@/context/WeightUnitContext';
+import { WorkoutNavigationContextProvider } from '@/context/WorkoutNavigationContext';
 import { ThemeProvider } from '@/components/theme-provider';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { HomePage } from '@/pages/HomePage';
@@ -35,17 +36,19 @@ function App() {
           <AuthProvider>
             <WeightUnitProvider>
               <Router>
-                <MainLayout>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/exercises" element={<ExerciseLibraryPage />} />
-                    <Route path="/overview" element={<OverviewPage />} />
-                    <Route path="/workout/:id" element={<WorkoutDetailsPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/training-session" element={<TrainingSessionPage />} />
-                  </Routes>
-                  <WorkoutBanner />
-                </MainLayout>
+                <WorkoutNavigationContextProvider>
+                  <MainLayout>
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/exercises" element={<ExerciseLibraryPage />} />
+                      <Route path="/overview" element={<OverviewPage />} />
+                      <Route path="/workout/:id" element={<WorkoutDetailsPage />} />
+                      <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/training-session" element={<TrainingSessionPage />} />
+                    </Routes>
+                    <WorkoutBanner />
+                  </MainLayout>
+                </WorkoutNavigationContextProvider>
               </Router>
             </WeightUnitProvider>
           </AuthProvider>
