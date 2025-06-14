@@ -27,6 +27,7 @@ const Index = () => {
     recommendedWorkoutType,
     recommendedDuration,
     stats,
+    isLoadingStats,
     handleStartTraining,
     handleContinueWorkout,
     toggleWorkoutDisplay,
@@ -70,7 +71,14 @@ const Index = () => {
           transition={{ duration: 0.6 }}
           className="px-6 pt-6"
         >
-          <WelcomeHeader stats={stats} />
+          {isLoadingStats ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-3/4 rounded-md" />
+              <Skeleton className="h-5 w-1/2 rounded-md" />
+            </div>
+          ) : (
+            <WelcomeHeader stats={stats} />
+          )}
         </motion.div>
 
         {/* Workout Action Center */}

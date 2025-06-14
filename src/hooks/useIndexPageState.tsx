@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useWorkoutStatsContext } from "@/context/WorkoutStatsProvider";
@@ -13,7 +12,7 @@ export function useIndexPageState() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [hasShownActiveToast, setHasShownActiveToast] = useState(false);
   
-  const { stats } = useWorkoutStatsContext();
+  const { stats, loading: isLoadingStats } = useWorkoutStatsContext();
   const { isActive, lastActiveRoute } = useWorkoutStore();
   
   // Stable intersection observer
@@ -124,6 +123,7 @@ export function useIndexPageState() {
     recommendedWorkoutType,
     recommendedDuration,
     stats,
+    isLoadingStats,
     
     // Actions
     handleStartTraining,

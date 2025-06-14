@@ -5,7 +5,8 @@ import { ThemeProvider as ShadcnThemeProvider } from '@/components/theme-provide
 import { AuthProvider } from '@/context/AuthContext';
 import { WeightUnitProvider } from '@/context/WeightUnitContext';
 import { DateRangeProvider } from '@/context/DateRangeContext';
-import { TooltipProvider } from '@/components/ui/tooltip'; // Added TooltipProvider
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { WorkoutStatsProvider } from '@/context/WorkoutStatsProvider';
 
 interface GlobalProvidersProps {
   children: React.ReactNode;
@@ -32,7 +33,9 @@ export const GlobalProviders: React.FC<GlobalProvidersProps> = React.memo(({ chi
           <AuthProvider>
             <WeightUnitProvider>
               <DateRangeProvider>
-                {children}
+                <WorkoutStatsProvider>
+                  {children}
+                </WorkoutStatsProvider>
               </DateRangeProvider>
             </WeightUnitProvider>
           </AuthProvider>
@@ -43,4 +46,3 @@ export const GlobalProviders: React.FC<GlobalProvidersProps> = React.memo(({ chi
 });
 
 GlobalProviders.displayName = 'GlobalProviders';
-
