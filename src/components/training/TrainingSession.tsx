@@ -20,7 +20,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   const navigate = useNavigate();
   const { isVisible } = usePageVisibility();
   const { 
-    resetSession, 
+    resetWorkout, 
     setTrainingConfig, 
     startWorkout, 
     updateLastActiveRoute, 
@@ -48,7 +48,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       console.log('Starting new workout session with config:', trainingConfig);
       
       // Reset any existing session first to ensure clean slate
-      resetSession();
+      resetWorkout();
       
       // Set up the new training session
       setTrainingConfig(trainingConfig);
@@ -84,7 +84,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   }, [
     trainingConfig, 
     isActive, 
-    resetSession, 
+    resetWorkout, 
     setTrainingConfig, 
     startWorkout, 
     updateLastActiveRoute, 

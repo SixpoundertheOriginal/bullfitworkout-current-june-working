@@ -52,7 +52,6 @@ export interface WorkoutState {
   startWorkout: (config?: any) => void;
   endWorkout: () => void;
   resetWorkout: () => void;
-  resetSession: () => void;
   addExercise: (exerciseName: string) => void;
   removeExercise: (exerciseName: string) => void;
   deleteExercise: (exerciseName: string) => void;
@@ -132,22 +131,6 @@ export const useWorkoutStore = create<WorkoutState>()(
       }),
 
       resetWorkout: () => set({
-        isActive: false,
-        explicitlyEnded: false,
-        workoutStatus: 'idle',
-        exercises: {},
-        elapsedTime: 0,
-        restTimerActive: false,
-        restTimerResetSignal: 0,
-        currentRestTime: 0,
-        activeExercise: null,
-        trainingConfig: null,
-        sessionId: undefined,
-        workoutId: undefined,
-        startTime: undefined
-      }),
-
-      resetSession: () => set({
         isActive: false,
         explicitlyEnded: false,
         workoutStatus: 'idle',
