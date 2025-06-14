@@ -62,7 +62,10 @@ const seedInitialExercises = async () => {
 
   const { error: insertError } = await supabase
     .from('exercises')
-    .insert(exercisesToSeed);
+    // Using `as any` here to bypass a TypeScript error. Zod's `parse` above ensures
+    // the data has the correct shape with defaults, but `z.infer` doesn't reflect this
+    // in the type, causing a mismatch with Supabase's strict insert types.
+    .insert(exercisesToSeed as any);
 
   if (insertError) {
     console.error('Error seeding exercises:', insertError);
@@ -109,7 +112,10 @@ export const useExercises = () => {
       
       const { data, error } = await supabase
         .from('exercises')
-        .insert(exerciseToInsert)
+        // Using `as any` here to bypass a TypeScript error. Zod's `parse` above ensures
+        // the data has the correct shape with defaults, but `z.infer` doesn't reflect this
+        // in the type, causing a mismatch with Supabase's strict insert types.
+        .insert(exerciseToInsert as any)
         .select()
         .single(); // Use .single() to expect and return a single object
 

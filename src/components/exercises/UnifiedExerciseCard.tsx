@@ -49,8 +49,8 @@ export const UnifiedExerciseCard: React.FC<UnifiedExerciseCardProps> = ({
     enabled: showPersonalStats && context === 'library'
   });
 
-  // Get movement pattern for this exercise
-  const movementPattern = getExerciseMovementPattern(exercise);
+  // Get movement pattern for this exercise, checking for name to avoid errors.
+  const movementPattern = exercise.name ? getExerciseMovementPattern(exercise) : undefined;
 
   const handleFavorite = () => {
     onFavorite?.(exercise);

@@ -23,8 +23,11 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   isLoading = false,
   className = ""
 }) => {
+  // Filter out exercises that are missing an ID to prevent runtime errors.
+  const validExercises = useMemo(() => (exercises || []).filter(e => e?.id), [exercises]);
+
   const { containerRef, gridDimensions, gridConfig } = useVirtualizedGrid({
-    items: exercises || [],
+    items: validExercises,
     className
   });
 
@@ -37,7 +40,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
     style: React.CSSProperties;
   }) => {
     const exerciseIndex = rowIndex * columnCount + columnIndex;
-    const exercise = exercises[exerciseIndex];
+    const exercise = validExercises[exerciseIndex];
 
     if (!exercise) return null;
 
@@ -62,7 +65,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
         </div>
       </div>
     );
-  }, [exercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, gridConfig.gap]);
+  }, [validExercises, columnCount, onSelectExercise, onEditExercise, onDeleteExercise, gridConfig.gap]);
 
   if (isLoading) {
     return (
@@ -72,7 +75,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
     );
   }
 
-  if (!exercises?.length) {
+  if (!validExercises?.length) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
@@ -90,7 +93,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
   if (!shouldUseVirtualization || columnCount === 0 || rowCount === 0) {
     return (
       <div ref={containerRef} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}>
-        {exercises.map((exercise) => (
+        {validExercises.map((exercise) => (
           <UnifiedExerciseCard
             key={exercise.id}
             exercise={exercise}
@@ -115,7 +118,7 @@ export const VirtualizedExerciseGrid: React.FC<VirtualizedExerciseGridProps> = R
         height={gridDimensions.containerSize.height}
         columnWidth={gridConfig.itemWidth + gridConfig.gap}
         rowHeight={gridConfig.itemHeight + gridConfig.gap}
-        itemData={{ exercises, onSelectExercise }}
+        itemData={{ exercises: validExercises, onSelectExercise }}
         className="scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-700"
       >
         {Cell}
