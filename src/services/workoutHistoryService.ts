@@ -9,6 +9,27 @@ export interface WorkoutHistoryFilters {
   trainingTypes?: string[];
 }
 
+// Enhanced workout session interface that extends Supabase data with exercise sets
+export interface EnhancedWorkoutSession {
+  id: string;
+  name: string;
+  start_time: string;
+  duration: number;
+  training_type: string;
+  created_at: string;
+  end_time: string;
+  is_historical: boolean;
+  logged_at: string;
+  metadata: any;
+  notes: string;
+  updated_at: string;
+  user_id: string;
+  exerciseSets: Array<{
+    exercise_name: string;
+    id: string;
+  }>;
+}
+
 export const getWorkoutHistory = async (filters: WorkoutHistoryFilters = { limit: 30 }) => {
   try {
     const countQuery = supabase
@@ -84,21 +105,30 @@ export const getWorkoutHistory = async (filters: WorkoutHistoryFilters = { limit
         });
       });
       
-      // Add exercise sets to workout data and calculate counts
-      data.forEach(workout => {
-        const exerciseSets = exerciseSetsByWorkout[workout.id] || [];
-        workout.exerciseSets = exerciseSets;
-        
-        const exerciseNames = new Set(exerciseSets.map(set => set.exercise_name));
+      // Create enhanced workout objects with exercise sets
+      const enhancedWorkouts: EnhancedWorkoutSession[] = data.map(workout => ({
+        ...workout,
+        exerciseSets: exerciseSetsByWorkout[workout.id] || []
+      }));
+      
+      // Calculate exercise counts
+      enhancedWorkouts.forEach(workout => {
+        const exerciseNames = new Set(workout.exerciseSets.map(set => set.exercise_name));
         exerciseCountData[workout.id] = {
           exercises: exerciseNames.size,
-          sets: exerciseSets.length
+          sets: workout.exerciseSets.length
         };
       });
+      
+      return {
+        workouts: enhancedWorkouts,
+        exerciseCounts: exerciseCountData,
+        totalCount: count || 0
+      };
     }
     
     return {
-      workouts: data || [],
+      workouts: [] as EnhancedWorkoutSession[],
       exerciseCounts: exerciseCountData,
       totalCount: count || 0
     };

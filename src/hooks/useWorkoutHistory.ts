@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getWorkoutHistory } from '@/services/workoutHistoryService';
+import { getWorkoutHistory, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
 import type { WorkoutHistoryFilters } from '@/services/workoutHistoryService';
 
 // Define WorkoutHistoryFilters interface to use throughout the application
@@ -92,7 +92,7 @@ export interface ValidatedWorkoutSession {
   start_time: string;
   duration: number;
   training_type: string;
-  exerciseSets?: Array<{
+  exerciseSets: Array<{
     exercise_name: string;
     id: string;
   }>;
@@ -107,13 +107,13 @@ export const useValidatedWorkoutHistory = (filters: WorkoutHistoryFilters = { li
       return undefined;
     }
     
-    const validatedWorkouts = (data.workouts || []).map((workout: any) => ({
+    const validatedWorkouts = (data.workouts || []).map((workout: EnhancedWorkoutSession) => ({
       id: workout.id,
       name: workout.name || 'Unnamed Workout',
       start_time: workout.start_time,
       duration: workout.duration || 0,
       training_type: workout.training_type || 'General',
-      exerciseSets: workout.exerciseSets || [], // Include exerciseSets for recent exercise extraction
+      exerciseSets: workout.exerciseSets || [], // Now properly typed
     })).filter((w: ValidatedWorkoutSession) => w.id && w.start_time);
 
     return {
