@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getWorkoutHistory } from '@/services/workoutHistoryService';
@@ -43,14 +43,9 @@ export function useWorkoutDates(year: number, month: number) {
 }
 
 export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [workouts, setWorkouts] = useState<any[]>([]);
-  const [error, setError] = useState<Error | null>(null);
-  const [exerciseCounts, setExerciseCounts] = useState<Record<string, { exercises: number; sets: number }>>({});
-  const [totalCount, setTotalCount] = useState<number>(0);
   const queryClient = useQueryClient();
   
-  const { data, error: queryError, isLoading: queryLoading, refetch } = useQuery({
+  const queryInfo = useQuery({
     queryKey: [
       'workout-history', 
       filters.limit, 
@@ -62,19 +57,6 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
     queryFn: () => getWorkoutHistory(filters),
     staleTime: 30000, // Consider data stale after 30 seconds
   });
-  
-  useEffect(() => {
-    if (data) {
-      setWorkouts(data.workouts);
-      setExerciseCounts(data.exerciseCounts);
-      setTotalCount(data.totalCount);
-      setIsLoading(false);
-    }
-    if (queryError) {
-      setError(queryError as Error);
-      setIsLoading(false);
-    }
-  }, [data, queryError]);
   
   // Set up a subscription for real-time updates
   useEffect(() => {
@@ -100,13 +82,40 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
     };
   }, [queryClient]);
   
-  return { 
-    workouts, 
-    data, 
-    exerciseCounts,
-    totalCount, 
-    isLoading: isLoading || queryLoading, 
-    error, 
-    refetch 
-  };
+  return queryInfo;
 }
+
+export interface ValidatedWorkoutSession {
+  id: string;
+  name: string;
+  start_time: string;
+  duration: number;
+  training_type: string;
+}
+
+// New hook that wraps useWorkoutHistory and validates data
+export const useValidatedWorkoutHistory = (filters: WorkoutHistoryFilters = { limit: 30 }) => {
+  const { data, ...rest } = useWorkoutHistory(filters);
+
+  const validatedData = useMemo(() => {
+    if (!data) {
+      return undefined;
+    }
+    
+    const validatedWorkouts = (data.workouts || []).map((workout: any) => ({
+      id: workout.id,
+      name: workout.name || 'Unnamed Workout',
+      start_time: workout.start_time,
+      duration: workout.duration || 0,
+      training_type: workout.training_type || 'General',
+    })).filter((w: ValidatedWorkoutSession) => w.id && w.start_time);
+
+    return {
+      workouts: validatedWorkouts,
+      exerciseCounts: data.exerciseCounts || {},
+      totalCount: data.totalCount || 0,
+    };
+  }, [data]);
+
+  return { data: validatedData, ...rest };
+};

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useWorkoutHistory } from './useWorkoutHistory';
+import { useValidatedWorkoutHistory } from './useWorkoutHistory';
 import { useQuery } from '@tanstack/react-query';
 import { getWorkoutDetails } from '@/services/workoutHistoryService';
 
@@ -17,7 +17,9 @@ export interface Workout {
 }
 
 export const useWorkouts = () => {
-  const { workouts: baseWorkouts, isLoading: historyLoading, error: historyError } = useWorkoutHistory({ limit: 365 });
+  const { data, isLoading: historyLoading, error: historyError } = useValidatedWorkoutHistory({ limit: 365 });
+
+  const baseWorkouts = data?.workouts;
 
   const workoutIds = useMemo(() => (baseWorkouts || []).map(w => w.id), [baseWorkouts]);
 
@@ -34,7 +36,7 @@ export const useWorkouts = () => {
       const details = workoutDetails?.[workout.id];
       return {
         id: workout.id,
-        name: workout.name || 'Unnamed Workout',
+        name: workout.name,
         created_at: workout.start_time,
         duration: workout.duration,
         exercises: details?.exercises,
