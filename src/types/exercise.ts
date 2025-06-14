@@ -1,4 +1,3 @@
-
 export interface ExerciseSet {
   id: string;
   weight: number;
@@ -9,10 +8,10 @@ export interface ExerciseSet {
   set_number?: number;
   exercise_name?: string;
   workout_id?: string;
-  restTime?: number;
+  restTime: number; // Make this required to match store expectations
   rest_time?: number;
   created_at?: string;
-  isEditing?: boolean;
+  isEditing: boolean; // Make this required to match store expectations
   metadata?: Record<string, any>;
   weightCalculation?: {
     weight: number;

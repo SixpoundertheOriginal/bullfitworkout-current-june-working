@@ -1,12 +1,10 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "@/hooks/use-toast";
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useFeedback } from '@/components/training/InteractionFeedback';
-import { Exercise } from "@/types/exercise";
-import { ExerciseSet } from '@/store/workoutStore'; // Use store version
+import { Exercise, ExerciseSet } from "@/types/exercise";
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
 
 export const useWorkoutActions = () => {
@@ -71,18 +69,21 @@ export const useWorkoutActions = () => {
       toast({ title: "Exercise already added", description: `${name} is already in your workout` });
       return;
     }
+    
+    const newSet: ExerciseSet = { 
+      id: `${name}-1`,
+      weight: 0, 
+      reps: 0, 
+      restTime: 60, 
+      completed: false, 
+      isEditing: false,
+      volume: 0,
+      duration: '0:00'
+    };
+    
     setStoreExercises(prev => ({ 
       ...prev, 
-      [name]: [{ 
-        id: `${name}-1`,
-        weight: 0, 
-        reps: 0, 
-        restTime: 60, 
-        completed: false, 
-        isEditing: false,
-        volume: 0,
-        duration: '0:00'
-      }] 
+      [name]: [newSet] 
     }));
     setActiveExercise(name);
     if (workoutStatus === 'idle') startWorkout();

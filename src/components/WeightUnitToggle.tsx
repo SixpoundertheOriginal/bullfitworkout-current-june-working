@@ -21,7 +21,7 @@ export const WeightUnitToggle: React.FC<WeightUnitToggleProps> = ({
   const { weightUnit, setWeightUnit, isDefaultUnit } = useWeightUnit();
 
   const toggleWeightUnit = () => {
-    setWeightUnit(weightUnit === "kg" ? "lbs" : "kg");
+    setWeightUnit(weightUnit === "kg" ? "lb" : "kg");
   };
 
   if (variant === "badge") {
@@ -59,10 +59,10 @@ export const WeightUnitToggle: React.FC<WeightUnitToggleProps> = ({
     <div className={cn("flex items-center gap-2", className)}>
       {showLabel && <span className="text-sm text-gray-400">KG</span>}
       <Switch
-        checked={weightUnit === "lbs"}
+        checked={weightUnit === "lb"}
         onCheckedChange={() => toggleWeightUnit()}
       />
-      {showLabel && <span className="text-sm text-gray-400">LBS</span>}
+      {showLabel && <span className="text-sm text-gray-400">LB</span>}
     </div>
   );
 };

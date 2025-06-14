@@ -1,22 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Exercise } from '@/types/exercise';
-
-interface ExerciseInput {
-  name: string;
-  description: string;
-  primary_muscle_groups: string[];
-  secondary_muscle_groups: string[];
-  equipment_type: string[];
-  difficulty: string;
-  movement_pattern: string;
-  is_compound: boolean;
-  instructions: {
-    steps: string;
-    form: string;
-  };
-  user_id: string;
-}
+import { Exercise, ExerciseInput } from '@/types/exercise';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -35,31 +19,34 @@ export const useExercises = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const createExercise = (exerciseData: ExerciseInput, options: {
-    onSuccess: (data: Exercise) => void;
-    onError: (error: Error) => void;
-  }) => {
+  const createExercise = async (exerciseData: ExerciseInput): Promise<Exercise> => {
     setIsPending(true);
     
-    // Mock creation
-    setTimeout(() => {
-      const newExercise: Exercise = {
-        id: Date.now().toString(),
-        name: exerciseData.name,
-        description: exerciseData.description,
-        primary_muscle_groups: exerciseData.primary_muscle_groups,
-        secondary_muscle_groups: exerciseData.secondary_muscle_groups,
-        equipment_type: exerciseData.equipment_type,
-        difficulty: exerciseData.difficulty,
-        movement_pattern: exerciseData.movement_pattern,
-        is_compound: exerciseData.is_compound,
-        instructions: exerciseData.instructions
-      };
-      
-      setExercises(prev => [...prev, newExercise]);
-      setIsPending(false);
-      options.onSuccess(newExercise);
-    }, 1000);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const newExercise: Exercise = {
+            id: Date.now().toString(),
+            name: exerciseData.name,
+            description: exerciseData.description,
+            primary_muscle_groups: exerciseData.primary_muscle_groups,
+            secondary_muscle_groups: exerciseData.secondary_muscle_groups,
+            equipment_type: exerciseData.equipment_type,
+            difficulty: exerciseData.difficulty,
+            movement_pattern: exerciseData.movement_pattern,
+            is_compound: exerciseData.is_compound,
+            instructions: exerciseData.instructions
+          };
+          
+          setExercises(prev => [...prev, newExercise]);
+          setIsPending(false);
+          resolve(newExercise);
+        } catch (err) {
+          setIsPending(false);
+          reject(err);
+        }
+      }, 1000);
+    });
   };
 
   return {
