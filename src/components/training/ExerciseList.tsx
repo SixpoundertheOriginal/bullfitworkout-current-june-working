@@ -6,23 +6,8 @@ import { useEnhancedExerciseTracker } from '@/hooks/useEnhancedExerciseTracker';
 
 interface ExerciseListProps {
   exercises: Record<string, ExerciseSet[]>;
-  activeExercise: string | null;
-  onAddSet: (exerciseName: string) => void;
   onCompleteSet: (exerciseName: string, setIndex: number) => void;
   onDeleteExercise: (exerciseName: string) => void;
-  onRemoveSet: (exerciseName: string, setIndex: number) => void;
-  onEditSet: (exerciseName: string, setIndex: number) => void;
-  onSaveSet: (exerciseName: string, setIndex: number) => void;
-  onWeightChange: (exerciseName: string, setIndex: number, value: string) => void;
-  onRepsChange: (exerciseName: string, setIndex: number, value: string) => void;
-  onRestTimeChange: (exerciseName: string, setIndex: number, value: string) => void;
-  onWeightIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
-  onRepsIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
-  onRestTimeIncrement: (exerciseName: string, setIndex: number, increment: number) => void;
-  onShowRestTimer: () => void;
-  onResetRestTimer: () => void;
-  onOpenAddExercise: () => void;
-  setExercises: (exercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => void;
 }
 
 // Individual exercise tracker component with timer integration
@@ -144,7 +129,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   }
 
   return (
-    <div className="space-y-4 pb-6 mb-20">
+    <div className="space-y-4 pb-6">
       {/* Enhanced Section Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

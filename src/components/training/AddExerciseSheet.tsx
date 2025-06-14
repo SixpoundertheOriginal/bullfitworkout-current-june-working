@@ -6,7 +6,7 @@ import { ExerciseSelectionModal } from "@/components/exercises/ExerciseSelection
 interface AddExerciseSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectExercise: (exercise: string | Exercise) => void;
+  onSelectExercise: (exercise: Exercise) => void;
   trainingType?: string;
 }
 
@@ -16,15 +16,11 @@ export const AddExerciseSheet: React.FC<AddExerciseSheetProps> = ({
   onSelectExercise,
   trainingType = ""
 }) => {
-  const handleSelectExercise = (exercise: Exercise) => {
-    onSelectExercise(exercise);
-  };
-
   return (
     <ExerciseSelectionModal
       open={open}
       onOpenChange={onOpenChange}
-      onSelectExercise={handleSelectExercise}
+      onSelectExercise={onSelectExercise}
       trainingType={trainingType}
       title="Add an Exercise"
       selectionMode="single"
