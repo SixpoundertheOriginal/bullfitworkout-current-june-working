@@ -1,5 +1,4 @@
-
-import { getCLS, getFCP, getFID, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFCP, onFID, onLCP, onTTFB } from 'web-vitals';
 
 interface PerformanceThresholds {
   good: number;
@@ -46,27 +45,27 @@ class PerformanceMetricsService {
 
   private initializeWebVitals() {
     // Track Core Web Vitals with enhanced error handling
-    getCLS((metric) => {
+    onCLS((metric) => {
       this.recordMetric('CLS', metric.value);
       this.checkThreshold('CLS', metric.value);
     });
 
-    getFCP((metric) => {
+    onFCP((metric) => {
       this.recordMetric('FCP', metric.value);
       this.checkThreshold('FCP', metric.value);
     });
 
-    getFID((metric) => {
+    onFID((metric) => {
       this.recordMetric('FID', metric.value);
       this.checkThreshold('FID', metric.value);
     });
 
-    getLCP((metric) => {
+    onLCP((metric) => {
       this.recordMetric('LCP', metric.value);
       this.checkThreshold('LCP', metric.value);
     });
 
-    getTTFB((metric) => {
+    onTTFB((metric) => {
       this.recordMetric('TTFB', metric.value);
       this.checkThreshold('TTFB', metric.value);
     });
