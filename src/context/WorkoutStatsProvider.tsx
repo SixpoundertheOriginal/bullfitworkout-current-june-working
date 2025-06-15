@@ -1,10 +1,11 @@
+
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { useDateRange } from '@/context/DateRangeContext';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { WorkoutStats } from '@/types/workout-metrics';
-import { workoutStatsApi } from '@/services/DataService';
+import { workoutStatsApi } from '@/services/workoutStatsService';
 
 interface WorkoutStatsContextType {
   stats: WorkoutStats;

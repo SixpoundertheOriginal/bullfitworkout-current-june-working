@@ -1,10 +1,11 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { workoutHistoryApi } from '@/services/DataService';
-import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/DataService';
+import { workoutHistoryApi } from '@/services/workoutHistoryService';
+import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
 import { useAuth } from '@/context/AuthContext';
-import { calendarApi } from '@/services/DataService';
+import { calendarApi } from '@/services/calendarService';
 
 // Define WorkoutHistoryFilters interface to use throughout the application
 export type { WorkoutHistoryFilters };

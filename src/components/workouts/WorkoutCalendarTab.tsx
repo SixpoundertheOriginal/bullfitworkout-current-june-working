@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useWorkoutDates } from '@/hooks/useWorkoutHistory';
-import { calendarApi } from '@/services/DataService';
+import { calendarApi } from '@/services/calendarService';
 
 interface ExerciseSet {
   id: string;
