@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 // Consistent schema for the 'instructions' JSON object.
@@ -44,9 +43,9 @@ export const SupabaseExerciseSchema = z.object({
     variations: z.array(z.string()).nullable(),
     metadata: z.record(z.any()).nullable(),
     // --- New Additive Fields ---
-    family_id: z.string().uuid().nullable(),
-    parent_exercise_id: z.string().uuid().nullable(),
-    variation_parameters: z.any().nullable(), // JSONB from DB
+    family_id: z.string().uuid().nullable().optional(),
+    parent_exercise_id: z.string().uuid().nullable().optional(),
+    variation_parameters: z.any().nullable().optional(), // JSONB from DB
 }).passthrough(); // Use passthrough to allow other fields from DB without failing validation.
 
 export type SupabaseExercise = z.infer<typeof SupabaseExerciseSchema>;
