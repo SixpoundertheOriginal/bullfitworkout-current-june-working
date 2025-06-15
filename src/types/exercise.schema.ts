@@ -52,7 +52,7 @@ export const SupabaseExerciseSchema = z.object({
 export type SupabaseExercise = z.infer<typeof SupabaseExerciseSchema>;
 
 // The canonical, strict Exercise schema used throughout the BullFit application.
-// This is the "ideal" state of an exercise object after transformation and validation.
+// Updated to make new fields nullable to support existing exercises without these values.
 export const ExerciseSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -71,7 +71,7 @@ export const ExerciseSchema = z.object({
   variations: z.array(z.string()),
   metadata: z.record(z.any()),
   load_factor: z.number().nullable(),
-  // --- New Additive Fields ---
+  // --- New Additive Fields (Made Nullable for Compatibility) ---
   family_id: z.string().uuid().nullable(),
   parent_exercise_id: z.string().uuid().nullable(),
   variation_parameters: z.record(z.any()).nullable(),
@@ -104,13 +104,12 @@ export function transformSupabaseExerciseToAppExercise(supabaseExercise: Supabas
         metadata: supabaseExercise.metadata ?? {},
         // Extract load_factor from metadata if it exists, otherwise default.
         load_factor: (supabaseExercise.metadata as any)?.load_factor ?? 1.0,
-        // --- New Additive Fields ---
+        // --- New Additive Fields (Handle null values gracefully) ---
         family_id: supabaseExercise.family_id ?? null,
         parent_exercise_id: supabaseExercise.parent_exercise_id ?? null,
         variation_parameters: supabaseExercise.variation_parameters ?? null,
     };
 }
-
 
 // This schema defines the shape for creating a new exercise. It's derived from the
 // strict ExerciseSchema, ensuring new exercises conform to our application model.
@@ -130,7 +129,7 @@ export const ExerciseInputSchema = ExerciseSchema.pick({
     variations: z.array(z.string()).optional().default([]),
     metadata: z.record(z.any()).optional().default({}),
     load_factor: z.number().nullable().optional().default(1.0),
-    // --- New Additive Fields ---
+    // --- New Additive Fields (Made Optional for Input) ---
     family_id: z.string().uuid().nullable().optional(),
     parent_exercise_id: z.string().uuid().nullable().optional(),
     variation_parameters: z.record(z.any()).nullable().optional(),
