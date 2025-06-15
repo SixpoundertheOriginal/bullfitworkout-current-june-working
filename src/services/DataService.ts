@@ -29,7 +29,7 @@ export interface EnhancedWorkoutSession {
 
 export interface WorkoutHistoryResponse {
   workouts: EnhancedWorkoutSession[];
-  exerciseCounts: Record<string, number>;
+  exerciseCounts: Record<string, { exercises: number; sets: number }>;
   totalCount: number;
 }
 
@@ -279,14 +279,21 @@ const fetchPersonalStats = async (userId: string, exerciseId: string): Promise<P
   try {
     console.log('[DataService] Fetching personal stats for exercise:', exerciseId);
     
-    // Mock implementation - replace with actual Supabase queries
+    // Mock implementation with all required PersonalStats properties
     return {
+      exerciseId,
+      userId,
+      totalSessions: 0,
+      totalVolume: 0,
       personalBest: null,
+      lastPerformed: null,
+      averageWeight: 0,
+      averageReps: 0,
       trend: 'stable',
-      isReadyToProgress: false,
+      progressPercentage: 0,
       daysSinceLastPerformed: 0,
+      isReadyToProgress: false,
       milestones: [],
-      totalSessions: 0
     };
   } catch (error) {
     console.error('[DataService] Error fetching personal stats:', error);
@@ -298,16 +305,23 @@ const fetchMultiplePersonalStats = async (userId: string, exerciseIds: string[])
   try {
     console.log('[DataService] Fetching multiple personal stats for exercises:', exerciseIds);
     
-    // Mock implementation - replace with actual Supabase queries
+    // Mock implementation with all required PersonalStats properties
     const stats: Record<string, PersonalStats> = {};
     exerciseIds.forEach(id => {
       stats[id] = {
+        exerciseId: id,
+        userId,
+        totalSessions: 0,
+        totalVolume: 0,
         personalBest: null,
+        lastPerformed: null,
+        averageWeight: 0,
+        averageReps: 0,
         trend: 'stable',
-        isReadyToProgress: false,
+        progressPercentage: 0,
         daysSinceLastPerformed: 0,
+        isReadyToProgress: false,
         milestones: [],
-        totalSessions: 0
       };
     });
     
@@ -323,10 +337,10 @@ const fetchWorkoutHistory = async (filters: WorkoutHistoryFilters): Promise<Work
   try {
     console.log('[DataService] Fetching workout history with filters:', filters);
     
-    // Mock implementation - replace with actual Supabase queries
+    // Mock implementation with proper exerciseCounts structure
     return {
       workouts: [],
-      exerciseCounts: {},
+      exerciseCounts: {}, // This will be populated as { workoutId: { exercises: number, sets: number } }
       totalCount: 0
     };
   } catch (error) {
