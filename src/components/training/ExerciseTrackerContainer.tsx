@@ -1,9 +1,8 @@
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExerciseTrackerState } from '@/hooks/useExerciseTrackerState';
 import { useExerciseSetOperations } from '@/hooks/useExerciseSetOperations';
-import { useExerciseValidation } from '@/hooks/useExerciseValidation';
 import { ExerciseTrackerHeader } from './ExerciseTrackerHeader';
 import { ExerciseTrackerProgress } from './ExerciseTrackerProgress';
 import { ExerciseTrackerSetsList } from './ExerciseTrackerSetsList';
@@ -41,7 +40,16 @@ export const ExerciseTrackerContainer: React.FC<ExerciseTrackerContainerProps> =
   isActive = false
 }) => {
   const { state, actions } = useExerciseTrackerState();
-  const { metrics } = useExerciseValidation(exercise);
+  
+  // Replace useExerciseValidation with a local useMemo to avoid type conflicts
+  // and make the component more self-contained.
+  const metrics = useMemo(() => {
+    const completedSets = exercise.sets.filter(s => s.completed).length;
+    const totalSets = exercise.sets.length;
+    const totalVolume = exercise.sets.reduce((sum, set) => sum + (set.completed ? set.volume : 0), 0);
+    const progressPercentage = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
+    return { completedSets, totalSets, totalVolume, progressPercentage };
+  }, [exercise.sets]);
   
   // Convert set ID to index for operations
   const handleSetUpdate = useCallback((setIndex: number, updates: Partial<ExerciseSet>) => {

@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { ExerciseTrackerContainer } from './ExerciseTrackerContainer';
-import { EnhancedExerciseSet } from '@/types/workout';
+import { ExerciseSet } from '@/types/exercise';
 
-// Enhanced Exercise interface with computed volume
+// Use the canonical ExerciseSet type to ensure all properties are present
+// and handler signatures use string IDs.
 interface EnhancedExercise {
   id: string;
   name: string;
@@ -12,29 +13,15 @@ interface EnhancedExercise {
     reps: number;
     daysAgo: number;
   };
-  sets: Array<{
-    id: number;
-    weight: number;
-    reps: number;
-    duration: string;
-    completed: boolean;
-    volume: number;
-  }>;
+  sets: ExerciseSet[];
 }
 
 interface EnhancedExerciseTrackerProps {
   exercise: EnhancedExercise;
-  onUpdateSet: (setId: number, updates: Partial<{
-    id: number;
-    weight: number;
-    reps: number;
-    duration: string;
-    completed: boolean;
-    volume: number;
-  }>) => void;
-  onToggleCompletion: (setId: number) => void;
+  onUpdateSet: (setId: string, updates: Partial<ExerciseSet>) => void;
+  onToggleCompletion: (setId: string) => void;
   onAddSet: () => void;
-  onDeleteSet: (setId: number) => void;
+  onDeleteSet: (setId: string) => void;
   onDeleteExercise?: (exerciseName: string) => void;
   isActive?: boolean;
 }

@@ -31,9 +31,13 @@ const ExerciseTrackerWrapper: React.FC<{
   } = useEnhancedExerciseTracker(exerciseName);
 
   // Enhanced completion handler that triggers rest timer
-  const handleToggleCompletion = (setIndex: number) => {
+  // This now correctly receives a string `setId` and finds the `setIndex` for the store.
+  const handleToggleCompletion = (setId: string) => {
+    const setIndex = exercise.sets.findIndex(s => s.id === setId);
+    if (setIndex === -1) return;
+
     const wasCompleted = exercise.sets[setIndex]?.completed;
-    onToggleCompletion(setIndex);
+    onToggleCompletion(setId);
     
     // Auto-start rest timer when set is completed (not uncompleted)
     if (!wasCompleted) {
@@ -42,41 +46,12 @@ const ExerciseTrackerWrapper: React.FC<{
     }
   };
 
-  // Convert the exercise to match the expected interface
-  const convertedExercise = {
-    ...exercise,
-    sets: exercise.sets.map(set => ({
-      id: typeof set.id === 'string' ? parseInt(set.id.split('-')[1]) || 1 : set.id,
-      weight: set.weight,
-      reps: set.reps,
-      duration: set.duration,
-      completed: set.completed,
-      volume: set.volume
-    }))
-  };
-
-  const handleUpdateSet = (setId: number, updates: Partial<{
-    id: number;
-    weight: number;
-    reps: number;
-    duration: string;
-    completed: boolean;
-    volume: number;
-  }>) => {
-    // Convert back to the format expected by the hook
-    const convertedUpdates: Partial<ExerciseSet> = {
-      ...updates,
-      id: updates.id?.toString() || setId.toString()
-    };
-    onUpdateSet(setId, convertedUpdates);
-  };
-
   return (
     <div onClick={onSetActive}>
       <EnhancedExerciseTracker
-        exercise={convertedExercise}
+        exercise={exercise}
         isActive={isActive}
-        onUpdateSet={handleUpdateSet}
+        onUpdateSet={onUpdateSet}
         onToggleCompletion={handleToggleCompletion}
         onAddSet={onAddSet}
         onDeleteSet={onDeleteSet}
