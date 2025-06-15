@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from "framer-motion";
 import { WorkoutMetrics } from "@/components/WorkoutMetrics";
@@ -113,6 +112,7 @@ export const ActiveWorkoutSection: React.FC<ActiveWorkoutSectionProps> = React.m
           exercises={convertedExercises}
           onCompleteSet={onCompleteSet}
           onDeleteExercise={onDeleteExercise}
+          onAddExercise={onOpenAddExercise}
         />
       </motion.div>
     </motion.div>
