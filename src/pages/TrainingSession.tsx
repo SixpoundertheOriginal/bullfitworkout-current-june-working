@@ -9,7 +9,7 @@ import { Exercise } from '@/types/exercise';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { AddExerciseSheet } from '@/components/training/AddExerciseSheet';
-import { WorkoutSessionFooter } from '@/components/training/WorkoutSessionFooter';
+import { EnhancedWorkoutSessionFooter } from '@/components/training/EnhancedWorkoutSessionFooter';
 import { useWorkoutSave } from '@/hooks/useWorkoutSave';
 import { PageHeader } from '@/components/navigation/PageHeader';
 import { toast } from '@/hooks/use-toast';
@@ -77,49 +77,48 @@ const TrainingSessionPage: React.FC = () => {
   const hasExercises = Object.keys(exercises).length > 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
-      <PageHeader 
-        title={trainingConfig?.trainingType || 'Training Session'}
-        showBackButton
-        onBack={() => {
-          // TODO: Add a confirmation dialog before resetting
-          resetWorkout();
-          navigate('/overview');
-        }}
-      >
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => {
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
+      <header className="pt-safe-top shrink-0">
+        <PageHeader 
+          title={trainingConfig?.trainingType || 'Training Session'}
+          showBackButton
+          onBack={() => {
             // TODO: Add a confirmation dialog before resetting
             resetWorkout();
             navigate('/overview');
-          }} 
-          aria-label="Cancel Workout"
+          }}
         >
-          <X className="h-6 w-6" />
-        </Button>
-      </PageHeader>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              // TODO: Add a confirmation dialog before resetting
+              resetWorkout();
+              navigate('/overview');
+            }} 
+            aria-label="Cancel Workout"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </PageHeader>
+      </header>
       
-      <div className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto footer-content-clearance">
         <div className="container mx-auto px-4 pt-4">
           <UnifiedTimerDisplay
             workoutTimer={workoutTimer}
             restTimer={restTimer}
             className="mb-6"
           />
-        </div>
-
-        <div className="container mx-auto px-4 pb-4">
           <ExerciseList
             exercises={exercises}
             onCompleteSet={handleCompleteSet}
             onDeleteExercise={removeExercise}
           />
         </div>
-      </div>
+      </main>
 
-      <WorkoutSessionFooter
+      <EnhancedWorkoutSessionFooter
         onAddExercise={() => setAddExerciseSheetOpen(true)}
         onFinishWorkout={handleFinishWorkout}
         hasExercises={hasExercises}
