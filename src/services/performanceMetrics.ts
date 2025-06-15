@@ -1,4 +1,5 @@
-import { onCLS, onFCP, onFID, onLCP, onTTFB } from 'web-vitals';
+
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
 interface PerformanceThresholds {
   good: number;
@@ -7,7 +8,7 @@ interface PerformanceThresholds {
 
 interface MetricThresholds {
   LCP: PerformanceThresholds;
-  FID: PerformanceThresholds;
+  INP: PerformanceThresholds; // Changed from FID to INP
   CLS: PerformanceThresholds;
   FCP: PerformanceThresholds;
   TTFB: PerformanceThresholds;
@@ -24,7 +25,7 @@ class PerformanceMetricsService {
   private metrics: Map<string, number> = new Map();
   private thresholds: MetricThresholds = {
     LCP: { good: 2500, needsImprovement: 4000 },
-    FID: { good: 100, needsImprovement: 300 },
+    INP: { good: 200, needsImprovement: 500 }, // Updated thresholds for INP
     CLS: { good: 0.1, needsImprovement: 0.25 },
     FCP: { good: 1800, needsImprovement: 3000 },
     TTFB: { good: 800, needsImprovement: 1800 }
@@ -55,9 +56,9 @@ class PerformanceMetricsService {
       this.checkThreshold('FCP', metric.value);
     });
 
-    onFID((metric) => {
-      this.recordMetric('FID', metric.value);
-      this.checkThreshold('FID', metric.value);
+    onINP((metric) => { // Changed from onFID to onINP
+      this.recordMetric('INP', metric.value);
+      this.checkThreshold('INP', metric.value);
     });
 
     onLCP((metric) => {
@@ -168,7 +169,7 @@ class PerformanceMetricsService {
     const report = {
       coreWebVitals: {
         LCP: this.metrics.get('LCP'),
-        FID: this.metrics.get('FID'),
+        INP: this.metrics.get('INP'), // Changed from FID to INP
         CLS: this.metrics.get('CLS'),
         FCP: this.metrics.get('FCP'),
         TTFB: this.metrics.get('TTFB')
@@ -192,11 +193,11 @@ class PerformanceMetricsService {
 
   public isPerformant(): boolean {
     const lcp = this.metrics.get('LCP') || 0;
-    const fid = this.metrics.get('FID') || 0;
+    const inp = this.metrics.get('INP') || 0; // Changed from FID to INP
     const cls = this.metrics.get('CLS') || 0;
 
     return lcp <= this.thresholds.LCP.good && 
-           fid <= this.thresholds.FID.good && 
+           inp <= this.thresholds.INP.good && // Updated threshold check
            cls <= this.thresholds.CLS.good;
   }
 }

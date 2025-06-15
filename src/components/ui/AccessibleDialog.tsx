@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface AccessibleDialogProps {
   children: React.ReactNode;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode; // Made optional for controlled dialogs
   title: string;
   description?: string;
   open?: boolean;
@@ -37,9 +37,11 @@ export const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       <DialogContent 
         className={cn("max-w-2xl", contentClassName || className)}
         aria-labelledby={titleId}
