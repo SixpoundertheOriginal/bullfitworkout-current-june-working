@@ -1,317 +1,215 @@
 interface ErrorContext {
   component?: string;
-  hook?: string;
   userAction?: string;
-  exerciseId?: string;
   userId?: string;
   sessionId?: string;
-  timestamp: number;
-  url: string;
-  userAgent: string;
+  buildVersion?: string;
+  userAgent?: string;
+  url?: string;
+  timestamp?: string;
 }
 
 interface PerformanceMetric {
   name: string;
   value: number;
-  timestamp: number;
   context?: Record<string, any>;
-}
-
-interface CrashData {
-  error: Error;
-  errorBoundary?: string;
-  componentStack?: string;
-  context: ErrorContext;
+  timestamp: string;
 }
 
 interface UserFlowStep {
-  flowName: string;
-  stepName: string;
-  timestamp: number;
-  duration?: number;
+  component: string;
+  step: string;
   success: boolean;
+  duration?: number;
   metadata?: Record<string, any>;
+  timestamp: string;
 }
 
 class ErrorTrackingService {
   private sessionId: string;
-  private userId: string | null = null;
-  private errorQueue: Array<CrashData> = [];
-  private metricQueue: Array<PerformanceMetric> = [];
-  private userFlowQueue: Array<UserFlowStep> = [];
-  private isOnline = true;
+  private errors: any[] = [];
+  private performanceMetrics: PerformanceMetric[] = [];
+  private userFlows: UserFlowStep[] = [];
+  private maxStoredItems = 100;
 
   constructor() {
     this.sessionId = this.generateSessionId();
     this.setupGlobalErrorHandlers();
-    this.setupNetworkStatusTracking();
-    this.startPeriodicFlush();
+    this.setupUnhandledRejectionHandler();
+    this.setupPerformanceObserver();
   }
 
   private generateSessionId(): string {
-    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   private setupGlobalErrorHandlers() {
-    // Global error handler
     window.addEventListener('error', (event) => {
       this.captureError(new Error(event.message), {
         component: 'Global',
-        userAction: 'unknown',
-        timestamp: Date.now(),
-        url: window.location.href,
+        userAction: 'Page Load',
+        url: event.filename,
         userAgent: navigator.userAgent
       });
     });
+  }
 
-    // Unhandled promise rejection handler
+  private setupUnhandledRejectionHandler() {
     window.addEventListener('unhandledrejection', (event) => {
-      this.captureError(new Error(`Unhandled Promise Rejection: ${event.reason}`), {
-        component: 'Promise',
-        userAction: 'promise_rejection',
-        timestamp: Date.now(),
-        url: window.location.href,
+      this.captureError(new Error(event.reason?.toString() || 'Unhandled Promise Rejection'), {
+        component: 'Global',
+        userAction: 'Promise Rejection',
         userAgent: navigator.userAgent
       });
     });
+  }
 
-    // React error boundary integration
-    window.addEventListener('react-error-boundary', (event: any) => {
-      this.reportCrashAnalytics({
-        error: event.detail.error,
-        errorBoundary: event.detail.errorBoundary,
-        componentStack: event.detail.componentStack,
-        context: {
-          component: event.detail.component,
-          timestamp: Date.now(),
-          url: window.location.href,
-          userAgent: navigator.userAgent
-        }
+  private setupPerformanceObserver() {
+    if ('PerformanceObserver' in window) {
+      const observer = new PerformanceObserver((list) => {
+        list.getEntries().forEach((entry) => {
+          if (entry.entryType === 'longtask') {
+            this.capturePerformanceMetric('long_task_duration', entry.duration, {
+              startTime: entry.startTime,
+              name: entry.name
+            });
+          }
+        });
       });
-    });
-  }
 
-  private setupNetworkStatusTracking() {
-    window.addEventListener('online', () => {
-      this.isOnline = true;
-      this.flushQueuedData();
-    });
-
-    window.addEventListener('offline', () => {
-      this.isOnline = false;
-    });
-  }
-
-  private startPeriodicFlush() {
-    // Flush data every 30 seconds if online
-    setInterval(() => {
-      if (this.isOnline) {
-        this.flushQueuedData();
+      try {
+        observer.observe({ entryTypes: ['longtask'] });
+      } catch (e) {
+        console.warn('Performance observer not supported');
       }
-    }, 30000);
+    }
+  }
 
-    // Flush on page visibility change
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && this.isOnline) {
-        this.flushQueuedData();
+  public captureError(error: Error, context: ErrorContext = {}) {
+    const errorData = {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      context: {
+        ...context,
+        sessionId: this.sessionId,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        buildVersion: process.env.VITE_BUILD_VERSION || 'development'
       }
-    });
-
-    // Flush before page unload
-    window.addEventListener('beforeunload', () => {
-      this.flushQueuedDataSync();
-    });
-  }
-
-  public setUserId(userId: string) {
-    this.userId = userId;
-  }
-
-  public captureError(error: Error, context: Partial<ErrorContext>) {
-    const fullContext: ErrorContext = {
-      timestamp: Date.now(),
-      url: window.location.href,
-      userAgent: navigator.userAgent,
-      userId: this.userId,
-      sessionId: this.sessionId,
-      ...context
     };
 
-    const crashData: CrashData = {
-      error,
-      context: fullContext
-    };
-
-    console.error('[ErrorTracking] Error captured:', error, fullContext);
-
-    this.errorQueue.push(crashData);
-
-    // Immediately flush critical errors
-    if (error.name === 'ChunkLoadError' || error.message.includes('Loading chunk')) {
-      this.flushQueuedData();
+    this.errors.push(errorData);
+    
+    // Keep only the most recent errors
+    if (this.errors.length > this.maxStoredItems) {
+      this.errors = this.errors.slice(-this.maxStoredItems);
     }
 
-    // Store in localStorage for persistence
-    this.persistToLocalStorage('errors', crashData);
+    // Log to console for development
+    console.error('🚨 Error captured:', errorData);
+
+    // In production, you would send this to your error tracking service
+    if (process.env.NODE_ENV === 'production') {
+      this.sendToErrorService(errorData);
+    }
   }
 
   public capturePerformanceMetric(name: string, value: number, context?: Record<string, any>) {
     const metric: PerformanceMetric = {
       name,
       value,
-      timestamp: Date.now(),
       context: {
-        userId: this.userId,
-        sessionId: this.sessionId,
-        url: window.location.href,
-        ...context
-      }
+        ...context,
+        sessionId: this.sessionId
+      },
+      timestamp: new Date().toISOString()
     };
 
-    console.log(`[ErrorTracking] Performance metric: ${name} = ${value}ms`, context);
+    this.performanceMetrics.push(metric);
 
-    this.metricQueue.push(metric);
+    // Keep only the most recent metrics
+    if (this.performanceMetrics.length > this.maxStoredItems) {
+      this.performanceMetrics = this.performanceMetrics.slice(-this.maxStoredItems);
+    }
 
-    // Store significant performance issues immediately
-    if ((name.includes('render') && value > 100) || 
-        (name.includes('load') && value > 2000)) {
-      this.persistToLocalStorage('performance', metric);
+    // Log performance issues
+    if (name.includes('slow') || value > 100) {
+      console.warn(`⚠️ Performance metric: ${name} = ${value}ms`, context);
     }
   }
 
-  public trackUserFlow(flowName: string, stepName: string, success: boolean = true, metadata?: Record<string, any>) {
-    const step: UserFlowStep = {
-      flowName,
-      stepName,
-      timestamp: Date.now(),
+  public trackUserFlow(component: string, step: string, success: boolean, metadata?: Record<string, any>) {
+    const flowStep: UserFlowStep = {
+      component,
+      step,
       success,
       metadata: {
-        userId: this.userId,
-        sessionId: this.sessionId,
-        url: window.location.href,
-        ...metadata
-      }
+        ...metadata,
+        sessionId: this.sessionId
+      },
+      timestamp: new Date().toISOString()
     };
 
-    console.log(`[ErrorTracking] User flow: ${flowName}/${stepName}`, { success, metadata });
+    this.userFlows.push(flowStep);
 
-    this.userFlowQueue.push(step);
-
-    // Track failed flows immediately
-    if (!success) {
-      this.persistToLocalStorage('userflows', step);
+    // Keep only the most recent flow steps
+    if (this.userFlows.length > this.maxStoredItems) {
+      this.userFlows = this.userFlows.slice(-this.maxStoredItems);
     }
+
+    console.log(`📈 User flow: ${component} > ${step} (${success ? 'success' : 'failed'})`, metadata);
   }
 
-  public reportCrashAnalytics(crashData: CrashData) {
-    console.error('[ErrorTracking] Crash reported:', crashData);
-
-    this.errorQueue.push(crashData);
-    this.persistToLocalStorage('crashes', crashData);
-
-    // Immediate flush for crashes
-    if (this.isOnline) {
-      this.flushQueuedData();
-    }
-  }
-
-  private persistToLocalStorage(type: string, data: any) {
+  private async sendToErrorService(errorData: any) {
     try {
-      const key = `errorTracking_${type}`;
-      const existing = JSON.parse(localStorage.getItem(key) || '[]');
-      existing.push(data);
+      // In a real implementation, you would send to services like:
+      // - Sentry
+      // - Rollbar
+      // - Bugsnag
+      // - Custom error endpoint
       
-      // Keep only recent items to avoid storage bloat
-      const recent = existing.slice(-50);
-      localStorage.setItem(key, JSON.stringify(recent));
-    } catch (error) {
-      console.warn('Failed to persist error tracking data:', error);
+      // Example implementation:
+      // await fetch('/api/errors', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(errorData)
+      // });
+      
+      console.log('Would send error to tracking service:', errorData);
+    } catch (sendError) {
+      console.error('Failed to send error to tracking service:', sendError);
     }
   }
 
-  private async flushQueuedData() {
-    if (!this.isOnline) return;
-
-    try {
-      // Combine all queued data
-      const payload = {
-        sessionId: this.sessionId,
-        userId: this.userId,
-        timestamp: Date.now(),
-        errors: [...this.errorQueue],
-        metrics: [...this.metricQueue],
-        userFlows: [...this.userFlowQueue]
-      };
-
-      // Clear queues
-      this.errorQueue = [];
-      this.metricQueue = [];
-      this.userFlowQueue = [];
-
-      // In a real app, this would send to your analytics service
-      console.log('[ErrorTracking] Flushing data:', payload);
-
-      // Simulate API call
-      if (payload.errors.length > 0 || payload.metrics.length > 0 || payload.userFlows.length > 0) {
-        await this.sendToAnalyticsService(payload);
-      }
-
-    } catch (error) {
-      console.error('Failed to flush error tracking data:', error);
-    }
-  }
-
-  private flushQueuedDataSync() {
-    // Synchronous version for beforeunload
-    if (!this.isOnline) return;
-
-    const payload = {
-      sessionId: this.sessionId,
-      userId: this.userId,
-      timestamp: Date.now(),
-      errors: [...this.errorQueue],
-      metrics: [...this.metricQueue],
-      userFlows: [...this.userFlowQueue]
-    };
-
-    // Use sendBeacon for reliable delivery
-    if (navigator.sendBeacon && (payload.errors.length > 0 || payload.metrics.length > 0)) {
-      navigator.sendBeacon('/api/analytics', JSON.stringify(payload));
-    }
-  }
-
-  private async sendToAnalyticsService(payload: any) {
-    // In production, this would send to your actual analytics service
-    // For now, we'll just log it
-    console.log('[ErrorTracking] Would send to analytics:', {
-      errors: payload.errors.length,
-      metrics: payload.metrics.length,
-      userFlows: payload.userFlows.length
-    });
-
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-
-  public getSessionMetrics() {
+  public getSessionData() {
     return {
       sessionId: this.sessionId,
-      userId: this.userId,
-      queuedErrors: this.errorQueue.length,
-      queuedMetrics: this.metricQueue.length,
-      queuedUserFlows: this.userFlowQueue.length,
-      isOnline: this.isOnline
+      errors: this.errors,
+      performanceMetrics: this.performanceMetrics,
+      userFlows: this.userFlows,
+      timestamp: new Date().toISOString()
     };
   }
 
-  public clearStoredData() {
-    ['errors', 'performance', 'userflows', 'crashes'].forEach(type => {
-      localStorage.removeItem(`errorTracking_${type}`);
-    });
+  public clearSession() {
+    this.errors = [];
+    this.performanceMetrics = [];
+    this.userFlows = [];
+    this.sessionId = this.generateSessionId();
   }
 
-  public destroy() {
-    this.flushQueuedDataSync();
+  public getErrorStats() {
+    return {
+      totalErrors: this.errors.length,
+      errorsByComponent: this.errors.reduce((acc, error) => {
+        const component = error.context?.component || 'Unknown';
+        acc[component] = (acc[component] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      recentErrors: this.errors.slice(-5)
+    };
   }
 }
 

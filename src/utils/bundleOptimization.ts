@@ -1,111 +1,141 @@
 
-import { lazy } from 'react';
-
-// Optimized bundle splitting with performance focus
-export const LazyTrainingSession = lazy(() => 
-  import('@/pages/TrainingSession').then(module => ({
-    default: module.default
-  }))
-);
-
-export const LazyExerciseLibrary = lazy(() => 
-  import('@/components/exercises/PerformanceOptimizedExerciseLibrary').then(module => ({
-    default: module.PerformanceOptimizedExerciseLibrary
-  }))
-);
-
-export const LazyWorkoutDetails = lazy(() => 
-  import('@/pages/WorkoutDetailsPage').then(module => ({
-    default: module.default
-  }))
-);
-
-export const LazyProfilePage = lazy(() => 
-  import('@/pages/ProfilePage').then(module => ({
-    default: module.default
-  }))
-);
-
-// Streamlined preloading for critical routes only
-export const preloadCriticalRoutes = () => {
-  const criticalImports = [
-    () => import('@/pages/TrainingSession'),
-    () => import('@/components/exercises/PerformanceOptimizedExerciseLibrary'),
+// Critical resource hints for performance optimization
+export function addResourceHints() {
+  const head = document.head;
+  
+  // Preconnect to critical origins
+  const origins = [
+    'https://oglcdlzomfuoyeqeobal.supabase.co',
+    'https://fonts.googleapis.com',
+    'https://fonts.gstatic.com'
   ];
 
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(() => {
-      criticalImports.forEach(importFn => {
-        importFn().catch(() => {}); // Silent fail for preloads
-      });
-    });
-  } else {
-    setTimeout(() => {
-      criticalImports.forEach(importFn => {
-        importFn().catch(() => {});
-      });
-    }, 1000);
-  }
-};
+  origins.forEach(origin => {
+    if (!document.querySelector(`link[href="${origin}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'preconnect';
+      link.href = origin;
+      link.crossOrigin = '';
+      head.appendChild(link);
+    }
+  });
 
-// Simplified resource hints
-export const addResourceHints = () => {
-  const hints = [
-    { rel: 'preconnect', href: 'https://fonts.googleapis.com', crossOrigin: 'anonymous' },
-    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-    { rel: 'preload', href: '/src/index.css', as: 'style' },
+  // DNS prefetch for additional performance
+  const dnsOrigins = [
+    'https://cdn.gpteng.co',
+    'https://lovable.dev'
   ];
 
-  hints.forEach(hint => {
-    const existing = document.querySelector(`link[rel="${hint.rel}"][href="${hint.href}"]`);
-    if (existing) return;
+  dnsOrigins.forEach(origin => {
+    if (!document.querySelector(`link[href="${origin}"][rel="dns-prefetch"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'dns-prefetch';
+      link.href = origin;
+      head.appendChild(link);
+    }
+  });
+}
 
+// Preload critical routes for better navigation performance
+export function preloadCriticalRoutes() {
+  const criticalRoutes = [
+    '/training',
+    '/exercises',
+    '/progress'
+  ];
+
+  criticalRoutes.forEach(route => {
     const link = document.createElement('link');
-    Object.entries(hint).forEach(([key, value]) => {
-      if (key === 'crossOrigin') {
-        link.crossOrigin = value as string;
-      } else {
-        link.setAttribute(key, value as string);
-      }
-    });
+    link.rel = 'prefetch';
+    link.href = route;
     document.head.appendChild(link);
   });
-};
+}
 
-// Optimized performance utilities
-export const performanceOptimizations = {
-  optimizeImage: (src: string, width?: number, height?: number) => {
-    const params = new URLSearchParams();
-    if (width) params.append('w', width.toString());
-    if (height) params.append('h', height.toString());
-    params.append('f', 'webp');
-    params.append('q', '85');
-    
-    return src.includes('?') ? `${src}&${params}` : `${src}?${params}`;
-  },
-
-  lazyLoadImage: (img: HTMLImageElement, src: string) => {
-    const observer = new IntersectionObserver((entries) => {
+// Optimize images with lazy loading and proper sizing
+export function optimizeImages() {
+  const images = document.querySelectorAll('img[data-src]');
+  
+  if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          requestAnimationFrame(() => {
-            img.src = src;
-            img.onload = () => {
-              requestAnimationFrame(() => {
-                img.classList.add('loaded');
-              });
-            };
-            observer.unobserve(img);
-          });
+          const img = entry.target as HTMLImageElement;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.classList.remove('lazy');
+            imageObserver.unobserve(img);
+          }
         }
       });
-    }, { 
-      rootMargin: '50px',
-      threshold: 0.1 
     });
 
-    observer.observe(img);
-    
-    return () => observer.disconnect();
+    images.forEach(img => imageObserver.observe(img));
+  } else {
+    // Fallback for browsers without IntersectionObserver
+    images.forEach(img => {
+      const element = img as HTMLImageElement;
+      if (element.dataset.src) {
+        element.src = element.dataset.src;
+      }
+    });
   }
-};
+}
+
+// Monitor bundle size and performance
+export function monitorBundlePerformance() {
+  if ('PerformanceObserver' in window) {
+    const observer = new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        if (entry.entryType === 'resource') {
+          const resource = entry as PerformanceResourceTiming;
+          
+          // Monitor JavaScript bundle sizes
+          if (resource.name.includes('.js') && resource.transferSize) {
+            const sizeKB = resource.transferSize / 1024;
+            if (sizeKB > 250) { // 250KB threshold
+              console.warn(`⚠️ Large bundle detected: ${resource.name} (${sizeKB.toFixed(2)}KB)`);
+            }
+          }
+          
+          // Monitor slow resource loading
+          if (resource.duration > 1000) {
+            console.warn(`⚠️ Slow resource: ${resource.name} (${resource.duration.toFixed(2)}ms)`);
+          }
+        }
+      });
+    });
+
+    try {
+      observer.observe({ entryTypes: ['resource'] });
+    } catch (e) {
+      console.warn('Resource performance monitoring not supported');
+    }
+  }
+}
+
+// Critical CSS inlining utility
+export function inlineCriticalCSS() {
+  const criticalCSS = `
+    /* Critical above-the-fold styles */
+    body { 
+      margin: 0; 
+      font-family: Inter, system-ui, sans-serif; 
+      background: #111827; 
+      color: #fff; 
+    }
+    #root { 
+      min-height: 100vh; 
+    }
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  `;
+
+  const style = document.createElement('style');
+  style.textContent = criticalCSS;
+  document.head.insertBefore(style, document.head.firstChild);
+}
