@@ -3,34 +3,37 @@ import { useState, useCallback, useMemo } from 'react';
 
 export interface ExerciseTrackerState {
   isCollapsed: boolean;
-  editingField: { setId: number; field: string } | null;
+  editingField: { setIndex: number; field: string } | null;
   editValue: string;
   showDeleteConfirm: boolean;
 }
 
 export const useExerciseTrackerState = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [editingField, setEditingField] = useState<{ setId: number; field: string } | null>(null);
+  const [editingField, setEditingField] = useState<{ setIndex: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const startEditing = useCallback((setId: number, field: string, currentValue: string | number) => {
-    setEditingField({ setId, field });
+  const startEditing = useCallback((setIndex: number, field: string, currentValue: string | number) => {
+    console.log(`Starting edit for set ${setIndex}, field ${field}, value ${currentValue}`);
+    setEditingField({ setIndex, field });
     setEditValue(currentValue.toString());
   }, []);
 
   const stopEditing = useCallback((save: boolean = true) => {
-    if (!save) {
+    console.log(`Stopping edit, save: ${save}, current value: ${editValue}`);
+    
+    if (!save || !editingField) {
       setEditingField(null);
       setEditValue('');
       return null;
     }
 
-    const result = editingField ? {
-      setId: editingField.setId,
+    const result = {
+      setIndex: editingField.setIndex,
       field: editingField.field,
       value: editValue
-    } : null;
+    };
 
     setEditingField(null);
     setEditValue('');

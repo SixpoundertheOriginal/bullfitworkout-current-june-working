@@ -16,14 +16,14 @@ interface ExerciseSet {
 
 interface ExerciseTrackerSetsListProps {
   sets: ExerciseSet[];
-  editingField: { setId: number; field: string } | null;
+  editingField: { setIndex: number; field: string } | null;
   editValue: string;
-  onSetDoubleClick: (setId: number, e: React.MouseEvent) => void;
-  onStartEditing: (setId: number, field: string, currentValue: string | number) => void;
+  onSetDoubleClick: (setIndex: number, e: React.MouseEvent) => void;
+  onStartEditing: (setIndex: number, field: string, currentValue: string | number) => void;
   onStopEditing: (save?: boolean) => void;
   onEditValueChange: (value: string) => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
-  onDeleteSet: (setId: number) => void;
+  onDeleteSet: (setIndex: number) => void;
 }
 
 export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = React.memo(({
@@ -37,6 +37,30 @@ export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = R
   onKeyPress,
   onDeleteSet
 }) => {
+  
+  const handleRowDoubleClick = (setIndex: number, e: React.MouseEvent) => {
+    // Prevent double-click if clicking on input or button
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || 
+        target.tagName === 'BUTTON' ||
+        target.closest('button') ||
+        target.closest('input')) {
+      e.stopPropagation();
+      return;
+    }
+    
+    onSetDoubleClick(setIndex, e);
+  };
+
+  const handleInputClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, callback: () => void) => {
+    e.stopPropagation();
+    callback();
+  };
+
   return (
     <div className="px-4 pb-4">
       {/* Grid Header */}
@@ -53,7 +77,7 @@ export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = R
       <div className="space-y-2">
         {sets.map((set, index) => (
           <motion.div
-            key={set.id}
+            key={`set-${index}`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -65,7 +89,7 @@ export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = R
                 : 'bg-slate-800/20 border border-slate-700/30'
               }
             `}
-            onDoubleClick={(e) => onSetDoubleClick(set.id, e)}
+            onDoubleClick={(e) => handleRowDoubleClick(index, e)}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
           >
@@ -84,20 +108,24 @@ export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = R
 
             {/* Weight */}
             <div className="col-span-2">
-              {editingField?.setId === set.id && editingField.field === 'weight' ? (
+              {editingField?.setIndex === index && editingField.field === 'weight' ? (
                 <Input
                   type="number"
                   value={editValue}
                   onChange={(e) => onEditValueChange(e.target.value)}
                   onBlur={() => onStopEditing(true)}
                   onKeyDown={onKeyPress}
+                  onClick={handleInputClick}
                   className="h-8 text-sm bg-slate-800 border-slate-600"
                   autoFocus
                 />
               ) : (
                 <div
                   className="text-sm text-white hover:bg-slate-700/30 px-2 py-1 rounded cursor-text"
-                  onClick={() => onStartEditing(set.id, 'weight', set.weight)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartEditing(index, 'weight', set.weight);
+                  }}
                 >
                   {set.weight}kg
                 </div>
@@ -106,20 +134,24 @@ export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = R
 
             {/* Reps */}
             <div className="col-span-2">
-              {editingField?.setId === set.id && editingField.field === 'reps' ? (
+              {editingField?.setIndex === index && editingField.field === 'reps' ? (
                 <Input
                   type="number"
                   value={editValue}
                   onChange={(e) => onEditValueChange(e.target.value)}
                   onBlur={() => onStopEditing(true)}
                   onKeyDown={onKeyPress}
+                  onClick={handleInputClick}
                   className="h-8 text-sm bg-slate-800 border-slate-600"
                   autoFocus
                 />
               ) : (
                 <div
                   className="text-sm text-white hover:bg-slate-700/30 px-2 py-1 rounded cursor-text"
-                  onClick={() => onStartEditing(set.id, 'reps', set.reps)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartEditing(index, 'reps', set.reps);
+                  }}
                 >
                   {set.reps}
                 </div>
@@ -147,10 +179,7 @@ export const ExerciseTrackerSetsList: React.FC<ExerciseTrackerSetsListProps> = R
                 variant="ghost"
                 size="sm"
                 className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteSet(set.id);
-                }}
+                onClick={(e) => handleButtonClick(e, () => onDeleteSet(index))}
               >
                 <Trash2 className="w-3 h-3" />
               </Button>

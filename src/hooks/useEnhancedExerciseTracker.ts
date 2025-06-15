@@ -30,9 +30,18 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
   const onUpdateSet = (setIndex: number, updates: Partial<ExerciseSet>) => {
     setExercise(prev => ({
       ...prev,
-      sets: prev.sets.map((set, index) => 
-        index === setIndex ? { ...set, ...updates } : set
-      )
+      sets: prev.sets.map((set, index) => {
+        if (index === setIndex) {
+          const updatedSet = { ...set, ...updates };
+          // Ensure volume is recalculated when weight or reps change
+          if (updates.weight !== undefined || updates.reps !== undefined) {
+            updatedSet.volume = updatedSet.weight * updatedSet.reps;
+          }
+          console.log(`Updated set ${setIndex}:`, updatedSet);
+          return updatedSet;
+        }
+        return set;
+      })
     }));
   };
 

@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExerciseTrackerState } from '@/hooks/useExerciseTrackerState';
-import { useExerciseTrackerActions } from '@/hooks/useExerciseTrackerActions';
+import { useExerciseSetOperations } from '@/hooks/useExerciseSetOperations';
 import { useExerciseValidation } from '@/hooks/useExerciseValidation';
 import { ExerciseTrackerHeader } from './ExerciseTrackerHeader';
 import { ExerciseTrackerProgress } from './ExerciseTrackerProgress';
@@ -50,22 +50,43 @@ export const ExerciseTrackerContainer: React.FC<ExerciseTrackerContainerProps> =
 }) => {
   const { state, actions } = useExerciseTrackerState();
   const { metrics } = useExerciseValidation(exercise);
-  const trackerActions = useExerciseTrackerActions({
-    onUpdateSet,
-    onToggleCompletion,
-    onAddSet,
-    onDeleteSet,
-    onDeleteExercise,
+  
+  // Convert set ID to index for operations
+  const handleSetUpdate = useCallback((setIndex: number, updates: Partial<ExerciseSet>) => {
+    const set = exercise.sets[setIndex];
+    if (set) {
+      onUpdateSet(set.id, updates);
+    }
+  }, [exercise.sets, onUpdateSet]);
+
+  const handleSetCompletion = useCallback((setIndex: number) => {
+    const set = exercise.sets[setIndex];
+    if (set) {
+      onToggleCompletion(set.id);
+    }
+  }, [exercise.sets, onToggleCompletion]);
+
+  const handleSetDelete = useCallback((setIndex: number) => {
+    const set = exercise.sets[setIndex];
+    if (set) {
+      onDeleteSet(set.id);
+    }
+  }, [exercise.sets, onDeleteSet]);
+
+  const setOperations = useExerciseSetOperations({
     exerciseName: exercise.name,
-    sets: exercise.sets
+    sets: exercise.sets,
+    onUpdateSet: handleSetUpdate,
+    onToggleCompletion: handleSetCompletion,
+    onDeleteSet: handleSetDelete
   });
 
   const handleStopEditing = useCallback((save: boolean = true) => {
     const result = actions.stopEditing(save);
     if (result && save) {
-      trackerActions.handleSetUpdate(result.setId, result.field, result.value);
+      setOperations.handleSetUpdate(result.setIndex, result.field, result.value);
     }
-  }, [actions, trackerActions]);
+  }, [actions, setOperations]);
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -74,6 +95,16 @@ export const ExerciseTrackerContainer: React.FC<ExerciseTrackerContainerProps> =
       handleStopEditing(false);
     }
   }, [handleStopEditing]);
+
+  const handleSetDoubleClick = useCallback((setIndex: number, e: React.MouseEvent) => {
+    setOperations.handleSetCompletion(setIndex, e);
+  }, [setOperations]);
+
+  const handleDeleteExercise = useCallback(() => {
+    if (onDeleteExercise) {
+      onDeleteExercise(exercise.name);
+    }
+  }, [onDeleteExercise, exercise.name]);
 
   return (
     <motion.div
@@ -95,7 +126,7 @@ export const ExerciseTrackerContainer: React.FC<ExerciseTrackerContainerProps> =
         totalSets={metrics.totalSets}
         totalVolume={metrics.totalVolume}
         onToggleCollapsed={actions.toggleCollapsed}
-        onDeleteExercise={trackerActions.handleDeleteExercise}
+        onDeleteExercise={handleDeleteExercise}
         onToggleDeleteConfirm={actions.toggleDeleteConfirm}
       />
 
@@ -114,15 +145,15 @@ export const ExerciseTrackerContainer: React.FC<ExerciseTrackerContainerProps> =
               sets={exercise.sets}
               editingField={state.editingField}
               editValue={state.editValue}
-              onSetDoubleClick={trackerActions.handleSetDoubleClick}
+              onSetDoubleClick={handleSetDoubleClick}
               onStartEditing={actions.startEditing}
               onStopEditing={handleStopEditing}
               onEditValueChange={actions.setEditValue}
               onKeyPress={handleKeyPress}
-              onDeleteSet={trackerActions.handleDeleteSet}
+              onDeleteSet={setOperations.handleSetDelete}
             />
 
-            <ExerciseTrackerActions onAddSet={trackerActions.handleAddSet} />
+            <ExerciseTrackerActions onAddSet={onAddSet} />
           </motion.div>
         )}
       </AnimatePresence>
