@@ -1,3 +1,4 @@
+
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExerciseSet } from "@/types/exercise";
@@ -8,6 +9,7 @@ interface ExerciseListProps {
   exercises: Record<string, ExerciseSet[]>;
   onCompleteSet: (exerciseName: string, setIndex: number) => void;
   onDeleteExercise: (exerciseName: string) => void;
+  onAddExercise: () => void;
 }
 
 // Individual exercise tracker component with timer integration
@@ -65,6 +67,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   exercises,
   onDeleteExercise,
   onCompleteSet,
+  onAddExercise,
 }) => {
   const exerciseList = Object.keys(exercises);
   
@@ -76,8 +79,15 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center justify-center py-16 px-6"
       >
-        <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-slate-800/50 to-purple-900/50 flex items-center justify-center mb-6 backdrop-blur-sm border border-slate-700/50">
+        <div
+          className="text-center space-y-4 max-w-sm"
+          role="button"
+          tabIndex={0}
+          onClick={onAddExercise}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onAddExercise()}
+          aria-label="Add first exercise"
+        >
+          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-slate-800/50 to-purple-900/50 flex items-center justify-center mb-6 backdrop-blur-sm border border-slate-700/50 cursor-pointer hover:scale-105 active:scale-100 transition-transform duration-200">
             <svg 
               className="w-8 h-8 text-slate-400" 
               fill="none" 

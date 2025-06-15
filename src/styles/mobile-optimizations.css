@@ -111,9 +111,15 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* App Store quality layout fixes - FIXED FOOTER */
+/* App Store quality layout fixes - HEADER & FOOTER CLEARANCE */
+.header-clearance {
+  padding-top: calc(64px + env(safe-area-inset-top)); /* Standard h-16 header */
+}
+
+/* Updated footer clearance for new component */
 .footer-content-clearance {
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  /* Updated for EnhancedWorkoutSessionFooter: p-4(16px) + button(h-12=48px) + p-4(16px) ~= 80px. Giving 88px for margin. */
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 
 .header-fixed {

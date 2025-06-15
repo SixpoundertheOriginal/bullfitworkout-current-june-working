@@ -57,9 +57,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     <header className={cn(
       "header-fixed backdrop-blur-sm border-gray-800/50",
       "transition-transform duration-300 ease-in-out",
-      !isHeaderVisible ? "-translate-y-full" : "translate-y-0"
+      !isHeaderVisible ? "-translate-y-full" : "translate-y-0",
+      "pt-safe-top" // Ensure content inside respects safe area
     )}>
-      <div className="content-row min-w-0 responsive-padding">
+      <div className="content-row min-w-0 responsive-padding h-16 flex items-center">
         <div className="flex-1 flex items-center min-w-0">
           {showBackButton && (
             <button 
