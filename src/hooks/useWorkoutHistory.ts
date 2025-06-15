@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,21 +45,19 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
   
   // Set up a subscription for real-time updates
   useEffect(() => {
+    const handleWorkoutChange = (payload: any) => {
+      console.log('Workout change detected, invalidating queries:', payload);
+      // When any changes occur to the workout_sessions table, invalidate the queries
+      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
+    };
+
     const channel = supabase
       .channel('workout-updates')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'workout_sessions' 
-        }, 
-        () => {
-          // When any changes occur to the workout_sessions table, invalidate the queries
-          queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-          queryClient.invalidateQueries({ queryKey: ['workouts'] });
-          queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
       .subscribe();
       
     return () => {

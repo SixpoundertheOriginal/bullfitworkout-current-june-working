@@ -1,9 +1,4 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import "./styles/animations.css";
-@import "./styles/mobile-optimizations.css";
-
-@import "./colors.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -104,7 +99,7 @@
   --duration-slow: 500ms;
   
   /* Easing Functions */
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
