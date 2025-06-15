@@ -4,15 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-interface ExerciseSet {
-  id: number;
-  weight: number;
-  reps: number;
-  duration: string;
-  completed: boolean;
-  volume: number;
-}
+import { ExerciseSet } from '@/types/exercise';
 
 interface ExerciseTrackerSetsListProps {
   sets: ExerciseSet[];

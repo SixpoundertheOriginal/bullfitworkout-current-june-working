@@ -27,17 +27,17 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
   });
   const [isActive, setIsActive] = useState(false);
 
-  const onUpdateSet = (setIndex: number, updates: Partial<ExerciseSet>) => {
+  const onUpdateSet = (setId: string, updates: Partial<ExerciseSet>) => {
     setExercise(prev => ({
       ...prev,
-      sets: prev.sets.map((set, index) => {
-        if (index === setIndex) {
+      sets: prev.sets.map((set) => {
+        if (set.id === setId) {
           const updatedSet = { ...set, ...updates };
           // Ensure volume is recalculated when weight or reps change
           if (updates.weight !== undefined || updates.reps !== undefined) {
             updatedSet.volume = updatedSet.weight * updatedSet.reps;
           }
-          console.log(`Updated set ${setIndex}:`, updatedSet);
+          console.log(`Updated set ${setId}:`, updatedSet);
           return updatedSet;
         }
         return set;
@@ -45,11 +45,11 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
     }));
   };
 
-  const onToggleCompletion = (setIndex: number) => {
+  const onToggleCompletion = (setId: string) => {
     setExercise(prev => ({
       ...prev,
-      sets: prev.sets.map((set, index) => 
-        index === setIndex ? { ...set, completed: !set.completed } : set
+      sets: prev.sets.map((set) => 
+        set.id === setId ? { ...set, completed: !set.completed } : set
       )
     }));
   };
@@ -73,10 +73,10 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
     }));
   };
 
-  const onDeleteSet = (setIndex: number) => {
+  const onDeleteSet = (setId: string) => {
     setExercise(prev => ({
       ...prev,
-      sets: prev.sets.filter((_, index) => index !== setIndex)
+      sets: prev.sets.filter((set) => set.id !== setId)
     }));
   };
 

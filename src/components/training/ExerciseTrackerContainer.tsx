@@ -8,15 +8,7 @@ import { ExerciseTrackerHeader } from './ExerciseTrackerHeader';
 import { ExerciseTrackerProgress } from './ExerciseTrackerProgress';
 import { ExerciseTrackerSetsList } from './ExerciseTrackerSetsList';
 import { ExerciseTrackerActions } from './ExerciseTrackerActions';
-
-interface ExerciseSet {
-  id: number;
-  weight: number;
-  reps: number;
-  duration: string;
-  completed: boolean;
-  volume: number;
-}
+import { ExerciseSet } from '@/types/exercise';
 
 interface Exercise {
   id: string;
@@ -31,10 +23,10 @@ interface Exercise {
 
 interface ExerciseTrackerContainerProps {
   exercise: Exercise;
-  onUpdateSet: (setId: number, updates: Partial<ExerciseSet>) => void;
-  onToggleCompletion: (setId: number) => void;
+  onUpdateSet: (setId: string, updates: Partial<ExerciseSet>) => void;
+  onToggleCompletion: (setId: string) => void;
   onAddSet: () => void;
-  onDeleteSet: (setId: number) => void;
+  onDeleteSet: (setId: string) => void;
   onDeleteExercise?: (exerciseName: string) => void;
   isActive?: boolean;
 }
