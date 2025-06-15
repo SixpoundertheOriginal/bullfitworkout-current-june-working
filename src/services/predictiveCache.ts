@@ -1,7 +1,5 @@
-
 import { Exercise } from '@/types/exercise';
 import { exerciseSearchEngine } from './exerciseSearchEngine';
-import { requestDeduplication } from './requestDeduplication';
 
 interface SearchPattern {
   query: string;
@@ -87,11 +85,8 @@ class PredictiveCacheService {
       try {
         const cached = await this.getCachedResults(pattern.query, pattern.filters);
         if (!cached) {
-          // Use requestDeduplication to avoid duplicate searches
-          const searchResult = await requestDeduplication.deduplicate(
-            `preload-${key}`,
-            () => exerciseSearchEngine.search(pattern.query, pattern.filters)
-          );
+          // Use direct search instead of requestDeduplication
+          const searchResult = await exerciseSearchEngine.search(pattern.query, pattern.filters);
           // Extract results from SearchResult object
           this.setCachedResults(pattern.query, pattern.filters, searchResult.results);
         }

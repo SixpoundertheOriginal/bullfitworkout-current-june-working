@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';
-import { networkOptimization } from '@/services/networkOptimization';
 import { concurrencyManager } from '@/lib/concurrency/ConcurrencyManager';
 
 interface MemoryInfo {
@@ -49,9 +47,6 @@ export function useMemoryPressure() {
       
       // Release pooled resources
       exerciseCardPool.cleanup();
-      
-      // Clear network caches
-      networkOptimization.clearCache();
       
       // Run cleanup for old scopes
       const stats = cleanupManager.getStats();

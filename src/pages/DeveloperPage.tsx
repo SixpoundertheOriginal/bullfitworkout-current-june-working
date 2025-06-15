@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +7,6 @@ import { Activity, Database, HardDrive, Zap, Settings, Code } from 'lucide-react
 import { useMemoryPressure } from '@/hooks/useMemoryPressure';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';
-import { networkOptimization } from '@/services/networkOptimization';
 import { concurrencyManager } from '@/services/concurrencyManager';
 import { performanceMonitor } from '@/services/performanceMonitor';
 
@@ -17,7 +15,6 @@ export default function DeveloperPage() {
   const [stats, setStats] = useState({
     cleanup: cleanupManager.getStats(),
     pool: exerciseCardPool.getPoolStats(),
-    network: networkOptimization.getCacheStats(),
     concurrency: concurrencyManager.getStats()
   });
   const { memoryPressure, isHighMemoryUsage } = useMemoryPressure();
@@ -27,7 +24,6 @@ export default function DeveloperPage() {
       setStats({
         cleanup: cleanupManager.getStats(),
         pool: exerciseCardPool.getPoolStats(),
-        network: networkOptimization.getCacheStats(),
         concurrency: concurrencyManager.getStats()
       });
     }, 1000);
@@ -43,7 +39,6 @@ export default function DeveloperPage() {
   const handleForceCleanup = () => {
     cleanupManager.cleanupAll();
     exerciseCardPool.cleanup();
-    networkOptimization.clearCache();
     concurrencyManager.cancelByTag('background-sync');
     concurrencyManager.cancelByTag('prefetch');
   };
@@ -247,22 +242,6 @@ export default function DeveloperPage() {
               <div className="flex justify-between">
                 <span className="text-gray-400">Cancelled</span>
                 <span className="text-gray-400">{stats.concurrency.cancelled}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Network Cache</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Cached Entries</span>
-                <span className="text-blue-400">{stats.network.size}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Max Size</span>
-                <span className="text-gray-400">{stats.network.maxSize}</span>
               </div>
             </CardContent>
           </Card>

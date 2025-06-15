@@ -1,6 +1,5 @@
 import MiniSearch from 'minisearch';
 import type { Exercise } from '@/types/exercise';
-import { networkOptimization } from './networkOptimization';
 
 export interface SearchFilters {
   muscleGroup?: string;
@@ -223,32 +222,28 @@ class ExerciseSearchEngine {
   ): Promise<SearchResult> {
     console.log('ExerciseSearchEngine: Starting search for query:', query, 'filters:', filters);
     
-    const cacheKey = `search:${query}:${JSON.stringify(filters)}:${JSON.stringify(options)}`;
-    
-    return networkOptimization.deduplicate(cacheKey, async () => {
-      if (!this.isIndexed) {
-        console.log('ExerciseSearchEngine: Not indexed yet, returning all exercises');
-        return { results: this.exercises, fromCache: false, fromWorker: false };
-      }
+    if (!this.isIndexed) {
+      console.log('ExerciseSearchEngine: Not indexed yet, returning all exercises');
+      return { results: this.exercises, fromCache: false, fromWorker: false };
+    }
 
-      let results: Exercise[];
-      let fromWorker = false;
+    let results: Exercise[];
+    let fromWorker = false;
 
-      if (this.worker && this.workerReady) {
-        try {
-          results = await this.searchWithWorker(query, filters, options);
-          fromWorker = true;
-        } catch (error) {
-          console.warn('Worker search failed, falling back to main thread:', error);
-          results = this.searchInMainThreadSync(query, filters, options);
-        }
-      } else {
+    if (this.worker && this.workerReady) {
+      try {
+        results = await this.searchWithWorker(query, filters, options);
+        fromWorker = true;
+      } catch (error) {
+        console.warn('Worker search failed, falling back to main thread:', error);
         results = this.searchInMainThreadSync(query, filters, options);
       }
+    } else {
+      results = this.searchInMainThreadSync(query, filters, options);
+    }
 
-      console.log('ExerciseSearchEngine: Search completed with', results.length, 'results');
-      return { results, fromCache: false, fromWorker };
-    });
+    console.log('ExerciseSearchEngine: Search completed with', results.length, 'results');
+    return { results, fromCache: false, fromWorker };
   }
 
   private searchWithWorker(

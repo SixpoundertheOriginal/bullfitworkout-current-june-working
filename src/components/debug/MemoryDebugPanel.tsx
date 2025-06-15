@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ export const MemoryDebugPanel: React.FC = () => {
   const [stats, setStats] = useState({
     cleanup: cleanupManager.getStats(),
     pool: exerciseCardPool.getPoolStats(),
-    network: networkOptimization.getCacheStats(),
     concurrency: concurrencyManager.getStats()
   });
   const { memoryPressure, isHighMemoryUsage } = useMemoryPressure();
@@ -24,7 +22,6 @@ export const MemoryDebugPanel: React.FC = () => {
       setStats({
         cleanup: cleanupManager.getStats(),
         pool: exerciseCardPool.getPoolStats(),
-        network: networkOptimization.getCacheStats(),
         concurrency: concurrencyManager.getStats()
       });
     }, 1000);
@@ -47,7 +44,6 @@ export const MemoryDebugPanel: React.FC = () => {
   const handleForceCleanup = () => {
     cleanupManager.cleanupAll();
     exerciseCardPool.cleanup();
-    networkOptimization.clearCache();
     concurrencyManager.cancelByTag('background-sync');
     concurrencyManager.cancelByTag('prefetch');
   };
