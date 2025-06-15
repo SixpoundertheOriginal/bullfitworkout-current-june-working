@@ -1,6 +1,8 @@
 
 import { useWorkoutStore } from '@/store/workoutStore';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { TimerEngine } from '@/services/TimerEngine';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 export interface WorkoutTimer {
   isActive: boolean;
@@ -29,6 +31,7 @@ export interface RestTimer {
 
 export const useTrainingTimers = () => {
   const {
+    isActive,
     elapsedTime,
     setElapsedTime,
     restTimerActive,
@@ -37,27 +40,68 @@ export const useTrainingTimers = () => {
     startRestTimer,
     stopRestTimer,
     resetRestTimer,
-    startTime
+    startWorkout,
+    resetWorkout,
   } = useWorkoutStore();
+  
+  const { isVisible } = usePageVisibility();
+  const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(isActive && isVisible);
+
+  const onWorkoutTick = useCallback((seconds: number) => {
+    // This check is important to prevent unnecessary re-renders via Zustand
+    if (seconds !== useWorkoutStore.getState().elapsedTime) {
+      setElapsedTime(seconds);
+    }
+  }, [setElapsedTime]);
+
+  const timerEngineRef = useRef<TimerEngine | null>(null);
+  if (!timerEngineRef.current) {
+    timerEngineRef.current = new TimerEngine(onWorkoutTick, elapsedTime);
+  }
+
+  useEffect(() => {
+    const engine = timerEngineRef.current!;
+    if (isActive && isVisible) {
+      engine.resume();
+      setIsWorkoutTimerRunning(true);
+    } else {
+      engine.pause();
+      setIsWorkoutTimerRunning(false);
+    }
+
+    return () => {
+      engine.pause();
+    };
+  }, [isActive, isVisible]);
+  
+  useEffect(() => {
+    if (!isActive) {
+      timerEngineRef.current?.reset();
+    }
+  }, [isActive]);
 
   // Unified timer system for workout tracking
   const workoutTimer: WorkoutTimer = {
-    isActive: true,
+    isActive: isActive,
     time: elapsedTime,
-    isRunning: true,
+    isRunning: isWorkoutTimerRunning,
     elapsed: elapsedTime,
     start: () => {
-      console.log('Workout timer started');
+      if (!isActive) startWorkout();
     },
     pause: () => {
-      console.log('Workout timer paused');
+      timerEngineRef.current?.pause();
+      setIsWorkoutTimerRunning(false);
     },
     resume: () => {
-      console.log('Workout timer resumed');
+      if (isActive) {
+        timerEngineRef.current?.resume();
+        setIsWorkoutTimerRunning(true);
+      }
     },
     reset: () => {
-      setElapsedTime(0);
-    }
+      resetWorkout();
+    },
   };
 
   // Rest timer with smart duration handling
