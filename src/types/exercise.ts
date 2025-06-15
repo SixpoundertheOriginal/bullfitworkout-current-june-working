@@ -26,6 +26,17 @@ export interface ExerciseSet {
   };
 }
 
+// Type for a family of exercises (e.g., "Bench Press Family")
+export interface ExerciseFamily {
+  id: string;
+  name: string;
+  movement_pattern: string | null;
+  primary_muscles: string[];
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Type for raw exercise data from Supabase, before transformation.
 export type SupabaseExercise = z.infer<typeof SupabaseExerciseSchema>;
 

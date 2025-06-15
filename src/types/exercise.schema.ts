@@ -43,6 +43,10 @@ export const SupabaseExerciseSchema = z.object({
     tips: z.array(z.string()).nullable(),
     variations: z.array(z.string()).nullable(),
     metadata: z.record(z.any()).nullable(),
+    // --- New Additive Fields ---
+    family_id: z.string().uuid().nullable(),
+    parent_exercise_id: z.string().uuid().nullable(),
+    variation_parameters: z.any().nullable(), // JSONB from DB
 }).passthrough(); // Use passthrough to allow other fields from DB without failing validation.
 
 export type SupabaseExercise = z.infer<typeof SupabaseExerciseSchema>;
@@ -67,6 +71,10 @@ export const ExerciseSchema = z.object({
   variations: z.array(z.string()),
   metadata: z.record(z.any()),
   load_factor: z.number().nullable(),
+  // --- New Additive Fields ---
+  family_id: z.string().uuid().nullable(),
+  parent_exercise_id: z.string().uuid().nullable(),
+  variation_parameters: z.record(z.any()).nullable(),
 });
 
 // Transformation function to map raw Supabase data to our clean application model.
@@ -96,6 +104,10 @@ export function transformSupabaseExerciseToAppExercise(supabaseExercise: Supabas
         metadata: supabaseExercise.metadata ?? {},
         // Extract load_factor from metadata if it exists, otherwise default.
         load_factor: (supabaseExercise.metadata as any)?.load_factor ?? 1.0,
+        // --- New Additive Fields ---
+        family_id: supabaseExercise.family_id ?? null,
+        parent_exercise_id: supabaseExercise.parent_exercise_id ?? null,
+        variation_parameters: supabaseExercise.variation_parameters ?? null,
     };
 }
 
@@ -118,4 +130,8 @@ export const ExerciseInputSchema = ExerciseSchema.pick({
     variations: z.array(z.string()).optional().default([]),
     metadata: z.record(z.any()).optional().default({}),
     load_factor: z.number().nullable().optional().default(1.0),
+    // --- New Additive Fields ---
+    family_id: z.string().uuid().nullable().optional(),
+    parent_exercise_id: z.string().uuid().nullable().optional(),
+    variation_parameters: z.record(z.any()).nullable().optional(),
 });

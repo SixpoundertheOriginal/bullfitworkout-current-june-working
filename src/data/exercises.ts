@@ -1,6 +1,19 @@
 
 import { Exercise } from '@/types/exercise';
 
+// Faking UUIDs for exercise families for demonstration purposes.
+// In a real scenario, these would come from the `exercise_families` table.
+const families = {
+  bench_press: 'f0f0f0f0-f0f0-f0f0-f0f0-f0f0f0f0f0f0',
+  squat: 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1',
+  deadlift: 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2',
+  pull_up: 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3',
+  shoulder_press: 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4',
+  bicep_curl: 'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5',
+  core: 'f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6',
+};
+
+
 // This is a workaround to make local data conform to the strict Exercise type.
 // The proper fix is to ensure data from all sources (local, API) is validated and transformed.
 const toExercise = (data: Omit<Exercise, 'id' | 'created_at' | 'user_id'> & { id: string }): Exercise => ({
@@ -18,6 +31,9 @@ const toExercise = (data: Omit<Exercise, 'id' | 'created_at' | 'user_id'> & { id
     variations: [],
     metadata: {},
     load_factor: 1.0,
+    family_id: null,
+    parent_exercise_id: null,
+    variation_parameters: null,
     ...data,
   },
   created_at: new Date().toISOString(),
@@ -40,8 +56,41 @@ export const exerciseDatabase: Exercise[] = [
       steps: "1. Lie on a flat bench with your feet flat on the floor. \n2. Grip the barbell with hands slightly wider than shoulder-width apart. \n3. Lift the bar off the rack and hold it straight over your chest. \n4. Lower the bar slowly to your chest, then push it back up to the starting position.",
       form: "Keep your back flat on the bench and avoid arching. Control the weight on the way down and explode on the way up."
     },
-    variations: ['Incline Bench Press', 'Dumbbell Bench Press'],
+    variations: ['Incline Bench Press', 'Dumbbell Bench Press'], // Kept for backward compatibility
     load_factor: 1.2,
+    family_id: families.bench_press,
+  }),
+  toExercise({
+    id: '1-incline',
+    name: 'Incline Bench Press',
+    description: 'A bench press variation using an inclined bench to emphasize the upper chest muscles.',
+    primary_muscle_groups: ['chest'],
+    secondary_muscle_groups: ['shoulders', 'triceps'],
+    equipment_type: ['barbell', 'bench'],
+    difficulty: 'intermediate',
+    movement_pattern: 'push',
+    is_compound: true,
+    is_bodyweight: false,
+    load_factor: 1.1,
+    family_id: families.bench_press,
+    parent_exercise_id: '1',
+    variation_parameters: { angle: 'incline', equipment: 'barbell' },
+  }),
+  toExercise({
+    id: '1-dumbbell',
+    name: 'Dumbbell Bench Press',
+    description: 'A bench press variation using dumbbells, which allows for a greater range of motion.',
+    primary_muscle_groups: ['chest'],
+    secondary_muscle_groups: ['shoulders', 'triceps'],
+    equipment_type: ['dumbbell', 'bench'],
+    difficulty: 'intermediate',
+    movement_pattern: 'push',
+    is_compound: true,
+    is_bodyweight: false,
+    load_factor: 1.2,
+    family_id: families.bench_press,
+    parent_exercise_id: '1',
+    variation_parameters: { angle: 'flat', equipment: 'dumbbell' },
   }),
   toExercise({
     id: '2',
@@ -61,6 +110,7 @@ export const exerciseDatabase: Exercise[] = [
     tips: ['Keep your weight on your heels.', 'Engage your core.'],
     variations: ['Front Squat', 'Goblet Squat'],
     load_factor: 1.2,
+    family_id: families.squat,
   }),
   toExercise({
     id: '3',
@@ -79,6 +129,7 @@ export const exerciseDatabase: Exercise[] = [
     },
     variations: ['Sumo Deadlift', 'Romanian Deadlift'],
     load_factor: 1.2,
+    family_id: families.deadlift,
   }),
   toExercise({
     id: '4',
@@ -98,6 +149,7 @@ export const exerciseDatabase: Exercise[] = [
     tips: ['Use a resistance band for assistance if needed.'],
     variations: ['Chin Up', 'Wide Grip Pull Up'],
     load_factor: 0.8,
+    family_id: families.pull_up,
   }),
   toExercise({
     id: '5',
@@ -116,6 +168,7 @@ export const exerciseDatabase: Exercise[] = [
     },
     variations: ['Arnold Press', 'Barbell Shoulder Press'],
     load_factor: 1.2,
+    family_id: families.shoulder_press,
   }),
   toExercise({
     id: '6',
@@ -135,6 +188,7 @@ export const exerciseDatabase: Exercise[] = [
     tips: ['Rotate your wrists at the top for a better contraction.'],
     variations: ['Hammer Curl', 'Zottman Curl'],
     load_factor: 1.0,
+    family_id: families.bicep_curl,
   }),
   toExercise({
     id: '7',
@@ -153,5 +207,6 @@ export const exerciseDatabase: Exercise[] = [
     },
     variations: ['Side Plank', 'High Plank'],
     load_factor: 0.8,
+    family_id: families.core,
   }),
 ];
