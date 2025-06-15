@@ -1,3 +1,4 @@
+
 import React, { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseCreationWizard } from "@/components/exercises/ExerciseCreationWizard";
@@ -116,10 +117,10 @@ export default function AllExercisesPage({
       description: "This may take a moment.",
     });
     try {
-      const result = await seedDatabase();
+      await seedDatabase();
       toast({
         title: "Database Seeding Complete",
-        description: result.message,
+        description: "Initial exercises have been added to your library.",
       });
     } catch (error) {
       toast({
