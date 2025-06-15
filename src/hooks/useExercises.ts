@@ -1,8 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Exercise, ExerciseInput } from '@/types/exercise';
 import { useAuth } from '@/context/AuthContext';
-import { exerciseApi } from '@/services/DataService';
+import { exerciseApi } from '@/services/exerciseService';
 
 export const useExercises = () => {
   const queryClient = useQueryClient();

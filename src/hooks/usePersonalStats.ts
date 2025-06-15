@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { personalStatsApi } from '@/services/DataService';
+import { personalStatsApi } from '@/services/personalStatsService';
 import { PersonalStats } from '@/types/personal-analytics';
 
 interface UsePersonalStatsOptions {

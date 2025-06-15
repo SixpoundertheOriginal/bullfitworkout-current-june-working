@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import { useValidatedWorkoutHistory } from './useWorkoutHistory';
 import { useQuery } from '@tanstack/react-query';
-import { workoutHistoryApi } from '@/services/DataService';
+import { workoutHistoryApi } from '@/services/workoutHistoryService';
 import type { ExerciseSet } from '@/types/exercise';
 
 export interface Workout {
