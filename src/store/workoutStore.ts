@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -28,6 +29,7 @@ export interface WorkoutState {
   restTimerActive: boolean;
   restTimerResetSignal: number;
   currentRestTime: number;
+  restTimerTargetDuration: number; // NEW
   
   // UI state
   activeExercise: string | null;
@@ -62,6 +64,7 @@ export interface WorkoutState {
   setActiveExercise: (exerciseName: string | null) => void;
   incrementElapsedTime: () => void;
   setElapsedTime: (time: number) => void;
+  setCurrentRestTime: (time: number) => void; // NEW
   startRestTimer: (duration: number) => void;
   stopRestTimer: () => void;
   resetRestTimer: () => void;
@@ -105,6 +108,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       restTimerActive: false,
       restTimerResetSignal: 0,
       currentRestTime: 0,
+      restTimerTargetDuration: 0, // NEW
       activeExercise: null,
       trainingConfig: null,
       lastActiveRoute: undefined,
@@ -223,20 +227,25 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setElapsedTime: (time) => set({ elapsedTime: validateElapsedTime(time) }),
 
+      setCurrentRestTime: (time) => set({ currentRestTime: validateRestTime(time) }), // NEW
+
       startRestTimer: (duration) => set({
         restTimerActive: true,
-        currentRestTime: validateRestTime(duration)
+        currentRestTime: validateRestTime(duration),
+        restTimerTargetDuration: validateRestTime(duration),
       }),
 
       stopRestTimer: () => set({
         restTimerActive: false,
-        currentRestTime: 0
+        currentRestTime: 0,
+        restTimerTargetDuration: 0,
       }),
 
       resetRestTimer: () => set((state) => ({
         restTimerResetSignal: state.restTimerResetSignal + 1,
         restTimerActive: false,
-        currentRestTime: 0
+        currentRestTime: 0,
+        restTimerTargetDuration: 0,
       })),
 
       setTrainingConfig: (config) => set({ trainingConfig: config }),
@@ -265,6 +274,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         isActive: state.isActive,
         exercises: state.exercises,
         elapsedTime: validateElapsedTime(state.elapsedTime), // Validate on persist
+        restTimerActive: state.restTimerActive, // Persist rest timer state
+        currentRestTime: state.currentRestTime,
+        restTimerTargetDuration: state.restTimerTargetDuration,
         trainingConfig: state.trainingConfig,
         workoutStatus: state.workoutStatus,
         lastActiveRoute: state.lastActiveRoute,

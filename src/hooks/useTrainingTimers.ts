@@ -3,6 +3,7 @@ import { useWorkoutStore } from '@/store/workoutStore';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TimerEngine } from '@/services/TimerEngine';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import { RestTimerEngine } from '@/services/RestTimerEngine';
 
 export interface WorkoutTimer {
   isActive: boolean;
@@ -37,11 +38,13 @@ export const useTrainingTimers = () => {
     restTimerActive,
     restTimerResetSignal,
     currentRestTime,
+    restTimerTargetDuration,
     startRestTimer,
     stopRestTimer,
     resetRestTimer,
     startWorkout,
     resetWorkout,
+    setCurrentRestTime,
   } = useWorkoutStore();
   
   const { isVisible } = usePageVisibility();
@@ -80,6 +83,29 @@ export const useTrainingTimers = () => {
     }
   }, [isActive]);
 
+  const restTimerEngineRef = useRef<RestTimerEngine | null>(null);
+
+  const onRestTick = useCallback((seconds: number) => {
+    setCurrentRestTime(seconds);
+  }, [setCurrentRestTime]);
+
+  const onRestEnd = useCallback(() => {
+    stopRestTimer();
+    // In the future, we can trigger a notification here.
+    console.log('[TrainingTimers] Rest timer finished.');
+  }, [stopRestTimer]);
+
+  if (!restTimerEngineRef.current) {
+    restTimerEngineRef.current = new RestTimerEngine(onRestTick, onRestEnd);
+  }
+  
+  useEffect(() => {
+    const engine = restTimerEngineRef.current!;
+    return () => {
+      engine.stop();
+    };
+  }, []);
+
   // Unified timer system for workout tracking
   const workoutTimer: WorkoutTimer = {
     isActive: isActive,
@@ -109,23 +135,34 @@ export const useTrainingTimers = () => {
     isActive: restTimerActive,
     time: currentRestTime,
     remaining: currentRestTime,
-    target: 60,
-    progress: currentRestTime > 0 ? ((60 - currentRestTime) / 60) * 100 : 0,
+    target: restTimerTargetDuration,
+    progress: restTimerTargetDuration > 0 ? ((restTimerTargetDuration - currentRestTime) / restTimerTargetDuration) * 100 : 0,
     resetSignal: restTimerResetSignal,
     start: (duration: number = 60) => {
       startRestTimer(duration);
+      restTimerEngineRef.current?.start(duration);
     },
     stop: () => {
       stopRestTimer();
+      restTimerEngineRef.current?.stop();
     },
     reset: () => {
       resetRestTimer();
+      restTimerEngineRef.current?.reset();
     },
     setDuration: (duration: number) => {
-      console.log(`Setting rest duration to ${duration}s`);
+      if (restTimerActive) {
+        // If timer is running, restart it with the new duration
+        restTimer.start(duration);
+      } else {
+        // This could be enhanced to set a "next" duration, but for now we'll log it.
+        // The UI will call start() with the new value anyway.
+        console.log(`Setting rest duration to ${duration}s`);
+      }
     },
     skip: () => {
       stopRestTimer();
+      restTimerEngineRef.current?.stop();
     }
   };
 
