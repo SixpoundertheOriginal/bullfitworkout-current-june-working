@@ -1,6 +1,9 @@
+
 import React, { lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { WelcomeHeader } from "@/components/home/WelcomeHeader";
+import { EnhancedWelcomeHeader } from "@/components/home/EnhancedWelcomeHeader";
+import { AchievementCard } from "@/components/home/AchievementCard";
+import { SmartInsightsPanel } from "@/components/home/SmartInsightsPanel";
 import { MobileWorkoutActionCenter } from "@/components/home/MobileWorkoutActionCenter";
 import { EnhancedWorkoutActionCenter } from "@/components/home/EnhancedWorkoutActionCenter";
 import { AnimatedLevelUp } from "@/components/home/AnimatedLevelUp";
@@ -35,6 +38,56 @@ const Index = () => {
 
   const isMobile = useIsMobile();
 
+  // Mock data for achievements and insights (in real app, this would come from hooks)
+  const mockAchievements = [
+    {
+      id: '1',
+      title: 'Consistency Master',
+      description: 'Complete 5 workouts this week',
+      type: 'consistency' as const,
+      progress: 3,
+      maxProgress: 5,
+      isCompleted: false,
+      icon: 'target' as const,
+      color: 'purple'
+    },
+    {
+      id: '2',
+      title: 'First Workout',
+      description: 'Congratulations on starting your fitness journey!',
+      type: 'milestone' as const,
+      progress: 1,
+      maxProgress: 1,
+      isCompleted: true,
+      icon: 'trophy' as const,
+      color: 'gold'
+    }
+  ];
+
+  const mockInsights = [
+    {
+      id: '1',
+      type: 'recommendation' as const,
+      title: 'Perfect Timing',
+      description: 'Your best workout performance is between 6-8 PM. Consider scheduling today\'s session then.',
+      action: 'Schedule workout',
+      priority: 'high' as const,
+      icon: 'clock' as const
+    },
+    {
+      id: '2',
+      type: 'pattern' as const,
+      title: 'Rest Day Recommendation',
+      description: 'You\'ve trained 3 days straight. Consider active recovery today.',
+      priority: 'medium' as const,
+      icon: 'brain' as const
+    }
+  ];
+
+  // Calculate progress for enhanced button
+  const dailyGoalProgress = stats?.totalWorkouts ? Math.min(100, (stats.totalWorkouts % 1) * 100) : 0;
+  const weeklyGoalProgress = stats?.streakDays ? Math.min(100, (stats.streakDays % 7 / 4) * 100) : 0;
+
   // Update handleStartTraining to go to funnel instead of direct training
   const handleStartWorkoutFunnel = () => {
     window.location.href = '/workout-setup/type';
@@ -64,7 +117,7 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="relative z-10 pb-24">
-        {/* Header */}
+        {/* Enhanced Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -73,15 +126,14 @@ const Index = () => {
         >
           {isLoadingStats ? (
             <div className="space-y-2">
-              <Skeleton className="h-8 w-3/4 rounded-md" />
-              <Skeleton className="h-5 w-1/2 rounded-md" />
+              <Skeleton className="h-32 w-full rounded-2xl" />
             </div>
           ) : (
-            <WelcomeHeader stats={stats} />
+            <EnhancedWelcomeHeader stats={stats} />
           )}
         </motion.div>
 
-        {/* Workout Action Center */}
+        {/* Enhanced Workout Action Center */}
         <motion.div
           ref={sectionRef as React.RefObject<HTMLDivElement>}
           initial={{ opacity: 0, y: 30 }}
@@ -116,11 +168,24 @@ const Index = () => {
           )}
         </motion.div>
 
+        {/* New Achievement and Insights Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="px-6 mt-8"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AchievementCard achievements={mockAchievements} />
+            <SmartInsightsPanel insights={mockInsights} />
+          </div>
+        </motion.div>
+
         {/* Workout History Toggle */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
           className="px-6 mt-8"
         >
           <div className="flex items-center justify-between mb-6">

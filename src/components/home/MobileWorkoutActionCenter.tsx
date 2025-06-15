@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
-import { HeroWorkoutButton } from './HeroWorkoutButton';
+import { EnhancedHeroWorkoutButton } from './EnhancedHeroWorkoutButton';
 import { TrainingTypeSelector } from '@/components/training/TrainingTypeSelector';
 import { DurationSelector } from '@/components/training/DurationSelector';
 import { WorkoutTagPicker } from '@/components/training/WorkoutTagPicker';
@@ -85,15 +85,21 @@ export const MobileWorkoutActionCenter: React.FC<MobileWorkoutActionCenterProps>
     onStartTraining(customConfig);
   };
 
+  // Mock progress values - in real app, these would come from user stats
+  const dailyProgress = 25; // Example: 25% of daily goal completed
+  const weeklyProgress = 60; // Example: 60% of weekly goal completed
+
   return (
     <>
       {/* Hero Section */}
       <div className="space-y-6">
-        {/* Main Start Button - Now goes to funnel */}
-        <HeroWorkoutButton
+        {/* Enhanced Main Start Button */}
+        <EnhancedHeroWorkoutButton
           onPress={handleStartWorkout}
           isLoading={isLoading}
           className="w-full"
+          dailyGoalProgress={dailyProgress}
+          weeklyGoalProgress={weeklyProgress}
         />
 
         {/* Quick Stats */}
