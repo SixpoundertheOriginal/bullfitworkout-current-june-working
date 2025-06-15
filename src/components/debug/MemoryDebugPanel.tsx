@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { useMemoryPressure } from '@/hooks/useMemoryPressure';
 import { cleanupManager } from '@/services/cleanupManager';
 import { exerciseCardPool } from '@/services/exerciseCardPool';
-import { networkOptimization } from '@/services/networkOptimization';
 import { concurrencyManager } from '@/services/concurrencyManager';
 
 export const MemoryDebugPanel: React.FC = () => {
@@ -128,15 +128,6 @@ export const MemoryDebugPanel: React.FC = () => {
             • In use: {stats.pool.inUse}
             <br />
             • Available: {stats.pool.available}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-gray-300 mb-1">Network Cache:</div>
-          <div className="text-gray-400">
-            • Cached entries: {stats.network.size}
-            <br />
-            • Max size: {stats.network.maxSize}
           </div>
         </div>
 
