@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -45,23 +46,38 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
   
   // Set up a subscription for real-time updates
   useEffect(() => {
-    const handleWorkoutChange = (payload: any) => {
-      console.log('Workout change detected, invalidating queries:', payload);
-      // When any changes occur to the workout_sessions table, invalidate the queries
-      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
+    let channel: any = null;
+
+    const setupSubscription = () => {
+      const handleWorkoutChange = (payload: any) => {
+        console.log('Workout change detected, invalidating queries:', payload);
+        // When any changes occur to the workout_sessions table, invalidate the queries
+        queryClient.invalidateQueries({ queryKey: ['workout-history'] });
+        queryClient.invalidateQueries({ queryKey: ['workouts'] });
+        queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
+      };
+
+      // Create a unique channel name to avoid conflicts
+      const channelName = `workout-updates-${Date.now()}`;
+      
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
+        .subscribe();
     };
 
-    const channel = supabase
-      .channel('workout-updates')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
-      .subscribe();
+    // Only set up subscription if we don't already have one
+    if (!channel) {
+      setupSubscription();
+    }
       
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+        channel = null;
+      }
     };
   }, [queryClient]);
   

@@ -78,12 +78,6 @@
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
       "src": "/icons/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
@@ -167,12 +161,6 @@
     "client_mode": "focus-existing"
   },
   "prefer_related_applications": false,
-  "protocol_handlers": [
-    {
-      "protocol": "bullfit",
-      "url": "/?workout=%s"
-    }
-  ],
   "related_applications": [
     {
       "platform": "webapp",

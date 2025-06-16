@@ -11,6 +11,7 @@ const CRITICAL_ASSETS = [
   '/src/index.css'
 ];
 
+// Updated static assets with proper icon paths
 const STATIC_ASSETS = [
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
@@ -21,7 +22,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     Promise.all([
       caches.open(STATIC_CACHE).then(cache => 
-        cache.addAll(CRITICAL_ASSETS.concat(STATIC_ASSETS)).catch(() => Promise.resolve())
+        cache.addAll(CRITICAL_ASSETS).catch(() => {
+          // If critical assets fail, still try static assets
+          return cache.addAll(STATIC_ASSETS.filter(asset => 
+            !asset.includes('icon-144x144.png') // Skip missing icon
+          ));
+        }).catch(() => Promise.resolve())
       )
     ]).then(() => self.skipWaiting())
   );
@@ -51,6 +57,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   
   if (!request.url.startsWith('http')) {
+    return;
+  }
+
+  // Skip missing icons to prevent 404s
+  if (request.url.includes('icon-144x144.png')) {
+    event.respondWith(new Response('', { status: 404 }));
     return;
   }
 
