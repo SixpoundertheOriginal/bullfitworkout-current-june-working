@@ -26,19 +26,36 @@ export const OverviewChartsSection: React.FC<OverviewChartsSectionProps> = React
   const workoutsForMetrics = React.useMemo(() => {
     if (!workouts || workouts.length === 0) return [];
     
-    return workouts.map(workout => ({
-      start_time: workout.created_at,
-      duration: workout.duration || 0,
-      exercises: workout.exercises ? Object.entries(workout.exercises).map(([exerciseName, sets]) => 
-        sets.map(set => ({
-          exercise_name: exerciseName,
-          completed: set.completed ?? true,
-          weight: set.weight,
-          reps: set.reps,
-          restTime: 0
-        }))
-      ).flat() : []
-    }));
+    return workouts.map(workout => {
+      // Safely extract exercises with proper type checking
+      let exercisesList: any[] = [];
+      
+      if (workout.exercises) {
+        if (Array.isArray(workout.exercises)) {
+          exercisesList = workout.exercises;
+        } else if (typeof workout.exercises === 'object') {
+          // Handle case where exercises is an object with exercise names as keys
+          exercisesList = Object.entries(workout.exercises).flatMap(([exerciseName, sets]) => {
+            if (Array.isArray(sets)) {
+              return sets.map(set => ({
+                exercise_name: exerciseName,
+                completed: set.completed ?? true,
+                weight: set.weight,
+                reps: set.reps,
+                restTime: 0
+              }));
+            }
+            return [];
+          });
+        }
+      }
+
+      return {
+        start_time: workout.created_at,
+        duration: workout.duration || 0,
+        exercises: exercisesList
+      };
+    });
   }, [workouts]);
 
   const { volumeOverTimeData } = useProcessWorkoutMetrics(workoutsForMetrics, weightUnit);
