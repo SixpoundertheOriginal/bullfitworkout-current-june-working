@@ -7,6 +7,7 @@ import { useWeightUnit } from '@/context/WeightUnitContext';
 import { WorkoutStats } from '@/types/workout-metrics';
 import { workoutStatsApi } from '@/services/workoutStatsService';
 import { subscriptionManager } from '@/services/SubscriptionManager';
+import { useCleanup } from '@/hooks/useCleanup';
 
 interface WorkoutDataContextType {
   stats: WorkoutStats;
@@ -47,6 +48,7 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
   const { dateRange, comparisonRange, enableComparison } = useDateRange();
   const { weightUnit } = useWeightUnit();
   const queryClient = useQueryClient();
+  const { registerCleanup } = useCleanup('workout-data-provider');
   
   // Use refs to prevent subscription recreation on re-renders
   const subscriptionRef = useRef<(() => void) | null>(null);
@@ -104,7 +106,7 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: false,
   });
 
-  // Set up unified real-time subscriptions
+  // Set up unified real-time subscriptions with enterprise architecture
   useEffect(() => {
     if (!user?.id || isSubscribedRef.current) return;
 
@@ -116,26 +118,35 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
     };
 
-    // Subscribe using the centralized manager
+    // Subscribe using the centralized manager with enhanced configuration
     subscriptionRef.current = subscriptionManager.subscribe({
       channelName: `workout-data-${user.id}`,
       table: 'workout_sessions',
       events: ['INSERT', 'UPDATE', 'DELETE'],
-      callback: handleWorkoutChange
+      callback: handleWorkoutChange,
+      filter: `user_id=eq.${user.id}`
     });
 
+    // Register cleanup with high priority
+    registerCleanup(() => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current();
+        subscriptionRef.current = null;
+        isSubscribedRef.current = false;
+      }
+    }, 'high');
+
     isSubscribedRef.current = true;
-    console.log('[WorkoutDataProvider] Subscription established');
+    console.log('[WorkoutDataProvider] Enterprise subscription established');
 
     return () => {
       if (subscriptionRef.current) {
         subscriptionRef.current();
         subscriptionRef.current = null;
         isSubscribedRef.current = false;
-        console.log('[WorkoutDataProvider] Subscription cleaned up');
       }
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, registerCleanup]);
 
   // Refetch function
   const refetch = React.useCallback(() => {

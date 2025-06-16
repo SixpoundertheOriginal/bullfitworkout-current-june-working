@@ -1,9 +1,10 @@
 
 import { subscriptionManager } from './SubscriptionManager';
+import { cleanupManager } from '@/hooks/useCleanup';
 
 class GlobalCleanupService {
   private static instance: GlobalCleanupService;
-  private cleanupTasks: (() => void)[] = [];
+  private isInitialized = false;
 
   static getInstance(): GlobalCleanupService {
     if (!GlobalCleanupService.instance) {
@@ -12,47 +13,77 @@ class GlobalCleanupService {
     return GlobalCleanupService.instance;
   }
 
-  addCleanupTask(task: () => void): void {
-    this.cleanupTasks.push(task);
+  private constructor() {
+    this.initialize();
+  }
+
+  private initialize(): void {
+    if (this.isInitialized || typeof window === 'undefined') return;
+
+    // Register subscription manager cleanup with high priority
+    cleanupManager.registerCleanup('global', () => {
+      subscriptionManager.cleanup();
+    }, 'high');
+
+    // Set up global cleanup listeners
+    this.setupEventListeners();
+    this.isInitialized = true;
+    console.log('[GlobalCleanupService] Enterprise cleanup service initialized');
+  }
+
+  private setupEventListeners(): void {
+    // Cleanup on page visibility change (mobile backgrounding)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.performCleanup();
+      }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      this.performCleanup();
+    });
+
+    // Cleanup on navigation (SPA routing)
+    window.addEventListener('popstate', () => {
+      this.performCleanup();
+    });
+
+    // Memory pressure cleanup
+    if ('memory' in performance) {
+      setInterval(() => {
+        const memInfo = (performance as any).memory;
+        if (memInfo && memInfo.usedJSHeapSize > memInfo.totalJSHeapSize * 0.8) {
+          console.warn('[GlobalCleanupService] High memory usage detected, performing cleanup');
+          this.performCleanup();
+        }
+      }, 30000); // Check every 30 seconds
+    }
+  }
+
+  addCleanupTask(task: () => void, priority: 'high' | 'medium' | 'low' = 'medium'): void {
+    cleanupManager.registerCleanup('global', task, priority);
   }
 
   performCleanup(): void {
-    console.log('[GlobalCleanupService] Performing global cleanup');
+    console.log('[GlobalCleanupService] Performing enterprise cleanup');
     
-    // Clean up all subscriptions
-    subscriptionManager.cleanup();
-    
-    // Run all registered cleanup tasks
-    this.cleanupTasks.forEach(task => {
-      try {
-        task();
-      } catch (error) {
-        console.error('[GlobalCleanupService] Error during cleanup:', error);
+    try {
+      // Use the centralized cleanup manager
+      cleanupManager.globalCleanup();
+    } catch (error) {
+      console.error('[GlobalCleanupService] Error during cleanup:', error);
+    }
+  }
+
+  getHealth(): { subscriptions: any; cleanup: { scopes: number } } {
+    return {
+      subscriptions: subscriptionManager.getSubscriptionHealth(),
+      cleanup: {
+        scopes: Object.keys(cleanupManager).length || 0
       }
-    });
-    
-    this.cleanupTasks = [];
+    };
   }
 }
 
 export const globalCleanupService = GlobalCleanupService.getInstance();
-
-// Set up global cleanup listeners
-if (typeof window !== 'undefined') {
-  // Cleanup on page visibility change (mobile backgrounding)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      globalCleanupService.performCleanup();
-    }
-  });
-
-  // Cleanup on page unload
-  window.addEventListener('beforeunload', () => {
-    globalCleanupService.performCleanup();
-  });
-
-  // Cleanup on navigation (SPA routing)
-  window.addEventListener('popstate', () => {
-    globalCleanupService.performCleanup();
-  });
-}
