@@ -49,13 +49,20 @@ export const ChartContainer = forwardRef<HTMLDivElement, ChartContainerProps>(({
   actions
 }, ref) => {
   return (
-    <ResponsiveContainer
+    <div
       ref={ref}
-      variant="chart"
-      className={cn('chart-container chart-responsive', className)}
-      aspectRatio={aspectRatio}
-      minHeight={typeof height === 'number' ? `${height}px` : height}
-      maxHeight="600px"
+      className={cn(
+        'chart-container chart-responsive',
+        'bg-card border border-border rounded-lg overflow-hidden',
+        'flex flex-col',
+        'w-full h-full relative',
+        aspectRatio && `aspect-[${aspectRatio}]`,
+        className
+      )}
+      style={{
+        minHeight: typeof height === 'number' ? `${height}px` : height,
+        maxHeight: '600px'
+      }}
     >
       {title && (
         <div className="chart-header flex items-center justify-between p-4 border-b border-border">
@@ -81,7 +88,7 @@ export const ChartContainer = forwardRef<HTMLDivElement, ChartContainerProps>(({
           </div>
         )}
       </div>
-    </ResponsiveContainer>
+    </div>
   );
 });
 

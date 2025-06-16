@@ -16,13 +16,16 @@ import { EnterpriseGrid, GridSection } from '@/components/layouts/EnterpriseGrid
 import { ResponsiveContainer } from '@/components/layouts/ResponsiveContainer';
 import { ChartContainer } from '@/components/layouts/ChartContainer';
 import { MetricCard } from '@/components/layouts/MetricCard';
+import { OverviewDatePicker } from '@/components/date-filters/OverviewDatePicker';
+import { OptimizedWorkoutStatsProvider, useOptimizedWorkoutStatsContext } from '@/context/OptimizedWorkoutStatsProvider';
 
-const OverviewPageComponent: React.FC = () => {
+const OverviewContent: React.FC = React.memo(() => {
   const { user } = useAuth();
   const { workouts, isLoading } = useWorkouts();
   const { weightUnit } = useWeightUnit();
+  const { stats, comparisonStats, loading: statsLoading } = useOptimizedWorkoutStatsContext();
 
-  // Transform workouts for metrics processing
+  // Transform workouts for metrics processing with memoization
   const workoutsForMetrics = useMemo(() => {
     if (!workouts || workouts.length === 0) return [];
     
@@ -41,14 +44,14 @@ const OverviewPageComponent: React.FC = () => {
     }));
   }, [workouts]);
 
-  // Get processed metrics
+  // Get processed metrics with memoization
   const {
     volumeOverTimeData,
     volumeStats,
     hasVolumeData
   } = useProcessWorkoutMetrics(workoutsForMetrics, weightUnit);
 
-  // Calculate workout type data
+  // Calculate workout type data with memoization
   const workoutTypeData = useMemo(() => {
     if (!workouts || workouts.length === 0) return [];
     
@@ -65,7 +68,7 @@ const OverviewPageComponent: React.FC = () => {
     }));
   }, [workouts]);
 
-  // Calculate muscle focus data
+  // Calculate muscle focus data with memoization
   const muscleFocusData = useMemo(() => {
     if (!workouts || workouts.length === 0) return {};
     
@@ -86,7 +89,8 @@ const OverviewPageComponent: React.FC = () => {
     return muscleFocus;
   }, [workouts]);
 
-  const stats = useMemo(() => {
+  // Calculate stats with comparison support
+  const calculatedStats = useMemo(() => {
     if (!workouts || workouts.length === 0) {
       return {
         totalWorkouts: 0,
@@ -94,7 +98,8 @@ const OverviewPageComponent: React.FC = () => {
         avgDuration: 0,
         totalVolume: 0,
         thisWeekWorkouts: 0,
-        weeklyGoal: 3
+        weeklyGoal: 3,
+        comparison: {}
       };
     }
 
@@ -115,17 +120,25 @@ const OverviewPageComponent: React.FC = () => {
       new Date(w.created_at) >= oneWeekAgo
     ).length;
 
+    // Calculate comparison metrics if available
+    const comparison = comparisonStats ? {
+      workoutsChange: ((totalWorkouts - comparisonStats.totalWorkouts) / Math.max(comparisonStats.totalWorkouts, 1)) * 100,
+      volumeChange: ((totalVolume - (comparisonStats.progressMetrics?.volumeChangePercentage || 0)) / Math.max(comparisonStats.progressMetrics?.volumeChangePercentage || 1, 1)) * 100,
+      durationChange: ((avgDuration - comparisonStats.avgDuration) / Math.max(comparisonStats.avgDuration, 1)) * 100
+    } : {};
+
     return {
       totalWorkouts,
       totalDuration,
       avgDuration,
       totalVolume,
       thisWeekWorkouts,
-      weeklyGoal: 3
+      weeklyGoal: 3,
+      comparison
     };
-  }, [workouts]);
+  }, [workouts, comparisonStats]);
 
-  if (isLoading) {
+  if (isLoading || statsLoading) {
     return (
       <div className="container-app py-6 space-y-6">
         <div className="flex items-center justify-between mb-6">
@@ -135,6 +148,7 @@ const OverviewPageComponent: React.FC = () => {
               Track your fitness journey and progress
             </p>
           </div>
+          <OverviewDatePicker />
         </div>
         
         <SkeletonScreen variant="workout-session" count={1} />
@@ -143,203 +157,192 @@ const OverviewPageComponent: React.FC = () => {
           <GridSection span={12}>
             <div className="section-skeleton h-32 rounded-lg" />
           </GridSection>
-          <GridSection span={3}>
-            <div className="section-skeleton h-48 rounded-lg" />
-          </GridSection>
-          <GridSection span={3}>
-            <div className="section-skeleton h-48 rounded-lg" />
-          </GridSection>
-          <GridSection span={3}>
-            <div className="section-skeleton h-48 rounded-lg" />
-          </GridSection>
-          <GridSection span={3}>
-            <div className="section-skeleton h-48 rounded-lg" />
-          </GridSection>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <GridSection key={i} span={1}>
+              <div className="section-skeleton h-48 rounded-lg" />
+            </GridSection>
+          ))}
         </EnterpriseGrid>
       </div>
     );
   }
 
-  const weeklyProgress = stats.weeklyGoal > 0 ? (stats.thisWeekWorkouts / stats.weeklyGoal) * 100 : 0;
+  const weeklyProgress = calculatedStats.weeklyGoal > 0 ? (calculatedStats.thisWeekWorkouts / calculatedStats.weeklyGoal) * 100 : 0;
 
   return (
-    <WorkoutErrorBoundary>
-      <div className="container-app py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Overview</h1>
-            <p className="text-muted-foreground">
-              Track your fitness journey and progress
-            </p>
-          </div>
+    <div className="container-app py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Overview</h1>
+          <p className="text-muted-foreground">
+            Track your fitness journey and progress
+          </p>
         </div>
+        <OverviewDatePicker showComparison={true} />
+      </div>
 
-        {/* Quick Stats Section */}
-        <GridSection span={12}>
-          <QuickStatsSection />
+      {/* Quick Stats Section */}
+      <GridSection span={12}>
+        <QuickStatsSection />
+      </GridSection>
+
+      {/* Main Dashboard Grid */}
+      <EnterpriseGrid columns={4} gap="lg" minRowHeight="200px">
+        {/* Core KPI Cards */}
+        <GridSection span={1}>
+          <MetricCard
+            title="Total Workouts"
+            value={calculatedStats.totalWorkouts}
+            icon={Activity}
+            subtitle="All time"
+            change={calculatedStats.comparison.workoutsChange ? {
+              value: calculatedStats.comparison.workoutsChange,
+              type: calculatedStats.comparison.workoutsChange > 0 ? 'increase' : 'decrease'
+            } : undefined}
+          />
         </GridSection>
 
-        {/* Main Dashboard Grid */}
-        <EnterpriseGrid columns={4} gap="lg" minRowHeight="200px">
-          {/* Core KPI Cards */}
-          <GridSection span={1}>
-            <MetricCard
-              title="Total Workouts"
-              value={stats.totalWorkouts}
-              icon={Activity}
-              subtitle="All time"
+        <GridSection span={1}>
+          <MetricCard
+            title="Weekly Goal"
+            value={`${calculatedStats.thisWeekWorkouts}/${calculatedStats.weeklyGoal}`}
+            icon={Target}
+            subtitle={`${Math.round(weeklyProgress)}% complete`}
+            actions={
+              <Progress value={weeklyProgress} className="w-16 h-2" />
+            }
+          />
+        </GridSection>
+
+        <GridSection span={1}>
+          <MetricCard
+            title="Avg Duration"
+            value={calculatedStats.avgDuration > 0 ? `${Math.round(calculatedStats.avgDuration / 60)}m` : '0m'}
+            icon={Clock}
+            subtitle="Per workout"
+            change={calculatedStats.comparison.durationChange ? {
+              value: calculatedStats.comparison.durationChange,
+              type: calculatedStats.comparison.durationChange > 0 ? 'increase' : 'decrease'
+            } : undefined}
+          />
+        </GridSection>
+
+        <GridSection span={1}>
+          <MetricCard
+            title="Total Volume"
+            value={`${(calculatedStats.totalVolume / 1000).toFixed(1)}k`}
+            icon={TrendingUp}
+            subtitle={`${weightUnit} lifted`}
+            change={calculatedStats.comparison.volumeChange ? {
+              value: calculatedStats.comparison.volumeChange,
+              type: calculatedStats.comparison.volumeChange > 0 ? 'increase' : 'decrease'
+            } : undefined}
+          />
+        </GridSection>
+
+        {/* Charts Row */}
+        <GridSection span={2} title="Workout Volume Trend">
+          <ChartContainer 
+            height={300}
+            aspectRatio="2/1"
+          >
+            <WorkoutVolumeOverTimeChart 
+              data={volumeOverTimeData}
+              height={250}
+              className="h-full"
             />
-          </GridSection>
+          </ChartContainer>
+        </GridSection>
 
-          <GridSection span={1}>
-            <MetricCard
-              title="Weekly Goal"
-              value={`${stats.thisWeekWorkouts}/${stats.weeklyGoal}`}
-              icon={Target}
-              subtitle={`${Math.round(weeklyProgress)}% complete`}
-              actions={
-                <Progress value={weeklyProgress} className="w-16 h-2" />
-              }
+        <GridSection span={2} title="Muscle Focus Distribution">
+          <ChartContainer height={300}>
+            <MuscleFocusChart muscleGroups={muscleFocusData} />
+          </ChartContainer>
+        </GridSection>
+
+        {/* Secondary Charts and Widgets */}
+        <GridSection span={1} title="Workout Types">
+          <ChartContainer height={200}>
+            <WorkoutTypeChart 
+              workoutTypes={workoutTypeData}
+              height={150}
             />
-          </GridSection>
+          </ChartContainer>
+        </GridSection>
 
-          <GridSection span={1}>
-            <MetricCard
-              title="Avg Duration"
-              value={stats.avgDuration > 0 ? `${Math.round(stats.avgDuration / 60)}m` : '0m'}
-              icon={Clock}
-              subtitle="Per workout"
-            />
-          </GridSection>
-
-          <GridSection span={1}>
-            <MetricCard
-              title="Total Volume"
-              value={`${(stats.totalVolume / 1000).toFixed(1)}k`}
-              icon={TrendingUp}
-              subtitle={`${weightUnit} lifted`}
-            />
-          </GridSection>
-
-          {/* Charts Row */}
-          <GridSection span={2} title="Workout Volume Trend">
-            <ChartContainer 
-              height={300}
-              aspectRatio="2/1"
-            >
-              <WorkoutVolumeOverTimeChart 
-                data={volumeOverTimeData}
-                height={250}
-                className="h-full"
-              />
-            </ChartContainer>
-          </GridSection>
-
-          <GridSection span={2} title="Muscle Focus Distribution">
-            <ChartContainer height={300}>
-              <MuscleFocusChart muscleGroups={muscleFocusData} />
-            </ChartContainer>
-          </GridSection>
-
-          {/* Secondary Charts */}
-          <GridSection span={1} title="Workout Types">
-            <ChartContainer height={200}>
-              <WorkoutTypeChart 
-                workoutTypes={workoutTypeData}
-                height={150}
-              />
-            </ChartContainer>
-          </GridSection>
-
-          <GridSection span={1} title="Training Consistency">
-            <ResponsiveContainer 
-              variant="card" 
-              minHeight="200px"
-              padding="md"
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <Calendar className="h-5 w-5 text-purple-400" />
-                <span className="text-sm text-gray-400">Ready for calendar integration</span>
-              </div>
-              <div className="space-y-2">
-                {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={i} className="flex justify-between items-center p-2 bg-gray-800/30 rounded">
-                    <span className="text-sm text-gray-400">Day {i + 1}</span>
-                    <div className="w-16 h-2 bg-gray-700 rounded">
-                      <div 
-                        className="h-full bg-purple-400 rounded" 
-                        style={{ width: `${Math.random() * 100}%` }}
-                      />
-                    </div>
+        <GridSection span={1} title="Training Consistency">
+          <ResponsiveContainer 
+            variant="card" 
+            minHeight="200px"
+            padding="md"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <Calendar className="h-5 w-5 text-purple-400" />
+              <span className="text-sm text-gray-400">Weekly pattern</span>
+            </div>
+            <div className="space-y-2">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
+                <div key={day} className="flex justify-between items-center p-2 bg-gray-800/30 rounded">
+                  <span className="text-sm text-gray-400">{day}</span>
+                  <div className="w-16 h-2 bg-gray-700 rounded">
+                    <div 
+                      className="h-full bg-purple-400 rounded" 
+                      style={{ width: `${Math.random() * 100}%` }}
+                    />
                   </div>
-                ))}
-              </div>
-            </ResponsiveContainer>
-          </GridSection>
-
-          <GridSection span={1} title="Performance Score">
-            <ResponsiveContainer 
-              variant="card" 
-              minHeight="200px"
-              padding="md"
-            >
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-400 mb-2">8.5</div>
-                <div className="text-sm text-gray-400 mb-4">Overall Score</div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div className="bg-purple-400 h-2 rounded-full" style={{ width: '85%' }} />
                 </div>
-              </div>
-            </ResponsiveContainer>
-          </GridSection>
+              ))}
+            </div>
+          </ResponsiveContainer>
+        </GridSection>
 
-          <GridSection span={1} title="Weekly Summary">
-            <ResponsiveContainer 
-              variant="card" 
-              minHeight="200px"
-              padding="md"
-            >
-              <div className="space-y-3">
-                <div className="p-3 bg-gray-800/30 rounded border-l-2 border-purple-400">
-                  <p className="text-sm text-gray-300">Strength trending upward</p>
-                  <p className="text-xs text-gray-500">Based on recent workouts</p>
-                </div>
-                <div className="p-3 bg-gray-800/30 rounded border-l-2 border-blue-400">
-                  <p className="text-sm text-gray-300">Consistent training schedule</p>
-                  <p className="text-xs text-gray-500">Great job this week!</p>
-                </div>
+        <GridSection span={1} title="Performance Score">
+          <ResponsiveContainer 
+            variant="card" 
+            minHeight="200px"
+            padding="md"
+          >
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-400 mb-2">8.5</div>
+              <div className="text-sm text-gray-400 mb-4">Overall Score</div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div className="bg-purple-400 h-2 rounded-full" style={{ width: '85%' }} />
               </div>
-            </ResponsiveContainer>
-          </GridSection>
+            </div>
+          </ResponsiveContainer>
+        </GridSection>
 
-          {/* Full Width Sections */}
-          <GridSection span={4} title="Top Exercises">
-            <ResponsiveContainer variant="card" padding="lg">
-              <div className="flex items-center gap-4 mb-4">
-                <BarChart3 className="h-5 w-5 text-purple-400" />
-                <span className="text-sm text-gray-400">Ready for exercise ranking</span>
+        <GridSection span={1} title="Weekly Summary">
+          <ResponsiveContainer 
+            variant="card" 
+            minHeight="200px"
+            padding="md"
+          >
+            <div className="space-y-3">
+              <div className="p-3 bg-gray-800/30 rounded border-l-2 border-purple-400">
+                <p className="text-sm text-gray-300">Strength trending upward</p>
+                <p className="text-xs text-gray-500">Based on recent workouts</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="p-4 bg-gray-800/50 rounded">
-                    <h4 className="font-medium text-gray-300 mb-2">Exercise {i + 1}</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Volume</span>
-                        <span className="text-gray-300">2.5k {weightUnit}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Sets</span>
-                        <span className="text-gray-300">24</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="p-3 bg-gray-800/30 rounded border-l-2 border-blue-400">
+                <p className="text-sm text-gray-300">Consistent training schedule</p>
+                <p className="text-xs text-gray-500">Great job this week!</p>
               </div>
-            </ResponsiveContainer>
-          </GridSection>
-        </EnterpriseGrid>
-      </div>
+            </div>
+          </ResponsiveContainer>
+        </GridSection>
+      </EnterpriseGrid>
+    </div>
+  );
+});
+
+OverviewContent.displayName = 'OverviewContent';
+
+const OverviewPageComponent: React.FC = () => {
+  return (
+    <WorkoutErrorBoundary>
+      <OptimizedWorkoutStatsProvider>
+        <OverviewContent />
+      </OptimizedWorkoutStatsProvider>
     </WorkoutErrorBoundary>
   );
 };
