@@ -1,19 +1,21 @@
+
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Target, TrendingUp, Clock, BarChart3, Calendar, Zap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { Progress } from '@/components/ui/progress';
 import { QuickStatsSection } from '@/components/metrics/QuickStatsSection';
 import WorkoutErrorBoundary from '@/components/ui/WorkoutErrorBoundary';
-import { DashboardGrid, DashboardSection } from '@/components/layouts/DashboardGrid';
-import { ChartPlaceholder } from '@/components/layouts/ChartPlaceholder';
 import { SkeletonScreen } from '@/components/performance/SkeletonScreen';
 import { WorkoutVolumeOverTimeChart } from '@/components/metrics/WorkoutVolumeOverTimeChart';
 import { WorkoutTypeChart } from '@/components/metrics/WorkoutTypeChart';
 import { MuscleFocusChart } from '@/components/metrics/MuscleFocusChart';
 import { useProcessWorkoutMetrics } from '@/hooks/useProcessWorkoutMetrics';
 import { useWeightUnit } from '@/context/WeightUnitContext';
+import { EnterpriseGrid, GridSection } from '@/components/layouts/EnterpriseGrid';
+import { ResponsiveContainer } from '@/components/layouts/ResponsiveContainer';
+import { ChartContainer } from '@/components/layouts/ChartContainer';
+import { MetricCard } from '@/components/layouts/MetricCard';
 
 const OverviewPageComponent: React.FC = () => {
   const { user } = useAuth();
@@ -25,12 +27,12 @@ const OverviewPageComponent: React.FC = () => {
     if (!workouts || workouts.length === 0) return [];
     
     return workouts.map(workout => ({
-      start_time: workout.created_at, // Use created_at instead of start_time
+      start_time: workout.created_at,
       duration: workout.duration || 0,
       exercises: workout.exercises ? Object.entries(workout.exercises).map(([exerciseName, sets]) => 
         sets.map(set => ({
           exercise_name: exerciseName,
-          completed: set.completed ?? true, // Provide default value for completed
+          completed: set.completed ?? true,
           weight: set.weight,
           reps: set.reps,
           restTime: 0
@@ -52,7 +54,7 @@ const OverviewPageComponent: React.FC = () => {
     
     const typeCount: Record<string, number> = {};
     workouts.forEach(workout => {
-      const type = 'Strength'; // Default type - could be enhanced with actual training types
+      const type = 'Strength';
       typeCount[type] = (typeCount[type] || 0) + 1;
     });
     
@@ -71,7 +73,6 @@ const OverviewPageComponent: React.FC = () => {
     workouts.forEach(workout => {
       if (workout.exercises) {
         Object.keys(workout.exercises).forEach(exerciseName => {
-          // Simple muscle group mapping - could be enhanced with exercise database
           const muscleGroup = exerciseName.toLowerCase().includes('bench') ? 'chest' :
                              exerciseName.toLowerCase().includes('squat') ? 'legs' :
                              exerciseName.toLowerCase().includes('deadlift') ? 'back' :
@@ -126,7 +127,7 @@ const OverviewPageComponent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container-app py-6 space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Overview</h1>
@@ -138,23 +139,23 @@ const OverviewPageComponent: React.FC = () => {
         
         <SkeletonScreen variant="workout-session" count={1} />
         
-        <DashboardGrid>
-          <DashboardSection span="full">
-            <ChartPlaceholder type="metric" height="sm" />
-          </DashboardSection>
-          <DashboardSection>
-            <ChartPlaceholder type="bar" />
-          </DashboardSection>
-          <DashboardSection>
-            <ChartPlaceholder type="pie" />
-          </DashboardSection>
-          <DashboardSection>
-            <ChartPlaceholder type="line" />
-          </DashboardSection>
-          <DashboardSection>
-            <ChartPlaceholder type="area" />
-          </DashboardSection>
-        </DashboardGrid>
+        <EnterpriseGrid columns={4} gap="lg">
+          <GridSection span={12}>
+            <div className="section-skeleton h-32 rounded-lg" />
+          </GridSection>
+          <GridSection span={3}>
+            <div className="section-skeleton h-48 rounded-lg" />
+          </GridSection>
+          <GridSection span={3}>
+            <div className="section-skeleton h-48 rounded-lg" />
+          </GridSection>
+          <GridSection span={3}>
+            <div className="section-skeleton h-48 rounded-lg" />
+          </GridSection>
+          <GridSection span={3}>
+            <div className="section-skeleton h-48 rounded-lg" />
+          </GridSection>
+        </EnterpriseGrid>
       </div>
     );
   }
@@ -163,7 +164,7 @@ const OverviewPageComponent: React.FC = () => {
 
   return (
     <WorkoutErrorBoundary>
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container-app py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Overview</h1>
@@ -174,152 +175,130 @@ const OverviewPageComponent: React.FC = () => {
         </div>
 
         {/* Quick Stats Section */}
-        <DashboardSection span="full">
+        <GridSection span={12}>
           <QuickStatsSection />
-        </DashboardSection>
+        </GridSection>
 
         {/* Main Dashboard Grid */}
-        <DashboardGrid>
+        <EnterpriseGrid columns={4} gap="lg" minRowHeight="200px">
           {/* Core KPI Cards */}
-          <DashboardSection>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
-              </CardContent>
-            </Card>
-          </DashboardSection>
-
-          <DashboardSection>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Weekly Goal</CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.thisWeekWorkouts}/{stats.weeklyGoal}</div>
-                <Progress value={weeklyProgress} className="mt-2" />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {Math.round(weeklyProgress)}% complete
-                </p>
-              </CardContent>
-            </Card>
-          </DashboardSection>
-
-          <DashboardSection>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.avgDuration > 0 ? `${Math.round(stats.avgDuration / 60)}m` : '0m'}
-                </div>
-                <p className="text-xs text-muted-foreground">Per workout</p>
-              </CardContent>
-            </Card>
-          </DashboardSection>
-
-          <DashboardSection>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(stats.totalVolume / 1000).toFixed(1)}k
-                </div>
-                <p className="text-xs text-muted-foreground">{weightUnit} lifted</p>
-              </CardContent>
-            </Card>
-          </DashboardSection>
-
-          {/* Integrated Charts */}
-          <DashboardSection span="half" title="Workout Volume Trend">
-            <WorkoutVolumeOverTimeChart 
-              data={volumeOverTimeData}
-              height={250}
-              className="h-64"
+          <GridSection span={1}>
+            <MetricCard
+              title="Total Workouts"
+              value={stats.totalWorkouts}
+              icon={Activity}
+              subtitle="All time"
             />
-          </DashboardSection>
+          </GridSection>
 
-          <DashboardSection span="half" title="Muscle Focus Distribution">
-            <Card className="h-64">
-              <CardContent className="p-4">
-                <MuscleFocusChart 
-                  muscleGroups={muscleFocusData}
-                />
-              </CardContent>
-            </Card>
-          </DashboardSection>
-
-          <DashboardSection span="third" title="Workout Types">
-            <Card className="h-48">
-              <CardContent className="p-4">
-                <WorkoutTypeChart 
-                  workoutTypes={workoutTypeData}
-                  height={150}
-                />
-              </CardContent>
-            </Card>
-          </DashboardSection>
-
-          <DashboardSection span="third" title="Training Consistency">
-            <ChartPlaceholder 
-              type="line" 
-              height="md"
+          <GridSection span={1}>
+            <MetricCard
+              title="Weekly Goal"
+              value={`${stats.thisWeekWorkouts}/${stats.weeklyGoal}`}
+              icon={Target}
+              subtitle={`${Math.round(weeklyProgress)}% complete`}
+              actions={
+                <Progress value={weeklyProgress} className="w-16 h-2" />
+              }
             />
-          </DashboardSection>
+          </GridSection>
 
-          <DashboardSection span="third" title="Performance Score">
-            <ChartPlaceholder 
-              type="metric" 
-              height="md"
+          <GridSection span={1}>
+            <MetricCard
+              title="Avg Duration"
+              value={stats.avgDuration > 0 ? `${Math.round(stats.avgDuration / 60)}m` : '0m'}
+              icon={Clock}
+              subtitle="Per workout"
             />
-          </DashboardSection>
+          </GridSection>
 
-          {/* Weekly Calendar Overview */}
-          <DashboardSection span="full" title="This Week's Training">
-            <Card className="p-6">
+          <GridSection span={1}>
+            <MetricCard
+              title="Total Volume"
+              value={`${(stats.totalVolume / 1000).toFixed(1)}k`}
+              icon={TrendingUp}
+              subtitle={`${weightUnit} lifted`}
+            />
+          </GridSection>
+
+          {/* Charts Row */}
+          <GridSection span={2} title="Workout Volume Trend">
+            <ChartContainer 
+              height={300}
+              aspectRatio="2/1"
+            >
+              <WorkoutVolumeOverTimeChart 
+                data={volumeOverTimeData}
+                height={250}
+                className="h-full"
+              />
+            </ChartContainer>
+          </GridSection>
+
+          <GridSection span={2} title="Muscle Focus Distribution">
+            <ChartContainer height={300}>
+              <MuscleFocusChart muscleGroups={muscleFocusData} />
+            </ChartContainer>
+          </GridSection>
+
+          {/* Secondary Charts */}
+          <GridSection span={1} title="Workout Types">
+            <ChartContainer height={200}>
+              <WorkoutTypeChart 
+                workoutTypes={workoutTypeData}
+                height={150}
+              />
+            </ChartContainer>
+          </GridSection>
+
+          <GridSection span={1} title="Training Consistency">
+            <ResponsiveContainer 
+              variant="card" 
+              minHeight="200px"
+              padding="md"
+            >
               <div className="flex items-center gap-4 mb-4">
                 <Calendar className="h-5 w-5 text-purple-400" />
                 <span className="text-sm text-gray-400">Ready for calendar integration</span>
               </div>
-              <ChartPlaceholder type="bar" height="sm" />
-            </Card>
-          </DashboardSection>
-
-          {/* Top Exercises Preview */}
-          <DashboardSection span="half" title="Top Exercises">
-            <Card className="p-4">
-              <div className="flex items-center gap-4 mb-4">
-                <BarChart3 className="h-5 w-5 text-purple-400" />
-                <span className="text-sm text-gray-400">Ready for exercise ranking</span>
-              </div>
               <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex justify-between items-center p-2 bg-gray-800/50 rounded">
-                    <span className="text-sm text-gray-400">Exercise {i + 1}</span>
-                    <span className="text-xs text-gray-500">Volume data</span>
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="flex justify-between items-center p-2 bg-gray-800/30 rounded">
+                    <span className="text-sm text-gray-400">Day {i + 1}</span>
+                    <div className="w-16 h-2 bg-gray-700 rounded">
+                      <div 
+                        className="h-full bg-purple-400 rounded" 
+                        style={{ width: `${Math.random() * 100}%` }}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
-            </Card>
-          </DashboardSection>
+            </ResponsiveContainer>
+          </GridSection>
 
-          {/* Performance Insights */}
-          <DashboardSection span="half" title="Performance Insights">
-            <Card className="p-4">
-              <div className="flex items-center gap-4 mb-4">
-                <Zap className="h-5 w-5 text-purple-400" />
-                <span className="text-sm text-gray-400">Ready for AI insights</span>
+          <GridSection span={1} title="Performance Score">
+            <ResponsiveContainer 
+              variant="card" 
+              minHeight="200px"
+              padding="md"
+            >
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-400 mb-2">8.5</div>
+                <div className="text-sm text-gray-400 mb-4">Overall Score</div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div className="bg-purple-400 h-2 rounded-full" style={{ width: '85%' }} />
+                </div>
               </div>
+            </ResponsiveContainer>
+          </GridSection>
+
+          <GridSection span={1} title="Weekly Summary">
+            <ResponsiveContainer 
+              variant="card" 
+              minHeight="200px"
+              padding="md"
+            >
               <div className="space-y-3">
                 <div className="p-3 bg-gray-800/30 rounded border-l-2 border-purple-400">
                   <p className="text-sm text-gray-300">Strength trending upward</p>
@@ -330,9 +309,36 @@ const OverviewPageComponent: React.FC = () => {
                   <p className="text-xs text-gray-500">Great job this week!</p>
                 </div>
               </div>
-            </Card>
-          </DashboardSection>
-        </DashboardGrid>
+            </ResponsiveContainer>
+          </GridSection>
+
+          {/* Full Width Sections */}
+          <GridSection span={4} title="Top Exercises">
+            <ResponsiveContainer variant="card" padding="lg">
+              <div className="flex items-center gap-4 mb-4">
+                <BarChart3 className="h-5 w-5 text-purple-400" />
+                <span className="text-sm text-gray-400">Ready for exercise ranking</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="p-4 bg-gray-800/50 rounded">
+                    <h4 className="font-medium text-gray-300 mb-2">Exercise {i + 1}</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Volume</span>
+                        <span className="text-gray-300">2.5k {weightUnit}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Sets</span>
+                        <span className="text-gray-300">24</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ResponsiveContainer>
+          </GridSection>
+        </EnterpriseGrid>
       </div>
     </WorkoutErrorBoundary>
   );

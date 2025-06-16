@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Enterprise Layout System */
+@import './styles/enterprise-layout.css';
+
 /* Design Token System - Foundation for consistent layout and spacing */
 :root {
   /* Spacing Scale - Fibonacci-based for visual hierarchy */

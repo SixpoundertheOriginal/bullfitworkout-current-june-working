@@ -1,0 +1,258 @@
+
+/* Enterprise Layout System - CSS Custom Properties and Container Queries */
+
+/* Z-Index Scale - Centralized Management */
+:root {
+  /* Layout Z-Index Scale */
+  --z-layout-base: 0;
+  --z-layout-content: 10;
+  --z-layout-sticky: 20;
+  --z-layout-overlay: 30;
+  --z-layout-modal: 40;
+  --z-layout-header: 50;
+  --z-layout-navigation: 60;
+  --z-layout-toast: 70;
+  --z-layout-tooltip: 80;
+  --z-layout-dropdown: 90;
+  --z-layout-max: 999;
+  
+  /* Grid System Variables */
+  --grid-columns: 12;
+  --grid-gap: 1.5rem;
+  --grid-min-row-height: 200px;
+  --grid-max-row-height: 500px;
+  
+  /* Container Breakpoints */
+  --container-xs: 20rem;   /* 320px */
+  --container-sm: 30rem;   /* 480px */
+  --container-md: 48rem;   /* 768px */
+  --container-lg: 64rem;   /* 1024px */
+  --container-xl: 80rem;   /* 1280px */
+  
+  /* Spacing Scale */
+  --space-unit: 0.25rem;
+  --space-xs: calc(var(--space-unit) * 1);   /* 4px */
+  --space-sm: calc(var(--space-unit) * 2);   /* 8px */
+  --space-md: calc(var(--space-unit) * 4);   /* 16px */
+  --space-lg: calc(var(--space-unit) * 6);   /* 24px */
+  --space-xl: calc(var(--space-unit) * 8);   /* 32px */
+  --space-2xl: calc(var(--space-unit) * 12); /* 48px */
+  
+  /* Typography Scale */
+  --text-scale-ratio: 1.125;
+  --text-base-size: 1rem;
+  --text-sm: calc(var(--text-base-size) / var(--text-scale-ratio));
+  --text-lg: calc(var(--text-base-size) * var(--text-scale-ratio));
+  --text-xl: calc(var(--text-lg) * var(--text-scale-ratio));
+  --text-2xl: calc(var(--text-xl) * var(--text-scale-ratio));
+  
+  /* Fluid Typography */
+  --fluid-text-sm: clamp(0.875rem, 2vw, 1rem);
+  --fluid-text-base: clamp(1rem, 2.5vw, 1.125rem);
+  --fluid-text-lg: clamp(1.125rem, 3vw, 1.25rem);
+  --fluid-text-xl: clamp(1.25rem, 3.5vw, 1.5rem);
+  
+  /* Border Radius System */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  /* Shadow System */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Animation System */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --easing-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enterprise Grid System */
+.enterprise-grid {
+  container-type: inline-size;
+  container-name: enterprise-grid;
+}
+
+.grid-section {
+  container-type: inline-size;
+  container-name: grid-section;
+  
+  /* Prevent layout shifts */
+  contain: layout style;
+}
+
+/* Responsive Container System */
+.responsive-container {
+  container-type: inline-size;
+  position: relative;
+  
+  /* Performance optimizations */
+  contain: layout style paint;
+  will-change: transform;
+}
+
+/* Container Query Responsive Behavior */
+@container enterprise-grid (min-width: 768px) {
+  .enterprise-grid {
+    --grid-gap: 2rem;
+  }
+}
+
+@container enterprise-grid (min-width: 1024px) {
+  .enterprise-grid {
+    --grid-gap: 2.5rem;
+  }
+}
+
+@container grid-section (min-width: 300px) {
+  .grid-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@container grid-section (min-width: 400px) {
+  .grid-section .section-content {
+    padding: var(--space-md);
+  }
+}
+
+/* Chart Container Queries */
+@container (min-width: 400px) {
+  .chart-responsive {
+    height: 250px;
+  }
+  
+  .chart-legend {
+    display: block;
+  }
+}
+
+@container (min-width: 600px) {
+  .chart-responsive {
+    height: 300px;
+  }
+  
+  .chart-controls {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+/* Metric Card Responsive Behavior */
+@container (min-width: 280px) {
+  .metric-card-content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-sm);
+  }
+}
+
+@container (min-width: 360px) {
+  .metric-card-content {
+    padding: var(--space-lg);
+  }
+  
+  .metric-card-value {
+    font-size: var(--fluid-text-2xl);
+  }
+}
+
+/* Layout Stability */
+.layout-stable {
+  /* Prevent cumulative layout shift */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
+.section-skeleton {
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.05), 
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Z-Index Management Classes */
+.z-layout-base { z-index: var(--z-layout-base); }
+.z-layout-content { z-index: var(--z-layout-content); }
+.z-layout-sticky { z-index: var(--z-layout-sticky); }
+.z-layout-overlay { z-index: var(--z-layout-overlay); }
+.z-layout-modal { z-index: var(--z-layout-modal); }
+.z-layout-header { z-index: var(--z-layout-header); }
+.z-layout-navigation { z-index: var(--z-layout-navigation); }
+.z-layout-toast { z-index: var(--z-layout-toast); }
+.z-layout-tooltip { z-index: var(--z-layout-tooltip); }
+.z-layout-dropdown { z-index: var(--z-layout-dropdown); }
+
+/* Performance Optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.layout-optimized {
+  contain: layout style paint;
+}
+
+/* Responsive Typography */
+.fluid-text-sm { font-size: var(--fluid-text-sm); }
+.fluid-text-base { font-size: var(--fluid-text-base); }
+.fluid-text-lg { font-size: var(--fluid-text-lg); }
+.fluid-text-xl { font-size: var(--fluid-text-xl); }
+
+/* Overflow Handling */
+.overflow-safe {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overflow-wrap {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Focus Management */
+.focus-visible-only:focus {
+  outline: none;
+}
+
+.focus-visible-only:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Reduce Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .enterprise-grid,
+  .grid-section,
+  .responsive-container {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+  .enterprise-grid .grid-section {
+    border: 2px solid currentColor;
+  }
+  
+  .responsive-container {
+    border: 1px solid currentColor;
+  }
+}
