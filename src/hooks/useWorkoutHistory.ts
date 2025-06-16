@@ -1,11 +1,11 @@
 
-import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { workoutHistoryApi } from '@/services/workoutHistoryService';
 import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
 import { useAuth } from '@/context/AuthContext';
 import { calendarApi } from '@/services/calendarService';
+import { subscriptionManager } from '@/services/SubscriptionManager';
 
 // Define WorkoutHistoryFilters interface to use throughout the application
 export type { WorkoutHistoryFilters };
@@ -30,6 +30,11 @@ export function useWorkoutDates(year: number, month: number) {
 
 export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  // Use refs to prevent subscription recreation
+  const subscriptionRef = useRef<(() => void) | null>(null);
+  const isSubscribedRef = useRef(false);
   
   const queryInfo = useQuery({
     queryKey: [
@@ -41,45 +46,40 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
       filters.trainingTypes
     ],
     queryFn: () => workoutHistoryApi.fetch(filters),
-    staleTime: 30000, // Consider data stale after 30 seconds
+    staleTime: 30000,
   });
   
-  // Set up a subscription for real-time updates
+  // Set up subscription using centralized manager
   useEffect(() => {
-    let channel: any = null;
+    if (!user?.id || isSubscribedRef.current) return;
 
-    const setupSubscription = () => {
-      const handleWorkoutChange = (payload: any) => {
-        console.log('Workout change detected, invalidating queries:', payload);
-        // When any changes occur to the workout_sessions table, invalidate the queries
-        queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-        queryClient.invalidateQueries({ queryKey: ['workouts'] });
-        queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
-      };
-
-      // Create a unique channel name to avoid conflicts
-      const channelName = `workout-updates-${Date.now()}`;
-      
-      channel = supabase
-        .channel(channelName)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
-        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'workout_sessions' }, handleWorkoutChange)
-        .subscribe();
+    const handleWorkoutChange = (payload: any) => {
+      console.log('[useWorkoutHistory] Workout change detected, invalidating queries:', payload);
+      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
     };
 
-    // Only set up subscription if we don't already have one
-    if (!channel) {
-      setupSubscription();
-    }
-      
+    // Use the centralized subscription manager
+    subscriptionRef.current = subscriptionManager.subscribe({
+      channelName: `workout-history-${user.id}`,
+      table: 'workout_sessions',
+      events: ['INSERT', 'UPDATE', 'DELETE'],
+      callback: handleWorkoutChange
+    });
+
+    isSubscribedRef.current = true;
+    console.log('[useWorkoutHistory] Subscription established via manager');
+
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-        channel = null;
+      if (subscriptionRef.current) {
+        subscriptionRef.current();
+        subscriptionRef.current = null;
+        isSubscribedRef.current = false;
+        console.log('[useWorkoutHistory] Subscription cleaned up');
       }
     };
-  }, [queryClient]);
+  }, [user?.id, queryClient]);
   
   return queryInfo;
 }
@@ -111,7 +111,7 @@ export const useValidatedWorkoutHistory = (filters: WorkoutHistoryFilters = { li
       start_time: workout.start_time,
       duration: workout.duration || 0,
       training_type: workout.training_type || 'General',
-      exerciseSets: workout.exerciseSets || [], // Now properly typed
+      exerciseSets: workout.exerciseSets || [],
     })).filter((w: ValidatedWorkoutSession) => w.id && w.start_time);
 
     return {

@@ -1,15 +1,15 @@
 
 import React from 'react';
 import WorkoutErrorBoundary from '@/components/ui/WorkoutErrorBoundary';
-import { OptimizedWorkoutStatsProvider } from '@/context/OptimizedWorkoutStatsProvider';
+import { WorkoutDataProvider } from '@/context/WorkoutDataProvider';
 import { OverviewContent } from '@/components/overview/OverviewContent';
 
 const OverviewPageComponent: React.FC = () => {
   return (
     <WorkoutErrorBoundary>
-      <OptimizedWorkoutStatsProvider>
+      <WorkoutDataProvider>
         <OverviewContent />
-      </OptimizedWorkoutStatsProvider>
+      </WorkoutDataProvider>
     </WorkoutErrorBoundary>
   );
 };

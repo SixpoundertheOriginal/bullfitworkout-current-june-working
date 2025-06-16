@@ -1,12 +1,12 @@
 
 import { useMemo } from 'react';
-import { useOptimizedWorkoutStatsContext } from '@/context/OptimizedWorkoutStatsProvider';
+import { useWorkoutDataContext } from '@/context/WorkoutDataProvider';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { overviewDataService } from '@/services/overviewDataService';
 
 export const useOverviewMetrics = () => {
   const { workouts } = useWorkouts();
-  const { stats, comparisonStats, loading } = useOptimizedWorkoutStatsContext();
+  const { stats, comparisonStats, loading } = useWorkoutDataContext();
 
   const overviewMetrics = useMemo(() => {
     return overviewDataService.calculateOverviewMetrics(workouts, comparisonStats);
