@@ -6,6 +6,7 @@ import { MainLayout } from '@/components/layouts/MainLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'; 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { WorkoutNavigationContextProvider } from '@/context/WorkoutNavigationContext';
+import { GlobalProviders } from '@/providers/GlobalProviders';
 
 // Lazy load all pages for enterprise-grade performance optimization.
 const IndexPage = lazy(() => import('@/pages/Index'));
@@ -26,63 +27,65 @@ const PageLoader = () => (
 
 function App() {
   return (
-    <ErrorBoundary>
-      <Router>
-        <WorkoutNavigationContextProvider>
-          <MainLayout>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<IndexPage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/exercises" element={<ExerciseLibraryPage />} />
-                <Route 
-                  path="/all-exercises" 
-                  element={
-                    <ProtectedRoute>
-                      <AllExercisesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/overview" 
-                  element={
-                    <ProtectedRoute>
-                      <OverviewPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/workout/:workoutId" 
-                  element={
-                    <ProtectedRoute>
-                      <WorkoutDetailsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/profile" 
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/training-session" 
-                  element={
-                    <ProtectedRoute>
-                      <TrainingSessionPage />
-                    </ProtectedRoute>
-                  } 
-                />
-              </Routes>
-            </Suspense>
-          </MainLayout>
-        </WorkoutNavigationContextProvider>
-      </Router>
-      <Toaster />
-    </ErrorBoundary>
+    <GlobalProviders>
+      <ErrorBoundary>
+        <Router>
+          <WorkoutNavigationContextProvider>
+            <MainLayout>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<IndexPage />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/exercises" element={<ExerciseLibraryPage />} />
+                  <Route 
+                    path="/all-exercises" 
+                    element={
+                      <ProtectedRoute>
+                        <AllExercisesPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  <Route 
+                    path="/overview" 
+                    element={
+                      <ProtectedRoute>
+                        <OverviewPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/workout/:workoutId" 
+                    element={
+                      <ProtectedRoute>
+                        <WorkoutDetailsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/training-session" 
+                    element={
+                      <ProtectedRoute>
+                        <TrainingSessionPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                </Routes>
+              </Suspense>
+            </MainLayout>
+          </WorkoutNavigationContextProvider>
+          <Toaster />
+        </Router>
+      </ErrorBoundary>
+    </GlobalProviders>
   );
 }
 

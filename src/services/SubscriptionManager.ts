@@ -48,13 +48,17 @@ class SubscriptionManager {
     
     const channel = supabase.channel(config.channelName);
     
-    // Add event listeners for each event type
+    // Add event listeners for each event type using the correct API
     config.events.forEach(event => {
-      channel.on('postgres_changes', {
-        event,
-        schema: 'public',
-        table: config.table
-      }, config.callback);
+      channel.on(
+        'postgres_changes',
+        {
+          event,
+          schema: 'public',
+          table: config.table
+        },
+        config.callback
+      );
     });
 
     // Subscribe to the channel
