@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,7 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WeightUnitProvider } from "@/context/WeightUnitContext";
 import { WorkoutDataProvider } from "@/context/WorkoutDataProvider";
-import { WorkoutNavigationProvider } from "@/context/WorkoutNavigationContext";
+import { WorkoutNavigationContextProvider } from "@/context/WorkoutNavigationContext";
 import { LayoutProvider } from "@/context/LayoutContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LayoutWrapper } from "@/components/layouts/LayoutWrapper";
@@ -18,10 +19,10 @@ import "./App.css";
 import "./styles/safe-area.css";
 
 const Overview = lazy(() => import("@/pages/Overview"));
-const Profile = lazy(() => import("@/pages/Profile"));
-const AllExercises = lazy(() => import("@/pages/AllExercises"));
+const Profile = lazy(() => import("@/pages/ProfilePage"));
+const AllExercises = lazy(() => import("@/pages/AllExercisesPage"));
 const TrainingSession = lazy(() => import("@/pages/TrainingSession"));
-const WorkoutDetails = lazy(() => import("@/pages/WorkoutDetails"));
+const WorkoutDetails = lazy(() => import("@/pages/WorkoutDetailsPage"));
 const DesignSystemPage = lazy(() => import("@/pages/DesignSystemPage"));
 
 const queryClient = new QueryClient({
@@ -43,7 +44,7 @@ function App() {
               <DateRangeProvider>
                 <WeightUnitProvider>
                   <WorkoutDataProvider>
-                    <WorkoutNavigationProvider>
+                    <WorkoutNavigationContextProvider>
                       <LayoutProvider>
                         <div className="min-h-screen bg-background font-sans antialiased">
                           <Suspense fallback={<div>Loading...</div>}>
@@ -89,7 +90,7 @@ function App() {
                           <Sonner />
                         </div>
                       </LayoutProvider>
-                    </WorkoutNavigationProvider>
+                    </WorkoutNavigationContextProvider>
                   </WorkoutDataProvider>
                 </WeightUnitProvider>
               </DateRangeProvider>
