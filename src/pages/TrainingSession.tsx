@@ -1,16 +1,15 @@
+
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { Exercise } from '@/types/exercise';
-import { X } from 'lucide-react';
 import { AddExerciseSheet } from '@/components/training/AddExerciseSheet';
 import { EnhancedWorkoutSessionFooter } from '@/components/training/EnhancedWorkoutSessionFooter';
 import { useWorkoutSave } from '@/hooks/useWorkoutSave';
 import { toast } from '@/hooks/use-toast';
-import { UnifiedLayout } from '@/components/layouts/UnifiedLayout';
-import { ContextualHeader } from '@/components/layouts/ContextualHeader';
+import { LayoutWrapper } from '@/components/layouts/LayoutWrapper';
 import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
 
 const TrainingSessionPage: React.FC = () => {
@@ -89,44 +88,48 @@ const TrainingSessionPage: React.FC = () => {
   const hasExercises = Object.keys(exercises).length > 0;
   const handleAddExercise = () => setAddExerciseSheetOpen(true);
 
-  // Timer Component
-  const timerComponent = (
-    <PriorityTimerDisplay
-      workoutTime={formatTime(elapsedTime)}
-      restTime={restTimerActive ? formatTime(currentRestTime) : undefined}
-      isRestActive={restTimerActive}
-      onRestTimerClick={() => {/* Handle rest timer click */}}
-    />
-  );
-
-  // Header Component
-  const headerComponent = (
-    <ContextualHeader
-      title={trainingConfig?.trainingType || 'Training Session'}
-      variant="overlay"
-      showCloseButton
-      onClose={handleExitWorkout}
-      actions={
-        <div className="text-sm text-gray-300">
-          {Object.keys(exercises).length} exercises
-        </div>
-      }
-    />
-  );
-
   return (
-    <UnifiedLayout
-      variant="training"
-      timerComponent={timerComponent}
-      headerComponent={headerComponent}
-    >
-      <div className="container mx-auto px-4 pb-24">
-        <ExerciseList
-          exercises={exercises}
-          onCompleteSet={handleCompleteSet}
-          onDeleteExercise={removeExercise}
-          onAddExercise={handleAddExercise}
-        />
+    <LayoutWrapper>
+      <div className="container mx-auto px-4">
+        {/* Sticky Timer Display at Top */}
+        <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 -mx-4 px-4 py-4 mb-6">
+          <PriorityTimerDisplay
+            workoutTime={formatTime(elapsedTime)}
+            restTime={restTimerActive ? formatTime(currentRestTime) : undefined}
+            isRestActive={restTimerActive}
+            onRestTimerClick={() => {/* Handle rest timer click */}}
+          />
+        </div>
+
+        {/* Session Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                {trainingConfig?.trainingType || 'Training Session'}
+              </h1>
+              <p className="text-gray-400">
+                {Object.keys(exercises).length} exercises
+              </p>
+            </div>
+            <button
+              onClick={handleExitWorkout}
+              className="text-gray-400 hover:text-white p-2"
+            >
+              Exit
+            </button>
+          </div>
+        </div>
+
+        {/* Exercise List */}
+        <div className="pb-24">
+          <ExerciseList
+            exercises={exercises}
+            onCompleteSet={handleCompleteSet}
+            onDeleteExercise={removeExercise}
+            onAddExercise={handleAddExercise}
+          />
+        </div>
       </div>
 
       <EnhancedWorkoutSessionFooter
@@ -142,7 +145,7 @@ const TrainingSessionPage: React.FC = () => {
         onSelectExercise={handleSelectExercise}
         trainingType={trainingConfig?.trainingType || ''}
       />
-    </UnifiedLayout>
+    </LayoutWrapper>
   );
 };
 
