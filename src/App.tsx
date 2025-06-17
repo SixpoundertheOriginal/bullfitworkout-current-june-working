@@ -1,91 +1,103 @@
-
-import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { MainLayout } from '@/components/layouts/MainLayout';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute'; 
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { WorkoutNavigationContextProvider } from '@/context/WorkoutNavigationContext';
-import { GlobalProviders } from '@/providers/GlobalProviders';
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/context/AuthContext";
+import { DateRangeProvider } from "@/context/DateRangeContext";
+import { WeightUnitProvider } from "@/context/WeightUnitContext";
+import { WorkoutDataProvider } from "@/context/WorkoutDataProvider";
+import { WorkoutNavigationProvider } from "@/context/WorkoutNavigationContext";
+import { LayoutProvider } from "@/context/LayoutContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { LayoutWrapper } from "@/components/layouts/LayoutWrapper";
+import Index from "@/pages/Index";
+import "./App.css";
+import "./styles/safe-area.css";
 
-// Lazy load all pages for enterprise-grade performance optimization.
-const IndexPage = lazy(() => import('@/pages/Index'));
-const AuthPage = lazy(() => import('@/pages/AuthPage'));
-const ExerciseLibraryPage = lazy(() => import('@/pages/ExerciseLibraryPage'));
-const AllExercisesPage = lazy(() => import('@/pages/AllExercisesPage'));
-const OverviewPage = lazy(() => import('@/pages/Overview'));
-const WorkoutDetailsPage = lazy(() => import('@/pages/WorkoutDetailsPage'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const TrainingSessionPage = lazy(() => import('@/pages/TrainingSession'));
+const Overview = lazy(() => import("@/pages/Overview"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const AllExercises = lazy(() => import("@/pages/AllExercises"));
+const TrainingSession = lazy(() => import("@/pages/TrainingSession"));
+const WorkoutDetails = lazy(() => import("@/pages/WorkoutDetails"));
+const DesignSystemPage = lazy(() => import("@/pages/DesignSystemPage"));
 
-// A reusable loader for our suspense fallback.
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[80vh] w-full">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-  </div>
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    },
+  },
+});
 
 function App() {
   return (
-    <GlobalProviders>
-      <ErrorBoundary>
-        <Router>
-          <WorkoutNavigationContextProvider>
-            <MainLayout>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<IndexPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/exercises" element={<ExerciseLibraryPage />} />
-                  <Route 
-                    path="/all-exercises" 
-                    element={
-                      <ProtectedRoute>
-                        <AllExercisesPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  <Route 
-                    path="/overview" 
-                    element={
-                      <ProtectedRoute>
-                        <OverviewPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/workout/:workoutId" 
-                    element={
-                      <ProtectedRoute>
-                        <WorkoutDetailsPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/profile" 
-                    element={
-                      <ProtectedRoute>
-                        <ProfilePage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/training-session" 
-                    element={
-                      <ProtectedRoute>
-                        <TrainingSessionPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                </Routes>
-              </Suspense>
-            </MainLayout>
-          </WorkoutNavigationContextProvider>
-          <Toaster />
-        </Router>
-      </ErrorBoundary>
-    </GlobalProviders>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <DateRangeProvider>
+                <WeightUnitProvider>
+                  <WorkoutDataProvider>
+                    <WorkoutNavigationProvider>
+                      <LayoutProvider>
+                        <div className="min-h-screen bg-background font-sans antialiased">
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Routes>
+                              <Route path="/" element={<Index />} />
+                              <Route path="/overview" element={
+                                <ProtectedRoute>
+                                  <LayoutWrapper>
+                                    <Overview />
+                                  </LayoutWrapper>
+                                </ProtectedRoute>
+                              } />
+                              <Route path="/profile" element={
+                                <ProtectedRoute>
+                                  <LayoutWrapper>
+                                    <Profile />
+                                  </LayoutWrapper>
+                                </ProtectedRoute>
+                              } />
+                              <Route path="/all-exercises" element={
+                                <ProtectedRoute>
+                                  <LayoutWrapper>
+                                    <AllExercises />
+                                  </LayoutWrapper>
+                                </ProtectedRoute>
+                              } />
+                              <Route path="/training-session" element={
+                                <ProtectedRoute>
+                                  <TrainingSession />
+                                </ProtectedRoute>
+                              } />
+                              <Route path="/workout/:id" element={
+                                <ProtectedRoute>
+                                  <LayoutWrapper>
+                                    <WorkoutDetails />
+                                  </LayoutWrapper>
+                                </ProtectedRoute>
+                              } />
+                              <Route path="/design-system" element={<DesignSystemPage />} />
+                            </Routes>
+                          </Suspense>
+                          <Toaster />
+                          <Sonner />
+                        </div>
+                      </LayoutProvider>
+                    </WorkoutNavigationProvider>
+                  </WorkoutDataProvider>
+                </WeightUnitProvider>
+              </DateRangeProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

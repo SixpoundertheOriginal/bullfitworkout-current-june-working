@@ -1,18 +1,17 @@
-
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
-import { UnifiedTimerDisplay } from '@/components/timers/UnifiedTimerDisplay';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { Exercise } from '@/types/exercise';
-import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { AddExerciseSheet } from '@/components/training/AddExerciseSheet';
 import { EnhancedWorkoutSessionFooter } from '@/components/training/EnhancedWorkoutSessionFooter';
 import { useWorkoutSave } from '@/hooks/useWorkoutSave';
-import { PageHeader } from '@/components/navigation/PageHeader';
 import { toast } from '@/hooks/use-toast';
+import { UnifiedLayout } from '@/components/layouts/UnifiedLayout';
+import { ContextualHeader } from '@/components/layouts/ContextualHeader';
+import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
 
 const TrainingSessionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +27,8 @@ const TrainingSessionPage: React.FC = () => {
     resetWorkout,
     elapsedTime,
     startTime,
+    restTimerActive,
+    currentRestTime,
   } = useWorkoutStore();
   
   const { saveWorkout, isSaving } = useWorkoutSave();
@@ -74,49 +75,59 @@ const TrainingSessionPage: React.FC = () => {
     navigate('/overview');
   };
 
+  const handleExitWorkout = () => {
+    resetWorkout();
+    navigate('/overview');
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const hasExercises = Object.keys(exercises).length > 0;
   const handleAddExercise = () => setAddExerciseSheetOpen(true);
 
-  return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
-      <PageHeader 
-        title={trainingConfig?.trainingType || 'Training Session'}
-        showBackButton
-        onBack={() => {
-          // TODO: Add a confirmation dialog before resetting
-          resetWorkout();
-          navigate('/overview');
-        }}
-      >
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => {
-            // TODO: Add a confirmation dialog before resetting
-            resetWorkout();
-            navigate('/overview');
-          }} 
-          aria-label="Cancel Workout"
-        >
-          <X className="h-6 w-6" />
-        </Button>
-      </PageHeader>
-      
-      <main className="flex-1 overflow-y-auto footer-content-clearance header-clearance">
-        <div className="container mx-auto px-4 pt-4">
-          <UnifiedTimerDisplay
-            workoutTimer={workoutTimer}
-            restTimer={restTimer}
-            className="mb-6"
-          />
-          <ExerciseList
-            exercises={exercises}
-            onCompleteSet={handleCompleteSet}
-            onDeleteExercise={removeExercise}
-            onAddExercise={handleAddExercise}
-          />
+  // Timer Component
+  const timerComponent = (
+    <PriorityTimerDisplay
+      workoutTime={formatTime(elapsedTime)}
+      restTime={restTimerActive ? formatTime(currentRestTime) : undefined}
+      isRestActive={restTimerActive}
+      onRestTimerClick={() => {/* Handle rest timer click */}}
+    />
+  );
+
+  // Header Component
+  const headerComponent = (
+    <ContextualHeader
+      title={trainingConfig?.trainingType || 'Training Session'}
+      variant="overlay"
+      showCloseButton
+      onClose={handleExitWorkout}
+      actions={
+        <div className="text-sm text-gray-300">
+          {Object.keys(exercises).length} exercises
         </div>
-      </main>
+      }
+    />
+  );
+
+  return (
+    <UnifiedLayout
+      variant="training"
+      timerComponent={timerComponent}
+      headerComponent={headerComponent}
+    >
+      <div className="container mx-auto px-4 pb-24">
+        <ExerciseList
+          exercises={exercises}
+          onCompleteSet={handleCompleteSet}
+          onDeleteExercise={removeExercise}
+          onAddExercise={handleAddExercise}
+        />
+      </div>
 
       <EnhancedWorkoutSessionFooter
         onAddExercise={handleAddExercise}
@@ -131,7 +142,7 @@ const TrainingSessionPage: React.FC = () => {
         onSelectExercise={handleSelectExercise}
         trainingType={trainingConfig?.trainingType || ''}
       />
-    </div>
+    </UnifiedLayout>
   );
 };
 

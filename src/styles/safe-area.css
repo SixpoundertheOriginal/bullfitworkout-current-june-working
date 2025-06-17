@@ -1,0 +1,41 @@
+
+/* Safe Area CSS Variables and Utilities */
+:root {
+  /* Safe Area Insets - will be updated by JavaScript */
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+  
+  /* Fallback values for non-supporting browsers */
+  --sat: 0px;
+  --sab: 0px;
+  --sal: 0px;
+  --sar: 0px;
+}
+
+/* Tailwind Safe Area Utilities */
+.pt-safe-top { padding-top: var(--sat); }
+.pb-safe-bottom { padding-bottom: var(--sab); }
+.pl-safe-left { padding-left: var(--sal); }
+.pr-safe-right { padding-right: var(--sar); }
+
+.mt-safe-top { margin-top: var(--sat); }
+.mb-safe-bottom { margin-bottom: var(--sab); }
+.ml-safe-left { margin-left: var(--sal); }
+.mr-safe-right { margin-right: var(--sar); }
+
+.top-safe-top { top: var(--sat); }
+.bottom-safe-bottom { bottom: var(--sab); }
+.left-safe-left { left: var(--sal); }
+.right-safe-right { right: var(--sar); }
+
+/* Enhanced viewport meta for iOS */
+@supports (padding-top: env(safe-area-inset-top)) {
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+}
