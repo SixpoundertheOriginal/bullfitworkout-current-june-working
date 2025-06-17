@@ -11,6 +11,7 @@ import { DateRangeProvider } from "@/context/DateRangeContext";
 import { WeightUnitProvider } from "@/context/WeightUnitContext";
 import { WorkoutDataProvider } from "@/context/WorkoutDataProvider";
 import { WorkoutNavigationContextProvider } from "@/context/WorkoutNavigationContext";
+import { WorkoutStatsProvider } from "@/context/WorkoutStatsProvider";
 import { LayoutProvider } from "@/context/LayoutContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LayoutWrapper } from "@/components/layouts/LayoutWrapper";
@@ -43,55 +44,57 @@ function App() {
             <AuthProvider>
               <DateRangeProvider>
                 <WeightUnitProvider>
-                  <WorkoutDataProvider>
-                    <WorkoutNavigationContextProvider>
-                      <LayoutProvider>
-                        <div className="min-h-screen bg-background font-sans antialiased">
-                          <Suspense fallback={<div>Loading...</div>}>
-                            <Routes>
-                              <Route path="/" element={<Index />} />
-                              <Route path="/overview" element={
-                                <ProtectedRoute>
-                                  <LayoutWrapper>
-                                    <Overview />
-                                  </LayoutWrapper>
-                                </ProtectedRoute>
-                              } />
-                              <Route path="/profile" element={
-                                <ProtectedRoute>
-                                  <LayoutWrapper>
-                                    <Profile />
-                                  </LayoutWrapper>
-                                </ProtectedRoute>
-                              } />
-                              <Route path="/all-exercises" element={
-                                <ProtectedRoute>
-                                  <LayoutWrapper>
-                                    <AllExercises />
-                                  </LayoutWrapper>
-                                </ProtectedRoute>
-                              } />
-                              <Route path="/training-session" element={
-                                <ProtectedRoute>
-                                  <TrainingSession />
-                                </ProtectedRoute>
-                              } />
-                              <Route path="/workout/:id" element={
-                                <ProtectedRoute>
-                                  <LayoutWrapper>
-                                    <WorkoutDetails />
-                                  </LayoutWrapper>
-                                </ProtectedRoute>
-                              } />
-                              <Route path="/design-system" element={<DesignSystemPage />} />
-                            </Routes>
-                          </Suspense>
-                          <Toaster />
-                          <Sonner />
-                        </div>
-                      </LayoutProvider>
-                    </WorkoutNavigationContextProvider>
-                  </WorkoutDataProvider>
+                  <WorkoutStatsProvider>
+                    <WorkoutDataProvider>
+                      <WorkoutNavigationContextProvider>
+                        <LayoutProvider>
+                          <div className="min-h-screen bg-background font-sans antialiased">
+                            <Suspense fallback={<div>Loading...</div>}>
+                              <Routes>
+                                <Route path="/" element={<Index />} />
+                                <Route path="/overview" element={
+                                  <ProtectedRoute>
+                                    <LayoutWrapper>
+                                      <Overview />
+                                    </LayoutWrapper>
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/profile" element={
+                                  <ProtectedRoute>
+                                    <LayoutWrapper>
+                                      <Profile />
+                                    </LayoutWrapper>
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/all-exercises" element={
+                                  <ProtectedRoute>
+                                    <LayoutWrapper>
+                                      <AllExercises />
+                                    </LayoutWrapper>
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/training-session" element={
+                                  <ProtectedRoute>
+                                    <TrainingSession />
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/workout/:id" element={
+                                  <ProtectedRoute>
+                                    <LayoutWrapper>
+                                      <WorkoutDetails />
+                                    </LayoutWrapper>
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/design-system" element={<DesignSystemPage />} />
+                              </Routes>
+                            </Suspense>
+                            <Toaster />
+                            <Sonner />
+                          </div>
+                        </LayoutProvider>
+                      </WorkoutNavigationContextProvider>
+                    </WorkoutDataProvider>
+                  </WorkoutStatsProvider>
                 </WeightUnitProvider>
               </DateRangeProvider>
             </AuthProvider>
