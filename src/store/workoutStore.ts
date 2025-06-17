@@ -1,6 +1,6 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { setProgressionService } from '@/services/SetProgressionService';
 
 export interface ExerciseSet {
   id: string;
@@ -197,14 +197,48 @@ export const useWorkoutStore = create<WorkoutState>()(
         const exercises = { ...state.exercises };
         if (exercises[exerciseName]) {
           const newSetIndex = exercises[exerciseName].length + 1;
+          
+          // Get smart defaults using progression service
+          const context = {
+            exerciseName,
+            currentSets: exercises[exerciseName],
+            userPreferences: state.trainingConfig || {},
+            workoutDuration: state.elapsedTime,
+            totalVolume: exercises[exerciseName].reduce((sum, set) => sum + (set.completed ? set.volume : 0), 0)
+          };
+          
+          const suggestion = setProgressionService.calculateNextSet(context);
+          
+          // Use smart defaults if confidence is high, otherwise use last set values
+          let defaultValues;
+          if (suggestion.confidence > 0.5) {
+            defaultValues = {
+              weight: suggestion.weight,
+              reps: suggestion.reps,
+              restTime: suggestion.restTime
+            };
+          } else {
+            // Fallback to last set values or basic defaults
+            const lastSet = exercises[exerciseName][exercises[exerciseName].length - 1];
+            defaultValues = lastSet ? {
+              weight: lastSet.weight,
+              reps: lastSet.reps,
+              restTime: lastSet.restTime
+            } : {
+              weight: 0,
+              reps: 0,
+              restTime: 60
+            };
+          }
+
           exercises[exerciseName].push({
             id: `${exerciseName}-${newSetIndex}`,
-            weight: 0,
-            reps: 0,
-            restTime: 60,
+            weight: defaultValues.weight,
+            reps: defaultValues.reps,
+            restTime: defaultValues.restTime,
             completed: false,
             isEditing: false,
-            volume: 0,
+            volume: defaultValues.weight * defaultValues.reps,
             duration: '0:00'
           });
         }
@@ -273,8 +307,8 @@ export const useWorkoutStore = create<WorkoutState>()(
       partialize: (state) => ({
         isActive: state.isActive,
         exercises: state.exercises,
-        elapsedTime: validateElapsedTime(state.elapsedTime), // Validate on persist
-        restTimerActive: state.restTimerActive, // Persist rest timer state
+        elapsedTime: validateElapsedTime(state.elapsedTime),
+        restTimerActive: state.restTimerActive,
         currentRestTime: state.currentRestTime,
         restTimerTargetDuration: state.restTimerTargetDuration,
         trainingConfig: state.trainingConfig,
