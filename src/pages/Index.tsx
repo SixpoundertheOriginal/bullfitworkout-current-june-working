@@ -84,17 +84,13 @@ const Index = () => {
     }
   ];
 
-  // Calculate progress for enhanced button
-  const dailyGoalProgress = stats?.totalWorkouts ? Math.min(100, (stats.totalWorkouts % 1) * 100) : 0;
-  const weeklyGoalProgress = stats?.streakDays ? Math.min(100, (stats.streakDays % 7 / 4) * 100) : 0;
-
   // Update handleStartTraining to go to funnel instead of direct training
   const handleStartWorkoutFunnel = () => {
     window.location.href = '/workout-setup/type';
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Animated Level Up Overlay */}
       <AnimatePresence>
         {showLevelUp && <AnimatedLevelUp show={showLevelUp} />}
@@ -115,7 +111,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Content - Now properly spaced for header */}
+      {/* Main Content - Properly spaced for header and footer */}
       <div className="relative z-10 pb-24">
         {/* Enhanced Header */}
         <motion.div
