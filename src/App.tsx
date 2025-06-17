@@ -51,7 +51,11 @@ function App() {
                           <div className="min-h-screen bg-background font-sans antialiased">
                             <Suspense fallback={<div>Loading...</div>}>
                               <Routes>
-                                <Route path="/" element={<Index />} />
+                                <Route path="/" element={
+                                  <LayoutWrapper>
+                                    <Index />
+                                  </LayoutWrapper>
+                                } />
                                 <Route path="/overview" element={
                                   <ProtectedRoute>
                                     <LayoutWrapper>

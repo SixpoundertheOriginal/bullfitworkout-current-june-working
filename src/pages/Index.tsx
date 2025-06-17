@@ -94,7 +94,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Animated Level Up Overlay */}
       <AnimatePresence>
         {showLevelUp && <AnimatedLevelUp show={showLevelUp} />}
@@ -115,7 +115,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
+      {/* Main Content - Now properly spaced for header */}
       <div className="relative z-10 pb-24">
         {/* Enhanced Header */}
         <motion.div
