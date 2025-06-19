@@ -1,11 +1,10 @@
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { workoutHistoryApi } from '@/services/workoutHistoryService';
 import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
 import { useAuth } from '@/context/AuthContext';
 import { calendarApi } from '@/services/calendarService';
-import { subscriptionManager } from '@/services/SubscriptionManager';
 
 // Define WorkoutHistoryFilters interface to use throughout the application
 export type { WorkoutHistoryFilters };
@@ -28,16 +27,14 @@ export function useWorkoutDates(year: number, month: number) {
   });
 }
 
+// Pure data fetching hook - NO subscription management
 export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }) {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
-  
-  // Simple state for subscription management
-  const [isSubscribed, setIsSubscribed] = useState(false);
   
   const queryInfo = useQuery({
     queryKey: [
       'workout-history', 
+      user?.id,
       filters.limit, 
       filters.offset, 
       filters.startDate, 
@@ -45,50 +42,10 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
       filters.trainingTypes
     ],
     queryFn: () => workoutHistoryApi.fetch(filters),
+    enabled: !!user?.id,
     staleTime: 30000,
     retry: 2,
   });
-  
-  // Stable callback function for workout changes
-  const handleWorkoutChange = useCallback((payload: any) => {
-    console.log('[useWorkoutHistory] Workout change detected, invalidating queries:', payload);
-    
-    // Simple debouncing with setTimeout
-    const timeoutId = setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
-    }, 1000);
-    
-    // Store timeout ID for potential cleanup
-    return () => clearTimeout(timeoutId);
-  }, [queryClient]);
-  
-  // Set up subscription - only depends on user.id and isSubscribed
-  useEffect(() => {
-    if (!user?.id || isSubscribed) return;
-
-    console.log('[useWorkoutHistory] Setting up subscription');
-
-    // Use the centralized subscription manager
-    const unsubscribe = subscriptionManager.subscribe({
-      channelName: `workout-history-${user.id}`,
-      table: 'workout_sessions',
-      events: ['INSERT', 'UPDATE', 'DELETE'],
-      callback: handleWorkoutChange
-    });
-
-    setIsSubscribed(true);
-    console.log('[useWorkoutHistory] Subscription established via manager');
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-        setIsSubscribed(false);
-        console.log('[useWorkoutHistory] Subscription cleaned up');
-      }
-    };
-  }, [user?.id, isSubscribed, handleWorkoutChange]);
   
   return queryInfo;
 }
@@ -105,7 +62,7 @@ export interface ValidatedWorkoutSession {
   }>;
 }
 
-// New hook that wraps useWorkoutHistory and validates data
+// Validated workout history hook - pure data transformation
 export const useValidatedWorkoutHistory = (filters: WorkoutHistoryFilters = { limit: 30 }) => {
   const { data, ...rest } = useWorkoutHistory(filters);
 

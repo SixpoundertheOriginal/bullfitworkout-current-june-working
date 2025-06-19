@@ -1,12 +1,11 @@
 
-import React, { createContext, useContext, ReactNode, useMemo, useRef, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { useDateRange } from '@/context/DateRangeContext';
 import { useWeightUnit } from '@/context/WeightUnitContext';
 import { WorkoutStats } from '@/types/workout-metrics';
 import { workoutStatsApi } from '@/services/workoutStatsService';
-import { subscriptionManager } from '@/services/SubscriptionManager';
 import { useCleanup } from '@/hooks/useCleanup';
 
 interface WorkoutDataContextType {
@@ -49,10 +48,6 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
   const { weightUnit } = useWeightUnit();
   const queryClient = useQueryClient();
   const { registerCleanup } = useCleanup('workout-data-provider');
-  
-  // Use refs to prevent subscription recreation on re-renders
-  const subscriptionRef = useRef<(() => void) | null>(null);
-  const isSubscribedRef = useRef(false);
 
   // Create stable query keys
   const primaryQueryKey = useMemo(() => [
@@ -73,7 +68,7 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
     'comparison'
   ], [user?.id, comparisonRange, weightUnit]);
 
-  // Primary stats query
+  // Primary stats query - NO subscription logic
   const {
     data: stats,
     isLoading: primaryLoading,
@@ -91,7 +86,7 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
     refetchOnMount: false,
   });
 
-  // Comparison stats query
+  // Comparison stats query - NO subscription logic
   const {
     data: comparisonStats,
     isLoading: comparisonLoading,
@@ -105,48 +100,6 @@ export function WorkoutDataProvider({ children }: { children: ReactNode }) {
     retry: 1,
     refetchOnWindowFocus: false,
   });
-
-  // Set up unified real-time subscriptions with enterprise architecture
-  useEffect(() => {
-    if (!user?.id || isSubscribedRef.current) return;
-
-    const handleWorkoutChange = (payload: any) => {
-      console.log('[WorkoutDataProvider] Workout change detected, invalidating queries:', payload);
-      queryClient.invalidateQueries({ queryKey: ['workout-stats-unified'] });
-      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
-    };
-
-    // Subscribe using the centralized manager with enhanced configuration
-    subscriptionRef.current = subscriptionManager.subscribe({
-      channelName: `workout-data-${user.id}`,
-      table: 'workout_sessions',
-      events: ['INSERT', 'UPDATE', 'DELETE'],
-      callback: handleWorkoutChange,
-      filter: `user_id=eq.${user.id}`
-    });
-
-    // Register cleanup with high priority
-    registerCleanup(() => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current();
-        subscriptionRef.current = null;
-        isSubscribedRef.current = false;
-      }
-    }, 'high');
-
-    isSubscribedRef.current = true;
-    console.log('[WorkoutDataProvider] Enterprise subscription established');
-
-    return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current();
-        subscriptionRef.current = null;
-        isSubscribedRef.current = false;
-      }
-    };
-  }, [user?.id, queryClient, registerCleanup]);
 
   // Refetch function
   const refetch = React.useCallback(() => {

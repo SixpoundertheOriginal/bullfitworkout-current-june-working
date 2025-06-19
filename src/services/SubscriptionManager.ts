@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -16,6 +15,9 @@ interface ActiveSubscription {
   config: SubscriptionConfig;
   lastActivity: number;
   saveOperationInProgress?: boolean;
+  connectionAttempts: number;
+  lastConnectionAttempt: number;
+  isHealthy: boolean;
 }
 
 // Global save operation tracker
@@ -26,7 +28,9 @@ class SubscriptionManager {
   private subscriptions = new Map<string, ActiveSubscription>();
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private isCleaningUp = false;
-  private readonly CLEANUP_DELAY_MS = 8000; // Increased to 8 seconds for save operations
+  private readonly CLEANUP_DELAY_MS = 8000;
+  private readonly MAX_CONNECTION_ATTEMPTS = 5;
+  private readonly CONNECTION_RETRY_BASE_DELAY = 1000;
 
   static getInstance(): SubscriptionManager {
     if (!SubscriptionManager.instance) {
@@ -98,6 +102,9 @@ class SubscriptionManager {
       return () => this.unsubscribe(key);
     }
 
+    // Check connection attempts for circuit breaker pattern
+    const now = Date.now();
+    
     console.log(`[SubscriptionManager] Creating new subscription ${key}`);
     
     const channel = supabase.channel(config.channelName);
@@ -120,6 +127,7 @@ class SubscriptionManager {
           const subscription = this.subscriptions.get(key);
           if (subscription) {
             subscription.lastActivity = Date.now();
+            subscription.isHealthy = true;
           }
         } catch (error) {
           console.error(`[SubscriptionManager] Callback error for ${key}:`, error);
@@ -128,16 +136,31 @@ class SubscriptionManager {
     });
 
     channel.subscribe((status, err) => {
+      const subscription = this.subscriptions.get(key);
+      
       if (status === 'SUBSCRIBED') {
         console.log(`[SubscriptionManager] Successfully subscribed to ${key}`);
+        if (subscription) {
+          subscription.connectionAttempts = 0;
+          subscription.isHealthy = true;
+        }
       } else if (status === 'CHANNEL_ERROR') {
         console.error(`[SubscriptionManager] Subscription error for ${key}:`, err);
+        if (subscription) {
+          subscription.isHealthy = false;
+        }
         this.handleSubscriptionError(key);
       } else if (status === 'TIMED_OUT') {
         console.warn(`[SubscriptionManager] Subscription timeout for ${key}`);
+        if (subscription) {
+          subscription.isHealthy = false;
+        }
         this.handleSubscriptionError(key);
       } else if (status === 'CLOSED') {
         console.log(`[SubscriptionManager] Subscription closed for ${key}`);
+        if (subscription) {
+          subscription.isHealthy = false;
+        }
       }
     });
 
@@ -146,7 +169,10 @@ class SubscriptionManager {
       refCount: 1,
       config,
       lastActivity: Date.now(),
-      saveOperationInProgress: false
+      saveOperationInProgress: false,
+      connectionAttempts: 0,
+      lastConnectionAttempt: now,
+      isHealthy: false
     });
 
     return () => this.unsubscribe(key);
@@ -163,19 +189,14 @@ class SubscriptionManager {
       const hasSaveOps = this.hasSaveOperationsInProgress();
       const subHasSaveOp = subscription.saveOperationInProgress;
       
-      // Check if we should delay cleanup due to save operations
       if (hasSaveOps || subHasSaveOp) {
-        console.log(`[SubscriptionManager] Delaying cleanup for ${key} due to save operations (global: ${hasSaveOps}, local: ${subHasSaveOp})`);
+        console.log(`[SubscriptionManager] Delaying cleanup for ${key} due to save operations`);
         
-        // Schedule delayed cleanup with longer delay
         setTimeout(() => {
-          // Double-check if subscription still exists and no saves are in progress
           const sub = this.subscriptions.get(key);
           if (sub && sub.refCount <= 0 && !this.hasSaveOperationsInProgress() && !sub.saveOperationInProgress) {
             console.log(`[SubscriptionManager] Executing delayed cleanup for ${key}`);
             this.removeSubscription(key, sub);
-          } else {
-            console.log(`[SubscriptionManager] Skipping delayed cleanup for ${key} - still needed or save in progress`);
           }
         }, this.CLEANUP_DELAY_MS);
       } else {
@@ -199,19 +220,37 @@ class SubscriptionManager {
   private handleSubscriptionError(key: string): void {
     console.error(`[SubscriptionManager] Handling error for subscription ${key}`);
     const subscription = this.subscriptions.get(key);
-    if (subscription && !this.isCleaningUp) {
-      // Remove the failed subscription
-      this.removeSubscription(key, subscription);
-      
-      // Attempt to recreate after a delay with exponential backoff
-      const retryDelay = Math.min(2000 * Math.pow(2, subscription.refCount), 10000);
-      setTimeout(() => {
-        if (!this.isCleaningUp && !this.subscriptions.has(key)) {
-          console.log(`[SubscriptionManager] Attempting to recreate subscription ${key}`);
-          this.subscribe(subscription.config);
-        }
-      }, retryDelay);
+    if (!subscription || this.isCleaningUp) return;
+
+    subscription.connectionAttempts++;
+    const now = Date.now();
+
+    // Circuit breaker: stop retrying after max attempts
+    if (subscription.connectionAttempts >= this.MAX_CONNECTION_ATTEMPTS) {
+      console.error(`[SubscriptionManager] Max connection attempts reached for ${key}, stopping retries`);
+      return;
     }
+
+    // Exponential backoff with jitter
+    const backoffDelay = Math.min(
+      this.CONNECTION_RETRY_BASE_DELAY * Math.pow(2, subscription.connectionAttempts - 1),
+      30000 // Max 30 seconds
+    );
+    const jitter = Math.random() * 1000;
+    const totalDelay = backoffDelay + jitter;
+
+    console.log(`[SubscriptionManager] Retrying ${key} in ${totalDelay}ms (attempt ${subscription.connectionAttempts})`);
+
+    // Remove the failed subscription
+    this.removeSubscription(key, subscription);
+    
+    // Attempt to recreate after delay
+    setTimeout(() => {
+      if (!this.isCleaningUp && !this.subscriptions.has(key)) {
+        console.log(`[SubscriptionManager] Attempting to recreate subscription ${key}`);
+        this.subscribe(subscription.config);
+      }
+    }, totalDelay);
   }
 
   private startHealthCheck(): void {
@@ -219,19 +258,21 @@ class SubscriptionManager {
     
     this.healthCheckInterval = setInterval(() => {
       this.performHealthCheck();
-    }, 30000); // Check every 30 seconds
+    }, 60000); // Check every minute
   }
 
   private performHealthCheck(): void {
     if (this.isCleaningUp) return;
 
     const now = Date.now();
-    const staleThreshold = 5 * 60 * 1000; // 5 minutes
+    const staleThreshold = 10 * 60 * 1000; // 10 minutes
 
     for (const [key, subscription] of this.subscriptions.entries()) {
-      if (now - subscription.lastActivity > staleThreshold) {
-        console.warn(`[SubscriptionManager] Stale subscription detected: ${key}`);
-        // Could implement reconnection logic here if needed
+      const timeSinceActivity = now - subscription.lastActivity;
+      
+      if (timeSinceActivity > staleThreshold && !subscription.isHealthy) {
+        console.warn(`[SubscriptionManager] Unhealthy stale subscription detected: ${key}`);
+        // Could implement health recovery here
       }
     }
 
@@ -262,12 +303,14 @@ class SubscriptionManager {
     return Array.from(this.subscriptions.keys());
   }
 
-  getSubscriptionHealth(): { [key: string]: { refCount: number; lastActivity: number } } {
-    const health: { [key: string]: { refCount: number; lastActivity: number } } = {};
+  getSubscriptionHealth(): { [key: string]: { refCount: number; lastActivity: number; isHealthy: boolean; connectionAttempts: number } } {
+    const health: { [key: string]: { refCount: number; lastActivity: number; isHealthy: boolean; connectionAttempts: number } } = {};
     for (const [key, subscription] of this.subscriptions.entries()) {
       health[key] = {
         refCount: subscription.refCount,
-        lastActivity: subscription.lastActivity
+        lastActivity: subscription.lastActivity,
+        isHealthy: subscription.isHealthy,
+        connectionAttempts: subscription.connectionAttempts
       };
     }
     return health;
