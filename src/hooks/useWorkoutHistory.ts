@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { workoutHistoryApi } from '@/services/workoutHistoryService';
 import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
@@ -32,9 +32,8 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
-  // Simple state for subscription management without useRef
+  // Simple state for subscription management
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState(0);
   
   const queryInfo = useQuery({
     queryKey: [
@@ -50,33 +49,26 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
     retry: 2,
   });
   
-  // Set up subscription using centralized manager with debouncing
+  // Stable callback function for workout changes
+  const handleWorkoutChange = useCallback((payload: any) => {
+    console.log('[useWorkoutHistory] Workout change detected, invalidating queries:', payload);
+    
+    // Simple debouncing with setTimeout
+    const timeoutId = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
+    }, 1000);
+    
+    // Store timeout ID for potential cleanup
+    return () => clearTimeout(timeoutId);
+  }, [queryClient]);
+  
+  // Set up subscription - only depends on user.id and isSubscribed
   useEffect(() => {
     if (!user?.id || isSubscribed) return;
 
-    const handleWorkoutChange = (payload: any) => {
-      const now = Date.now();
-      
-      // Debounce rapid updates (common during save operations)
-      if (now - lastUpdate < 2000) {
-        console.log('[useWorkoutHistory] Debouncing rapid update');
-        return;
-      }
-      
-      setLastUpdate(now);
-      
-      console.log('[useWorkoutHistory] Workout change detected, invalidating queries:', payload);
-      
-      // Stagger query invalidations to prevent race conditions
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-      }, 500);
-      
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['workouts'] });
-        queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
-      }, 1000);
-    };
+    console.log('[useWorkoutHistory] Setting up subscription');
 
     // Use the centralized subscription manager
     const unsubscribe = subscriptionManager.subscribe({
@@ -96,7 +88,7 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
         console.log('[useWorkoutHistory] Subscription cleaned up');
       }
     };
-  }, [user?.id, queryClient, isSubscribed, lastUpdate]);
+  }, [user?.id, isSubscribed, handleWorkoutChange]);
   
   return queryInfo;
 }
