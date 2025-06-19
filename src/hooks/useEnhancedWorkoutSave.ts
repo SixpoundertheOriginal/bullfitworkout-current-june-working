@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { globalCleanupService } from '@/services/GlobalCleanupService';
 import type { ExerciseSet } from '@/store/workoutStore';
 
 interface WorkoutData {
@@ -48,7 +49,8 @@ export const useEnhancedWorkoutSave = () => {
       
       console.log(`[EnhancedWorkoutSave] Starting save operation: ${operationId}`);
       
-      // REMOVED: subscriptionManager.markSaveOperationActive - React Query handles save state
+      // Disable cleanup during save operation
+      globalCleanupService.disableCleanupTemporarily(15000); // 15 seconds
       
       try {
         setSaveStatus('saving');
@@ -165,7 +167,6 @@ export const useEnhancedWorkoutSave = () => {
         console.error(`[EnhancedWorkoutSave] Save failed:`, error);
         throw error;
       } finally {
-        // REMOVED: subscriptionManager.markSaveOperationComplete - not needed with React Query
         operationIdRef.current = null;
       }
     },
@@ -201,8 +202,6 @@ export const useEnhancedWorkoutSave = () => {
   const reset = () => {
     setSaveProgress(0);
     setSaveStatus('idle');
-    
-    // REMOVED: subscriptionManager cleanup - not needed
     operationIdRef.current = null;
   };
 

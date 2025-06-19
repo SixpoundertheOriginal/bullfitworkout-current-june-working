@@ -5,6 +5,9 @@ import { cleanupManager } from '@/hooks/useCleanup';
 class GlobalCleanupService {
   private static instance: GlobalCleanupService;
   private isInitialized = false;
+  private cleanupTimeout: NodeJS.Timeout | null = null;
+  private readonly CLEANUP_DELAY = 5000; // 5 seconds
+  private isCleanupDisabled = false;
 
   static getInstance(): GlobalCleanupService {
     if (!GlobalCleanupService.instance) {
@@ -25,29 +28,84 @@ class GlobalCleanupService {
       subscriptionManager.cleanup();
     }, 'high');
 
-    // Set up ONLY essential cleanup listeners (remove aggressive monitoring)
-    this.setupEssentialListeners();
+    // Set up debounced cleanup listeners
+    this.setupDebouncedListeners();
     this.isInitialized = true;
-    console.log('[GlobalCleanupService] Essential cleanup service initialized');
+    console.log('[GlobalCleanupService] Debounced cleanup service initialized');
   }
 
-  private setupEssentialListeners(): void {
-    // Only cleanup on page visibility change (mobile backgrounding) - ESSENTIAL
+  private setupDebouncedListeners(): void {
+    // Debounced page visibility change - only cleanup after sustained backgrounding
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        console.log('[GlobalCleanupService] Page hidden - performing essential cleanup');
-        this.performCleanup();
-      }
+      this.handleVisibilityChange();
     });
 
-    // Only cleanup on page unload - ESSENTIAL
+    // Still cleanup on page unload - this should be immediate
     window.addEventListener('beforeunload', () => {
       this.performCleanup();
     });
+  }
 
-    // REMOVED: Aggressive memory monitoring intervals
-    // REMOVED: Navigation cleanup (causes race conditions)
-    // REMOVED: Memory pressure monitoring (too aggressive)
+  private handleVisibilityChange(): void {
+    if (document.hidden) {
+      // Page is hidden - start cleanup timer
+      console.log('[GlobalCleanupService] Page hidden - starting cleanup timer (5s delay)');
+      this.cleanupTimeout = setTimeout(() => {
+        // Double-check page is still hidden and it's safe to cleanup
+        if (document.hidden && this.isSafeToCleanup()) {
+          console.log('[GlobalCleanupService] Page remained hidden - performing cleanup');
+          this.performCleanup();
+        } else {
+          console.log('[GlobalCleanupService] Cleanup cancelled - page visible or operations in progress');
+        }
+      }, this.CLEANUP_DELAY);
+    } else {
+      // Page is visible again - cancel cleanup
+      if (this.cleanupTimeout) {
+        console.log('[GlobalCleanupService] Page visible again - cancelling cleanup timer');
+        clearTimeout(this.cleanupTimeout);
+        this.cleanupTimeout = null;
+      }
+    }
+  }
+
+  private isSafeToCleanup(): boolean {
+    // Don't cleanup if explicitly disabled
+    if (this.isCleanupDisabled) {
+      return false;
+    }
+
+    // Check if React Query has pending mutations
+    try {
+      // Access the global query client if available
+      const queryClient = (window as any).__REACT_QUERY_CLIENT__;
+      if (queryClient && queryClient.isMutating && queryClient.isMutating() > 0) {
+        console.log('[GlobalCleanupService] React Query mutations in progress - deferring cleanup');
+        return false;
+      }
+    } catch (error) {
+      // If we can't check React Query state, err on the side of caution
+      console.warn('[GlobalCleanupService] Could not check React Query state:', error);
+    }
+
+    // Check if page has focus (additional safety check)
+    if (document.hasFocus && document.hasFocus()) {
+      console.log('[GlobalCleanupService] Page still has focus - deferring cleanup');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Method to temporarily disable cleanup during critical operations
+  disableCleanupTemporarily(duration: number = 10000): void {
+    this.isCleanupDisabled = true;
+    console.log(`[GlobalCleanupService] Cleanup disabled for ${duration}ms`);
+    
+    setTimeout(() => {
+      this.isCleanupDisabled = false;
+      console.log('[GlobalCleanupService] Cleanup re-enabled');
+    }, duration);
   }
 
   addCleanupTask(task: () => void, priority: 'high' | 'medium' | 'low' = 'medium'): void {
@@ -55,7 +113,13 @@ class GlobalCleanupService {
   }
 
   performCleanup(): void {
-    console.log('[GlobalCleanupService] Performing essential cleanup only');
+    // Cancel any pending cleanup timer
+    if (this.cleanupTimeout) {
+      clearTimeout(this.cleanupTimeout);
+      this.cleanupTimeout = null;
+    }
+
+    console.log('[GlobalCleanupService] Performing cleanup');
     
     try {
       cleanupManager.globalCleanup();
