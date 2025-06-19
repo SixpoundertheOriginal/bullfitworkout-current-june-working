@@ -11,13 +11,15 @@ import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { useWorkouts } from '@/hooks/useWorkouts';
 
 export const OverviewContent: React.FC = React.memo(() => {
-  const { isLoading, error: workoutsError } = useWorkouts();
+  // Single useWorkouts call to prevent infinite re-renders
+  const { workouts, isLoading, error: workoutsError } = useWorkouts();
+  
   const { 
     overviewMetrics, 
     workoutTypeData, 
     muscleFocusData, 
     loading: statsLoading 
-  } = useOverviewMetrics();
+  } = useOverviewMetrics(workouts || []);
 
   // Show error state with fallback
   if (workoutsError) {
@@ -70,8 +72,6 @@ export const OverviewContent: React.FC = React.memo(() => {
       </div>
     );
   }
-
-  const { workouts } = useWorkouts();
 
   return (
     <div className="container-app py-6 space-y-6">

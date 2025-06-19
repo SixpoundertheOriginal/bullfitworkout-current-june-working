@@ -31,17 +31,23 @@ export function useWorkoutDates(year: number, month: number) {
 export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }) {
   const { user } = useAuth();
   
+  // Memoize query key to prevent unnecessary re-renders
+  const queryKey = useMemo(() => [
+    'workout-history', 
+    user?.id,
+    filters.limit, 
+    filters.offset, 
+    filters.startDate, 
+    filters.endDate, 
+    filters.trainingTypes
+  ], [user?.id, filters.limit, filters.offset, filters.startDate, filters.endDate, filters.trainingTypes]);
+  
   const queryInfo = useQuery({
-    queryKey: [
-      'workout-history', 
-      user?.id,
-      filters.limit, 
-      filters.offset, 
-      filters.startDate, 
-      filters.endDate, 
-      filters.trainingTypes
-    ],
-    queryFn: () => workoutHistoryApi.fetch(filters),
+    queryKey,
+    queryFn: () => {
+      console.log('[useWorkoutHistory] Fetching workout history with filters:', filters);
+      return workoutHistoryApi.fetch(filters);
+    },
     enabled: !!user?.id,
     staleTime: 30000,
     retry: 2,

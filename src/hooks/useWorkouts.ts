@@ -18,7 +18,10 @@ export const useWorkouts = () => {
 
   const baseWorkouts = data?.workouts;
 
-  const workoutIds = useMemo(() => (baseWorkouts || []).map(w => w.id), [baseWorkouts]);
+  const workoutIds = useMemo(() => {
+    if (!baseWorkouts || baseWorkouts.length === 0) return [];
+    return baseWorkouts.map(w => w.id);
+  }, [baseWorkouts]);
 
   const { data: workoutDetails, isLoading: detailsLoading, error: detailsError } = useQuery({
     queryKey: ['workoutDetails', workoutIds],
