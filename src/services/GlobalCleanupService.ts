@@ -25,40 +25,29 @@ class GlobalCleanupService {
       subscriptionManager.cleanup();
     }, 'high');
 
-    // Set up global cleanup listeners
-    this.setupEventListeners();
+    // Set up ONLY essential cleanup listeners (remove aggressive monitoring)
+    this.setupEssentialListeners();
     this.isInitialized = true;
-    console.log('[GlobalCleanupService] Enterprise cleanup service initialized');
+    console.log('[GlobalCleanupService] Essential cleanup service initialized');
   }
 
-  private setupEventListeners(): void {
-    // Cleanup on page visibility change (mobile backgrounding)
+  private setupEssentialListeners(): void {
+    // Only cleanup on page visibility change (mobile backgrounding) - ESSENTIAL
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
+        console.log('[GlobalCleanupService] Page hidden - performing essential cleanup');
         this.performCleanup();
       }
     });
 
-    // Cleanup on page unload
+    // Only cleanup on page unload - ESSENTIAL
     window.addEventListener('beforeunload', () => {
       this.performCleanup();
     });
 
-    // Cleanup on navigation (SPA routing)
-    window.addEventListener('popstate', () => {
-      this.performCleanup();
-    });
-
-    // Memory pressure cleanup
-    if ('memory' in performance) {
-      setInterval(() => {
-        const memInfo = (performance as any).memory;
-        if (memInfo && memInfo.usedJSHeapSize > memInfo.totalJSHeapSize * 0.8) {
-          console.warn('[GlobalCleanupService] High memory usage detected, performing cleanup');
-          this.performCleanup();
-        }
-      }, 30000); // Check every 30 seconds
-    }
+    // REMOVED: Aggressive memory monitoring intervals
+    // REMOVED: Navigation cleanup (causes race conditions)
+    // REMOVED: Memory pressure monitoring (too aggressive)
   }
 
   addCleanupTask(task: () => void, priority: 'high' | 'medium' | 'low' = 'medium'): void {
@@ -66,10 +55,9 @@ class GlobalCleanupService {
   }
 
   performCleanup(): void {
-    console.log('[GlobalCleanupService] Performing enterprise cleanup');
+    console.log('[GlobalCleanupService] Performing essential cleanup only');
     
     try {
-      // Use the centralized cleanup manager
       cleanupManager.globalCleanup();
     } catch (error) {
       console.error('[GlobalCleanupService] Error during cleanup:', error);

@@ -15,20 +15,18 @@ export interface ExerciseSet {
   exercise_name?: string;
   workout_id?: string;
   rest_time?: number;
-  timestamp?: number; // Add timestamp for recovery
+  timestamp?: number;
 }
 
 export interface WorkoutState {
-  // Core workout state
+  // Core workout state - SIMPLIFIED
   isActive: boolean;
   explicitlyEnded: boolean;
-  workoutStatus: 'idle' | 'active' | 'saving' | 'saved' | 'failed';
+  workoutStatus: 'idle' | 'active'; // REMOVED save states - React Query handles this
   exercises: Record<string, ExerciseSet[]>;
   
-  // Save state tracking
-  saveInProgress: boolean;
-  saveConfirmed: boolean;
-  saveError: string | null;
+  // REMOVED: Dual state management with React Query
+  // saveInProgress, saveConfirmed, saveError - React Query handles all save states
   
   // Timer state with validation
   elapsedTime: number;
@@ -60,7 +58,7 @@ export interface WorkoutState {
   startTime?: number;
   needsRecovery?: boolean;
   
-  // Actions
+  // Actions - SIMPLIFIED (removed save state actions)
   startWorkout: (config?: any) => void;
   endWorkout: () => void;
   resetWorkout: () => void;
@@ -80,14 +78,13 @@ export interface WorkoutState {
   stopRestTimer: () => void;
   resetRestTimer: () => void;
   setTrainingConfig: (config: any) => void;
-  setWorkoutStatus: (status: 'idle' | 'active' | 'saving' | 'saved' | 'failed') => void;
+  setWorkoutStatus: (status: 'idle' | 'active') => void; // SIMPLIFIED
   updateLastActiveRoute: (route: string) => void;
   setExercises: (exercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => void;
-  markAsSaving: () => void;
-  markAsSaved: () => void;
-  markAsFailed: (error: any) => void;
-  setSaveInProgress: (inProgress: boolean) => void;
-  setSaveConfirmed: (confirmed: boolean) => void;
+  
+  // REMOVED: Save state management actions - React Query handles these
+  // markAsSaving, markAsSaved, markAsFailed, setSaveInProgress, setSaveConfirmed
+  
   workoutId?: string;
   handleCompleteSet?: (exerciseName: string, setIndex: number) => void;
   
@@ -139,14 +136,12 @@ const calculateWorkoutStartTime = (exercises: Record<string, ExerciseSet[]>): nu
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set, get) => ({
-      // Initial state
+      // Initial state - SIMPLIFIED
       isActive: false,
       explicitlyEnded: false,
-      workoutStatus: 'idle',
+      workoutStatus: 'idle', // SIMPLIFIED - only idle/active
       exercises: {},
-      saveInProgress: false,
-      saveConfirmed: false,
-      saveError: null,
+      // REMOVED: saveInProgress, saveConfirmed, saveError
       elapsedTime: 0,
       restTimerActive: false,
       restTimerResetSignal: 0,
@@ -160,7 +155,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       startTime: undefined,
       needsRecovery: false,
 
-      // Enhanced actions with recovery support
+      // Enhanced actions - SIMPLIFIED
       startWorkout: (config) => {
         const now = Date.now();
         set({
@@ -168,9 +163,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           explicitlyEnded: false,
           workoutStatus: 'active',
           elapsedTime: 0,
-          saveInProgress: false,
-          saveConfirmed: false,
-          saveError: null,
+          // REMOVED: Save state resets - React Query handles this
           trainingConfig: config || null,
           sessionId: `workout_${now}`,
           startTime: now,
@@ -199,23 +192,17 @@ export const useWorkoutStore = create<WorkoutState>()(
         sessionId: undefined,
         workoutId: undefined,
         startTime: undefined,
-        saveInProgress: false,
-        saveConfirmed: false,
-        saveError: null,
+        // REMOVED: Save state resets
         needsRecovery: false
       }),
 
-      // Safe reset that checks save status
+      // Safe reset - SIMPLIFIED (removed save state checks)
       safeResetWorkout: () => {
         const state = get();
         
-        if (state.saveInProgress) {
-          console.warn('[WorkoutStore] Cannot reset workout while save is in progress');
-          return;
-        }
-
-        if (state.isActive && !state.saveConfirmed && Object.keys(state.exercises).length > 0) {
-          console.warn('[WorkoutStore] Cannot reset active workout without save confirmation');
+        // SIMPLIFIED: Just check if workout is active and has exercises
+        if (state.isActive && Object.keys(state.exercises).length > 0) {
+          console.warn('[WorkoutStore] Cannot reset active workout with exercises');
           return;
         }
 
@@ -234,9 +221,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           sessionId: undefined,
           workoutId: undefined,
           startTime: undefined,
-          saveInProgress: false,
-          saveConfirmed: false,
-          saveError: null,
           needsRecovery: false
         });
       },
@@ -385,29 +369,6 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: typeof exercises === 'function' ? exercises(state.exercises) : exercises
       })),
 
-      markAsSaving: () => set({ 
-        workoutStatus: 'saving',
-        saveInProgress: true,
-        saveError: null 
-      }),
-
-      markAsSaved: () => set({ 
-        workoutStatus: 'saved',
-        saveInProgress: false,
-        saveConfirmed: true,
-        saveError: null 
-      }),
-
-      markAsFailed: (error) => set({ 
-        workoutStatus: 'failed',
-        saveInProgress: false,
-        saveError: error?.message || 'Save failed' 
-      }),
-
-      setSaveInProgress: (inProgress) => set({ saveInProgress: inProgress }),
-      
-      setSaveConfirmed: (confirmed) => set({ saveConfirmed: confirmed }),
-
       handleCompleteSet: (exerciseName, setIndex) => {
         const state = get();
         set({ restTimerActive: true, currentRestTime: 60 });
@@ -476,9 +437,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         lastActiveRoute: state.lastActiveRoute,
         sessionId: state.sessionId,
         workoutId: state.workoutId,
-        saveInProgress: state.saveInProgress,
-        saveConfirmed: state.saveConfirmed,
-        startTime: state.startTime, // Now persisted
+        // REMOVED: Save state persistence
+        startTime: state.startTime,
         needsRecovery: state.needsRecovery
       })
     }
