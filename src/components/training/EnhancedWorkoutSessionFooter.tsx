@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Plus, CheckCircle } from 'lucide-react';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { cn } from '@/lib/utils';
@@ -11,22 +11,29 @@ interface EnhancedWorkoutSessionFooterProps {
   isSaving: boolean;
 }
 
-export const EnhancedWorkoutSessionFooter: React.FC<EnhancedWorkoutSessionFooterProps> = ({
+// Custom comparison function to prevent unnecessary re-renders
+const arePropsEqual = (
+  prevProps: EnhancedWorkoutSessionFooterProps,
+  nextProps: EnhancedWorkoutSessionFooterProps
+) => {
+  return (
+    prevProps.hasExercises === nextProps.hasExercises &&
+    prevProps.isSaving === nextProps.isSaving &&
+    prevProps.onAddExercise === nextProps.onAddExercise &&
+    prevProps.onFinishWorkout === nextProps.onFinishWorkout
+  );
+};
+
+const EnhancedWorkoutSessionFooterComponent: React.FC<EnhancedWorkoutSessionFooterProps> = ({
   onAddExercise,
   onFinishWorkout,
   hasExercises,
   isSaving,
 }) => {
-  console.log('[EnhancedWorkoutSessionFooter] Render state:', {
-    hasExercises,
-    isSaving,
-    buttonDisabled: !hasExercises || isSaving
-  });
-
-  const handleFinishClick = () => {
-    console.log('[EnhancedWorkoutSessionFooter] Finish button clicked');
+  // Memoize the finish click handler to prevent recreation
+  const handleFinishClick = useCallback(() => {
     onFinishWorkout();
-  };
+  }, [onFinishWorkout]);
 
   return (
     <footer
@@ -64,3 +71,9 @@ export const EnhancedWorkoutSessionFooter: React.FC<EnhancedWorkoutSessionFooter
     </footer>
   );
 };
+
+// Export the memoized component
+export const EnhancedWorkoutSessionFooter = React.memo(
+  EnhancedWorkoutSessionFooterComponent,
+  arePropsEqual
+);
