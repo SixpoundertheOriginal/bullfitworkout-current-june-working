@@ -152,8 +152,8 @@ export const useEnhancedWorkoutSave = () => {
           };
         }
 
-        // Parse transaction result properly
-        const result = transactionResult as TransactionResult;
+        // Parse transaction result properly with safe type conversion
+        const result = transactionResult as unknown as TransactionResult;
         
         setSaveProgress(100);
         console.log(`[EnhancedWorkoutSave] Atomic save completed:`, result?.workout_id);
