@@ -26,6 +26,13 @@ interface SaveResult {
   partialSave?: boolean;
 }
 
+interface TransactionResult {
+  success: boolean;
+  workout_id?: string;
+  error?: string;
+  detail?: string;
+}
+
 export const useEnhancedWorkoutSave = () => {
   const { user } = useAuth();
   const [saveProgress, setSaveProgress] = useState<number>(0);
@@ -145,12 +152,15 @@ export const useEnhancedWorkoutSave = () => {
           };
         }
 
+        // Parse transaction result properly
+        const result = transactionResult as TransactionResult;
+        
         setSaveProgress(100);
-        console.log(`[EnhancedWorkoutSave] Atomic save completed:`, transactionResult?.workout_id);
+        console.log(`[EnhancedWorkoutSave] Atomic save completed:`, result?.workout_id);
         
         return {
           success: true,
-          workoutId: transactionResult?.workout_id
+          workoutId: result?.workout_id
         };
 
       } catch (error) {
