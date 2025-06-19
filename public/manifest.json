@@ -119,10 +119,10 @@
       "name": "Start Workout",
       "short_name": "Workout",
       "description": "Begin a new training session",
-      "url": "/training",
+      "url": "/training-session",
       "icons": [
         {
-          "src": "/icons/shortcut-workout.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96"
         }
       ]
@@ -131,10 +131,10 @@
       "name": "Exercise Library",
       "short_name": "Exercises",
       "description": "Browse exercise library",
-      "url": "/exercises",
+      "url": "/all-exercises",
       "icons": [
         {
-          "src": "/icons/shortcut-library.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96"
         }
       ]
@@ -143,10 +143,10 @@
       "name": "Progress Tracking",
       "short_name": "Progress",
       "description": "View your fitness progress",
-      "url": "/progress",
+      "url": "/overview",
       "icons": [
         {
-          "src": "/icons/shortcut-progress.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96"
         }
       ]

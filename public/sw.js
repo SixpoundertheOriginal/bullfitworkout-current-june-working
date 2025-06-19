@@ -11,7 +11,7 @@ const CRITICAL_ASSETS = [
   '/src/index.css'
 ];
 
-// Updated static assets with proper icon paths
+// Updated static assets - removed missing icon
 const STATIC_ASSETS = [
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
@@ -24,9 +24,7 @@ self.addEventListener('install', (event) => {
       caches.open(STATIC_CACHE).then(cache => 
         cache.addAll(CRITICAL_ASSETS).catch(() => {
           // If critical assets fail, still try static assets
-          return cache.addAll(STATIC_ASSETS.filter(asset => 
-            !asset.includes('icon-144x144.png') // Skip missing icon
-          ));
+          return cache.addAll(STATIC_ASSETS);
         }).catch(() => Promise.resolve())
       )
     ]).then(() => self.skipWaiting())
@@ -60,9 +58,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip missing icons to prevent 404s
-  if (request.url.includes('icon-144x144.png')) {
-    event.respondWith(new Response('', { status: 404 }));
+  // Handle missing icons gracefully
+  if (request.url.includes('icon-144x144.png') || 
+      request.url.includes('shortcut-workout.png') ||
+      request.url.includes('shortcut-library.png') ||
+      request.url.includes('shortcut-progress.png')) {
+    event.respondWith(
+      // Try to serve a fallback icon or return 404
+      caches.match('/icons/icon-192x192.png').then(response => {
+        return response || new Response('', { status: 404 });
+      })
+    );
+    return;
+  }
+
+  // Block Cloudflare insights to prevent 503 errors
+  if (request.url.includes('cloudflareinsights.com')) {
+    event.respondWith(new Response('', { status: 200 }));
     return;
   }
 
