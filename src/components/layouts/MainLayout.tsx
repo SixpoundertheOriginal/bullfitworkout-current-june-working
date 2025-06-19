@@ -31,7 +31,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <main className={cn(
         "flex-1",
         isTrainingSession ? "pt-0" : "pt-16",
-        "pb-20 lg:pb-16" // Extra padding bottom for mobile bottom nav
+        // Adjust bottom padding - no padding when training session (footer handles it)
+        isTrainingSession ? "pb-0" : "pb-20 lg:pb-16"
       )}>
         {children}
       </main>
@@ -41,10 +42,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <Footer />
       )}
       
-      {/* Bottom Navigation - Mobile only */}
-      <div className="lg:hidden">
-        <BottomNav />
-      </div>
+      {/* Bottom Navigation - Hidden on training session pages */}
+      {!isTrainingSession && (
+        <div className="lg:hidden">
+          <BottomNav />
+        </div>
+      )}
       
       {/* Workout Banner */}
       <WorkoutBanner />

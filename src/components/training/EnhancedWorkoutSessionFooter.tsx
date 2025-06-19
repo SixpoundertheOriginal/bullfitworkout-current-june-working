@@ -20,9 +20,9 @@ export const EnhancedWorkoutSessionFooter: React.FC<EnhancedWorkoutSessionFooter
   return (
     <footer
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-40 bg-neutral/90 backdrop-blur-md border-t border-slate-700/50',
-        'p-4', // Base padding
-        'pb-[calc(1rem+env(safe-area-inset-bottom))]' // Override bottom padding to include safe area
+        'fixed bottom-0 left-0 right-0 z-50 bg-neutral/90 backdrop-blur-md border-t border-slate-700/50',
+        'p-4',
+        'pb-[calc(1rem+env(safe-area-inset-bottom))]' // Proper safe area handling
       )}
     >
       <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4">
