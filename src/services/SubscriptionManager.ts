@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -15,13 +14,18 @@ interface ActiveSubscription {
   refCount: number;
   config: SubscriptionConfig;
   lastActivity: number;
+  saveOperationInProgress?: boolean;
 }
+
+// Global save operation tracker
+const activeSaveOperations = new Set<string>();
 
 class SubscriptionManager {
   private static instance: SubscriptionManager;
   private subscriptions = new Map<string, ActiveSubscription>();
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private isCleaningUp = false;
+  private readonly CLEANUP_DELAY_MS = 5000; // 5 second delay for save operations
 
   static getInstance(): SubscriptionManager {
     if (!SubscriptionManager.instance) {
@@ -32,6 +36,35 @@ class SubscriptionManager {
 
   private constructor() {
     this.startHealthCheck();
+  }
+
+  // Mark save operation as active
+  markSaveOperationActive(operationId: string): void {
+    activeSaveOperations.add(operationId);
+    console.log(`[SubscriptionManager] Save operation marked active: ${operationId}`);
+    
+    // Mark all subscriptions as having save operation in progress
+    this.subscriptions.forEach(sub => {
+      sub.saveOperationInProgress = true;
+    });
+  }
+
+  // Mark save operation as complete
+  markSaveOperationComplete(operationId: string): void {
+    activeSaveOperations.delete(operationId);
+    console.log(`[SubscriptionManager] Save operation completed: ${operationId}`);
+    
+    // If no more save operations, clear the flag
+    if (activeSaveOperations.size === 0) {
+      this.subscriptions.forEach(sub => {
+        sub.saveOperationInProgress = false;
+      });
+    }
+  }
+
+  // Check if any save operations are active
+  private hasSaveOperationsInProgress(): boolean {
+    return activeSaveOperations.size > 0;
   }
 
   private generateSubscriptionKey(config: SubscriptionConfig): string {
@@ -47,7 +80,6 @@ class SubscriptionManager {
 
     const key = this.generateSubscriptionKey(config);
     
-    // If subscription already exists, increment ref count
     if (this.subscriptions.has(key)) {
       const existing = this.subscriptions.get(key)!;
       existing.refCount++;
@@ -57,12 +89,10 @@ class SubscriptionManager {
       return () => this.unsubscribe(key);
     }
 
-    // Create new subscription with correct Supabase API
     console.log(`[SubscriptionManager] Creating new subscription ${key}`);
     
     const channel = supabase.channel(config.channelName);
     
-    // Use the correct API: channel.on with proper event configuration
     config.events.forEach(event => {
       const eventConfig: any = {
         event,
@@ -78,7 +108,6 @@ class SubscriptionManager {
         console.log(`[SubscriptionManager] Received ${event} for ${config.table}:`, payload);
         try {
           config.callback(payload);
-          // Update activity timestamp
           const subscription = this.subscriptions.get(key);
           if (subscription) {
             subscription.lastActivity = Date.now();
@@ -89,7 +118,6 @@ class SubscriptionManager {
       });
     });
 
-    // Subscribe to the channel with error handling
     channel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log(`[SubscriptionManager] Successfully subscribed to ${key}`);
@@ -108,7 +136,8 @@ class SubscriptionManager {
       channel,
       refCount: 1,
       config,
-      lastActivity: Date.now()
+      lastActivity: Date.now(),
+      saveOperationInProgress: false
     });
 
     return () => this.unsubscribe(key);
@@ -122,8 +151,23 @@ class SubscriptionManager {
     console.log(`[SubscriptionManager] Decrementing refCount for ${key}, now: ${subscription.refCount}`);
 
     if (subscription.refCount <= 0) {
-      console.log(`[SubscriptionManager] Removing subscription ${key}`);
-      this.removeSubscription(key, subscription);
+      // Check if we should delay cleanup due to save operations
+      if (this.hasSaveOperationsInProgress() || subscription.saveOperationInProgress) {
+        console.log(`[SubscriptionManager] Delaying cleanup for ${key} due to save operations`);
+        
+        // Schedule delayed cleanup
+        setTimeout(() => {
+          // Double-check if subscription still exists and no saves are in progress
+          const sub = this.subscriptions.get(key);
+          if (sub && sub.refCount <= 0 && !this.hasSaveOperationsInProgress()) {
+            console.log(`[SubscriptionManager] Executing delayed cleanup for ${key}`);
+            this.removeSubscription(key, sub);
+          }
+        }, this.CLEANUP_DELAY_MS);
+      } else {
+        console.log(`[SubscriptionManager] Removing subscription ${key} immediately`);
+        this.removeSubscription(key, subscription);
+      }
     }
   }
 
@@ -195,6 +239,7 @@ class SubscriptionManager {
       }
     });
     this.subscriptions.clear();
+    activeSaveOperations.clear();
   }
 
   getActiveSubscriptions(): string[] {

@@ -35,6 +35,7 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
   // Use refs to prevent subscription recreation
   const subscriptionRef = useRef<(() => void) | null>(null);
   const isSubscribedRef = useRef(false);
+  const lastUpdateRef = useRef<number>(0);
   
   const queryInfo = useQuery({
     queryKey: [
@@ -49,15 +50,32 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
     staleTime: 30000,
   });
   
-  // Set up subscription using centralized manager
+  // Set up subscription using centralized manager with debouncing
   useEffect(() => {
     if (!user?.id || isSubscribedRef.current) return;
 
     const handleWorkoutChange = (payload: any) => {
+      const now = Date.now();
+      
+      // Debounce rapid updates (common during save operations)
+      if (now - lastUpdateRef.current < 2000) {
+        console.log('[useWorkoutHistory] Debouncing rapid update');
+        return;
+      }
+      
+      lastUpdateRef.current = now;
+      
       console.log('[useWorkoutHistory] Workout change detected, invalidating queries:', payload);
-      queryClient.invalidateQueries({ queryKey: ['workout-history'] });
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
+      
+      // Stagger query invalidations to prevent race conditions
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['workout-history'] });
+      }, 500);
+      
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['workouts'] });
+        queryClient.invalidateQueries({ queryKey: ['workout-dates'] });
+      }, 1000);
     };
 
     // Use the centralized subscription manager

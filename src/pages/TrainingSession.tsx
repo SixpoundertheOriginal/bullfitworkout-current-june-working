@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
@@ -7,7 +7,7 @@ import { useWorkoutStore } from '@/store/workoutStore';
 import { Exercise } from '@/types/exercise';
 import { AddExerciseSheet } from '@/components/training/AddExerciseSheet';
 import { EnhancedWorkoutSessionFooter } from '@/components/training/EnhancedWorkoutSessionFooter';
-import { useWorkoutSave } from '@/hooks/useWorkoutSave';
+import { useEnhancedWorkoutSave } from '@/hooks/useEnhancedWorkoutSave';
 import { toast } from '@/hooks/use-toast';
 import { LayoutWrapper } from '@/components/layouts/LayoutWrapper';
 import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
@@ -23,14 +23,46 @@ const TrainingSessionPage: React.FC = () => {
     addExercise, 
     completeSet,
     removeExercise,
-    resetWorkout,
+    safeResetWorkout,
     elapsedTime,
     startTime,
     restTimerActive,
     currentRestTime,
+    saveInProgress,
+    saveConfirmed,
+    markAsSaving,
+    markAsSaved,
+    markAsFailed,
+    setSaveInProgress,
+    setSaveConfirmed
   } = useWorkoutStore();
   
-  const { saveWorkout, isSaving } = useWorkoutSave();
+  const { 
+    saveWorkoutAsync, 
+    isSaving, 
+    isSuccess, 
+    error, 
+    saveProgress, 
+    saveStatus 
+  } = useEnhancedWorkoutSave();
+
+  // Sync save state with workout store
+  useEffect(() => {
+    setSaveInProgress(isSaving);
+  }, [isSaving, setSaveInProgress]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      setSaveConfirmed(true);
+      markAsSaved();
+    }
+  }, [isSuccess, setSaveConfirmed, markAsSaved]);
+
+  useEffect(() => {
+    if (error) {
+      markAsFailed(error);
+    }
+  }, [error, markAsFailed]);
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
     addExercise(exercise.name);
@@ -59,6 +91,8 @@ const TrainingSessionPage: React.FC = () => {
       return;
     }
 
+    markAsSaving();
+
     const workoutData = {
       exercises,
       duration: elapsedTime,
@@ -69,13 +103,45 @@ const TrainingSessionPage: React.FC = () => {
       trainingConfig,
     };
 
-    await saveWorkout(workoutData);
-    resetWorkout();
-    navigate('/overview');
+    try {
+      console.log('[TrainingSession] Starting workout save process');
+      const result = await saveWorkoutAsync(workoutData);
+      
+      if (result.success) {
+        console.log('[TrainingSession] Workout saved successfully, safe to navigate');
+        
+        // Wait a moment for subscriptions to process the save
+        setTimeout(() => {
+          safeResetWorkout();
+          navigate('/overview');
+        }, 1000);
+      }
+    } catch (saveError) {
+      console.error('[TrainingSession] Save failed:', saveError);
+      // Error is already handled by the hook and store
+    }
   };
 
   const handleExitWorkout = () => {
-    resetWorkout();
+    if (saveInProgress) {
+      toast({
+        title: "Cannot exit during save",
+        description: "Please wait for the workout to finish saving.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (Object.keys(exercises).length > 0 && !saveConfirmed) {
+      toast({
+        title: "Unsaved workout data",
+        description: "Your workout data will be lost. Save your workout first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    safeResetWorkout();
     navigate('/overview');
   };
 
@@ -88,6 +154,9 @@ const TrainingSessionPage: React.FC = () => {
   const hasExercises = Object.keys(exercises).length > 0;
   const handleAddExercise = () => setAddExerciseSheetOpen(true);
 
+  // Show save progress if saving
+  const showSaveProgress = saveInProgress && saveProgress > 0;
+
   return (
     <LayoutWrapper>
       <div className="container mx-auto px-4">
@@ -99,6 +168,16 @@ const TrainingSessionPage: React.FC = () => {
             isRestActive={restTimerActive}
             onRestTimerClick={() => {/* Handle rest timer click */}}
           />
+          
+          {/* Save Progress Indicator */}
+          {showSaveProgress && (
+            <div className="mt-2 bg-gray-800 rounded-full h-2 overflow-hidden">
+              <div 
+                className="h-full bg-green-500 transition-all duration-300"
+                style={{ width: `${saveProgress}%` }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Session Header */}
@@ -110,11 +189,18 @@ const TrainingSessionPage: React.FC = () => {
               </h1>
               <p className="text-gray-400">
                 {Object.keys(exercises).length} exercises
+                {saveInProgress && (
+                  <span className="ml-2 text-yellow-400">• Saving...</span>
+                )}
+                {saveConfirmed && (
+                  <span className="ml-2 text-green-400">• Saved</span>
+                )}
               </p>
             </div>
             <button
               onClick={handleExitWorkout}
-              className="text-gray-400 hover:text-white p-2"
+              disabled={saveInProgress}
+              className="text-gray-400 hover:text-white p-2 disabled:opacity-50"
             >
               Exit
             </button>
@@ -136,7 +222,7 @@ const TrainingSessionPage: React.FC = () => {
         onAddExercise={handleAddExercise}
         onFinishWorkout={handleFinishWorkout}
         hasExercises={hasExercises}
-        isSaving={isSaving}
+        isSaving={saveInProgress}
       />
 
       <AddExerciseSheet

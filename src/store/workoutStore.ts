@@ -24,12 +24,17 @@ export interface WorkoutState {
   workoutStatus: 'idle' | 'active' | 'saving' | 'saved' | 'failed';
   exercises: Record<string, ExerciseSet[]>;
   
+  // Save state tracking
+  saveInProgress: boolean;
+  saveConfirmed: boolean;
+  saveError: string | null;
+  
   // Timer state with validation
   elapsedTime: number;
   restTimerActive: boolean;
   restTimerResetSignal: number;
   currentRestTime: number;
-  restTimerTargetDuration: number; // NEW
+  restTimerTargetDuration: number;
   
   // UI state
   activeExercise: string | null;
@@ -54,6 +59,7 @@ export interface WorkoutState {
   startWorkout: (config?: any) => void;
   endWorkout: () => void;
   resetWorkout: () => void;
+  safeResetWorkout: () => void; // New safe reset that checks save status
   addExercise: (exerciseName: string) => void;
   removeExercise: (exerciseName: string) => void;
   deleteExercise: (exerciseName: string) => void;
@@ -64,7 +70,7 @@ export interface WorkoutState {
   setActiveExercise: (exerciseName: string | null) => void;
   incrementElapsedTime: () => void;
   setElapsedTime: (time: number) => void;
-  setCurrentRestTime: (time: number) => void; // NEW
+  setCurrentRestTime: (time: number) => void;
   startRestTimer: (duration: number) => void;
   stopRestTimer: () => void;
   resetRestTimer: () => void;
@@ -73,7 +79,10 @@ export interface WorkoutState {
   updateLastActiveRoute: (route: string) => void;
   setExercises: (exercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => void;
   markAsSaving: () => void;
+  markAsSaved: () => void;
   markAsFailed: (error: any) => void;
+  setSaveInProgress: (inProgress: boolean) => void;
+  setSaveConfirmed: (confirmed: boolean) => void;
   workoutId?: string;
   handleCompleteSet?: (exerciseName: string, setIndex: number) => void;
   startTime?: number;
@@ -104,11 +113,14 @@ export const useWorkoutStore = create<WorkoutState>()(
       explicitlyEnded: false,
       workoutStatus: 'idle',
       exercises: {},
+      saveInProgress: false,
+      saveConfirmed: false,
+      saveError: null,
       elapsedTime: 0,
       restTimerActive: false,
       restTimerResetSignal: 0,
       currentRestTime: 0,
-      restTimerTargetDuration: 0, // NEW
+      restTimerTargetDuration: 0,
       activeExercise: null,
       trainingConfig: null,
       lastActiveRoute: undefined,
@@ -116,12 +128,15 @@ export const useWorkoutStore = create<WorkoutState>()(
       workoutId: undefined,
       startTime: undefined,
 
-      // Actions with enhanced validation
+      // Actions with enhanced save state management
       startWorkout: (config) => set({
         isActive: true,
         explicitlyEnded: false,
         workoutStatus: 'active',
         elapsedTime: 0,
+        saveInProgress: false,
+        saveConfirmed: false,
+        saveError: null,
         trainingConfig: config || null,
         sessionId: `workout_${Date.now()}`,
         startTime: Date.now()
@@ -147,8 +162,46 @@ export const useWorkoutStore = create<WorkoutState>()(
         trainingConfig: null,
         sessionId: undefined,
         workoutId: undefined,
-        startTime: undefined
+        startTime: undefined,
+        saveInProgress: false,
+        saveConfirmed: false,
+        saveError: null
       }),
+
+      // Safe reset that checks save status
+      safeResetWorkout: () => {
+        const state = get();
+        
+        if (state.saveInProgress) {
+          console.warn('[WorkoutStore] Cannot reset workout while save is in progress');
+          return;
+        }
+
+        if (state.isActive && !state.saveConfirmed && Object.keys(state.exercises).length > 0) {
+          console.warn('[WorkoutStore] Cannot reset active workout without save confirmation');
+          return;
+        }
+
+        // Safe to reset
+        set({
+          isActive: false,
+          explicitlyEnded: false,
+          workoutStatus: 'idle',
+          exercises: {},
+          elapsedTime: 0,
+          restTimerActive: false,
+          restTimerResetSignal: 0,
+          currentRestTime: 0,
+          activeExercise: null,
+          trainingConfig: null,
+          sessionId: undefined,
+          workoutId: undefined,
+          startTime: undefined,
+          saveInProgress: false,
+          saveConfirmed: false,
+          saveError: null
+        });
+      },
 
       addExercise: (exerciseName) => set((state) => ({
         exercises: {
@@ -261,7 +314,7 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setElapsedTime: (time) => set({ elapsedTime: validateElapsedTime(time) }),
 
-      setCurrentRestTime: (time) => set({ currentRestTime: validateRestTime(time) }), // NEW
+      setCurrentRestTime: (time) => set({ currentRestTime: validateRestTime(time) }),
 
       startRestTimer: (duration) => set({
         restTimerActive: true,
@@ -292,9 +345,28 @@ export const useWorkoutStore = create<WorkoutState>()(
         exercises: typeof exercises === 'function' ? exercises(state.exercises) : exercises
       })),
 
-      markAsSaving: () => set({ workoutStatus: 'saving' }),
+      markAsSaving: () => set({ 
+        workoutStatus: 'saving',
+        saveInProgress: true,
+        saveError: null 
+      }),
 
-      markAsFailed: (error) => set({ workoutStatus: 'failed' }),
+      markAsSaved: () => set({ 
+        workoutStatus: 'saved',
+        saveInProgress: false,
+        saveConfirmed: true,
+        saveError: null 
+      }),
+
+      markAsFailed: (error) => set({ 
+        workoutStatus: 'failed',
+        saveInProgress: false,
+        saveError: error?.message || 'Save failed' 
+      }),
+
+      setSaveInProgress: (inProgress) => set({ saveInProgress: inProgress }),
+      
+      setSaveConfirmed: (confirmed) => set({ saveConfirmed: confirmed }),
 
       handleCompleteSet: (exerciseName, setIndex) => {
         const state = get();
@@ -315,7 +387,9 @@ export const useWorkoutStore = create<WorkoutState>()(
         workoutStatus: state.workoutStatus,
         lastActiveRoute: state.lastActiveRoute,
         sessionId: state.sessionId,
-        workoutId: state.workoutId
+        workoutId: state.workoutId,
+        saveInProgress: state.saveInProgress,
+        saveConfirmed: state.saveConfirmed
       })
     }
   )
