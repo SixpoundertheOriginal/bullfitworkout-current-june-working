@@ -1,15 +1,13 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast as shadToast } from "@/hooks/use-toast"; // Renamed to avoid conflict
+import { toast as shadToast } from "@/hooks/use-toast";
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 import { useFeedback } from '@/components/training/InteractionFeedback';
-import { useEnhancedWorkoutSave } from '@/hooks/useEnhancedWorkoutSave'; // NEW: Use React Query for save state
+import { useEnhancedWorkoutSave } from '@/hooks/useEnhancedWorkoutSave';
 import { Exercise, ExerciseSet } from "@/types/exercise";
 import { generateWorkoutTemplate, convertTemplateToStoreFormat } from "@/services/workoutTemplateService";
 
-// Make sure to use shadToast for shadcn toasts
 const toast = (options: Parameters<typeof shadToast>[0]) => shadToast(options);
 
 export const useWorkoutActions = () => {
@@ -29,17 +27,18 @@ export const useWorkoutActions = () => {
     trainingConfig,
     isActive,
     setTrainingConfig,
-    setWorkoutStatus
+    setWorkoutStatus,
+    startTime,
+    safeResetWorkout
   } = useWorkoutStore();
   
-  // NEW: Use React Query for save state instead of WorkoutStore
   const { isSaving, saveWorkoutAsync, isSuccess, error } = useEnhancedWorkoutSave();
-  
   const { handleSetCompletion } = useTrainingTimers();
   const { showFeedback } = useFeedback();
   
   const exerciseCount = Object.keys(storeExercises).length;
   const hasExercises = exerciseCount > 0;
+  const hasCompletedSets = Object.values(storeExercises).some(sets => sets.some(set => set.completed));
 
   // Define the onAddSet function to add a basic set to an exercise
   const handleAddSet = (exerciseName: string) => {
@@ -140,72 +139,77 @@ export const useWorkoutActions = () => {
   };
 
   const handleFinishWorkout = async () => {
-    if (!hasExercises) {
-      toast({ title: "Error", description: "Add at least one exercise before finishing your workout", variant: "destructive" });
-      return;
-    }
-    
-    // Check if already saving using React Query state
+    console.log('[WorkoutActions] Finish workout clicked');
+
+    // Check if already saving
     if (isSaving) {
       console.log('[WorkoutActions] Save already in progress, ignoring click');
       return;
     }
-    
-    try {
-      const now = new Date();
-      const startTime = new Date(now.getTime() - elapsedTime * 1000);
-      
-      // storeExercises is already Record<string, ExerciseSet[]>
-      // The structure for WorkoutCompletePage might need adjustment if it's different
-      // from the database schema. For now, we assume it matches ExerciseSet closely.
-      const convertedExercises: Record<string, ExerciseSet[]> = {};
-      Object.entries(storeExercises).forEach(([exerciseName, sets]) => {
-        convertedExercises[exerciseName] = sets.map((set, index) => ({
-          ...set, // Spread the full ExerciseSet object
-          set_number: set.set_number || index + 1, // Ensure set_number
-          exercise_name: set.exercise_name || exerciseName, // Ensure exercise_name
-          workout_id: set.workout_id || workoutId || 'temp' 
-        }));
+
+    // Validate workout has exercises and completed sets
+    if (!hasExercises) {
+      toast({ 
+        title: "No exercises added", 
+        description: "Add at least one exercise to finish your workout.", 
+        variant: "destructive" 
       });
-      
-      const [completedSets, totalSets] = Object.entries(storeExercises).reduce(
-        ([completed, total], [_, sets]) => [
-          completed + sets.filter(s => s.completed).length,
-          total + sets.length
-        ],
-        [0, 0]
-      );
-      
+      return;
+    }
+
+    if (!hasCompletedSets) {
+      toast({ 
+        title: "No sets completed", 
+        description: "Complete at least one set to finish your workout.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Validate required workout metadata
+    if (!startTime || !trainingConfig) {
+      toast({ 
+        title: "Missing workout data", 
+        description: "Cannot save workout - missing session information.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    try {
+      console.log('[WorkoutActions] Starting save with React Query');
+
       const workoutData = {
-        exercises: convertedExercises, // This is now Record<string, ExerciseSet[]>
+        exercises: storeExercises,
         duration: elapsedTime,
-        startTime,
-        endTime: now,
-        trainingType: trainingConfig?.trainingType || "Strength",
-        name: trainingConfig?.trainingType || "Workout",
-        trainingConfig: trainingConfig || null,
+        startTime: new Date(startTime),
+        endTime: new Date(),
+        trainingType: trainingConfig.trainingType || "Strength",
+        name: trainingConfig.trainingType ? `${trainingConfig.trainingType} Workout` : 'Workout',
+        trainingConfig: trainingConfig,
         notes: "",
-        metrics: {
-          trainingConfig: trainingConfig || null,
-          performance: { completedSets, totalSets, restTimers: { defaultTime: 60, wasUsed: false } },
-          progression: {
-            timeOfDay: startTime.getHours() < 12 ? 'morning' :
-                       startTime.getHours() < 17 ? 'afternoon' : 'evening',
-            totalVolume: Object.values(storeExercises).flat().reduce((acc, s) => acc + (s.completed ? s.volume : 0), 0) // Use s.volume
-          },
-          sessionDetails: { exerciseCount, averageRestTime: 60, workoutDensity: completedSets / (elapsedTime / 60) }
-        }
       };
       
-      console.log('[WorkoutActions] Starting save with React Query');
+      console.log('[WorkoutActions] Calling saveWorkoutAsync with data:', workoutData);
       const result = await saveWorkoutAsync(workoutData);
+      console.log('[WorkoutActions] Save result:', result);
       
       if (result?.success) {
-        navigate("/workout-complete", { state: { workoutData } });
+        console.log('[WorkoutActions] Workout saved successfully, navigating to overview');
+        
+        // Reset workout and navigate after short delay to show success state
+        setTimeout(() => {
+          safeResetWorkout();
+          navigate('/overview');
+        }, 2000);
       }
-    } catch (err) {
-      console.error("Error preparing workout data:", err);
-      toast({ title: "Error", description: "Failed to complete workout", variant: "destructive" });
+    } catch (saveError) {
+      console.error('[WorkoutActions] Save failed with error:', saveError);
+      toast({ 
+        title: "Error saving workout", 
+        description: "There was a problem saving your workout. Please try again.", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -222,7 +226,7 @@ export const useWorkoutActions = () => {
     // State
     isAddExerciseSheetOpen,
     setIsAddExerciseSheetOpen,
-    isSaving, // NEW: From React Query instead of local state
+    isSaving,
     
     // Actions
     handleAddSet,
@@ -235,14 +239,14 @@ export const useWorkoutActions = () => {
     
     // Store state
     storeExercises,
-    setStoreExercises, // Expose setStoreExercises if direct manipulation is needed elsewhere
+    setStoreExercises,
     showFeedback,
     
     // Computed values
     hasExercises,
     exerciseCount,
     
-    // NEW: React Query save states
+    // React Query save states
     isSuccess,
     error
   };
