@@ -31,14 +31,13 @@ export const WorkoutBanner: React.FC = React.memo(() => {
   const debouncedIsActive = useDebounce(isActive, 100);
   const debouncedWorkoutStatus = useDebounce(workoutStatus, 100);
   
-  // Memoize the visibility calculation
+  // Memoize the visibility calculation - SIMPLIFIED: Remove 'saved' check
   const shouldShow = useMemo(() => {
     return debouncedIsActive && 
            !explicitlyEnded && 
-           debouncedWorkoutStatus !== 'saved' &&
            !isTrainingRoute && 
            exerciseCount > 0;
-  }, [debouncedIsActive, explicitlyEnded, debouncedWorkoutStatus, isTrainingRoute, exerciseCount]);
+  }, [debouncedIsActive, explicitlyEnded, isTrainingRoute, exerciseCount]);
   
   // Update banner visibility with debounced values
   useEffect(() => {

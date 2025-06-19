@@ -4,7 +4,6 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { subscriptionManager } from '@/services/SubscriptionManager';
 import type { ExerciseSet } from '@/store/workoutStore';
 
 interface WorkoutData {
@@ -49,8 +48,7 @@ export const useEnhancedWorkoutSave = () => {
       
       console.log(`[EnhancedWorkoutSave] Starting save operation: ${operationId}`);
       
-      // Mark save operation as active to prevent subscription cleanup
-      subscriptionManager.markSaveOperationActive(operationId);
+      // REMOVED: subscriptionManager.markSaveOperationActive - React Query handles save state
       
       try {
         setSaveStatus('saving');
@@ -167,11 +165,8 @@ export const useEnhancedWorkoutSave = () => {
         console.error(`[EnhancedWorkoutSave] Save failed:`, error);
         throw error;
       } finally {
-        // Always mark save operation as complete
-        if (operationIdRef.current) {
-          subscriptionManager.markSaveOperationComplete(operationIdRef.current);
-          operationIdRef.current = null;
-        }
+        // REMOVED: subscriptionManager.markSaveOperationComplete - not needed with React Query
+        operationIdRef.current = null;
       }
     },
     onSuccess: (result) => {
@@ -207,11 +202,8 @@ export const useEnhancedWorkoutSave = () => {
     setSaveProgress(0);
     setSaveStatus('idle');
     
-    // Clean up any active operation tracking
-    if (operationIdRef.current) {
-      subscriptionManager.markSaveOperationComplete(operationIdRef.current);
-      operationIdRef.current = null;
-    }
+    // REMOVED: subscriptionManager cleanup - not needed
+    operationIdRef.current = null;
   };
 
   return {
