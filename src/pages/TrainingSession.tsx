@@ -11,6 +11,7 @@ import { useEnhancedWorkoutSave } from '@/hooks/useEnhancedWorkoutSave';
 import { toast } from '@/hooks/use-toast';
 import { LayoutWrapper } from '@/components/layouts/LayoutWrapper';
 import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
+import { WorkoutRecoveryBanner } from '@/components/training/WorkoutRecoveryBanner';
 
 const TrainingSessionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -34,7 +35,11 @@ const TrainingSessionPage: React.FC = () => {
     markAsSaved,
     markAsFailed,
     setSaveInProgress,
-    setSaveConfirmed
+    setSaveConfirmed,
+    needsRecovery,
+    detectRecoveryNeeded,
+    performRecovery,
+    clearRecovery
   } = useWorkoutStore();
   
   const { 
@@ -46,9 +51,17 @@ const TrainingSessionPage: React.FC = () => {
     saveStatus 
   } = useEnhancedWorkoutSave();
 
+  // Check for recovery needs on component mount
+  useEffect(() => {
+    detectRecoveryNeeded();
+  }, [detectRecoveryNeeded]);
+
   // Debug logging for button state
   const hasExercises = Object.keys(exercises).length > 0;
   const hasCompletedSets = Object.values(exercises).some(sets => sets.some(set => set.completed));
+  const completedSetsCount = Object.values(exercises).reduce((total, sets) => 
+    total + sets.filter(set => set.completed).length, 0
+  );
   
   useEffect(() => {
     console.log('[TrainingSession] Button state debug:', {
@@ -60,9 +73,10 @@ const TrainingSessionPage: React.FC = () => {
       exerciseCount: Object.keys(exercises).length,
       startTime: !!startTime,
       trainingConfig: !!trainingConfig,
+      needsRecovery,
       buttonShouldBeDisabled: !hasExercises || isSaving || saveInProgress
     });
-  }, [hasExercises, hasCompletedSets, isSaving, saveInProgress, saveConfirmed, exercises, startTime, trainingConfig]);
+  }, [hasExercises, hasCompletedSets, isSaving, saveInProgress, saveConfirmed, exercises, startTime, trainingConfig, needsRecovery]);
 
   // Sync save state with workout store
   useEffect(() => {
@@ -139,27 +153,43 @@ const TrainingSessionPage: React.FC = () => {
     workoutTimer.pause();
     restTimer.stop();
     
-    if (!startTime || !trainingConfig) {
-      console.error('[TrainingSession] Missing required data:', { startTime, trainingConfig });
+    // Enhanced validation with recovery support
+    let finalStartTime = startTime;
+    let finalTrainingConfig = trainingConfig;
+    
+    if (!finalStartTime || !finalTrainingConfig) {
+      console.log('[TrainingSession] Missing metadata, attempting recovery');
+      
+      // Perform automatic recovery
+      performRecovery();
+      
+      // Get updated values after recovery
+      const state = useWorkoutStore.getState();
+      finalStartTime = state.startTime;
+      finalTrainingConfig = state.trainingConfig;
+    }
+
+    if (!finalStartTime || !finalTrainingConfig) {
+      console.error('[TrainingSession] Recovery failed, cannot save workout');
       toast({
         title: "Could Not Finish Workout",
-        description: "Workout data is incomplete. Cannot save.",
+        description: "Unable to recover workout session data. Please start a new workout.",
         variant: "destructive",
       });
       return;
     }
 
-    console.log('[TrainingSession] Starting save process');
+    console.log('[TrainingSession] Starting save process with recovered data');
     markAsSaving();
 
     const workoutData = {
       exercises,
       duration: elapsedTime,
-      startTime: new Date(startTime),
+      startTime: new Date(finalStartTime),
       endTime: new Date(),
-      trainingType: trainingConfig.trainingType,
-      name: trainingConfig.trainingType ? `${trainingConfig.trainingType} Workout` : 'Workout',
-      trainingConfig,
+      trainingType: finalTrainingConfig.trainingType,
+      name: finalTrainingConfig.trainingType ? `${finalTrainingConfig.trainingType} Workout` : 'Workout',
+      trainingConfig: finalTrainingConfig,
     };
 
     try {
@@ -170,7 +200,6 @@ const TrainingSessionPage: React.FC = () => {
       if (result?.success) {
         console.log('[TrainingSession] Workout saved successfully, navigating to overview');
         
-        // Wait a bit longer for subscriptions to process
         setTimeout(() => {
           safeResetWorkout();
           navigate('/overview');
@@ -184,6 +213,25 @@ const TrainingSessionPage: React.FC = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleRecoverWorkout = () => {
+    console.log('[TrainingSession] User chose to recover workout');
+    performRecovery();
+    toast({
+      title: "Workout recovered",
+      description: "Your previous workout session has been restored. You can now finish it.",
+    });
+  };
+
+  const handleDismissRecovery = () => {
+    console.log('[TrainingSession] User chose to start fresh');
+    clearRecovery();
+    safeResetWorkout();
+    toast({
+      title: "Started fresh",
+      description: "Previous workout data cleared. You can start a new workout.",
+    });
   };
 
   const handleExitWorkout = () => {
@@ -223,6 +271,18 @@ const TrainingSessionPage: React.FC = () => {
   return (
     <LayoutWrapper>
       <div className="container mx-auto px-4">
+        {/* Recovery Banner */}
+        {needsRecovery && (
+          <div className="sticky top-16 z-50 -mx-4 px-4 py-2">
+            <WorkoutRecoveryBanner
+              onRecover={handleRecoverWorkout}
+              onDismiss={handleDismissRecovery}
+              exerciseCount={Object.keys(exercises).length}
+              completedSetsCount={completedSetsCount}
+            />
+          </div>
+        )}
+
         {/* Sticky Timer Display at Top */}
         <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 -mx-4 px-4 py-4 mb-6">
           <PriorityTimerDisplay
@@ -253,13 +313,16 @@ const TrainingSessionPage: React.FC = () => {
               <p className="text-gray-400">
                 {Object.keys(exercises).length} exercises
                 {hasCompletedSets && (
-                  <span className="ml-2 text-blue-400">• {Object.values(exercises).reduce((total, sets) => total + sets.filter(set => set.completed).length, 0)} sets completed</span>
+                  <span className="ml-2 text-blue-400">• {completedSetsCount} sets completed</span>
                 )}
                 {saveInProgress && (
                   <span className="ml-2 text-yellow-400">• Saving...</span>
                 )}
                 {saveConfirmed && (
                   <span className="ml-2 text-green-400">• Saved</span>
+                )}
+                {needsRecovery && (
+                  <span className="ml-2 text-yellow-400">• Recovery needed</span>
                 )}
               </p>
             </div>

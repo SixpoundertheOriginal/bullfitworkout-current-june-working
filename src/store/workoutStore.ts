@@ -15,6 +15,7 @@ export interface ExerciseSet {
   exercise_name?: string;
   workout_id?: string;
   rest_time?: number;
+  timestamp?: number; // Add timestamp for recovery
 }
 
 export interface WorkoutState {
@@ -55,11 +56,15 @@ export interface WorkoutState {
     };
   } | null;
   
+  // Recovery support
+  startTime?: number;
+  needsRecovery?: boolean;
+  
   // Actions
   startWorkout: (config?: any) => void;
   endWorkout: () => void;
   resetWorkout: () => void;
-  safeResetWorkout: () => void; // New safe reset that checks save status
+  safeResetWorkout: () => void;
   addExercise: (exerciseName: string) => void;
   removeExercise: (exerciseName: string) => void;
   deleteExercise: (exerciseName: string) => void;
@@ -85,24 +90,50 @@ export interface WorkoutState {
   setSaveConfirmed: (confirmed: boolean) => void;
   workoutId?: string;
   handleCompleteSet?: (exerciseName: string, setIndex: number) => void;
-  startTime?: number;
+  
+  // Recovery methods
+  detectRecoveryNeeded: () => void;
+  performRecovery: () => void;
+  clearRecovery: () => void;
 }
 
-// Validation helpers
-const validateElapsedTime = (time: number): number => {
-  const MAX_WORKOUT_TIME = 86400; // 24 hours
-  const validatedTime = Math.max(0, Math.min(Math.floor(time), MAX_WORKOUT_TIME));
+// Recovery helper functions
+const inferTrainingTypeFromExercises = (exercises: Record<string, ExerciseSet[]>): string => {
+  const exerciseNames = Object.keys(exercises).map(name => name.toLowerCase());
   
-  if (time > MAX_WORKOUT_TIME) {
-    console.warn('[WorkoutStore] Timer reset due to excessive value:', time);
+  if (exerciseNames.some(name => name.includes('squat') || name.includes('deadlift') || name.includes('bench'))) {
+    return 'Strength';
+  }
+  if (exerciseNames.some(name => name.includes('pushup') || name.includes('pullup') || name.includes('dip'))) {
+    return 'Calisthenics';
+  }
+  if (exerciseNames.some(name => name.includes('run') || name.includes('bike') || name.includes('cardio'))) {
+    return 'Cardio';
   }
   
-  return validatedTime;
+  return 'General';
 };
 
-const validateRestTime = (time: number): number => {
-  const MAX_REST_TIME = 3600; // 1 hour max rest
-  return Math.max(0, Math.min(Math.floor(time), MAX_REST_TIME));
+const calculateWorkoutStartTime = (exercises: Record<string, ExerciseSet[]>): number => {
+  let earliestTimestamp = Date.now();
+  
+  // Look for the earliest timestamp in completed sets
+  Object.values(exercises).forEach(sets => {
+    sets.forEach(set => {
+      if (set.completed && set.timestamp && set.timestamp < earliestTimestamp) {
+        earliestTimestamp = set.timestamp;
+      }
+    });
+  });
+  
+  // If no timestamps found, estimate based on typical workout duration
+  if (earliestTimestamp === Date.now()) {
+    const totalSets = Object.values(exercises).reduce((total, sets) => total + sets.filter(s => s.completed).length, 0);
+    const estimatedDuration = totalSets * 3 * 60 * 1000; // 3 minutes per set average
+    earliestTimestamp = Date.now() - estimatedDuration;
+  }
+  
+  return earliestTimestamp;
 };
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -127,20 +158,25 @@ export const useWorkoutStore = create<WorkoutState>()(
       sessionId: undefined,
       workoutId: undefined,
       startTime: undefined,
+      needsRecovery: false,
 
-      // Actions with enhanced save state management
-      startWorkout: (config) => set({
-        isActive: true,
-        explicitlyEnded: false,
-        workoutStatus: 'active',
-        elapsedTime: 0,
-        saveInProgress: false,
-        saveConfirmed: false,
-        saveError: null,
-        trainingConfig: config || null,
-        sessionId: `workout_${Date.now()}`,
-        startTime: Date.now()
-      }),
+      // Enhanced actions with recovery support
+      startWorkout: (config) => {
+        const now = Date.now();
+        set({
+          isActive: true,
+          explicitlyEnded: false,
+          workoutStatus: 'active',
+          elapsedTime: 0,
+          saveInProgress: false,
+          saveConfirmed: false,
+          saveError: null,
+          trainingConfig: config || null,
+          sessionId: `workout_${now}`,
+          startTime: now,
+          needsRecovery: false
+        });
+      },
 
       endWorkout: () => set({
         isActive: false,
@@ -165,7 +201,8 @@ export const useWorkoutStore = create<WorkoutState>()(
         startTime: undefined,
         saveInProgress: false,
         saveConfirmed: false,
-        saveError: null
+        saveError: null,
+        needsRecovery: false
       }),
 
       // Safe reset that checks save status
@@ -199,7 +236,8 @@ export const useWorkoutStore = create<WorkoutState>()(
           startTime: undefined,
           saveInProgress: false,
           saveConfirmed: false,
-          saveError: null
+          saveError: null,
+          needsRecovery: false
         });
       },
 
@@ -214,7 +252,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             completed: false,
             isEditing: false,
             volume: 0,
-            duration: '0:00'
+            duration: '0:00',
+            timestamp: Date.now()
           }]
         }
       })),
@@ -243,7 +282,10 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       completeSet: (exerciseName, setIndex) => {
         const { updateExerciseSet } = get();
-        updateExerciseSet(exerciseName, setIndex, { completed: true });
+        updateExerciseSet(exerciseName, setIndex, { 
+          completed: true,
+          timestamp: Date.now()
+        });
       },
 
       addSet: (exerciseName) => set((state) => {
@@ -251,7 +293,6 @@ export const useWorkoutStore = create<WorkoutState>()(
         if (exercises[exerciseName]) {
           const newSetIndex = exercises[exerciseName].length + 1;
           
-          // Get smart defaults using progression service
           const context = {
             exerciseName,
             currentSets: exercises[exerciseName],
@@ -262,7 +303,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           
           const suggestion = setProgressionService.calculateNextSet(context);
           
-          // Use smart defaults if confidence is high, otherwise use last set values
           let defaultValues;
           if (suggestion.confidence > 0.5) {
             defaultValues = {
@@ -271,7 +311,6 @@ export const useWorkoutStore = create<WorkoutState>()(
               restTime: suggestion.restTime
             };
           } else {
-            // Fallback to last set values or basic defaults
             const lastSet = exercises[exerciseName][exercises[exerciseName].length - 1];
             defaultValues = lastSet ? {
               weight: lastSet.weight,
@@ -292,7 +331,8 @@ export const useWorkoutStore = create<WorkoutState>()(
             completed: false,
             isEditing: false,
             volume: defaultValues.weight * defaultValues.reps,
-            duration: '0:00'
+            duration: '0:00',
+            timestamp: Date.now()
           });
         }
         return { exercises };
@@ -370,9 +410,57 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       handleCompleteSet: (exerciseName, setIndex) => {
         const state = get();
-        // Start rest timer logic here
         set({ restTimerActive: true, currentRestTime: 60 });
-      }
+      },
+
+      detectRecoveryNeeded: () => {
+        const state = get();
+        const hasExercises = Object.keys(state.exercises).length > 0;
+        const hasCompletedSets = Object.values(state.exercises).some(sets => 
+          sets.some(set => set.completed)
+        );
+        const missingMetadata = !state.startTime || !state.trainingConfig;
+        
+        if (hasExercises && hasCompletedSets && missingMetadata) {
+          console.log('[WorkoutStore] Recovery needed - has exercises but missing metadata');
+          set({ needsRecovery: true });
+        }
+      },
+
+      performRecovery: () => {
+        const state = get();
+        console.log('[WorkoutStore] Performing workout recovery');
+        
+        const recoveredStartTime = calculateWorkoutStartTime(state.exercises);
+        const recoveredTrainingType = inferTrainingTypeFromExercises(state.exercises);
+        
+        const recoveredConfig = {
+          trainingType: recoveredTrainingType,
+          tags: [],
+          duration: 60 // Default duration
+        };
+
+        // Calculate elapsed time based on recovered start time
+        const recoveredElapsedTime = Math.floor((Date.now() - recoveredStartTime) / 1000);
+
+        set({
+          startTime: recoveredStartTime,
+          trainingConfig: recoveredConfig,
+          elapsedTime: recoveredElapsedTime,
+          isActive: true,
+          workoutStatus: 'active',
+          needsRecovery: false,
+          sessionId: state.sessionId || `recovered_${Date.now()}`
+        });
+
+        console.log('[WorkoutStore] Recovery completed', {
+          startTime: new Date(recoveredStartTime),
+          trainingType: recoveredTrainingType,
+          elapsedTime: recoveredElapsedTime
+        });
+      },
+
+      clearRecovery: () => set({ needsRecovery: false })
     }),
     {
       name: 'workout-storage',
@@ -389,8 +477,27 @@ export const useWorkoutStore = create<WorkoutState>()(
         sessionId: state.sessionId,
         workoutId: state.workoutId,
         saveInProgress: state.saveInProgress,
-        saveConfirmed: state.saveConfirmed
+        saveConfirmed: state.saveConfirmed,
+        startTime: state.startTime, // Now persisted
+        needsRecovery: state.needsRecovery
       })
     }
   )
 );
+
+// Validation helpers
+const validateElapsedTime = (time: number): number => {
+  const MAX_WORKOUT_TIME = 86400; // 24 hours
+  const validatedTime = Math.max(0, Math.min(Math.floor(time), MAX_WORKOUT_TIME));
+  
+  if (time > MAX_WORKOUT_TIME) {
+    console.warn('[WorkoutStore] Timer reset due to excessive value:', time);
+  }
+  
+  return validatedTime;
+};
+
+const validateRestTime = (time: number): number => {
+  const MAX_REST_TIME = 3600; // 1 hour max rest
+  return Math.max(0, Math.min(Math.floor(time), MAX_REST_TIME));
+};
