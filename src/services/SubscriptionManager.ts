@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -25,7 +26,7 @@ class SubscriptionManager {
   private subscriptions = new Map<string, ActiveSubscription>();
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private isCleaningUp = false;
-  private readonly CLEANUP_DELAY_MS = 5000; // 5 second delay for save operations
+  private readonly CLEANUP_DELAY_MS = 8000; // Increased to 8 seconds for save operations
 
   static getInstance(): SubscriptionManager {
     if (!SubscriptionManager.instance) {
@@ -42,6 +43,7 @@ class SubscriptionManager {
   markSaveOperationActive(operationId: string): void {
     activeSaveOperations.add(operationId);
     console.log(`[SubscriptionManager] Save operation marked active: ${operationId}`);
+    console.log(`[SubscriptionManager] Active save operations: ${activeSaveOperations.size}`);
     
     // Mark all subscriptions as having save operation in progress
     this.subscriptions.forEach(sub => {
@@ -51,14 +53,21 @@ class SubscriptionManager {
 
   // Mark save operation as complete
   markSaveOperationComplete(operationId: string): void {
+    const wasActive = activeSaveOperations.has(operationId);
     activeSaveOperations.delete(operationId);
-    console.log(`[SubscriptionManager] Save operation completed: ${operationId}`);
+    console.log(`[SubscriptionManager] Save operation completed: ${operationId}, was active: ${wasActive}`);
+    console.log(`[SubscriptionManager] Remaining active operations: ${activeSaveOperations.size}`);
     
-    // If no more save operations, clear the flag
+    // If no more save operations, clear the flag after a small delay
     if (activeSaveOperations.size === 0) {
-      this.subscriptions.forEach(sub => {
-        sub.saveOperationInProgress = false;
-      });
+      setTimeout(() => {
+        if (activeSaveOperations.size === 0) {
+          this.subscriptions.forEach(sub => {
+            sub.saveOperationInProgress = false;
+          });
+          console.log('[SubscriptionManager] All save operations complete, subscriptions ready for normal cleanup');
+        }
+      }, 1000);
     }
   }
 
@@ -151,17 +160,22 @@ class SubscriptionManager {
     console.log(`[SubscriptionManager] Decrementing refCount for ${key}, now: ${subscription.refCount}`);
 
     if (subscription.refCount <= 0) {
+      const hasSaveOps = this.hasSaveOperationsInProgress();
+      const subHasSaveOp = subscription.saveOperationInProgress;
+      
       // Check if we should delay cleanup due to save operations
-      if (this.hasSaveOperationsInProgress() || subscription.saveOperationInProgress) {
-        console.log(`[SubscriptionManager] Delaying cleanup for ${key} due to save operations`);
+      if (hasSaveOps || subHasSaveOp) {
+        console.log(`[SubscriptionManager] Delaying cleanup for ${key} due to save operations (global: ${hasSaveOps}, local: ${subHasSaveOp})`);
         
-        // Schedule delayed cleanup
+        // Schedule delayed cleanup with longer delay
         setTimeout(() => {
           // Double-check if subscription still exists and no saves are in progress
           const sub = this.subscriptions.get(key);
-          if (sub && sub.refCount <= 0 && !this.hasSaveOperationsInProgress()) {
+          if (sub && sub.refCount <= 0 && !this.hasSaveOperationsInProgress() && !sub.saveOperationInProgress) {
             console.log(`[SubscriptionManager] Executing delayed cleanup for ${key}`);
             this.removeSubscription(key, sub);
+          } else {
+            console.log(`[SubscriptionManager] Skipping delayed cleanup for ${key} - still needed or save in progress`);
           }
         }, this.CLEANUP_DELAY_MS);
       } else {
@@ -173,11 +187,13 @@ class SubscriptionManager {
 
   private removeSubscription(key: string, subscription: ActiveSubscription): void {
     try {
+      console.log(`[SubscriptionManager] Removing channel for ${key}`);
       supabase.removeChannel(subscription.channel);
     } catch (error) {
       console.error(`[SubscriptionManager] Error removing channel for ${key}:`, error);
     }
     this.subscriptions.delete(key);
+    console.log(`[SubscriptionManager] Subscription ${key} removed from manager`);
   }
 
   private handleSubscriptionError(key: string): void {
@@ -219,7 +235,7 @@ class SubscriptionManager {
       }
     }
 
-    console.log(`[SubscriptionManager] Health check: ${this.subscriptions.size} active subscriptions`);
+    console.log(`[SubscriptionManager] Health check: ${this.subscriptions.size} active subscriptions, ${activeSaveOperations.size} save operations`);
   }
 
   cleanup(): void {

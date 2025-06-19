@@ -17,6 +17,17 @@ export const EnhancedWorkoutSessionFooter: React.FC<EnhancedWorkoutSessionFooter
   hasExercises,
   isSaving,
 }) => {
+  console.log('[EnhancedWorkoutSessionFooter] Render state:', {
+    hasExercises,
+    isSaving,
+    buttonDisabled: !hasExercises || isSaving
+  });
+
+  const handleFinishClick = () => {
+    console.log('[EnhancedWorkoutSessionFooter] Finish button clicked');
+    onFinishWorkout();
+  };
+
   return (
     <footer
       className={cn(
@@ -41,7 +52,7 @@ export const EnhancedWorkoutSessionFooter: React.FC<EnhancedWorkoutSessionFooter
           variant="primary"
           size="md"
           icon={CheckCircle}
-          onClick={onFinishWorkout}
+          onClick={handleFinishClick}
           disabled={!hasExercises || isSaving}
           loading={isSaving}
           className="flex-1"

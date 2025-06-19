@@ -46,6 +46,24 @@ const TrainingSessionPage: React.FC = () => {
     saveStatus 
   } = useEnhancedWorkoutSave();
 
+  // Debug logging for button state
+  const hasExercises = Object.keys(exercises).length > 0;
+  const hasCompletedSets = Object.values(exercises).some(sets => sets.some(set => set.completed));
+  
+  useEffect(() => {
+    console.log('[TrainingSession] Button state debug:', {
+      hasExercises,
+      hasCompletedSets,
+      isSaving,
+      saveInProgress,
+      saveConfirmed,
+      exerciseCount: Object.keys(exercises).length,
+      startTime: !!startTime,
+      trainingConfig: !!trainingConfig,
+      buttonShouldBeDisabled: !hasExercises || isSaving || saveInProgress
+    });
+  }, [hasExercises, hasCompletedSets, isSaving, saveInProgress, saveConfirmed, exercises, startTime, trainingConfig]);
+
   // Sync save state with workout store
   useEffect(() => {
     setSaveInProgress(isSaving);
@@ -53,6 +71,7 @@ const TrainingSessionPage: React.FC = () => {
 
   useEffect(() => {
     if (isSuccess) {
+      console.log('[TrainingSession] Save successful, updating state');
       setSaveConfirmed(true);
       markAsSaved();
     }
@@ -60,11 +79,13 @@ const TrainingSessionPage: React.FC = () => {
 
   useEffect(() => {
     if (error) {
+      console.error('[TrainingSession] Save error:', error);
       markAsFailed(error);
     }
   }, [error, markAsFailed]);
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
+    console.log('[TrainingSession] Adding exercise:', exercise.name);
     addExercise(exercise.name);
     setAddExerciseSheetOpen(false);
     toast({
@@ -74,15 +95,52 @@ const TrainingSessionPage: React.FC = () => {
   }, [addExercise]);
   
   const handleCompleteSet = useCallback((exerciseName: string, setIndex: number) => {
+    console.log('[TrainingSession] Completing set:', { exerciseName, setIndex });
     completeSet(exerciseName, setIndex);
     handleTimerOnComplete(exerciseName, setIndex);
   }, [completeSet, handleTimerOnComplete]);
 
   const handleFinishWorkout = async () => {
+    console.log('[TrainingSession] Finish workout clicked');
+    console.log('[TrainingSession] Pre-save validation:', {
+      hasExercises,
+      hasCompletedSets,
+      startTime: !!startTime,
+      trainingConfig: !!trainingConfig,
+      saveInProgress,
+      isSaving
+    });
+
+    // Check if already saving
+    if (isSaving || saveInProgress) {
+      console.log('[TrainingSession] Save already in progress, ignoring click');
+      return;
+    }
+
+    // Check for exercises with completed sets
+    if (!hasExercises) {
+      toast({
+        title: "No exercises added",
+        description: "Add at least one exercise to finish your workout.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hasCompletedSets) {
+      toast({
+        title: "No sets completed",
+        description: "Complete at least one set to finish your workout.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     workoutTimer.pause();
     restTimer.stop();
     
     if (!startTime || !trainingConfig) {
+      console.error('[TrainingSession] Missing required data:', { startTime, trainingConfig });
       toast({
         title: "Could Not Finish Workout",
         description: "Workout data is incomplete. Cannot save.",
@@ -91,6 +149,7 @@ const TrainingSessionPage: React.FC = () => {
       return;
     }
 
+    console.log('[TrainingSession] Starting save process');
     markAsSaving();
 
     const workoutData = {
@@ -104,21 +163,26 @@ const TrainingSessionPage: React.FC = () => {
     };
 
     try {
-      console.log('[TrainingSession] Starting workout save process');
+      console.log('[TrainingSession] Calling saveWorkoutAsync with data:', workoutData);
       const result = await saveWorkoutAsync(workoutData);
+      console.log('[TrainingSession] Save result:', result);
       
-      if (result.success) {
-        console.log('[TrainingSession] Workout saved successfully, safe to navigate');
+      if (result?.success) {
+        console.log('[TrainingSession] Workout saved successfully, navigating to overview');
         
-        // Wait a moment for subscriptions to process the save
+        // Wait a bit longer for subscriptions to process
         setTimeout(() => {
           safeResetWorkout();
           navigate('/overview');
-        }, 1000);
+        }, 2000);
       }
     } catch (saveError) {
-      console.error('[TrainingSession] Save failed:', saveError);
-      // Error is already handled by the hook and store
+      console.error('[TrainingSession] Save failed with error:', saveError);
+      toast({
+        title: "Error saving workout",
+        description: "There was a problem saving your workout. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -151,7 +215,6 @@ const TrainingSessionPage: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const hasExercises = Object.keys(exercises).length > 0;
   const handleAddExercise = () => setAddExerciseSheetOpen(true);
 
   // Show save progress if saving
@@ -189,6 +252,9 @@ const TrainingSessionPage: React.FC = () => {
               </h1>
               <p className="text-gray-400">
                 {Object.keys(exercises).length} exercises
+                {hasCompletedSets && (
+                  <span className="ml-2 text-blue-400">• {Object.values(exercises).reduce((total, sets) => total + sets.filter(set => set.completed).length, 0)} sets completed</span>
+                )}
                 {saveInProgress && (
                   <span className="ml-2 text-yellow-400">• Saving...</span>
                 )}
@@ -222,7 +288,7 @@ const TrainingSessionPage: React.FC = () => {
         onAddExercise={handleAddExercise}
         onFinishWorkout={handleFinishWorkout}
         hasExercises={hasExercises}
-        isSaving={saveInProgress}
+        isSaving={saveInProgress || isSaving}
       />
 
       <AddExerciseSheet
