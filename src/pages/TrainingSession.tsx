@@ -29,13 +29,6 @@ const TrainingSessionPage: React.FC = () => {
     startTime,
     restTimerActive,
     currentRestTime,
-    saveInProgress,
-    saveConfirmed,
-    markAsSaving,
-    markAsSaved,
-    markAsFailed,
-    setSaveInProgress,
-    setSaveConfirmed,
     needsRecovery,
     detectRecoveryNeeded,
     performRecovery,
@@ -68,35 +61,13 @@ const TrainingSessionPage: React.FC = () => {
       hasExercises,
       hasCompletedSets,
       isSaving,
-      saveInProgress,
-      saveConfirmed,
       exerciseCount: Object.keys(exercises).length,
       startTime: !!startTime,
       trainingConfig: !!trainingConfig,
       needsRecovery,
-      buttonShouldBeDisabled: !hasExercises || isSaving || saveInProgress
+      buttonShouldBeDisabled: !hasExercises || isSaving
     });
-  }, [hasExercises, hasCompletedSets, isSaving, saveInProgress, saveConfirmed, exercises, startTime, trainingConfig, needsRecovery]);
-
-  // Sync save state with workout store
-  useEffect(() => {
-    setSaveInProgress(isSaving);
-  }, [isSaving, setSaveInProgress]);
-
-  useEffect(() => {
-    if (isSuccess) {
-      console.log('[TrainingSession] Save successful, updating state');
-      setSaveConfirmed(true);
-      markAsSaved();
-    }
-  }, [isSuccess, setSaveConfirmed, markAsSaved]);
-
-  useEffect(() => {
-    if (error) {
-      console.error('[TrainingSession] Save error:', error);
-      markAsFailed(error);
-    }
-  }, [error, markAsFailed]);
+  }, [hasExercises, hasCompletedSets, isSaving, exercises, startTime, trainingConfig, needsRecovery]);
 
   const handleSelectExercise = useCallback((exercise: Exercise) => {
     console.log('[TrainingSession] Adding exercise:', exercise.name);
@@ -121,12 +92,11 @@ const TrainingSessionPage: React.FC = () => {
       hasCompletedSets,
       startTime: !!startTime,
       trainingConfig: !!trainingConfig,
-      saveInProgress,
       isSaving
     });
 
     // Check if already saving
-    if (isSaving || saveInProgress) {
+    if (isSaving) {
       console.log('[TrainingSession] Save already in progress, ignoring click');
       return;
     }
@@ -180,7 +150,6 @@ const TrainingSessionPage: React.FC = () => {
     }
 
     console.log('[TrainingSession] Starting save process with recovered data');
-    markAsSaving();
 
     const workoutData = {
       exercises,
@@ -235,7 +204,7 @@ const TrainingSessionPage: React.FC = () => {
   };
 
   const handleExitWorkout = () => {
-    if (saveInProgress) {
+    if (isSaving) {
       toast({
         title: "Cannot exit during save",
         description: "Please wait for the workout to finish saving.",
@@ -244,7 +213,7 @@ const TrainingSessionPage: React.FC = () => {
       return;
     }
 
-    if (Object.keys(exercises).length > 0 && !saveConfirmed) {
+    if (Object.keys(exercises).length > 0 && !isSuccess) {
       toast({
         title: "Unsaved workout data",
         description: "Your workout data will be lost. Save your workout first.",
@@ -266,7 +235,7 @@ const TrainingSessionPage: React.FC = () => {
   const handleAddExercise = () => setAddExerciseSheetOpen(true);
 
   // Show save progress if saving
-  const showSaveProgress = saveInProgress && saveProgress > 0;
+  const showSaveProgress = isSaving && saveProgress > 0;
 
   return (
     <LayoutWrapper>
@@ -315,10 +284,10 @@ const TrainingSessionPage: React.FC = () => {
                 {hasCompletedSets && (
                   <span className="ml-2 text-blue-400">• {completedSetsCount} sets completed</span>
                 )}
-                {saveInProgress && (
+                {isSaving && (
                   <span className="ml-2 text-yellow-400">• Saving...</span>
                 )}
-                {saveConfirmed && (
+                {isSuccess && (
                   <span className="ml-2 text-green-400">• Saved</span>
                 )}
                 {needsRecovery && (
@@ -328,7 +297,7 @@ const TrainingSessionPage: React.FC = () => {
             </div>
             <button
               onClick={handleExitWorkout}
-              disabled={saveInProgress}
+              disabled={isSaving}
               className="text-gray-400 hover:text-white p-2 disabled:opacity-50"
             >
               Exit
@@ -351,7 +320,7 @@ const TrainingSessionPage: React.FC = () => {
         onAddExercise={handleAddExercise}
         onFinishWorkout={handleFinishWorkout}
         hasExercises={hasExercises}
-        isSaving={saveInProgress || isSaving}
+        isSaving={isSaving}
       />
 
       <AddExerciseSheet
