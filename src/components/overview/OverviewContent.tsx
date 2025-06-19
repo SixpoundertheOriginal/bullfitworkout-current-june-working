@@ -11,13 +11,36 @@ import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { useWorkouts } from '@/hooks/useWorkouts';
 
 export const OverviewContent: React.FC = React.memo(() => {
-  const { isLoading } = useWorkouts();
+  const { isLoading, error: workoutsError } = useWorkouts();
   const { 
     overviewMetrics, 
     workoutTypeData, 
     muscleFocusData, 
     loading: statsLoading 
   } = useOverviewMetrics();
+
+  // Show error state with fallback
+  if (workoutsError) {
+    console.error('[OverviewContent] Workouts loading error:', workoutsError);
+    return (
+      <div className="container-app py-6 space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Overview</h1>
+            <p className="text-muted-foreground">
+              Track your fitness journey and progress
+            </p>
+          </div>
+          <OverviewDatePicker />
+        </div>
+        
+        <div className="bg-red-900/20 border border-red-500/30 text-red-300 p-4 rounded-lg text-center">
+          <h3 className="font-semibold text-lg mb-2">Error Loading Workouts</h3>
+          <p>We're having trouble loading your workout data. Please refresh the page.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || statsLoading) {
     return (

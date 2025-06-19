@@ -22,23 +22,33 @@ export const useWorkouts = () => {
 
   const { data: workoutDetails, isLoading: detailsLoading, error: detailsError } = useQuery({
     queryKey: ['workoutDetails', workoutIds],
-    queryFn: () => workoutHistoryApi.fetchDetails(workoutIds),
+    queryFn: async () => {
+      if (!workoutIds || workoutIds.length === 0) return {};
+      return workoutHistoryApi.fetchDetails(workoutIds);
+    },
     enabled: !!workoutIds && workoutIds.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 
   const workouts: Workout[] = useMemo(() => {
     if (!baseWorkouts) return [];
-    return baseWorkouts.map(workout => {
-      const details = workoutDetails?.[workout.id];
-      return {
-        id: workout.id,
-        name: workout.name,
-        created_at: workout.start_time,
-        duration: workout.duration,
-        exercises: details?.exercises as Record<string, ExerciseSet[]> | undefined,
-      };
-    }).filter(w => w.created_at);
+    
+    try {
+      return baseWorkouts.map(workout => {
+        const details = workoutDetails?.[workout.id];
+        return {
+          id: workout.id,
+          name: workout.name,
+          created_at: workout.start_time,
+          duration: workout.duration,
+          exercises: details?.exercises as Record<string, ExerciseSet[]> | undefined,
+        };
+      }).filter(w => w.created_at);
+    } catch (error) {
+      console.error('[useWorkouts] Error processing workout data:', error);
+      return [];
+    }
   }, [baseWorkouts, workoutDetails]);
 
   const combinedError = historyError || detailsError;

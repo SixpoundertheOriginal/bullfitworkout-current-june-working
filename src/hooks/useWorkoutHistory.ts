@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { workoutHistoryApi } from '@/services/workoutHistoryService';
 import type { WorkoutHistoryFilters, EnhancedWorkoutSession } from '@/services/workoutHistoryService';
@@ -32,10 +32,9 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
-  // Use refs to prevent subscription recreation
-  const subscriptionRef = useRef<(() => void) | null>(null);
-  const isSubscribedRef = useRef(false);
-  const lastUpdateRef = useRef<number>(0);
+  // Simple state for subscription management without useRef
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(0);
   
   const queryInfo = useQuery({
     queryKey: [
@@ -48,22 +47,23 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
     ],
     queryFn: () => workoutHistoryApi.fetch(filters),
     staleTime: 30000,
+    retry: 2,
   });
   
   // Set up subscription using centralized manager with debouncing
   useEffect(() => {
-    if (!user?.id || isSubscribedRef.current) return;
+    if (!user?.id || isSubscribed) return;
 
     const handleWorkoutChange = (payload: any) => {
       const now = Date.now();
       
       // Debounce rapid updates (common during save operations)
-      if (now - lastUpdateRef.current < 2000) {
+      if (now - lastUpdate < 2000) {
         console.log('[useWorkoutHistory] Debouncing rapid update');
         return;
       }
       
-      lastUpdateRef.current = now;
+      setLastUpdate(now);
       
       console.log('[useWorkoutHistory] Workout change detected, invalidating queries:', payload);
       
@@ -79,25 +79,24 @@ export function useWorkoutHistory(filters: WorkoutHistoryFilters = { limit: 30 }
     };
 
     // Use the centralized subscription manager
-    subscriptionRef.current = subscriptionManager.subscribe({
+    const unsubscribe = subscriptionManager.subscribe({
       channelName: `workout-history-${user.id}`,
       table: 'workout_sessions',
       events: ['INSERT', 'UPDATE', 'DELETE'],
       callback: handleWorkoutChange
     });
 
-    isSubscribedRef.current = true;
+    setIsSubscribed(true);
     console.log('[useWorkoutHistory] Subscription established via manager');
 
     return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current();
-        subscriptionRef.current = null;
-        isSubscribedRef.current = false;
+      if (unsubscribe) {
+        unsubscribe();
+        setIsSubscribed(false);
         console.log('[useWorkoutHistory] Subscription cleaned up');
       }
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, isSubscribed, lastUpdate]);
   
   return queryInfo;
 }
@@ -123,20 +122,29 @@ export const useValidatedWorkoutHistory = (filters: WorkoutHistoryFilters = { li
       return undefined;
     }
     
-    const validatedWorkouts = (data.workouts || []).map((workout: EnhancedWorkoutSession) => ({
-      id: workout.id,
-      name: workout.name || 'Unnamed Workout',
-      start_time: workout.start_time,
-      duration: workout.duration || 0,
-      training_type: workout.training_type || 'General',
-      exerciseSets: workout.exerciseSets || [],
-    })).filter((w: ValidatedWorkoutSession) => w.id && w.start_time);
+    try {
+      const validatedWorkouts = (data.workouts || []).map((workout: EnhancedWorkoutSession) => ({
+        id: workout.id,
+        name: workout.name || 'Unnamed Workout',
+        start_time: workout.start_time,
+        duration: workout.duration || 0,
+        training_type: workout.training_type || 'General',
+        exerciseSets: workout.exerciseSets || [],
+      })).filter((w: ValidatedWorkoutSession) => w.id && w.start_time);
 
-    return {
-      workouts: validatedWorkouts,
-      exerciseCounts: data.exerciseCounts || {},
-      totalCount: data.totalCount || 0,
-    };
+      return {
+        workouts: validatedWorkouts,
+        exerciseCounts: data.exerciseCounts || {},
+        totalCount: data.totalCount || 0,
+      };
+    } catch (error) {
+      console.error('[useValidatedWorkoutHistory] Data validation error:', error);
+      return {
+        workouts: [],
+        exerciseCounts: {},
+        totalCount: 0,
+      };
+    }
   }, [data]);
 
   return { data: validatedData, ...rest };

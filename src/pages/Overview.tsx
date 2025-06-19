@@ -1,16 +1,19 @@
 
 import React from 'react';
-import WorkoutErrorBoundary from '@/components/ui/WorkoutErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { WorkoutErrorBoundary } from '@/components/ui/WorkoutErrorBoundary';
 import { WorkoutDataProvider } from '@/context/WorkoutDataProvider';
 import { OverviewContent } from '@/components/overview/OverviewContent';
 
 const OverviewPageComponent: React.FC = () => {
   return (
-    <WorkoutErrorBoundary>
-      <WorkoutDataProvider>
-        <OverviewContent />
-      </WorkoutDataProvider>
-    </WorkoutErrorBoundary>
+    <ErrorBoundary>
+      <WorkoutErrorBoundary>
+        <WorkoutDataProvider>
+          <OverviewContent />
+        </WorkoutDataProvider>
+      </WorkoutErrorBoundary>
+    </ErrorBoundary>
   );
 };
 
