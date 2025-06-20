@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast as shadToast } from "@/hooks/use-toast";
@@ -15,8 +16,8 @@ export const useWorkoutActions = () => {
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   
   const {
-    exercises: storeExercises,
-    setExercises: setStoreExercises,
+    exercises, // Use exercises from workout store directly
+    setExercises, // Use setExercises from workout store directly
     activeExercise,
     setActiveExercise,
     elapsedTime,
@@ -29,20 +30,22 @@ export const useWorkoutActions = () => {
     setTrainingConfig,
     setWorkoutStatus,
     startTime,
-    safeResetWorkout
+    safeResetWorkout,
+    addExercise // Use addExercise from workout store
   } = useWorkoutStore();
   
   const { isSaving, saveWorkoutAsync, isSuccess, error } = useEnhancedWorkoutSave();
   const { handleSetCompletion } = useTrainingTimers();
   const { showFeedback } = useFeedback();
   
-  const exerciseCount = Object.keys(storeExercises).length;
+  // Fix validation to use exercises from workout store
+  const exerciseCount = Object.keys(exercises).length;
   const hasExercises = exerciseCount > 0;
-  const hasCompletedSets = Object.values(storeExercises).some(sets => sets.some(set => set.completed));
+  const hasCompletedSets = Object.values(exercises).some(sets => sets.some(set => set.completed));
 
   // Define the onAddSet function to add a basic set to an exercise
   const handleAddSet = (exerciseName: string) => {
-    setStoreExercises(prev => {
+    setExercises(prev => {
       const currentSets = prev[exerciseName] || [];
       const newSetNumber = currentSets.length + 1;
       const newSet: ExerciseSet = { 
@@ -73,31 +76,16 @@ export const useWorkoutActions = () => {
     );
   };
 
-  // Enhanced exercise addition with feedback
+  // Enhanced exercise addition with feedback - use workout store's addExercise
   const handleAddExerciseWithFeedback = (exercise: Exercise | string) => {
     const name = typeof exercise === 'string' ? exercise : exercise.name;
-    if (storeExercises[name]) {
-      toast({ title: "Exercise already added", description: `${name} is already in your workout.` }); // Use object for toast
+    if (exercises[name]) {
+      toast({ title: "Exercise already added", description: `${name} is already in your workout.` });
       return;
     }
     
-    const newSet: ExerciseSet = { 
-      id: `${name}-set-1-${Date.now()}`, // Unique ID
-      weight: 0, 
-      reps: 0, 
-      duration: '0:00', // Required
-      completed: false, 
-      volume: 0, // Required
-      restTime: 60, 
-      isEditing: true, // Start in editing mode
-      exercise_name: name,
-      set_number: 1,
-    };
-    
-    setStoreExercises(prev => ({ 
-      ...prev, 
-      [name]: [newSet] 
-    }));
+    // Use workout store's addExercise method
+    addExercise(name);
     setActiveExercise(name);
     if (workoutStatus === 'idle') startWorkout();
     setIsAddExerciseSheetOpen(false);
@@ -123,7 +111,7 @@ export const useWorkoutActions = () => {
     const workoutTemplate = generateWorkoutTemplate(trainingConfig);
     // convertTemplateToStoreFormat now returns Record<string, ExerciseSet[]>
     const autoExercises: Record<string, ExerciseSet[]> = convertTemplateToStoreFormat(workoutTemplate);
-    setStoreExercises(autoExercises);
+    setExercises(autoExercises);
     
     const firstExercise = Object.keys(autoExercises)[0];
     if (firstExercise) {
@@ -132,7 +120,7 @@ export const useWorkoutActions = () => {
     
     startWorkout();
     
-    toast({ // Use object for toast
+    toast({
       title: "Workout loaded!",
       description: `${Object.keys(autoExercises).length} exercises ready to go`
     });
@@ -147,7 +135,7 @@ export const useWorkoutActions = () => {
       return;
     }
 
-    // Validate workout has exercises and completed sets
+    // Validate workout has exercises and completed sets - using exercises from workout store
     if (!hasExercises) {
       toast({ 
         title: "No exercises added", 
@@ -180,7 +168,7 @@ export const useWorkoutActions = () => {
       console.log('[WorkoutActions] Starting save with React Query');
 
       const workoutData = {
-        exercises: storeExercises,
+        exercises: exercises, // Use exercises from workout store
         duration: elapsedTime,
         startTime: new Date(startTime),
         endTime: new Date(),
@@ -213,15 +201,6 @@ export const useWorkoutActions = () => {
     }
   };
 
-  // Function to handle exercise updates from ExerciseList component
-  const handleSetExercises = (updatedExercises: Record<string, ExerciseSet[]> | ((prev: Record<string, ExerciseSet[]>) => Record<string, ExerciseSet[]>)) => {
-    if (typeof updatedExercises === 'function') {
-      setStoreExercises(prev => updatedExercises(prev));
-    } else {
-      setStoreExercises(updatedExercises);
-    }
-  };
-
   return {
     // State
     isAddExerciseSheetOpen,
@@ -235,11 +214,10 @@ export const useWorkoutActions = () => {
     handleDeleteExerciseWithFeedback,
     handleAutoPopulateWorkout,
     handleFinishWorkout,
-    handleSetExercises,
     
-    // Store state
-    storeExercises,
-    setStoreExercises,
+    // Store state - use exercises from workout store
+    exercises,
+    setExercises,
     showFeedback,
     
     // Computed values

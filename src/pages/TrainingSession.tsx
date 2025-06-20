@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
@@ -99,8 +98,6 @@ const TrainingSessionPage: React.FC = () => {
   const { 
     exercises, 
     trainingConfig, 
-    addExercise, 
-    completeSet,
     removeExercise,
     safeResetWorkout,
     elapsedTime,
@@ -115,14 +112,15 @@ const TrainingSessionPage: React.FC = () => {
   // Use useWorkoutActions for all workout operations including save
   const {
     handleFinishWorkout,
+    handleAddExerciseWithFeedback,
     isSaving,
     isSuccess,
-    error
+    error,
+    hasExercises,
+    exerciseCount // Get exerciseCount from useWorkoutActions which uses workout store
   } = useWorkoutActions();
 
-  // Memoized computations to prevent expensive recalculations
-  const exerciseCount = useMemo(() => Object.keys(exercises).length, [exercises]);
-  const hasExercises = useMemo(() => exerciseCount > 0, [exerciseCount]);
+  // Memoized computations to prevent expensive recalculations - use exercises from workout store
   const hasCompletedSets = useMemo(() => 
     Object.values(exercises).some(sets => sets.some(set => set.completed)), 
     [exercises]
@@ -142,19 +140,20 @@ const TrainingSessionPage: React.FC = () => {
   // Stabilized callback functions with proper dependencies
   const handleSelectExercise = useCallback((exercise: Exercise) => {
     console.log('[TrainingSession] Adding exercise:', exercise.name);
-    addExercise(exercise.name);
+    handleAddExerciseWithFeedback(exercise);
     setAddExerciseSheetOpen(false);
     toast({
       title: `${exercise.name} added`,
       description: "You can start tracking your sets now.",
     });
-  }, [addExercise]);
+  }, [handleAddExerciseWithFeedback]);
   
   const handleCompleteSet = useCallback((exerciseName: string, setIndex: number) => {
     console.log('[TrainingSession] Completing set:', { exerciseName, setIndex });
+    const { completeSet } = useWorkoutStore.getState();
     completeSet(exerciseName, setIndex);
     handleTimerOnComplete(exerciseName, setIndex);
-  }, [completeSet, handleTimerOnComplete]);
+  }, [handleTimerOnComplete]);
 
   const handleRecoverWorkout = useCallback(() => {
     console.log('[TrainingSession] User chose to recover workout');
@@ -207,7 +206,7 @@ const TrainingSessionPage: React.FC = () => {
       <div className={cn(
         "container mx-auto px-4",
         // Mobile-optimized layout with proper footer clearance
-        "min-h-screen pb-24 lg:pb-16"
+        "min-h-screen pb-32 lg:pb-20"
       )}>
         {/* Recovery Banner */}
         {needsRecovery && (
