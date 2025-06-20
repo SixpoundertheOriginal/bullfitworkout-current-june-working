@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast as shadToast } from "@/hooks/use-toast";
@@ -16,8 +15,8 @@ export const useWorkoutActions = () => {
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   
   const {
-    exercises, // Use exercises from workout store directly
-    setExercises, // Use setExercises from workout store directly
+    exercises,
+    setExercises,
     activeExercise,
     setActiveExercise,
     elapsedTime,
@@ -31,7 +30,7 @@ export const useWorkoutActions = () => {
     setWorkoutStatus,
     startTime,
     safeResetWorkout,
-    addExercise // Use addExercise from workout store
+    addExercise
   } = useWorkoutStore();
   
   const { isSaving, saveWorkoutAsync, isSuccess, error } = useEnhancedWorkoutSave();
@@ -128,6 +127,17 @@ export const useWorkoutActions = () => {
 
   const handleFinishWorkout = async () => {
     console.log('[WorkoutActions] Finish workout clicked');
+    console.log('[WorkoutActions] Current state:', {
+      exerciseCount,
+      hasExercises,
+      hasCompletedSets,
+      isSaving,
+      startTime,
+      trainingConfig,
+      exercises: Object.keys(exercises),
+      workoutStatus,
+      isActive
+    });
 
     // Check if already saving
     if (isSaving) {
@@ -135,8 +145,9 @@ export const useWorkoutActions = () => {
       return;
     }
 
-    // Validate workout has exercises and completed sets - using exercises from workout store
+    // Validate workout has exercises and completed sets
     if (!hasExercises) {
+      console.log('[WorkoutActions] VALIDATION FAILED: No exercises');
       toast({ 
         title: "No exercises added", 
         description: "Add at least one exercise to finish your workout.", 
@@ -146,6 +157,7 @@ export const useWorkoutActions = () => {
     }
 
     if (!hasCompletedSets) {
+      console.log('[WorkoutActions] VALIDATION FAILED: No completed sets');
       toast({ 
         title: "No sets completed", 
         description: "Complete at least one set to finish your workout.", 
@@ -155,20 +167,33 @@ export const useWorkoutActions = () => {
     }
 
     // Validate required workout metadata
-    if (!startTime || !trainingConfig) {
+    if (!startTime) {
+      console.log('[WorkoutActions] VALIDATION FAILED: No start time');
       toast({ 
         title: "Missing workout data", 
-        description: "Cannot save workout - missing session information.", 
+        description: "Cannot save workout - missing start time.", 
         variant: "destructive" 
       });
       return;
     }
 
+    if (!trainingConfig) {
+      console.log('[WorkoutActions] VALIDATION FAILED: No training config');
+      toast({ 
+        title: "Missing workout data", 
+        description: "Cannot save workout - missing training configuration.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    console.log('[WorkoutActions] All validations passed, proceeding with save');
+
     try {
       console.log('[WorkoutActions] Starting save with React Query');
 
       const workoutData = {
-        exercises: exercises, // Use exercises from workout store
+        exercises: exercises,
         duration: elapsedTime,
         startTime: new Date(startTime),
         endTime: new Date(),
