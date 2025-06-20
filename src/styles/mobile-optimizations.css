@@ -24,6 +24,10 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.mb-safe-bottom {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
 .bottom-safe-bottom {
   bottom: env(safe-area-inset-bottom);
 }
@@ -116,10 +120,10 @@
   padding-top: calc(64px + env(safe-area-inset-top)); /* Standard h-16 header */
 }
 
-/* Updated footer clearance for new component */
+/* Updated footer clearance for enhanced mobile experience */
 .footer-content-clearance {
-  /* Updated for EnhancedWorkoutSessionFooter: p-4(16px) + button(h-12=48px) + p-4(16px) ~= 80px. Giving 88px for margin. */
-  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  /* Enhanced footer clearance: padding(16px) + button(48px) + padding(16px) + safe-area = 96px base */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .header-fixed {
@@ -132,15 +136,25 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* CRITICAL: Fixed footer positioning */
+/* CRITICAL: Enhanced fixed footer positioning for mobile */
 .footer-stable {
   position: fixed !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
   z-index: 50 !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  /* Ensure footer is always visible */
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile-specific viewport optimizations */
+@supports (height: 100dvh) {
+  .mobile-full-height {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
 }
 
 /* Dark mode optimizations */
@@ -211,6 +225,13 @@
 .navigation-zone {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile keyboard optimization */
+@media (max-height: 500px) {
+  .keyboard-aware {
+    padding-bottom: 0;
+  }
 }
 
 /* Haptic feedback integration points */

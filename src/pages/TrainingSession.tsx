@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { LayoutWrapper } from '@/components/layouts/LayoutWrapper';
 import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
 import { WorkoutRecoveryBanner } from '@/components/training/WorkoutRecoveryBanner';
+import { cn } from '@/lib/utils';
 
 // Memoized SessionHeader component to isolate renders
 const SessionHeader = React.memo<{
@@ -58,7 +59,7 @@ const SessionHeader = React.memo<{
       <button
         onClick={onExitWorkout}
         disabled={isSaving}
-        className="text-gray-400 hover:text-white p-2 disabled:opacity-50"
+        className="text-gray-400 hover:text-white p-2 disabled:opacity-50 touch-target"
       >
         Exit
       </button>
@@ -203,7 +204,11 @@ const TrainingSessionPage: React.FC = () => {
 
   return (
     <LayoutWrapper>
-      <div className="container mx-auto px-4">
+      <div className={cn(
+        "container mx-auto px-4",
+        // Mobile-optimized layout with proper footer clearance
+        "min-h-screen pb-24 lg:pb-16"
+      )}>
         {/* Recovery Banner */}
         {needsRecovery && (
           <div className="sticky top-16 z-50 -mx-4 px-4 py-2">
@@ -235,8 +240,12 @@ const TrainingSessionPage: React.FC = () => {
           onExitWorkout={handleExitWorkout}
         />
 
-        {/* Exercise List */}
-        <div className="pb-24">
+        {/* Exercise List with mobile padding */}
+        <div className={cn(
+          "pb-4",
+          // Additional bottom padding for mobile footer clearance
+          "mb-safe-bottom"
+        )}>
           <ExerciseList
             exercises={exercises}
             onCompleteSet={handleCompleteSet}
@@ -246,6 +255,7 @@ const TrainingSessionPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Enhanced Mobile Footer */}
       <EnhancedWorkoutSessionFooter
         onAddExercise={handleAddExercise}
         onFinishWorkout={handleFinishWorkout}
