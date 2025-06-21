@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
@@ -133,12 +134,6 @@ const TrainingSessionPage: React.FC = () => {
     Object.values(exercises).some(sets => sets.some(set => set.completed)), 
     [exercises]
   );
-  const completedSetsCount = useMemo(() => 
-    Object.values(exercises).reduce((total, sets) => 
-      total + sets.filter(set => set.completed).length, 0
-    ), 
-    [exercises]
-  );
 
   // Check for recovery needs on component mount
   useEffect(() => {
@@ -266,6 +261,7 @@ const TrainingSessionPage: React.FC = () => {
         onFinishWorkout={handleFinishWorkout}
         hasExercises={hasExercises}
         isSaving={isSaving}
+        completedSetsCount={completedSetsCount}
       />
 
       {/* Workout Completion Dialog */}
