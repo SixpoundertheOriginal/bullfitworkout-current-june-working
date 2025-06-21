@@ -7,6 +7,7 @@ import { StatsSection } from '@/components/profile/StatsSection';
 import { ProfileLoadingSkeleton } from '@/components/profile/ProfileLoadingSkeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { RecentWorkoutsSection } from '@/components/profile/RecentWorkoutsSection';
 import { z } from 'zod';
 
 export const profileFormSchema = z.object({
@@ -80,8 +81,13 @@ export const ProfilePage: React.FC = () => {
           totalDuration={stats.totalDuration}
         />
       </ErrorBoundary>
+
+      {/* Recent Workouts Section */}
+      <ErrorBoundary>
+        <RecentWorkoutsSection workouts={stats.workouts || []} />
+      </ErrorBoundary>
       
-      {/* Placeholder for future sections */}
+      {/* Settings Section */}
       <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
           <CardTitle>Settings</CardTitle>
