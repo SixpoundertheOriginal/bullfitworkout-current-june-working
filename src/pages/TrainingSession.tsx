@@ -12,6 +12,7 @@ import { LayoutWrapper } from '@/components/layouts/LayoutWrapper';
 import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
 import { WorkoutRecoveryBanner } from '@/components/training/WorkoutRecoveryBanner';
 import { cn } from '@/lib/utils';
+import { WorkoutCompletionDialog } from '@/components/training/WorkoutCompletionDialog';
 
 // Memoized SessionHeader component to isolate renders
 const SessionHeader = React.memo<{
@@ -113,11 +114,18 @@ const TrainingSessionPage: React.FC = () => {
   const {
     handleFinishWorkout,
     handleAddExerciseWithFeedback,
+    handleSaveWorkout,
+    handleSaveAsDraft,
+    handleDiscardWorkout,
+    handleContinueWorkout,
     isSaving,
     isSuccess,
     error,
     hasExercises,
-    exerciseCount // Get exerciseCount from useWorkoutActions which uses workout store
+    exerciseCount,
+    completedSetsCount,
+    isCompletionDialogOpen,
+    closeCompletionDialog
   } = useWorkoutActions();
 
   // Memoized computations to prevent expensive recalculations - use exercises from workout store
@@ -205,7 +213,6 @@ const TrainingSessionPage: React.FC = () => {
     <LayoutWrapper>
       <div className={cn(
         "container mx-auto px-4",
-        // Mobile-optimized layout with proper footer clearance
         "min-h-screen pb-32 lg:pb-20"
       )}>
         {/* Recovery Banner */}
@@ -242,7 +249,6 @@ const TrainingSessionPage: React.FC = () => {
         {/* Exercise List with mobile padding */}
         <div className={cn(
           "pb-4",
-          // Additional bottom padding for mobile footer clearance
           "mb-safe-bottom"
         )}>
           <ExerciseList
@@ -259,6 +265,19 @@ const TrainingSessionPage: React.FC = () => {
         onAddExercise={handleAddExercise}
         onFinishWorkout={handleFinishWorkout}
         hasExercises={hasExercises}
+        isSaving={isSaving}
+      />
+
+      {/* Workout Completion Dialog */}
+      <WorkoutCompletionDialog
+        open={isCompletionDialogOpen}
+        onOpenChange={closeCompletionDialog}
+        exerciseCount={exerciseCount}
+        completedSetsCount={completedSetsCount}
+        onSaveWorkout={handleSaveWorkout}
+        onSaveAsDraft={handleSaveAsDraft}
+        onDiscardWorkout={handleDiscardWorkout}
+        onContinueWorkout={handleContinueWorkout}
         isSaving={isSaving}
       />
 
