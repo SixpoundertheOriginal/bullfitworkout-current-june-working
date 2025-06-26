@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 
 // Form validation schemas
 const loginSchema = z.object({
@@ -26,8 +26,17 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  console.log('[AuthPage] Rendering with state:', { 
+    isLogin, 
+    hasUser: !!user, 
+    loading, 
+    locationState: location.state 
+  });
 
   // Initialize all form state regardless of user authentication status
   const loginForm = useForm<LoginFormValues>({
@@ -48,26 +57,36 @@ const Auth = () => {
   });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
+    console.log('[AuthPage] Login form submitted');
+    setError(null);
     try {
       await signIn(data.email, data.password);
-      navigate("/");
-    } catch (error) {
-      console.error("Login error:", error);
+      console.log('[AuthPage] Login successful, navigating to:', location.state?.from?.pathname || '/overview');
+      navigate(location.state?.from?.pathname || '/overview');
+    } catch (error: any) {
+      console.error('[AuthPage] Login error:', error);
+      setError(error.message || 'Login failed');
     }
   };
 
   const onSignupSubmit = async (data: SignupFormValues) => {
+    console.log('[AuthPage] Signup form submitted');
+    setError(null);
     try {
       await signUp(data.email, data.password, data.fullName);
+      console.log('[AuthPage] Signup successful, switching to login');
       setIsLogin(true); // Switch to login view after signup
-    } catch (error) {
-      console.error("Signup error:", error);
+    } catch (error: any) {
+      console.error('[AuthPage] Signup error:', error);
+      setError(error.message || 'Signup failed');
     }
   };
 
-  // If already logged in, redirect to home after all hooks are initialized
+  // If already logged in, redirect to requested page or overview
   if (user) {
-    return <Navigate to="/" />;
+    const redirectTo = location.state?.from?.pathname || '/overview';
+    console.log('[AuthPage] User already logged in, redirecting to:', redirectTo);
+    return <Navigate to={redirectTo} replace />;
   }
 
   return (
@@ -77,6 +96,12 @@ const Auth = () => {
           <h1 className="text-3xl font-bold mb-6 text-center">
             {isLogin ? "Welcome Back" : "Create Account"}
           </h1>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/20 border border-red-500/30 text-red-300 rounded">
+              {error}
+            </div>
+          )}
           
           {isLogin ? (
             <Form {...loginForm}>

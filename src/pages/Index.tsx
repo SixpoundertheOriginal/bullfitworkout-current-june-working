@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { EnhancedWelcomeHeader } from "@/components/home/EnhancedWelcomeHeader";
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, Eye, EyeOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 // Lazy-load the WorkoutHistory component to speed up initial page load.
 const WorkoutHistory = lazy(() => import("@/components/WorkoutHistory").then(module => ({ default: module.WorkoutHistory })));
@@ -240,6 +240,63 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Debug Navigation Section */}
+      <TestNavigation />
+    </div>
+  );
+};
+
+// Add this debug navigation section before the closing div
+const TestNavigation = () => {
+  const navigate = useNavigate();
+  
+  const handleNavigation = (path: string) => {
+    console.log('[Index] Navigating to:', path);
+    navigate(path);
+  };
+
+  return (
+    <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+      <h3 className="text-white text-lg font-semibold mb-4">Debug Navigation</h3>
+      <div className="grid grid-cols-2 gap-2">
+        <button 
+          onClick={() => handleNavigation('/auth')}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Auth Page
+        </button>
+        <button 
+          onClick={() => handleNavigation('/overview')}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Overview
+        </button>
+        <button 
+          onClick={() => handleNavigation('/profile')}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          Profile
+        </button>
+        <button 
+          onClick={() => handleNavigation('/all-exercises')}
+          className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+        >
+          All Exercises
+        </button>
+        <button 
+          onClick={() => handleNavigation('/training-session')}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Training Session
+        </button>
+        <button 
+          onClick={() => handleNavigation('/design-system')}
+          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
+          Design System
+        </button>
+      </div>
     </div>
   );
 };

@@ -17,6 +17,7 @@ import { RealtimeSubscriptionProvider } from "@/context/RealtimeSubscriptionProv
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LayoutWrapper } from "@/components/layouts/LayoutWrapper";
 import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
 import "./App.css";
 import "./styles/safe-area.css";
 
@@ -37,6 +38,8 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  console.log('[App] Rendering application');
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
@@ -62,6 +65,7 @@ function App() {
                                       <Index />
                                     </LayoutWrapper>
                                   } />
+                                  <Route path="/auth" element={<Auth />} />
                                   <Route path="/overview" element={
                                     <ProtectedRoute>
                                       <LayoutWrapper>
@@ -77,7 +81,7 @@ function App() {
                                     </ProtectedRoute>
                                   } />
                                   <Route path="/all-exercises" element={
-                                    <ProtectedRoute>
+                                    <ProtectedRoute allowPublic={true}>
                                       <LayoutWrapper>
                                         <AllExercises />
                                       </LayoutWrapper>
