@@ -14,7 +14,7 @@ import StatsLoadingSkeleton from "@/components/metrics/StatsLoadingSkeleton";
 import { usePerformanceTracking } from "@/hooks/usePerformanceTracking";
 
 const UserStatsComponent = () => {
-  const { stats, loading } = useWorkoutStatsContext();
+  const { stats, loading, error } = useWorkoutStatsContext();
   
   // Track component performance
   usePerformanceTracking({ 
@@ -30,26 +30,41 @@ const UserStatsComponent = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Show loading state
   if (loading) {
     return <StatsLoadingSkeleton />;
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <Card className="bg-gray-900 border-gray-800">
+        <CardContent className="p-6 text-center">
+          <div className="text-red-400 mb-2">Error loading stats</div>
+          <p className="text-gray-400 text-sm">{error.message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const emptyStats = !stats || stats.totalWorkouts === 0;
 
-  // Prepare data for WorkoutTypeChart
-  const workoutTypeData = stats?.workoutTypes?.map(type => ({
-    type: type.type,
-    count: type.count,
-    totalDuration: 0,
-    percentage: type.percentage,
-    timeOfDay: {
-      morning: 0,
-      afternoon: 0,
-      evening: 0,
-      night: 0
-    },
-    averageDuration: 0
-  })) || [];
+  // Prepare data for WorkoutTypeChart with better error handling
+  const workoutTypeData = React.useMemo(() => {
+    return stats?.workoutTypes?.map(type => ({
+      type: type.type,
+      count: type.count,
+      totalDuration: 0,
+      percentage: type.percentage,
+      timeOfDay: {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0
+      },
+      averageDuration: 0
+    })) || [];
+  }, [stats?.workoutTypes]);
 
   return (
     <div className="space-y-6">
@@ -86,8 +101,8 @@ const UserStatsComponent = () => {
             />
             <StatCard 
               icon={<Flame className="h-5 w-5 text-purple-400" />}
-              label="Total Time"
-              value={`${Math.floor(stats.totalDuration / 60)} min`}
+              label="Total Volume"
+              value={`${Math.round(stats.totalVolume || 0).toLocaleString()}`}
             />
           </div>
           
@@ -105,8 +120,13 @@ const UserStatsComponent = () => {
                     <div key={workout.id} className="flex items-center justify-between p-2 rounded bg-gray-800">
                       <div>
                         <div className="font-medium text-white">{workout.name}</div>
-                        <div className="text-xs text-gray-400">
-                          {new Date(workout.start_time).toLocaleDateString()}
+                        <div className="text-xs text-gray-400 flex items-center gap-2">
+                          <span>{new Date(workout.start_time).toLocaleDateString()}</span>
+                          {workout.training_type && (
+                            <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs">
+                              {workout.training_type}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

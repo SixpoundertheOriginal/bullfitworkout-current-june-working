@@ -16,11 +16,11 @@ interface WorkoutStatsContextType {
 
 const WorkoutStatsContext = createContext<WorkoutStatsContextType | undefined>(undefined);
 
-// Create a stable query key factory
+// Create a stable query key factory with better caching strategy
 const createWorkoutStatsQueryKey = (userId: string | undefined, dateRange: any, weightUnit: string) => {
   const from = dateRange?.from?.toISOString();
   const to = dateRange?.to?.toISOString();
-  return ['workout-stats', userId, from, to, weightUnit];
+  return ['workout-stats-v2', userId, from, to, weightUnit]; // v2 to invalidate old cache
 };
 
 export function WorkoutStatsProvider({ children }: { children: ReactNode }) {
@@ -40,51 +40,63 @@ export function WorkoutStatsProvider({ children }: { children: ReactNode }) {
     queryKey,
     queryFn: () => workoutStatsApi.fetch(user!.id, dateRange, weightUnit),
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // Increased: 5 minutes
-    gcTime: 10 * 60 * 1000, // Increased: 10 minutes
-    retry: 1,
+    staleTime: 2 * 60 * 1000, // 2 minutes - shorter for more frequent updates
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Prevent redundant queries on mount
+    refetchOnMount: false,
+    // Add network mode for better offline handling
+    networkMode: 'online'
   });
 
-  // Optimized background refresh - significantly reduced frequency
+  // Optimized background refresh - less frequent but still responsive
   React.useEffect(() => {
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        queryClient.invalidateQueries({ queryKey });
+      if (document.visibilityState === 'visible' && user) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['workout-stats-v2', user.id],
+          exact: false // Invalidate all related queries
+        });
       }
-    }, 30 * 60 * 1000); // Increased to 30 minutes
+    }, 10 * 60 * 1000); // 10 minutes instead of 30
 
     return () => clearInterval(interval);
-  }, [queryClient, queryKey]);
+  }, [queryClient, user]);
+
+  // Default stats with better structure
+  const defaultStats: WorkoutStats = React.useMemo(() => ({
+    totalWorkouts: 0,
+    totalExercises: 0,
+    totalSets: 0,
+    totalDuration: 0,
+    avgDuration: 0,
+    workoutTypes: [],
+    tags: [],
+    recommendedType: undefined,
+    recommendedDuration: 0,
+    recommendedTags: [],
+    progressMetrics: { volumeChangePercentage: 0, strengthTrend: 'stable', consistencyScore: 0 },
+    streakDays: 0,
+    workouts: [],
+    timePatterns: {
+      daysFrequency: { monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0, saturday: 0, sunday: 0 },
+      durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
+    },
+    muscleFocus: {},
+    exerciseVolumeHistory: [],
+    lastWorkoutDate: undefined,
+    efficiency: 0,
+    density: 0,
+    intensity: 0,
+    totalVolume: 0
+  }), []);
 
   const contextValue: WorkoutStatsContextType = React.useMemo(() => ({
-    stats: stats || {
-      totalWorkouts: 0,
-      totalExercises: 0,
-      totalSets: 0,
-      totalDuration: 0,
-      avgDuration: 0,
-      workoutTypes: [],
-      tags: [],
-      recommendedType: undefined,
-      recommendedDuration: 0,
-      recommendedTags: [],
-      progressMetrics: { volumeChangePercentage: 0, strengthTrend: 'stable', consistencyScore: 0 },
-      streakDays: 0,
-      workouts: [],
-      timePatterns: {
-        daysFrequency: { monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0, saturday: 0, sunday: 0 },
-        durationByTimeOfDay: { morning: 0, afternoon: 0, evening: 0, night: 0 }
-      },
-      muscleFocus: {},
-      exerciseVolumeHistory: [],
-      lastWorkoutDate: undefined
-    },
+    stats: stats || defaultStats,
     loading,
     error: error as Error | null,
     refetch: () => refetch()
-  }), [stats, loading, error, refetch]);
+  }), [stats, defaultStats, loading, error, refetch]);
 
   return (
     <WorkoutStatsContext.Provider value={contextValue}>
