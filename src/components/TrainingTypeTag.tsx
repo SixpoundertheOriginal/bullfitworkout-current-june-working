@@ -2,22 +2,19 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 
-export type TrainingType = 'Strength' | 'Hypertrophy' | 'Cardio' | 'Calisthenics' | 'Stretching' | 'Yoga';
+export type StrengthTrainingType = 'Strength Training' | 'Hypertrophy' | 'Calisthenics';
 
 interface TrainingTypeTagProps {
-  type: TrainingType;
+  type: StrengthTrainingType;
   className?: string;
   size?: 'sm' | 'default';
   variant?: 'default' | 'large';
 }
 
-const typeStyles: Record<TrainingType, string> = {
-  'Strength': 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30',
+const typeStyles: Record<StrengthTrainingType, string> = {
+  'Strength Training': 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30',
   'Hypertrophy': 'bg-pink-500/20 text-pink-200 border-pink-500/30 hover:bg-pink-500/30',
-  'Cardio': 'bg-red-500/20 text-red-200 border-red-500/30 hover:bg-red-500/30',
-  'Calisthenics': 'bg-blue-500/20 text-blue-200 border-blue-500/30 hover:bg-blue-500/30',
-  'Stretching': 'bg-teal-500/20 text-teal-200 border-teal-500/30 hover:bg-teal-500/30',
-  'Yoga': 'bg-green-500/20 text-green-200 border-green-500/30 hover:bg-green-500/30'
+  'Calisthenics': 'bg-blue-500/20 text-blue-200 border-blue-500/30 hover:bg-blue-500/30'
 };
 
 export const TrainingTypeTag = ({ type, className, size = 'default', variant = 'default' }: TrainingTypeTagProps) => {
@@ -34,15 +31,12 @@ export const TrainingTypeTag = ({ type, className, size = 'default', variant = '
   );
 };
 
-export const trainingTypes: TrainingType[] = [
-  'Strength',
+export const strengthTrainingTypes: StrengthTrainingType[] = [
+  'Strength Training',
   'Hypertrophy',
-  'Cardio',
-  'Calisthenics',
-  'Stretching',
-  'Yoga'
+  'Calisthenics'
 ];
 
-export function isValidTrainingType(type: string): type is TrainingType {
-  return trainingTypes.includes(type as TrainingType);
+export function isValidStrengthTrainingType(type: string): type is StrengthTrainingType {
+  return strengthTrainingTypes.includes(type as StrengthTrainingType);
 }

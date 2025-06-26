@@ -17,9 +17,9 @@ interface WorkoutSetupContextType {
 const WorkoutSetupContext = createContext<WorkoutSetupContextType | undefined>(undefined);
 
 const initialState: WorkoutSetupState = {
-  trainingType: "Strength",
+  trainingType: "Strength Training",
   tags: [],
-  duration: 30,
+  duration: 45, // Increased default for strength training
   intensity: "Moderate"
 };
 

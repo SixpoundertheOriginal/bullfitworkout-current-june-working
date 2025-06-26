@@ -9,9 +9,9 @@ export interface TrainingConfiguration {
 }
 
 export const useTrainingConfiguration = () => {
-  const [trainingType, setTrainingType] = useState<string>("Strength");
+  const [trainingType, setTrainingType] = useState<string>("Strength Training");
   const [tags, setTags] = useState<string[]>([]);
-  const [duration, setDuration] = useState<number>(30);
+  const [duration, setDuration] = useState<number>(45); // Increased default for strength training
   const { stats } = useWorkoutStatsContext();
 
   const configuration: TrainingConfiguration = {
@@ -43,9 +43,9 @@ export const useTrainingConfiguration = () => {
   }, []);
 
   const resetConfiguration = useCallback(() => {
-    setTrainingType("Strength");
+    setTrainingType("Strength Training");
     setTags([]);
-    setDuration(30);
+    setDuration(45);
   }, []);
 
   return {

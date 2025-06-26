@@ -1,7 +1,6 @@
 
 import React from "react";
 import { TrainingTypeSelector } from "../TrainingTypeSelector";
-import { Card } from "@/components/ui/card";
 
 interface WorkoutTypeStepProps {
   selectedType: string;
@@ -13,10 +12,10 @@ export function WorkoutTypeStep({ selectedType, onSelect }: WorkoutTypeStepProps
     <div className="px-6 py-8 h-full flex flex-col">
       <div className="text-center mb-8">
         <h3 className="text-2xl font-bold text-white mb-2">
-          Choose Your Adventure
+          Select Your Training Focus
         </h3>
         <p className="text-gray-400 text-base">
-          Select the type of workout that matches your mood today
+          Choose the training style that matches your strength goals
         </p>
       </div>
 
@@ -29,7 +28,7 @@ export function WorkoutTypeStep({ selectedType, onSelect }: WorkoutTypeStepProps
 
       <div className="text-center mt-6">
         <p className="text-sm text-gray-500">
-          Tap any training type to continue
+          Tap any training focus to continue
         </p>
       </div>
     </div>
