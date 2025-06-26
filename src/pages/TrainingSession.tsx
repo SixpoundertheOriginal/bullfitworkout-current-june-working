@@ -3,9 +3,11 @@ import React from 'react';
 import { TrainingSession as TrainingSessionComponent } from '@/components/training/TrainingSession';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useWorkoutStore } from '@/store/workoutStore';
+import { useNavigate } from 'react-router-dom';
 
 const TrainingSessionPage: React.FC = () => {
   const { isActive, exercises } = useWorkoutStore();
+  const navigate = useNavigate();
   
   // Show message if no active workout
   if (!isActive && Object.keys(exercises).length === 0) {
@@ -25,10 +27,24 @@ const TrainingSessionPage: React.FC = () => {
     );
   }
 
+  const handleComplete = () => {
+    // Navigate to home or workout complete page
+    navigate('/');
+  };
+
+  const handleCancel = () => {
+    // Navigate back to home
+    navigate('/');
+  };
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-900">
-        <TrainingSessionComponent />
+        <TrainingSessionComponent 
+          trainingConfig={null}
+          onComplete={handleComplete}
+          onCancel={handleCancel}
+        />
       </div>
     </ErrorBoundary>
   );

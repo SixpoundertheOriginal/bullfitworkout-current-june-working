@@ -70,14 +70,14 @@ const AllExercisesPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {exercise.primaryMuscleGroups && exercise.primaryMuscleGroups.length > 0 && (
+                    {exercise.primary_muscle_groups && exercise.primary_muscle_groups.length > 0 && (
                       <p className="text-sm text-gray-400">
-                        <span className="font-medium">Muscles:</span> {exercise.primaryMuscleGroups.join(', ')}
+                        <span className="font-medium">Muscles:</span> {exercise.primary_muscle_groups.join(', ')}
                       </p>
                     )}
-                    {exercise.equipmentTypes && exercise.equipmentTypes.length > 0 && (
+                    {exercise.equipment_type && exercise.equipment_type.length > 0 && (
                       <p className="text-sm text-gray-400">
-                        <span className="font-medium">Equipment:</span> {exercise.equipmentTypes.join(', ')}
+                        <span className="font-medium">Equipment:</span> {exercise.equipment_type.join(', ')}
                       </p>
                     )}
                     {exercise.difficulty && (
