@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('[AuthContext] Initializing authentication...');
     
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[AuthContext] Auth state changed:', { 
         event, 
         hasSession: !!session, 
@@ -31,17 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Handle profile creation on sign up
-      if (event === 'SIGNED_UP' && session?.user) {
-        console.log('[AuthContext] New user signed up, ensuring profile exists');
-        setTimeout(() => {
-          ensureUserProfile(session.user);
-        }, 0);
-      }
-
-      // Handle profile check on sign in
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('[AuthContext] User signed in, checking profile');
+      // Simplified: ensure profile exists whenever we have a session with a user
+      if (session?.user) {
+        console.log('[AuthContext] Session with user detected, ensuring profile exists');
         setTimeout(() => {
           ensureUserProfile(session.user);
         }, 0);
