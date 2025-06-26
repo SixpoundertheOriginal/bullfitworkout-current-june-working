@@ -37,6 +37,7 @@ const Index = () => {
   } = useIndexPageState();
 
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   // Mock data for achievements and insights (in real app, this would come from hooks)
   const mockAchievements = [
@@ -86,7 +87,7 @@ const Index = () => {
 
   // Update handleStartTraining to go to funnel instead of direct training
   const handleStartWorkoutFunnel = () => {
-    window.location.href = '/workout-setup/type';
+    navigate('/workout-setup/type');
   };
 
   return (
