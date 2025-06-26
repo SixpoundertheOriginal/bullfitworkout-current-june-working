@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExerciseSet } from "@/types/exercise";
+import { ExerciseSet } from "@/store/workoutStore";
 import { EnhancedExerciseTracker } from './EnhancedExerciseTracker';
 import { useEnhancedExerciseTracker } from '@/hooks/useEnhancedExerciseTracker';
 
@@ -33,7 +33,6 @@ const ExerciseTrackerWrapper: React.FC<{
   } = useEnhancedExerciseTracker(exerciseName);
 
   // Enhanced completion handler that triggers rest timer
-  // This now correctly receives a string `setId` and finds the `setIndex` for the store.
   const handleToggleCompletion = (setId: string) => {
     const setIndex = exercise.sets.findIndex(s => s.id === setId);
     if (setIndex === -1) return;

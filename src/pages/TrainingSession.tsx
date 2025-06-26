@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { WorkoutCompletionDialog } from '@/components/training/WorkoutCompletionDialog';
 import { RestTimerNotification } from '@/components/timers/RestTimerNotification';
 import { RestTimerSheet } from '@/components/timers/RestTimerSheet';
+import { formatTime } from '@/utils/formatTime';
 
 // Memoized SessionHeader component to isolate renders
 const SessionHeader = React.memo<{
@@ -84,8 +85,10 @@ const TimerDisplay = React.memo<{
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  const restProgress = restTimerTargetDuration > 0 ? 
-    ((restTimerTargetDuration - currentRestTime) / restTimerTargetDuration) * 100 : 0;
+  const restProgress = useMemo(() => {
+    return restTimerTargetDuration > 0 ? 
+      ((restTimerTargetDuration - currentRestTime) / restTimerTargetDuration) * 100 : 0;
+  }, [restTimerTargetDuration, currentRestTime]);
 
   return (
     <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 -mx-4 px-4 py-4 mb-6">
@@ -155,6 +158,12 @@ const TrainingSessionPage: React.FC = () => {
     Object.values(exercises).some(sets => sets.some(set => set.completed)), 
     [exercises]
   );
+
+  // Calculate rest progress
+  const restProgress = useMemo(() => {
+    return restTimerTargetDuration > 0 ? 
+      ((restTimerTargetDuration - currentRestTime) / restTimerTargetDuration) * 100 : 0;
+  }, [restTimerTargetDuration, currentRestTime]);
 
   // Check for recovery needs on component mount
   useEffect(() => {

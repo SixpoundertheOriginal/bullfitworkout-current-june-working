@@ -1,10 +1,8 @@
 
 import React from 'react';
 import { ExerciseTrackerContainer } from './ExerciseTrackerContainer';
-import { ExerciseSet } from '@/types/exercise';
+import { ExerciseSet } from '@/store/workoutStore';
 
-// Use the canonical ExerciseSet type to ensure all properties are present
-// and handler signatures use string IDs.
 interface EnhancedExercise {
   id: string;
   name: string;

@@ -1,7 +1,22 @@
+
 import { create } from 'zustand';
 import { Exercise } from '@/types/exercise';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
-import { calculateSetVolume } from '@/utils/volumeCalculator';
+
+export interface ExerciseSet {
+  id: string;
+  setNumber: number;
+  weight: number;
+  reps: number;
+  duration?: number;
+  restTime?: number;
+  completed: boolean;
+  isEditing: boolean;
+  volume: number;
+  exercise_name?: string;
+  set_number?: number;
+  workout_id?: string;
+}
 
 interface WorkoutStore {
   sessionId: string | null;
@@ -17,13 +32,20 @@ interface WorkoutStore {
   needsRecovery: boolean;
   recoveryData: WorkoutStore | null;
   
+  // Additional properties needed by components
+  activeExercise: string | null;
+  workoutStatus: 'idle' | 'active' | 'paused' | 'completed';
+  workoutId: string | null;
+  startTime: number | null;
+  explicitlyEnded: boolean;
+  
   startWorkout: () => void;
   pauseWorkout: () => void;
   resetWorkout: () => void;
   safeResetWorkout: () => void;
   setElapsedTime: (time: number) => void;
   setTrainingConfig: (config: TrainingConfig) => void;
-  addExercise: (exercise: Exercise) => void;
+  addExercise: (exercise: Exercise | string) => void;
   removeExercise: (exerciseName: string) => void;
   addSet: (exerciseName: string) => void;
   completeSet: (exerciseName: string, setIndex: number) => void;
@@ -35,28 +57,29 @@ interface WorkoutStore {
   resetRestTimer: () => void;
   setCurrentRestTime: (time: number) => void;
   updateLastActiveRoute: (route: string) => void;
+  setRestTimerTargetDuration: (duration: number) => void;
+  
+  // Additional methods needed by components
+  setExercises: (exercises: { [key: string]: ExerciseSet[] } | ((prev: { [key: string]: ExerciseSet[] }) => { [key: string]: ExerciseSet[] })) => void;
+  setActiveExercise: (exerciseName: string | null) => void;
+  updateExerciseSet: (exerciseName: string, setIndex: number, updates: Partial<ExerciseSet>) => void;
+  removeSet: (exerciseName: string, setIndex: number) => void;
+  deleteExercise: (exerciseName: string) => void;
+  setWorkoutStatus: (status: 'idle' | 'active' | 'paused' | 'completed') => void;
   
   // Recovery-related actions
   detectRecoveryNeeded: () => void;
   performRecovery: () => void;
   clearRecovery: () => void;
   setRecoveryData: (data: WorkoutStore) => void;
-  
-  setRestTimerTargetDuration: (duration: number) => void;
-}
-
-interface ExerciseSet {
-  setNumber: number;
-  weight: number;
-  reps: number;
-  duration?: number;
-  restTime?: number;
-  completed: boolean;
-  isEditing: boolean;
 }
 
 const generateSessionId = (): string => {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
+const generateSetId = (exerciseName: string, setNumber: number): string => {
+  return `${exerciseName}-set-${setNumber}-${Date.now()}`;
 };
 
 const persistWorkoutData = (state: WorkoutStore) => {
@@ -94,14 +117,22 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
   restTimerTargetDuration: 60,
   needsRecovery: false,
   recoveryData: null,
+  activeExercise: null,
+  workoutStatus: 'idle',
+  workoutId: null,
+  startTime: null,
+  explicitlyEnded: false,
   
   startWorkout: () => {
     set({ 
       isActive: true,
-      sessionId: generateSessionId()
+      workoutStatus: 'active',
+      sessionId: generateSessionId(),
+      startTime: Date.now(),
+      explicitlyEnded: false
     });
   },
-  pauseWorkout: () => set({ isActive: false }),
+  pauseWorkout: () => set({ isActive: false, workoutStatus: 'paused' }),
   resetWorkout: () => {
     set({
       sessionId: generateSessionId(),
@@ -112,6 +143,10 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       restTimerResetSignal: 0,
       currentRestTime: 0,
       restTimerTargetDuration: 60,
+      workoutStatus: 'idle',
+      activeExercise: null,
+      startTime: null,
+      explicitlyEnded: true
     });
     clearPersistedWorkoutData();
   },
@@ -124,29 +159,37 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       restTimerResetSignal: 0,
       currentRestTime: 0,
       restTimerTargetDuration: 60,
+      workoutStatus: 'idle',
+      activeExercise: null,
+      explicitlyEnded: true
     });
   },
   setElapsedTime: (time: number) => set({ elapsedTime: time }),
   setTrainingConfig: (config: TrainingConfig) => set({ trainingConfig: config }),
-  addExercise: (exercise: Exercise) => {
+  addExercise: (exercise: Exercise | string) => {
+    const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     set((state) => {
-      if (state.exercises[exercise.name]) {
-        console.warn(`Exercise "${exercise.name}" already exists. Not adding.`);
+      if (state.exercises[exerciseName]) {
+        console.warn(`Exercise "${exerciseName}" already exists. Not adding.`);
         return state;
       }
       
       const initialSet: ExerciseSet = {
+        id: generateSetId(exerciseName, 1),
         setNumber: 1,
         weight: 0,
         reps: 0,
         completed: false,
         isEditing: false,
+        volume: 0,
+        exercise_name: exerciseName,
+        set_number: 1
       };
       
       return {
         exercises: {
           ...state.exercises,
-          [exercise.name]: [initialSet],
+          [exerciseName]: [initialSet],
         },
       };
     });
@@ -163,11 +206,15 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       const newSetNumber = exerciseSets.length > 0 ? Math.max(...exerciseSets.map(s => s.setNumber)) + 1 : 1;
       
       const newSet: ExerciseSet = {
+        id: generateSetId(exerciseName, newSetNumber),
         setNumber: newSetNumber,
         weight: 0,
         reps: 0,
         completed: false,
         isEditing: true,
+        volume: 0,
+        exercise_name: exerciseName,
+        set_number: newSetNumber
       };
       
       return {
@@ -206,18 +253,16 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       }
       
       const updatedSets = [...exerciseSets];
-      updatedSets[setIndex] = { ...updatedSets[setIndex], ...updates };
+      const currentSet = updatedSets[setIndex];
+      const newWeight = updates.weight ?? currentSet.weight;
+      const newReps = updates.reps ?? currentSet.reps;
+      const volume = newWeight * newReps;
       
-      // Recalculate volume for the set
-      const exerciseData = state.trainingConfig?.exercises?.find(ex => ex.name === exerciseName);
-      const userWeight = state.trainingConfig?.userWeight || 75;
-      const weight = updatedSets[setIndex].weight;
-      const reps = updatedSets[setIndex].reps;
-      
-      if (exerciseData) {
-        const volume = calculateSetVolume(exerciseName, weight, reps, exerciseData, userWeight);
-        updatedSets[setIndex] = { ...updatedSets[setIndex], currentVolume: volume };
-      }
+      updatedSets[setIndex] = { 
+        ...currentSet, 
+        ...updates, 
+        volume 
+      };
       
       return {
         exercises: {
@@ -260,12 +305,10 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
         return state;
       }
       
-      // Reorder the exerciseNames array
       const reorderedExerciseNames = [...exerciseNames];
       reorderedExerciseNames.splice(oldIndex, 1);
       reorderedExerciseNames.splice(newIndex, 0, exerciseName);
       
-      // Rebuild the exercises object based on the reordered names
       const reorderedExercises: { [key: string]: ExerciseSet[] } = {};
       reorderedExerciseNames.forEach(name => {
         reorderedExercises[name] = state.exercises[name];
@@ -289,6 +332,27 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
   }),
   setCurrentRestTime: (time: number) => set({ currentRestTime: time }),
   updateLastActiveRoute: (route: string) => set({ lastActiveRoute: route }),
+  setRestTimerTargetDuration: (duration: number) => set({ restTimerTargetDuration: duration }),
+  
+  // Additional methods
+  setExercises: (exercises) => {
+    if (typeof exercises === 'function') {
+      set((state) => ({ exercises: exercises(state.exercises) }));
+    } else {
+      set({ exercises });
+    }
+  },
+  setActiveExercise: (exerciseName: string | null) => set({ activeExercise: exerciseName }),
+  updateExerciseSet: (exerciseName: string, setIndex: number, updates: Partial<ExerciseSet>) => {
+    get().updateSet(exerciseName, setIndex, updates);
+  },
+  removeSet: (exerciseName: string, setIndex: number) => {
+    get().deleteSet(exerciseName, setIndex);
+  },
+  deleteExercise: (exerciseName: string) => {
+    get().removeExercise(exerciseName);
+  },
+  setWorkoutStatus: (status: 'idle' | 'active' | 'paused' | 'completed') => set({ workoutStatus: status }),
   
   detectRecoveryNeeded: () => {
     const persistedData = loadPersistedWorkoutData();
@@ -320,6 +384,7 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
         restTimerTargetDuration: persistedData.restTimerTargetDuration,
         needsRecovery: false,
         recoveryData: null,
+        workoutStatus: 'active'
       }));
       clearPersistedWorkoutData();
     }
@@ -334,10 +399,6 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
   setRecoveryData: (data: WorkoutStore) => {
     set({ recoveryData: data });
   },
-  
-  setRestTimerTargetDuration: (duration: number) => {
-    set({ restTimerTargetDuration: duration });
-  },
 }));
 
 useWorkoutStore.subscribe(
@@ -345,6 +406,5 @@ useWorkoutStore.subscribe(
     if (state.isActive) {
       persistWorkoutData(state);
     }
-  },
-  (state) => [state.exercises, state.isActive, state.elapsedTime, state.restTimerActive, state.currentRestTime, state.restTimerTargetDuration]
+  }
 );
