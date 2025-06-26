@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { TimerEngine } from '@/services/TimerEngine';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { RestTimerEngine } from '@/services/RestTimerEngine';
+import { useExerciseRestTime } from '@/hooks/useExerciseRestTime';
 
 export interface WorkoutTimer {
   isActive: boolean;
@@ -48,6 +49,7 @@ export const useTrainingTimers = () => {
   } = useWorkoutStore();
   
   const { isVisible } = usePageVisibility();
+  const { getRestTime } = useExerciseRestTime();
   const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(isActive && isVisible);
 
   const onWorkoutTick = useCallback((seconds: number) => {
@@ -166,26 +168,16 @@ export const useTrainingTimers = () => {
     }
   };
 
-  // Enhanced set completion with automatic rest timer
+  // Enhanced set completion with user's preferred rest time
   const handleSetCompletion = useCallback((exerciseName: string, setIndex: number) => {
     console.log(`[TrainingTimers] Set completion: ${exerciseName} set ${setIndex + 1}`);
     
-    // Auto-start rest timer based on exercise type and user preferences
-    const restDuration = calculateRestDuration(exerciseName);
+    // Use user's preferred rest time for this exercise
+    const restDuration = getRestTime(exerciseName);
     restTimer.start(restDuration);
     
-    console.log(`[TrainingTimers] Rest timer started for ${restDuration}s`);
-  }, [restTimer]);
-
-  const calculateRestDuration = (exerciseName: string): number => {
-    // Smart rest duration based on exercise type
-    const compoundExercises = ['squat', 'deadlift', 'bench', 'row'];
-    const isCompound = compoundExercises.some(exercise => 
-      exerciseName.toLowerCase().includes(exercise)
-    );
-    
-    return isCompound ? 180 : 90; // 3 minutes for compound, 90s for isolation
-  };
+    console.log(`[TrainingTimers] Rest timer started for ${restDuration}s (user preference)`);
+  }, [restTimer, getRestTime]);
 
   return {
     workoutTimer,

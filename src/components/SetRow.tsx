@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from "react";
 import { MinusCircle, PlusCircle, Save, Trash2, Edit, Check, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,10 @@ import { useWeightUnit } from "@/context/WeightUnitContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isIsometricExercise, formatDuration, formatIsometricSet } from "@/utils/exerciseUtils";
 import { useExerciseWeight } from '@/hooks/useExerciseWeight';
+import { useExerciseRestTime } from '@/hooks/useExerciseRestTime';
 import { Exercise } from '@/types/exercise';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RestTimeSelector } from '@/components/training/RestTimeSelector';
 import { cn } from "@/lib/utils";
 
 interface SetRowProps {
@@ -69,6 +70,7 @@ export const SetRow = ({
   const { weightUnit: globalWeightUnit } = useWeightUnit();
   const isMobile = useIsMobile();
   const isIsometric = isIsometricExercise(exerciseName);
+  const { getRestTime, setRestTime: setExerciseRestTime } = useExerciseRestTime();
   
   const { 
     weight: calculatedWeight,
@@ -84,11 +86,26 @@ export const SetRow = ({
 
   const displayUnit = weightUnit || globalWeightUnit;
   const displayWeight = isEditing ? weight : (isAutoWeight ? calculatedWeight : weight);
+  
+  // Get the preferred rest time for this exercise
+  const preferredRestTime = getRestTime(exerciseName);
 
   const formatRestTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleRestTimeChange = (newRestTime: number) => {
+    // Update the exercise preference
+    setExerciseRestTime(exerciseName, newRestTime);
+    
+    // Update the current set's rest time if the callback is provided
+    if (onRestTimeChange) {
+      onRestTimeChange({
+        target: { value: newRestTime.toString() }
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
   };
 
   const handleRestTimeIncrement = (increment: number) => {
@@ -260,44 +277,16 @@ export const SetRow = ({
               </>
             )}
           </div>
-          <div className="col-span-3 flex items-center gap-1 min-w-0">
-            {onRestTimeIncrement && (
-              <button 
-                type="button"
-                onClick={() => handleRestTimeIncrement(-5)} 
-                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-              >
-                <MinusCircle size={isMobile ? 20 : 18} />
-              </button>
-            )}
-            <Input 
-              type="number"
-              min="0"
-              step="5"
-              value={restTime || 60}
-              onChange={handleManualRestTimeChange}
-              disabled={!onRestTimeChange}
-              className="workout-number-input text-center value-text px-1 py-2 w-full min-w-0"
-              onBlur={(e) => {
-                if (parseInt(e.target.value) < 0 || e.target.value === '') {
-                  if (onRestTimeChange) {
-                    handleManualRestTimeChange({
-                      target: { value: "0" }
-                    } as React.ChangeEvent<HTMLInputElement>);
-                  }
-                }
-              }}
+          
+          {/* Enhanced Rest Time Selector */}
+          <div className="col-span-3 min-w-0">
+            <RestTimeSelector
+              value={restTime || preferredRestTime}
+              onChange={handleRestTimeChange}
+              size="sm"
             />
-            {onRestTimeIncrement && (
-              <button 
-                type="button"
-                onClick={() => handleRestTimeIncrement(5)} 
-                className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 rounded-full"
-              >
-                <PlusCircle size={isMobile ? 20 : 18} />
-              </button>
-            )}
           </div>
+          
           <div className="col-span-12 flex justify-end gap-2 mt-2">
             <Button
               size="icon"
@@ -367,7 +356,7 @@ export const SetRow = ({
             <div className="flex items-center gap-2 text-gray-400">
               <Timer size={16} className="text-purple-400" />
               <span className="font-mono text-sm text-white value-text">
-                {formatRestTime(restTime)}
+                {formatRestTime(restTime || preferredRestTime)}
               </span>
               {currentVolume && (
                 <span className="ml-2 text-sm text-emerald-400 font-mono value-text">
