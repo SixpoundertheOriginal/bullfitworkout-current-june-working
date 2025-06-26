@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthChangeEvent } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
@@ -32,16 +31,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Handle profile creation on sign up - using AuthChangeEvent enum
-      if (event === AuthChangeEvent.SIGNED_UP && session?.user) {
+      // Handle profile creation on sign up - using string literal
+      if (event === 'SIGNED_UP' && session?.user) {
         console.log('[AuthContext] New user signed up, ensuring profile exists');
         setTimeout(() => {
           ensureUserProfile(session.user);
         }, 0);
       }
 
-      // Handle profile check on sign in - using AuthChangeEvent enum
-      if (event === AuthChangeEvent.SIGNED_IN && session?.user) {
+      // Handle profile check on sign in - using string literal
+      if (event === 'SIGNED_IN' && session?.user) {
         console.log('[AuthContext] User signed in, checking profile');
         setTimeout(() => {
           ensureUserProfile(session.user);
