@@ -1,202 +1,106 @@
 
-import React, { useCallback, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { ExerciseCreationWizard } from "@/components/exercises/ExerciseCreationWizard";
-import { PerformanceOptimizedExerciseLibrary } from "@/components/exercises/PerformanceOptimizedExerciseLibrary";
-import { Exercise } from "@/types/exercise";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ExerciseFAB } from "@/components/ExerciseFAB";
-import { PageHeader } from "@/components/navigation/PageHeader";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useOptimizedExercises } from "@/hooks/useOptimizedExercises";
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useExercises } from '@/hooks/useExercises';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface AllExercisesPageProps {
-  onSelectExercise?: (exercise: string | Exercise) => void;
-  standalone?: boolean;
-  onBack?: () => void;
-}
+const AllExercisesPage: React.FC = () => {
+  const { exercises, isLoading, error } = useExercises();
 
-export default function AllExercisesPage({ 
-  onSelectExercise, 
-  standalone = true, 
-  onBack 
-}: AllExercisesPageProps) {
-  const { createExercise, isPending, seedDatabase, isSeeding } = useOptimizedExercises();
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
-  const { user, loading: authLoading } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCreateWizard, setShowCreateWizard] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [exerciseToDelete, setExerciseToDelete] = useState<Exercise | null>(null);
-
-  // Memoized exercise selection handler to prevent rerenders
-  const handleSelectExercise = useCallback((exercise: Exercise) => {
-    console.log('Exercise selected:', exercise.name);
-    if (onSelectExercise) {
-      onSelectExercise(exercise);
-    }
-  }, [onSelectExercise]);
-
-  const handleEdit = useCallback((exercise: Exercise) => {
-    toast({
-      title: "Edit Exercise",
-      description: "Exercise editing will be available soon!",
-    });
-  }, [toast]);
-  
-  const handleViewDetails = useCallback((exercise: Exercise) => {
-    toast({
-      title: "View Details",
-      description: `This feature will be implemented soon!`,
-    });
-  }, [toast]);
-  
-  const handleDuplicate = useCallback((exercise: Exercise) => {
-    toast({
-      title: "Duplicate Exercise",
-      description: `This feature will be implemented soon!`,
-    });
-  }, [toast]);
-
-  // Create exercise handler
-  const handleCreateExercise = useCallback(() => {
-    setShowCreateWizard(true);
-  }, []);
-
-  // Optimized wizard submission handler
-  const handleSubmitExercise = useCallback(async (exerciseData: any) => {
-    if (!user?.id) {
-      console.error("No authenticated user found");
-      toast({
-        title: "Authentication Error",
-        description: "Please log in to create exercises",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await createExercise(exerciseData);
-      
-      setShowCreateWizard(false);
-      toast({
-        title: "Exercise created successfully! 🎉",
-        description: `${exerciseData.name} has been added with optimized performance`,
-      });
-    } catch (error) {
-      console.error('Failed to create exercise:', error);
-      toast({
-        title: "Failed to create exercise",
-        description: error instanceof Error ? error.message : "Please try again or check your connection",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [createExercise, toast, user?.id]);
-
-  const handleDeleteConfirm = useCallback(async (exerciseToDelete: Exercise | null) => {
-    if (!exerciseToDelete) return;
-    
-    toast({
-      title: "Exercise deleted",
-      description: `${exerciseToDelete.name} has been removed from your library`,
-    });
-    setDeleteConfirmOpen(false);
-    setExerciseToDelete(null);
-  }, [toast]);
-
-  const handleSeedDatabase = useCallback(async () => {
-    toast({
-      title: "Seeding database...",
-      description: "This may take a moment.",
-    });
-    try {
-      await seedDatabase();
-      toast({
-        title: "Database Seeding Complete",
-        description: "Initial exercises have been added to your library.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error Seeding Database",
-        description: error instanceof Error ? error.message : "An unknown error occurred. Please check your Supabase RLS policies for the 'exercises' table.",
-        variant: "destructive",
-      });
-    }
-  }, [seedDatabase, toast]);
-
-  if (authLoading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
+      <div className="container mx-auto px-4 py-6 bg-gray-900 min-h-screen">
+        <div className="mb-6">
+          <Skeleton className="h-9 w-48 mb-2 bg-gray-700" />
+          <Skeleton className="h-5 w-64 bg-gray-700" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 bg-gray-700" />
+          ))}
         </div>
       </div>
     );
   }
 
-  const isLoading = isPending || isSubmitting || isSeeding;
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-6 bg-gray-900 min-h-screen">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-white">Exercise Library</h1>
+          <p className="text-gray-400">Browse and manage your exercise database</p>
+        </div>
+        <div className="bg-red-900/20 border border-red-500/30 text-red-300 p-4 rounded-lg">
+          <h3 className="font-semibold text-lg mb-2">Error Loading Exercises</h3>
+          <p>We're having trouble loading the exercise library. Please refresh the page.</p>
+          <p className="text-sm mt-2 opacity-70">Error: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`${standalone ? 'pt-16 pb-24' : ''} h-full overflow-hidden flex flex-col`}>
-      {standalone && <PageHeader title="Exercise Library" />}
-      
-      <div className={`flex-1 overflow-hidden flex flex-col mx-auto w-full max-w-4xl px-4 ${standalone ? 'py-4' : 'pt-0'}`}>
-        {user && standalone && (
-          <div className="mb-4 flex justify-end">
-            <Button onClick={handleSeedDatabase} disabled={isLoading}>
-              {isSeeding ? 'Seeding...' : 'Seed Initial Exercises'}
-            </Button>
+    <ErrorBoundary>
+      <div className="container mx-auto px-4 py-6 bg-gray-900 min-h-screen text-white">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-white">Exercise Library</h1>
+          <p className="text-gray-400">
+            Browse and manage your exercise database ({exercises.length} exercises)
+          </p>
+        </div>
+        
+        {exercises.length === 0 ? (
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white">No Exercises Found</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-400">
+                No exercises available. Try seeding the database or creating new exercises.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {exercises.slice(0, 20).map((exercise) => (
+              <Card key={exercise.id} className="bg-gray-800 border-gray-700 hover:border-purple-500 transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-white text-lg">{exercise.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {exercise.primaryMuscleGroups && exercise.primaryMuscleGroups.length > 0 && (
+                      <p className="text-sm text-gray-400">
+                        <span className="font-medium">Muscles:</span> {exercise.primaryMuscleGroups.join(', ')}
+                      </p>
+                    )}
+                    {exercise.equipmentTypes && exercise.equipmentTypes.length > 0 && (
+                      <p className="text-sm text-gray-400">
+                        <span className="font-medium">Equipment:</span> {exercise.equipmentTypes.join(', ')}
+                      </p>
+                    )}
+                    {exercise.difficulty && (
+                      <p className="text-sm text-gray-400">
+                        <span className="font-medium">Difficulty:</span> {exercise.difficulty}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {exercises.length > 20 && (
+              <Card className="bg-gray-800 border-gray-700">
+                <CardContent className="flex items-center justify-center h-32">
+                  <p className="text-gray-400">+ {exercises.length - 20} more exercises</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
-        {/* Use the optimized exercise library component */}
-        <PerformanceOptimizedExerciseLibrary
-          onSelectExercise={handleSelectExercise}
-          onCreateExercise={handleCreateExercise}
-          showCreateButton={standalone}
-        />
-        
-        {/* Exercise Creation Wizard */}
-        <ExerciseCreationWizard
-          open={showCreateWizard}
-          onOpenChange={setShowCreateWizard}
-          onSubmit={handleSubmitExercise}
-          loading={isLoading}
-        />
-        
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Exercise</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete "{exerciseToDelete?.name}"? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={() => handleDeleteConfirm(exerciseToDelete)} 
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
-      
-      {/* Mobile Add Button */}
-      {standalone && isMobile && (
-        <ExerciseFAB onClick={() => setShowCreateWizard(true)} />
-      )}
-    </div>
+    </ErrorBoundary>
   );
-}
+};
+
+export default AllExercisesPage;

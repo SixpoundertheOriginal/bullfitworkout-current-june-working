@@ -28,7 +28,7 @@ export const OverviewContent: React.FC = React.memo(() => {
       <div className="container-app py-6 space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Overview</h1>
+            <h1 className="text-3xl font-bold text-white">Overview</h1>
             <p className="text-muted-foreground">
               Track your fitness journey and progress
             </p>
@@ -39,6 +39,7 @@ export const OverviewContent: React.FC = React.memo(() => {
         <div className="bg-red-900/20 border border-red-500/30 text-red-300 p-4 rounded-lg text-center">
           <h3 className="font-semibold text-lg mb-2">Error Loading Workouts</h3>
           <p>We're having trouble loading your workout data. Please refresh the page.</p>
+          <p className="text-sm mt-2 opacity-70">Error: {workoutsError?.message}</p>
         </div>
       </div>
     );
@@ -49,7 +50,7 @@ export const OverviewContent: React.FC = React.memo(() => {
       <div className="container-app py-6 space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Overview</h1>
+            <h1 className="text-3xl font-bold text-white">Overview</h1>
             <p className="text-muted-foreground">
               Track your fitness journey and progress
             </p>
@@ -61,11 +62,11 @@ export const OverviewContent: React.FC = React.memo(() => {
         
         <div className="grid grid-cols-4 gap-8">
           <GridSection span={12}>
-            <div className="section-skeleton h-32 rounded-lg" />
+            <div className="section-skeleton h-32 rounded-lg bg-gray-800" />
           </GridSection>
           {Array.from({ length: 8 }).map((_, i) => (
             <GridSection key={i} span={1}>
-              <div className="section-skeleton h-48 rounded-lg" />
+              <div className="section-skeleton h-48 rounded-lg bg-gray-800" />
             </GridSection>
           ))}
         </div>
@@ -74,10 +75,10 @@ export const OverviewContent: React.FC = React.memo(() => {
   }
 
   return (
-    <div className="container-app py-6 space-y-6">
+    <div className="container-app py-6 space-y-6 text-white">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Overview</h1>
+          <h1 className="text-3xl font-bold text-white">Overview</h1>
           <p className="text-muted-foreground">
             Track your fitness journey and progress
           </p>

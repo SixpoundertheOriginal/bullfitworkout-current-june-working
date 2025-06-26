@@ -24,8 +24,8 @@ export const profileFormSchema = z.object({
 export type UserProfileData = z.infer<typeof profileFormSchema>;
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
-  const { stats, loading, error } = useWorkoutStatsContext();
+  const { user, loading: authLoading } = useAuth();
+  const { stats, loading: statsLoading, error } = useWorkoutStatsContext();
 
   const getInitials = (name?: string, email?: string) => {
     if (name) {
@@ -38,62 +38,74 @@ export const ProfilePage: React.FC = () => {
     return email?.substring(0, 2).toUpperCase() || 'U';
   };
 
-  if (loading) {
+  // Show loading for auth or stats
+  if (authLoading || statsLoading) {
     return <ProfileLoadingSkeleton />;
   }
   
+  // Show error state
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-6 text-center">
-        <h1 className="text-3xl font-bold text-red-500">An Error Occurred</h1>
-        <p className="text-muted-foreground mt-2">
-          We couldn't load your profile stats. Please try again later.
+      <div className="container mx-auto px-4 py-6 text-center bg-gray-900 min-h-screen">
+        <h1 className="text-3xl font-bold text-red-400">Profile Error</h1>
+        <p className="text-gray-400 mt-2">
+          We couldn't load your profile stats. Please try refreshing the page.
         </p>
-        <pre className="mt-4 text-xs text-left bg-gray-800 p-2 rounded">
-          {error.message}
-        </pre>
+        <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+          <p className="text-red-300 text-sm">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show content if user exists
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-6 text-center bg-gray-900 min-h-screen">
+        <h1 className="text-3xl font-bold text-gray-400">No User Found</h1>
+        <p className="text-gray-500 mt-2">Please log in to view your profile.</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-8">
+    <div className="container mx-auto px-4 py-6 space-y-8 bg-gray-900 min-h-screen text-white">
       {/* Profile Header */}
       <div className="flex flex-col items-center space-y-4 text-center">
         <Avatar className="h-24 w-24 border-4 border-purple-500">
           <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || user?.email} />
-          <AvatarFallback className="bg-purple-800 text-3xl">
+          <AvatarFallback className="bg-purple-800 text-3xl text-white">
             {getInitials(user?.user_metadata?.full_name, user?.email)}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-3xl font-bold">{user?.user_metadata?.full_name || 'Anonymous User'}</h1>
-          <p className="text-muted-foreground">{user?.email}</p>
+          <h1 className="text-3xl font-bold text-white">{user?.user_metadata?.full_name || 'Anonymous User'}</h1>
+          <p className="text-gray-400">{user?.email}</p>
         </div>
       </div>
       
       {/* Stats Section */}
       <ErrorBoundary>
         <StatsSection
-          totalWorkouts={stats.totalWorkouts}
-          totalSets={stats.totalSets}
-          averageDuration={stats.avgDuration}
-          totalDuration={stats.totalDuration}
+          totalWorkouts={stats?.totalWorkouts || 0}
+          totalSets={stats?.totalSets || 0}
+          averageDuration={stats?.avgDuration || 0}
+          totalDuration={stats?.totalDuration || 0}
         />
       </ErrorBoundary>
 
       {/* Recent Workouts Section */}
       <ErrorBoundary>
-        <RecentWorkoutsSection workouts={stats.workouts || []} />
+        <RecentWorkoutsSection workouts={stats?.workouts || []} />
       </ErrorBoundary>
       
       {/* Settings Section */}
-      <Card className="bg-gray-900 border-gray-800">
+      <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle>Settings</CardTitle>
+          <CardTitle className="text-white">Settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Manage your app preferences here. (Coming Soon)</p>
+          <p className="text-gray-400">Manage your app preferences here. (Coming Soon)</p>
         </CardContent>
       </Card>
     </div>
