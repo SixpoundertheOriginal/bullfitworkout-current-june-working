@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -50,7 +51,11 @@ function App() {
                         <WorkoutNavigationContextProvider>
                           <LayoutProvider>
                             <div className="min-h-screen bg-background font-sans antialiased">
-                              <Suspense fallback={<div>Loading...</div>}>
+                              <Suspense fallback={
+                                <div className="flex items-center justify-center min-h-screen">
+                                  <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+                                </div>
+                              }>
                                 <Routes>
                                   <Route path="/" element={
                                     <LayoutWrapper>
@@ -90,7 +95,11 @@ function App() {
                                       </LayoutWrapper>
                                     </ProtectedRoute>
                                   } />
-                                  <Route path="/design-system" element={<DesignSystemPage />} />
+                                  <Route path="/design-system" element={
+                                    <LayoutWrapper>
+                                      <DesignSystemPage />
+                                    </LayoutWrapper>
+                                  } />
                                 </Routes>
                               </Suspense>
                               <Toaster />
