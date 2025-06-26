@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExerciseTrackerState } from '@/hooks/useExerciseTrackerState';
@@ -41,8 +40,7 @@ export const ExerciseTrackerContainer: React.FC<ExerciseTrackerContainerProps> =
 }) => {
   const { state, actions } = useExerciseTrackerState();
   
-  // Replace useExerciseValidation with a local useMemo to avoid type conflicts
-  // and make the component more self-contained.
+  // Calculate metrics from exercise sets
   const metrics = useMemo(() => {
     const completedSets = exercise.sets.filter(s => s.completed).length;
     const totalSets = exercise.sets.length;

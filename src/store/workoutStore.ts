@@ -1,22 +1,7 @@
 
 import { create } from 'zustand';
-import { Exercise } from '@/types/exercise';
+import { Exercise, ExerciseSet } from '@/types/exercise';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
-
-export interface ExerciseSet {
-  id: string;
-  setNumber: number;
-  weight: number;
-  reps: number;
-  duration?: number;
-  restTime?: number;
-  completed: boolean;
-  isEditing: boolean;
-  volume: number;
-  exercise_name?: string;
-  set_number?: number;
-  workout_id?: string;
-}
 
 interface WorkoutStore {
   sessionId: string | null;
@@ -176,14 +161,15 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       
       const initialSet: ExerciseSet = {
         id: generateSetId(exerciseName, 1),
-        setNumber: 1,
         weight: 0,
         reps: 0,
+        duration: '0',
         completed: false,
         isEditing: false,
         volume: 0,
-        exercise_name: exerciseName,
-        set_number: 1
+        restTime: 60,
+        set_number: 1,
+        exercise_name: exerciseName
       };
       
       return {
@@ -203,18 +189,19 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
   addSet: (exerciseName: string) => {
     set((state) => {
       const exerciseSets = state.exercises[exerciseName] || [];
-      const newSetNumber = exerciseSets.length > 0 ? Math.max(...exerciseSets.map(s => s.setNumber)) + 1 : 1;
+      const newSetNumber = exerciseSets.length > 0 ? Math.max(...exerciseSets.map(s => s.set_number || 1)) + 1 : 1;
       
       const newSet: ExerciseSet = {
         id: generateSetId(exerciseName, newSetNumber),
-        setNumber: newSetNumber,
         weight: 0,
         reps: 0,
+        duration: '0',
         completed: false,
         isEditing: true,
         volume: 0,
-        exercise_name: exerciseName,
-        set_number: newSetNumber
+        restTime: 60,
+        set_number: newSetNumber,
+        exercise_name: exerciseName
       };
       
       return {
@@ -234,7 +221,13 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       }
       
       const updatedSets = [...exerciseSets];
-      updatedSets[setIndex] = { ...updatedSets[setIndex], completed: true };
+      const currentSet = updatedSets[setIndex];
+      updatedSets[setIndex] = { 
+        ...currentSet, 
+        completed: true,
+        // Store actual rest time when set is completed
+        restTime: state.restTimerActive ? state.restTimerTargetDuration - state.currentRestTime : currentSet.restTime
+      };
       
       return {
         exercises: {
@@ -408,3 +401,6 @@ useWorkoutStore.subscribe(
     }
   }
 );
+
+// Export the ExerciseSet type for backward compatibility
+export type { ExerciseSet };

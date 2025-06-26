@@ -28,7 +28,23 @@ export const useEnhancedExerciseTracker = (exerciseName: string) => {
     const setIndex = exerciseData.findIndex(s => s.id === setId);
     if (setIndex > -1) {
       const set = exerciseData[setIndex];
-      updateExerciseSet(exerciseName, setIndex, { completed: !set.completed });
+      const now = new Date().toISOString();
+      
+      // Enhanced completion with analytics data
+      const updates: Partial<ExerciseSet> = {
+        completed: !set.completed
+      };
+      
+      // If completing the set, capture rest timer analytics
+      if (!set.completed) {
+        const state = useWorkoutStore.getState();
+        updates.actualRestTime = state.restTimerActive ? 
+          state.restTimerTargetDuration - state.currentRestTime : 0;
+        updates.targetRestTime = state.restTimerTargetDuration;
+        updates.restTimerCompleted = now;
+      }
+      
+      updateExerciseSet(exerciseName, setIndex, updates);
     }
   }, [updateExerciseSet, exerciseData, exerciseName]);
 

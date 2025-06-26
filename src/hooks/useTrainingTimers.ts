@@ -47,6 +47,8 @@ export const useTrainingTimers = () => {
     startWorkout,
     resetWorkout,
     setCurrentRestTime,
+    updateExerciseSet,
+    exercises
   } = useWorkoutStore();
   
   const { isVisible } = usePageVisibility();
@@ -184,16 +186,27 @@ export const useTrainingTimers = () => {
     }
   };
 
-  // Enhanced set completion with user's preferred rest time
+  // Enhanced set completion with analytics and rest time tracking
   const handleSetCompletion = useCallback((exerciseName: string, setIndex: number) => {
     console.log(`[TrainingTimers] Set completion: ${exerciseName} set ${setIndex + 1}`);
     
-    // Use user's preferred rest time for this exercise
+    const now = new Date().toISOString();
     const restDuration = getRestTime(exerciseName);
+    
+    // Update the completed set with rest timer analytics
+    const exerciseSets = exercises[exerciseName];
+    if (exerciseSets && exerciseSets[setIndex]) {
+      updateExerciseSet(exerciseName, setIndex, {
+        restTimerStarted: now,
+        targetRestTime: restDuration
+      });
+    }
+    
+    // Start rest timer
     restTimer.start(restDuration);
     
     console.log(`[TrainingTimers] Rest timer started for ${restDuration}s (user preference)`);
-  }, [restTimer, getRestTime]);
+  }, [restTimer, getRestTime, exercises, updateExerciseSet]);
 
   const dismissRestNotification = useCallback(() => {
     setShowRestNotification(false);
@@ -214,17 +227,49 @@ export const useTrainingTimers = () => {
   }, [restTimerTargetDuration, restTimer]);
 
   return {
-    workoutTimer,
+    workoutTimer: {
+      isActive: isActive,
+      time: elapsedTime,
+      isRunning: isWorkoutTimerRunning,
+      elapsed: elapsedTime,
+      start: () => {
+        if (!isActive) startWorkout();
+      },
+      pause: () => {
+        timerEngineRef.current?.pause();
+        setIsWorkoutTimerRunning(false);
+      },
+      resume: () => {
+        if (isActive) {
+          timerEngineRef.current?.resume();
+          setIsWorkoutTimerRunning(true);
+        }
+      },
+      reset: () => {
+        resetWorkout();
+      },
+    },
     restTimer,
     handleSetCompletion,
     elapsedTime,
     restTimerActive,
     currentRestTime,
     showRestNotification,
-    dismissRestNotification,
+    dismissRestNotification: useCallback(() => {
+      setShowRestNotification(false);
+    }, []),
     isRestOvertime,
     restOvertimeSeconds,
-    addRestTime,
-    restartRestTimer
+    addRestTime: useCallback((seconds: number) => {
+      if (restTimerActive) {
+        const newDuration = restTimerTargetDuration + seconds;
+        restTimer.setDuration(newDuration);
+      }
+    }, [restTimerActive, restTimerTargetDuration, restTimer]),
+    restartRestTimer: useCallback(() => {
+      if (restTimerTargetDuration > 0) {
+        restTimer.start(restTimerTargetDuration);
+      }
+    }, [restTimerTargetDuration, restTimer])
   };
 };

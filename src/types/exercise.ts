@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import { ExerciseSchema, ExerciseInputSchema, SupabaseExerciseSchema } from './exercise.schema';
 
@@ -11,11 +12,16 @@ export interface ExerciseSet {
   set_number?: number;
   exercise_name?: string;
   workout_id?: string;
-  restTime: number; // Make this required to match store expectations
-  rest_time?: number;
+  restTime: number; // Rest time in seconds - this is the actual rest time taken
+  rest_time?: number; // Legacy field for backward compatibility
   created_at?: string;
-  isEditing: boolean; // Make this required to match store expectations
+  isEditing: boolean;
   metadata?: Record<string, any>;
+  // Enhanced analytics fields
+  actualRestTime?: number; // Actual rest time taken (seconds)
+  targetRestTime?: number; // Target rest time set by user (seconds)
+  restTimerStarted?: string; // ISO timestamp when rest timer started
+  restTimerCompleted?: string; // ISO timestamp when rest timer completed
   weightCalculation?: {
     weight: number;
     unit: WeightUnit;
