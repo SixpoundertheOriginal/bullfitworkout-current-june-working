@@ -88,7 +88,7 @@ const fetchWorkoutStats = async (userId: string, dateRange: DateRange | undefine
       .filter(s => s.completed)
       .reduce((sum, s) => sum + (s.weight * s.reps), 0);
 
-    // Calculate time patterns
+    // Calculate time patterns - Fix the TypeScript error here
     const daysFrequency = {
       monday: 0, tuesday: 0, wednesday: 0, thursday: 0,
       friday: 0, saturday: 0, sunday: 0
@@ -100,7 +100,8 @@ const fetchWorkoutStats = async (userId: string, dateRange: DateRange | undefine
 
     safeWorkouts.forEach(workout => {
       const date = new Date(workout.start_time);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'lowercase' }) as keyof typeof daysFrequency;
+      // Get day name in long format and convert to lowercase
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as keyof typeof daysFrequency;
       if (daysFrequency.hasOwnProperty(dayName)) {
         daysFrequency[dayName]++;
       }
