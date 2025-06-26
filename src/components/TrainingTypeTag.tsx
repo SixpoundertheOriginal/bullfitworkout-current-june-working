@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 
 export type StrengthTrainingType = 'Strength Training' | 'Hypertrophy' | 'Calisthenics';
 
+// Legacy type alias for backward compatibility
+export type TrainingType = StrengthTrainingType;
+
 interface TrainingTypeTagProps {
   type: StrengthTrainingType;
   className?: string;
@@ -36,6 +39,9 @@ export const strengthTrainingTypes: StrengthTrainingType[] = [
   'Hypertrophy',
   'Calisthenics'
 ];
+
+// Legacy export for backward compatibility
+export const trainingTypes = strengthTrainingTypes;
 
 export function isValidStrengthTrainingType(type: string): type is StrengthTrainingType {
   return strengthTrainingTypes.includes(type as StrengthTrainingType);
