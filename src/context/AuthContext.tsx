@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Handle profile creation on sign up - using string literal
+      // Handle profile creation on sign up
       if (event === 'SIGNED_UP' && session?.user) {
         console.log('[AuthContext] New user signed up, ensuring profile exists');
         setTimeout(() => {
@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }, 0);
       }
 
-      // Handle profile check on sign in - using string literal
+      // Handle profile check on sign in
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('[AuthContext] User signed in, checking profile');
         setTimeout(() => {
