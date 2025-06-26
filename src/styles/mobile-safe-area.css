@@ -1,0 +1,77 @@
+
+/* Mobile Safe Area CSS Utilities - App Store Quality */
+
+/* Enhanced safe area support for all mobile devices */
+:root {
+  /* Safe Area Insets with fallbacks */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* Touch target utilities - 44px minimum for App Store compliance */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Safe area utilities */
+.pt-safe-top { 
+  padding-top: var(--sat); 
+}
+
+.pb-safe-bottom { 
+  padding-bottom: var(--sab); 
+}
+
+.mb-safe-bottom { 
+  margin-bottom: var(--sab); 
+}
+
+.pl-safe-left { 
+  padding-left: var(--sal); 
+}
+
+.pr-safe-right { 
+  padding-right: var(--sar); 
+}
+
+/* Mobile viewport optimization */
+@supports (height: 100dvh) {
+  .mobile-full-height {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+/* Touch feedback for better mobile UX */
+.touch-feedback {
+  transition: transform 0.1s ease-out;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.touch-feedback:active {
+  transform: scale(0.98);
+}
+
+/* Mobile-optimized scrolling */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Prevent zoom on input focus (iOS) */
+input, select, textarea {
+  font-size: 16px;
+}
+
+@media (max-width: 480px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}

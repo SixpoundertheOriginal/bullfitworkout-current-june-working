@@ -49,22 +49,19 @@ export const CardContainer = ({
         mass: 0.8
       }}
       className={cn(
-        "min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95 relative",
-        "backdrop-blur-xl border-l border-white/10",
+        "min-h-screen bg-gradient-to-br from-gray-900 via-gray-900/98 to-gray-900/95",
+        "flex flex-col",
         className
       )}
     >
-      {/* iOS-style status bar safe area */}
-      <div className="h-safe-top bg-transparent" />
-      
-      {/* Header with back button and progress */}
-      <div className="relative px-6 pt-4 pb-2">
-        <div className="flex items-center justify-between mb-6">
+      {/* Header with proper safe area and back button */}
+      <div className="pt-safe-top px-4 sm:px-6 pb-2 flex-shrink-0">
+        <div className="flex items-center justify-between mb-4 pt-4">
           {showBackButton && (
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleBack}
-              className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors"
+              className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors touch-target"
             >
               <ArrowLeft className="h-6 w-6 text-white" />
             </motion.button>
@@ -87,32 +84,32 @@ export const CardContainer = ({
           )}
         </div>
 
-        {/* Large title - iOS style */}
+        {/* Title section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8"
+          className="mb-6"
         >
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-lg text-white/70 font-medium">
+            <p className="text-base sm:text-lg text-white/70 font-medium">
               {subtitle}
             </p>
           )}
         </motion.div>
       </div>
 
-      {/* Content with glassmorphism effect */}
+      {/* Content area with proper mobile scrolling */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="flex-1 px-6 pb-safe-bottom"
+        className="flex-1 px-4 sm:px-6 pb-safe-bottom overflow-y-auto"
       >
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-6 min-h-[60vh]">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl p-4 sm:p-6 mb-4">
           {children}
         </div>
       </motion.div>
