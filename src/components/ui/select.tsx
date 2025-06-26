@@ -1,10 +1,9 @@
-
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { TrainingTypeTag, TrainingType } from "@/components/TrainingTypeTag"
+import { TrainingTypeTag, TrainingType, strengthTrainingTypes } from "@/components/TrainingTypeTag"
 
 const Select = SelectPrimitive.Root
 
@@ -117,17 +116,8 @@ const SelectItem = React.forwardRef<
     trainingType?: boolean;
   }
 >(({ className, children, trainingType, ...props }, ref) => {
-  const trainingTypes: TrainingType[] = [
-    'Strength', 
-    'Hypertrophy', 
-    'Cardio', 
-    'Calisthenics', 
-    'Stretching', 
-    'Yoga'
-  ];
-
-  // Ensure the children is a valid training type
-  const isValidTrainingType = trainingTypes.includes(children as TrainingType);
+  // Use the consolidated strength training types from our constants
+  const isValidTrainingType = strengthTrainingTypes.includes(children as TrainingType);
 
   return (
     <SelectPrimitive.Item
@@ -181,4 +171,3 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
-
