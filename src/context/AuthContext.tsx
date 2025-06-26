@@ -20,7 +20,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('[AuthContext] Initializing authentication...');
     
-    // Get initial session
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthContext] Auth state changed:', { 
+        event, 
+        hasSession: !!session, 
+        hasUser: !!session?.user,
+        userId: session?.user?.id 
+      });
+      
+      setUser(session?.user ?? null);
+      setLoading(false);
+
+      // Handle profile creation on sign up
+      if (event === 'SIGNED_UP' && session?.user) {
+        console.log('[AuthContext] New user signed up, ensuring profile exists');
+        await ensureUserProfile(session.user);
+      }
+
+      // Handle profile check on sign in
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('[AuthContext] User signed in, checking profile');
+        await ensureUserProfile(session.user);
+      }
+    });
+
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log('[AuthContext] Initial session check:', { 
         hasSession: !!session, 
@@ -36,26 +61,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[AuthContext] Auth state changed:', { 
-        event, 
-        hasSession: !!session, 
-        hasUser: !!session?.user,
-        userId: session?.user?.id 
-      });
-      
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     return () => {
       console.log('[AuthContext] Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, []);
+
+  const ensureUserProfile = async (user: User) => {
+    try {
+      console.log('[AuthContext] Checking if profile exists for user:', user.id);
+      
+      const { data: existingProfile, error } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[AuthContext] Error checking profile:', error);
+        return;
+      }
+
+      if (!existingProfile) {
+        console.log('[AuthContext] Profile does not exist, creating...');
+        
+        const newProfile = {
+          id: user.id,
+          full_name: user.user_metadata?.full_name || null,
+          age: null,
+          weight: null,
+          weight_unit: 'kg',
+          height: null,
+          height_unit: 'cm',
+          fitness_goal: null,
+          experience_level: null,
+          training_experience: {
+            totalXp: 0,
+            trainingTypeLevels: {
+              Strength: { xp: 0 },
+              Cardio: { xp: 0 },
+              Yoga: { xp: 0 },
+              Calisthenics: { xp: 0 }
+            }
+          },
+          training_preferences: {
+            preferred_time: null,
+            preferred_types: [],
+            preferred_duration: null
+          }
+        };
+
+        const { error: insertError } = await supabase
+          .from('user_profiles')
+          .insert(newProfile);
+
+        if (insertError) {
+          console.error('[AuthContext] Error creating profile:', insertError);
+        } else {
+          console.log('[AuthContext] Profile created successfully');
+        }
+      } else {
+        console.log('[AuthContext] Profile already exists');
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error in ensureUserProfile:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     console.log('[AuthContext] Attempting sign in for:', email);
@@ -70,8 +141,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       console.log('[AuthContext] Sign in successful');
-    } finally {
+    } catch (error) {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -79,10 +151,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('[AuthContext] Attempting sign up for:', email);
     setLoading(true);
     try {
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
           },
@@ -93,8 +168,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       console.log('[AuthContext] Sign up successful');
-    } finally {
+    } catch (error) {
       setLoading(false);
+      throw error;
     }
   };
 
