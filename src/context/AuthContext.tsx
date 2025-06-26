@@ -32,16 +32,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Handle profile creation on sign up
+      // Handle profile creation on sign up - using string comparison
       if (event === 'SIGNED_UP' && session?.user) {
         console.log('[AuthContext] New user signed up, ensuring profile exists');
-        await ensureUserProfile(session.user);
+        setTimeout(() => {
+          ensureUserProfile(session.user);
+        }, 0);
       }
 
-      // Handle profile check on sign in
+      // Handle profile check on sign in - using string comparison
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('[AuthContext] User signed in, checking profile');
-        await ensureUserProfile(session.user);
+        setTimeout(() => {
+          ensureUserProfile(session.user);
+        }, 0);
       }
     });
 
