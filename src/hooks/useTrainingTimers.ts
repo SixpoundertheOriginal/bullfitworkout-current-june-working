@@ -142,7 +142,7 @@ export const useTrainingTimers = () => {
     },
   };
 
-  // Rest timer with smart duration handling
+  // Enhanced rest timer with additional controls
   const restTimer: RestTimer = {
     isActive: restTimerActive,
     time: currentRestTime,
@@ -173,6 +173,8 @@ export const useTrainingTimers = () => {
         restTimer.start(duration);
       } else {
         console.log(`Setting rest duration to ${duration}s`);
+        // Update the target duration in the store
+        useWorkoutStore.getState().setRestTimerTargetDuration(duration);
       }
     },
     skip: () => {
@@ -197,6 +199,20 @@ export const useTrainingTimers = () => {
     setShowRestNotification(false);
   }, []);
 
+  // Additional control functions for Phase 3
+  const addRestTime = useCallback((seconds: number) => {
+    if (restTimerActive) {
+      const newDuration = restTimerTargetDuration + seconds;
+      restTimer.setDuration(newDuration);
+    }
+  }, [restTimerActive, restTimerTargetDuration, restTimer]);
+
+  const restartRestTimer = useCallback(() => {
+    if (restTimerTargetDuration > 0) {
+      restTimer.start(restTimerTargetDuration);
+    }
+  }, [restTimerTargetDuration, restTimer]);
+
   return {
     workoutTimer,
     restTimer,
@@ -207,6 +223,8 @@ export const useTrainingTimers = () => {
     showRestNotification,
     dismissRestNotification,
     isRestOvertime,
-    restOvertimeSeconds
+    restOvertimeSeconds,
+    addRestTime,
+    restartRestTimer
   };
 };

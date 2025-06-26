@@ -14,6 +14,7 @@ import { WorkoutRecoveryBanner } from '@/components/training/WorkoutRecoveryBann
 import { cn } from '@/lib/utils';
 import { WorkoutCompletionDialog } from '@/components/training/WorkoutCompletionDialog';
 import { RestTimerNotification } from '@/components/timers/RestTimerNotification';
+import { RestTimerSheet } from '@/components/timers/RestTimerSheet';
 
 // Memoized SessionHeader component to isolate renders
 const SessionHeader = React.memo<{
@@ -103,6 +104,8 @@ const TimerDisplay = React.memo<{
 const TrainingSessionPage: React.FC = () => {
   const navigate = useNavigate();
   const [isAddExerciseSheetOpen, setAddExerciseSheetOpen] = useState(false);
+  const [isRestTimerSheetOpen, setRestTimerSheetOpen] = useState(false);
+  const [currentExerciseName, setCurrentExerciseName] = useState<string>('');
 
   const { 
     workoutTimer, 
@@ -222,6 +225,10 @@ const TrainingSessionPage: React.FC = () => {
     setAddExerciseSheetOpen(true);
   }, []);
 
+  const handleRestTimerClick = useCallback(() => {
+    setRestTimerSheetOpen(true);
+  }, []);
+
   return (
     <LayoutWrapper>
       <div className={cn(
@@ -241,14 +248,16 @@ const TrainingSessionPage: React.FC = () => {
         )}
 
         {/* Enhanced Sticky Timer Display at Top */}
-        <TimerDisplay
-          elapsedTime={elapsedTime}
-          restTimerActive={restTimerActive}
-          currentRestTime={currentRestTime}
-          isRestOvertime={isRestOvertime}
-          restOvertimeSeconds={restOvertimeSeconds}
-          restTimerTargetDuration={restTimerTargetDuration}
-        />
+        <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 -mx-4 px-4 py-4 mb-6">
+          <PriorityTimerDisplay
+            workoutTime={formatTime(elapsedTime)}
+            restTime={isRestOvertime ? formatTime(restOvertimeSeconds) : (restTimerActive ? formatTime(currentRestTime) : undefined)}
+            isRestActive={restTimerActive}
+            restProgress={isRestOvertime ? 100 + (restOvertimeSeconds / 60) * 20 : restProgress}
+            isOvertime={isRestOvertime}
+            onRestTimerClick={handleRestTimerClick}
+          />
+        </div>
 
         {/* Rest Timer Notification */}
         <RestTimerNotification
@@ -307,6 +316,14 @@ const TrainingSessionPage: React.FC = () => {
         onDiscardWorkout={handleDiscardWorkout}
         onContinueWorkout={handleContinueWorkout}
         isSaving={isSaving}
+      />
+
+      {/* Rest Timer Control Sheet */}
+      <RestTimerSheet
+        open={isRestTimerSheetOpen}
+        onOpenChange={setRestTimerSheetOpen}
+        restTimer={restTimer}
+        exerciseName={currentExerciseName}
       />
 
       <AddExerciseSheet

@@ -59,7 +59,10 @@ export const PriorityTimerDisplay: React.FC<PriorityTimerDisplayProps> = ({
       {/* Enhanced Rest Timer (when active) */}
       {isRestActive && restTime && (
         <div 
-          className="flex items-center space-x-3 cursor-pointer transition-all duration-300"
+          className={cn(
+            "flex items-center space-x-3 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95",
+            "p-2 rounded-xl hover:bg-gray-800/50"
+          )}
           onClick={onRestTimerClick}
         >
           <div>
@@ -86,6 +89,11 @@ export const PriorityTimerDisplay: React.FC<PriorityTimerDisplayProps> = ({
                   width: isOvertime ? '100%' : `${Math.min(restProgress, 100)}%` 
                 }}
               />
+            </div>
+            
+            {/* Tap hint */}
+            <div className="text-xs text-gray-500 text-right mt-1">
+              Tap to adjust
             </div>
           </div>
           

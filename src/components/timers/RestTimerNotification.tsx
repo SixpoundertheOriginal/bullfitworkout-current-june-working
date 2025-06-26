@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Bell, X, Play } from 'lucide-react';
+import { Bell, X, Play, Plus, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +9,8 @@ interface RestTimerNotificationProps {
   overtimeSeconds: number;
   onDismiss: () => void;
   onStartNextSet?: () => void;
+  onAddTime?: (seconds: number) => void;
+  onRestartTimer?: () => void;
   className?: string;
 }
 
@@ -17,6 +19,8 @@ export const RestTimerNotification: React.FC<RestTimerNotificationProps> = ({
   overtimeSeconds,
   onDismiss,
   onStartNextSet,
+  onAddTime,
+  onRestartTimer,
   className
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -78,28 +82,63 @@ export const RestTimerNotification: React.FC<RestTimerNotificationProps> = ({
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onDismiss}
-          className="flex-1 bg-gray-800 border-gray-600 hover:bg-gray-700"
-        >
-          Dismiss
-        </Button>
-        {onStartNextSet && (
+      <div className="space-y-2">
+        {/* Primary Actions */}
+        <div className="flex gap-2">
           <Button
+            variant="outline"
             size="sm"
-            onClick={() => {
-              onStartNextSet();
-              onDismiss();
-            }}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            onClick={onDismiss}
+            className="flex-1 bg-gray-800 border-gray-600 hover:bg-gray-700"
           >
-            <Play className="w-4 h-4 mr-2" />
-            Next Set
+            Dismiss
           </Button>
-        )}
+          {onStartNextSet && (
+            <Button
+              size="sm"
+              onClick={() => {
+                onStartNextSet();
+                onDismiss();
+              }}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Next Set
+            </Button>
+          )}
+        </div>
+
+        {/* Secondary Actions */}
+        <div className="flex gap-2">
+          {onAddTime && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onAddTime(60);
+                onDismiss();
+              }}
+              className="flex-1 bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              +1 min
+            </Button>
+          )}
+          {onRestartTimer && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onRestartTimer();
+                onDismiss();
+              }}
+              className="flex-1 bg-gray-800 border-gray-600 hover:bg-gray-700 text-xs"
+            >
+              <RotateCcw className="w-3 h-3 mr-1" />
+              Restart
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
