@@ -3,14 +3,26 @@ import React from 'react';
 import { TrainingSession as TrainingSessionComponent } from '@/components/training/TrainingSession';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useWorkoutStore } from '@/store/workoutStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 
 const TrainingSessionPage: React.FC = () => {
   const { isActive, exercises } = useWorkoutStore();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // Show message if no active workout
-  if (!isActive && Object.keys(exercises).length === 0) {
+  // Extract training config from navigation state
+  const trainingConfig = location.state?.trainingConfig as TrainingConfig | null;
+  
+  console.log('TrainingSessionPage state:', { 
+    isActive, 
+    exerciseCount: Object.keys(exercises).length,
+    trainingConfig,
+    locationState: location.state 
+  });
+  
+  // Show message if no active workout AND no training config from setup
+  if (!isActive && Object.keys(exercises).length === 0 && !trainingConfig) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center text-white">
@@ -41,7 +53,7 @@ const TrainingSessionPage: React.FC = () => {
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-900">
         <TrainingSessionComponent 
-          trainingConfig={null}
+          trainingConfig={trainingConfig}
           onComplete={handleComplete}
           onCancel={handleCancel}
         />

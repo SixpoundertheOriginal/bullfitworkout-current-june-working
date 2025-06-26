@@ -57,21 +57,15 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       updateLastActiveRoute('/training-session');
       startWorkout();
       
-      // Navigate to the training session page
-      navigate('/training-session');
-      
       // Show toast to confirm workout started
       toast({
         title: "Workout started",
         description: "You can return to it anytime from the banner"
       });
     } 
-    // Case 2: Active session exists - Just navigate to it
+    // Case 2: Active session exists - show training interface
     else if (isActive) {
-      console.log('Navigating to existing active workout session');
-      
-      // If there's an active workout, just navigate to the training session page
-      navigate('/training-session');
+      console.log('Continuing existing active workout session');
       
       // Only show toast if we have exercises (not just a new session)
       if (Object.keys(exercises).length > 0) {
@@ -80,7 +74,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
         });
       }
     }
-    // Case 3: No config, no active session - Do nothing, component will unmount
+    // Case 3: No config, no active session - This should be handled by parent component
   }, [
     trainingConfig, 
     isActive, 
@@ -88,7 +82,6 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     setTrainingConfig, 
     startWorkout, 
     updateLastActiveRoute, 
-    navigate, 
     exercises
   ]);
 
@@ -97,9 +90,19 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     initializeSession();
   }, [initializeSession]);
 
+  // If we have training config or active workout, show training interface
+  if (trainingConfig || isActive) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-white">Loading training session...</p>
+      </div>
+    );
+  }
+
+  // This should not happen due to parent component logic, but just in case
   return (
     <div className="flex items-center justify-center h-full">
-      <p className="text-white">Loading training session...</p>
+      <p className="text-white">Initializing workout...</p>
     </div>
   );
 };
