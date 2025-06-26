@@ -1,15 +1,30 @@
 
-@keyframes fadeIn {
+/* ... keep existing code the same ... */
+
+@keyframes slide-down {
   from {
+    transform: translate(-50%, -100%);
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
+    transform: translate(-50%, 0);
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 30px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }

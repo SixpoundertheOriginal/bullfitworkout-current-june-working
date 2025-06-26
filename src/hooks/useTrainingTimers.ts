@@ -1,4 +1,3 @@
-
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TimerEngine } from '@/services/TimerEngine';
@@ -27,6 +26,8 @@ export interface RestTimer {
   remaining: number;
   target: number;
   progress: number;
+  isOvertime: boolean;
+  overtimeSeconds: number;
   setDuration: (duration: number) => void;
   skip: () => void;
 }
@@ -51,6 +52,9 @@ export const useTrainingTimers = () => {
   const { isVisible } = usePageVisibility();
   const { getRestTime } = useExerciseRestTime();
   const [isWorkoutTimerRunning, setIsWorkoutTimerRunning] = useState(isActive && isVisible);
+  const [isRestOvertime, setIsRestOvertime] = useState(false);
+  const [restOvertimeSeconds, setRestOvertimeSeconds] = useState(0);
+  const [showRestNotification, setShowRestNotification] = useState(false);
 
   const onWorkoutTick = useCallback((seconds: number) => {
     // This check is important to prevent unnecessary re-renders via Zustand
@@ -87,15 +91,21 @@ export const useTrainingTimers = () => {
 
   const restTimerEngineRef = useRef<RestTimerEngine | null>(null);
 
-  const onRestTick = useCallback((seconds: number) => {
-    setCurrentRestTime(seconds);
+  const onRestTick = useCallback((remainingTime: number, isOvertime: boolean, overtimeSeconds: number) => {
+    setCurrentRestTime(remainingTime);
+    setIsRestOvertime(isOvertime);
+    setRestOvertimeSeconds(overtimeSeconds);
   }, [setCurrentRestTime]);
 
   const onRestEnd = useCallback(() => {
-    stopRestTimer();
-    // In the future, we can trigger a notification here.
-    console.log('[TrainingTimers] Rest timer finished.');
-  }, [stopRestTimer]);
+    console.log('[TrainingTimers] Rest timer finished - showing notification');
+    setShowRestNotification(true);
+    
+    // Play notification sound or vibration if available
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+  }, []);
 
   if (!restTimerEngineRef.current) {
     restTimerEngineRef.current = new RestTimerEngine(onRestTick, onRestEnd);
@@ -139,32 +149,36 @@ export const useTrainingTimers = () => {
     remaining: currentRestTime,
     target: restTimerTargetDuration,
     progress: restTimerTargetDuration > 0 ? ((restTimerTargetDuration - currentRestTime) / restTimerTargetDuration) * 100 : 0,
+    isOvertime: isRestOvertime,
+    overtimeSeconds: restOvertimeSeconds,
     resetSignal: restTimerResetSignal,
     start: (duration: number = 60) => {
       startRestTimer(duration);
       restTimerEngineRef.current?.start(duration);
+      setShowRestNotification(false);
     },
     stop: () => {
       stopRestTimer();
       restTimerEngineRef.current?.stop();
+      setShowRestNotification(false);
     },
     reset: () => {
       resetRestTimer();
       restTimerEngineRef.current?.reset();
+      setShowRestNotification(false);
     },
     setDuration: (duration: number) => {
       if (restTimerActive) {
         // If timer is running, restart it with the new duration
         restTimer.start(duration);
       } else {
-        // This could be enhanced to set a "next" duration, but for now we'll log it.
-        // The UI will call start() with the new value anyway.
         console.log(`Setting rest duration to ${duration}s`);
       }
     },
     skip: () => {
       stopRestTimer();
       restTimerEngineRef.current?.stop();
+      setShowRestNotification(false);
     }
   };
 
@@ -179,12 +193,20 @@ export const useTrainingTimers = () => {
     console.log(`[TrainingTimers] Rest timer started for ${restDuration}s (user preference)`);
   }, [restTimer, getRestTime]);
 
+  const dismissRestNotification = useCallback(() => {
+    setShowRestNotification(false);
+  }, []);
+
   return {
     workoutTimer,
     restTimer,
     handleSetCompletion,
     elapsedTime,
     restTimerActive,
-    currentRestTime
+    currentRestTime,
+    showRestNotification,
+    dismissRestNotification,
+    isRestOvertime,
+    restOvertimeSeconds
   };
 };

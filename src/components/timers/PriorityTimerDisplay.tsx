@@ -1,12 +1,14 @@
 
 import React from 'react';
-import { Timer } from 'lucide-react';
+import { Timer, Bell, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PriorityTimerDisplayProps {
   workoutTime: string;
   restTime?: string;
   isRestActive?: boolean;
+  restProgress?: number; // 0-100 for progress, >100 for overtime
+  isOvertime?: boolean;
   onRestTimerClick?: () => void;
   className?: string;
 }
@@ -15,9 +17,25 @@ export const PriorityTimerDisplay: React.FC<PriorityTimerDisplayProps> = ({
   workoutTime,
   restTime,
   isRestActive = false,
+  restProgress = 0,
+  isOvertime = false,
   onRestTimerClick,
   className
 }) => {
+  const getRestTimerColor = () => {
+    if (isOvertime) return 'text-red-400';
+    if (restProgress > 80) return 'text-orange-400';
+    if (restProgress > 50) return 'text-yellow-400';
+    return 'text-blue-400';
+  };
+
+  const getRestTimerBgColor = () => {
+    if (isOvertime) return 'bg-red-500/20';
+    if (restProgress > 80) return 'bg-orange-500/20';
+    if (restProgress > 50) return 'bg-yellow-500/20';
+    return 'bg-blue-500/20';
+  };
+
   return (
     <div className={cn(
       "flex items-center justify-between",
@@ -38,22 +56,52 @@ export const PriorityTimerDisplay: React.FC<PriorityTimerDisplayProps> = ({
         </div>
       </div>
 
-      {/* Rest Timer (when active) */}
+      {/* Enhanced Rest Timer (when active) */}
       {isRestActive && restTime && (
         <div 
-          className="flex items-center space-x-3 cursor-pointer"
+          className="flex items-center space-x-3 cursor-pointer transition-all duration-300"
           onClick={onRestTimerClick}
         >
           <div>
-            <div className="text-xl font-mono font-bold text-orange-400 text-right">
+            <div className={cn(
+              "text-xl font-mono font-bold text-right transition-colors duration-300",
+              getRestTimerColor(),
+              isOvertime && "animate-pulse"
+            )}>
+              {isOvertime && '+'}
               {restTime}
             </div>
             <div className="text-sm text-gray-400 text-right">
-              Rest Time
+              {isOvertime ? 'Overtime' : 'Rest Time'}
+            </div>
+            
+            {/* Progress bar */}
+            <div className="w-16 h-1 bg-gray-700 rounded-full mt-1 overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-1000 ease-out",
+                  isOvertime ? 'bg-red-500' : 'bg-blue-500'
+                )}
+                style={{ 
+                  width: isOvertime ? '100%' : `${Math.min(restProgress, 100)}%` 
+                }}
+              />
             </div>
           </div>
-          <div className="p-2 bg-orange-500/20 rounded-xl">
-            <div className="w-3 h-3 bg-orange-400 rounded-full animate-pulse" />
+          
+          <div className={cn(
+            "p-2 rounded-xl transition-all duration-300",
+            getRestTimerBgColor()
+          )}>
+            {isOvertime ? (
+              <BellRing className="w-3 h-3 text-red-400 animate-bounce" />
+            ) : (
+              <div className={cn(
+                "w-3 h-3 rounded-full transition-colors duration-300",
+                getRestTimerColor().replace('text-', 'bg-'),
+                restProgress > 90 && "animate-pulse"
+              )} />
+            )}
           </div>
         </div>
       )}

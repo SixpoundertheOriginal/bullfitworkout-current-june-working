@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ExerciseList } from '@/components/training/ExerciseList';
@@ -14,6 +13,7 @@ import { PriorityTimerDisplay } from '@/components/timers/PriorityTimerDisplay';
 import { WorkoutRecoveryBanner } from '@/components/training/WorkoutRecoveryBanner';
 import { cn } from '@/lib/utils';
 import { WorkoutCompletionDialog } from '@/components/training/WorkoutCompletionDialog';
+import { RestTimerNotification } from '@/components/timers/RestTimerNotification';
 
 // Memoized SessionHeader component to isolate renders
 const SessionHeader = React.memo<{
@@ -68,24 +68,32 @@ const SessionHeader = React.memo<{
   </div>
 ));
 
-// Memoized TimerDisplay component
+// Memoized TimerDisplay component with overtime support
 const TimerDisplay = React.memo<{
   elapsedTime: number;
   restTimerActive: boolean;
   currentRestTime: number;
-}>(({ elapsedTime, restTimerActive, currentRestTime }) => {
+  isRestOvertime: boolean;
+  restOvertimeSeconds: number;
+  restTimerTargetDuration: number;
+}>(({ elapsedTime, restTimerActive, currentRestTime, isRestOvertime, restOvertimeSeconds, restTimerTargetDuration }) => {
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
+  const restProgress = restTimerTargetDuration > 0 ? 
+    ((restTimerTargetDuration - currentRestTime) / restTimerTargetDuration) * 100 : 0;
+
   return (
     <div className="sticky top-16 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 -mx-4 px-4 py-4 mb-6">
       <PriorityTimerDisplay
         workoutTime={formatTime(elapsedTime)}
-        restTime={restTimerActive ? formatTime(currentRestTime) : undefined}
+        restTime={isRestOvertime ? formatTime(restOvertimeSeconds) : (restTimerActive ? formatTime(currentRestTime) : undefined)}
         isRestActive={restTimerActive}
+        restProgress={isRestOvertime ? 100 + (restOvertimeSeconds / 60) * 20 : restProgress}
+        isOvertime={isRestOvertime}
         onRestTimerClick={() => {/* Handle rest timer click */}}
       />
     </div>
@@ -96,7 +104,16 @@ const TrainingSessionPage: React.FC = () => {
   const navigate = useNavigate();
   const [isAddExerciseSheetOpen, setAddExerciseSheetOpen] = useState(false);
 
-  const { workoutTimer, restTimer, handleSetCompletion: handleTimerOnComplete } = useTrainingTimers();
+  const { 
+    workoutTimer, 
+    restTimer, 
+    handleSetCompletion: handleTimerOnComplete,
+    showRestNotification,
+    dismissRestNotification,
+    isRestOvertime,
+    restOvertimeSeconds
+  } = useTrainingTimers();
+  
   const { 
     exercises, 
     trainingConfig, 
@@ -105,6 +122,7 @@ const TrainingSessionPage: React.FC = () => {
     elapsedTime,
     restTimerActive,
     currentRestTime,
+    restTimerTargetDuration,
     needsRecovery,
     detectRecoveryNeeded,
     performRecovery,
@@ -222,11 +240,25 @@ const TrainingSessionPage: React.FC = () => {
           </div>
         )}
 
-        {/* Sticky Timer Display at Top */}
+        {/* Enhanced Sticky Timer Display at Top */}
         <TimerDisplay
           elapsedTime={elapsedTime}
           restTimerActive={restTimerActive}
           currentRestTime={currentRestTime}
+          isRestOvertime={isRestOvertime}
+          restOvertimeSeconds={restOvertimeSeconds}
+          restTimerTargetDuration={restTimerTargetDuration}
+        />
+
+        {/* Rest Timer Notification */}
+        <RestTimerNotification
+          isVisible={showRestNotification}
+          overtimeSeconds={restOvertimeSeconds}
+          onDismiss={dismissRestNotification}
+          onStartNextSet={() => {
+            // Logic to focus on next set input or scroll to next exercise
+            console.log('User wants to start next set');
+          }}
         />
 
         {/* Session Header */}
