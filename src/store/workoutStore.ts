@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { Exercise, ExerciseSet } from '@/types/exercise';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
@@ -150,7 +149,10 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     });
   },
   setElapsedTime: (time: number) => set({ elapsedTime: time }),
-  setTrainingConfig: (config: TrainingConfig) => set({ trainingConfig: config }),
+  setTrainingConfig: (config: TrainingConfig) => {
+    console.log('Setting training config:', config);
+    set({ trainingConfig: config });
+  },
   addExercise: (exercise: Exercise | string) => {
     const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
     set((state) => {
@@ -225,7 +227,6 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       updatedSets[setIndex] = { 
         ...currentSet, 
         completed: true,
-        // Store actual rest time when set is completed
         restTime: state.restTimerActive ? state.restTimerTargetDuration - state.currentRestTime : currentSet.restTime
       };
       

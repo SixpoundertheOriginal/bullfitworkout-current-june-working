@@ -5,6 +5,9 @@ import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { toast } from "@/hooks/use-toast";
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import { ExerciseTrackerContainer } from '@/components/training/ExerciseTrackerContainer';
+import { WorkoutSessionHeader } from '@/components/training/WorkoutSessionHeader';
+import { WorkoutSessionFooter } from '@/components/training/WorkoutSessionFooter';
 
 interface TrainingSessionProps {
   trainingConfig: TrainingConfig | null;
@@ -90,11 +93,27 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     initializeSession();
   }, [initializeSession]);
 
-  // If we have training config or active workout, show training interface
-  if (trainingConfig || isActive) {
+  // Show loading state only during initial setup
+  if (trainingConfig && !isActive) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-white">Loading training session...</p>
+        <p className="text-white">Initializing workout...</p>
+      </div>
+    );
+  }
+
+  // If we have training config or active workout, show the full training interface
+  if (trainingConfig || isActive) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex flex-col">
+        <WorkoutSessionHeader />
+        <div className="flex-1 overflow-y-auto">
+          <ExerciseTrackerContainer />
+        </div>
+        <WorkoutSessionFooter 
+          onComplete={onComplete}
+          onCancel={onCancel}
+        />
       </div>
     );
   }
@@ -102,7 +121,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   // This should not happen due to parent component logic, but just in case
   return (
     <div className="flex items-center justify-center h-full">
-      <p className="text-white">Initializing workout...</p>
+      <p className="text-white">No active workout session found</p>
     </div>
   );
 };
