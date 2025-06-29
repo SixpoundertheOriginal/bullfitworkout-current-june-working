@@ -81,6 +81,17 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     ), 0
   );
 
+  // Map workout store status to WorkoutStatus type for header
+  const mapWorkoutStatus = (status: string) => {
+    switch (status) {
+      case 'idle': return 'idle' as const;
+      case 'active': return 'active' as const;
+      case 'paused': return 'idle' as const; // Map paused to idle for display
+      case 'completed': return 'saved' as const;
+      default: return 'idle' as const;
+    }
+  };
+
   // Exercise list handlers
   const handleCompleteSet = useCallback((exerciseName: string, setIndex: number) => {
     completeSet(exerciseName, setIndex);
@@ -212,7 +223,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
           totalSets={totalSets}
           totalVolume={totalVolume}
           totalReps={totalReps}
-          workoutStatus={workoutStatus}
+          workoutStatus={mapWorkoutStatus(workoutStatus)}
           isRecoveryMode={needsRecovery}
           saveProgress={null}
           onRetrySave={handleRetrySave}
@@ -236,13 +247,13 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
           onAddExercise={handleAddExercise}
           onFinishWorkout={handleFinishWorkout}
           hasExercises={exerciseCount > 0}
-          isSaving={workoutStatus === 'saving'}
+          isSaving={workoutStatus === 'active'} // Use active as proxy since store doesn't have saving
         />
         
         <AddExerciseSheet 
-          isOpen={isAddExerciseSheetOpen}
-          onClose={() => setIsAddExerciseSheetOpen(false)}
-          onAddExercise={handleAddExerciseFromSheet}
+          open={isAddExerciseSheetOpen}
+          onOpenChange={setIsAddExerciseSheetOpen}
+          onSelectExercise={(exercise) => handleAddExerciseFromSheet(exercise.name)}
         />
       </div>
     );
