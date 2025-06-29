@@ -1,4 +1,3 @@
-
 import React, { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
@@ -37,32 +36,80 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   const { isVisible } = usePageVisibility();
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   
-  // Split store subscriptions for optimal performance
-  const timerState = useWorkoutTimer();
-  const exerciseState = useWorkoutExercises();
-  const sessionState = useWorkoutSession();
-  const actions = useWorkoutActions();
+  console.log('[TrainingSession] Starting component render with props:', { trainingConfig });
   
-  // Destructure for cleaner code
-  const { elapsedTime } = timerState;
-  const { exercises, isActive, workoutStatus } = exerciseState;
-  const { sessionId, needsRecovery, recoveryData } = sessionState;
+  // Split store subscriptions for optimal performance with error handling
+  let timerState, exerciseState, sessionState, actions;
+  
+  try {
+    timerState = useWorkoutTimer();
+    exerciseState = useWorkoutExercises();
+    sessionState = useWorkoutSession();
+    actions = useWorkoutActions();
+    
+    console.log('[TrainingSession] Successfully got store states:', {
+      timerState,
+      exerciseState,
+      sessionState,
+      actions: Object.keys(actions)
+    });
+  } catch (error) {
+    console.error('[TrainingSession] Error accessing workout store:', error);
+    
+    // Provide fallback values
+    timerState = { 
+      elapsedTime: 0, 
+      restTimerActive: false, 
+      currentRestTime: 0, 
+      restTimerResetSignal: 0, 
+      restTimerTargetDuration: 60 
+    };
+    exerciseState = { 
+      exercises: {}, 
+      isActive: false, 
+      workoutStatus: 'idle' as const 
+    };
+    sessionState = { 
+      sessionId: null, 
+      needsRecovery: false, 
+      recoveryData: null, 
+      trainingConfig: null 
+    };
+    actions = {
+      resetWorkout: () => {},
+      setTrainingConfig: () => {},
+      startWorkout: () => {},
+      updateLastActiveRoute: () => {},
+      completeSet: () => {},
+      removeExercise: () => {},
+      addExercise: () => {},
+      stopRestTimer: () => {},
+      resetRestTimer: () => {},
+      performRecovery: () => {},
+      clearRecovery: () => {}
+    };
+  }
+  
+  // Destructure for cleaner code with null checks
+  const { elapsedTime = 0 } = timerState || {};
+  const { exercises = {}, isActive = false, workoutStatus = 'idle' } = exerciseState || {};
+  const { sessionId = null, needsRecovery = false, recoveryData = null } = sessionState || {};
   const {
-    resetWorkout, 
-    setTrainingConfig, 
-    startWorkout, 
-    updateLastActiveRoute, 
-    completeSet,
-    removeExercise,
-    addExercise,
-    stopRestTimer,
-    resetRestTimer,
-    performRecovery,
-    clearRecovery
-  } = actions;
+    resetWorkout = () => {}, 
+    setTrainingConfig = () => {}, 
+    startWorkout = () => {}, 
+    updateLastActiveRoute = () => {}, 
+    completeSet = () => {},
+    removeExercise = () => {},
+    addExercise = () => {},
+    stopRestTimer = () => {},
+    resetRestTimer = () => {},
+    performRecovery = () => {},
+    clearRecovery = () => {}
+  } = actions || {};
   
   // Memoized workout metrics - only recalculates when exercises change
-  const metrics = useOptimizedWorkoutMetrics(exercises);
+  const metrics = useOptimizedWorkoutMetrics(exercises || {});
   
   // Debug logging for component state
   useEffect(() => {
@@ -89,19 +136,37 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
 
   // Memoized handlers to prevent recreation on every render
   const handleCompleteSet = useCallback((exerciseName: string, setIndex: number) => {
-    completeSet(exerciseName, setIndex);
-    toast({
-      title: "Set completed!",
-      description: "Rest timer started"
-    });
+    try {
+      completeSet(exerciseName, setIndex);
+      toast({
+        title: "Set completed!",
+        description: "Rest timer started"
+      });
+    } catch (error) {
+      console.error('[TrainingSession] Error completing set:', error);
+      toast({
+        title: "Error completing set",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
   }, [completeSet]);
 
   const handleDeleteExercise = useCallback((exerciseName: string) => {
-    removeExercise(exerciseName);
-    toast({
-      title: "Exercise removed",
-      description: `${exerciseName} has been removed from your workout`
-    });
+    try {
+      removeExercise(exerciseName);
+      toast({
+        title: "Exercise removed",
+        description: `${exerciseName} has been removed from your workout`
+      });
+    } catch (error) {
+      console.error('[TrainingSession] Error removing exercise:', error);
+      toast({
+        title: "Error removing exercise",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
   }, [removeExercise]);
 
   const handleAddExercise = useCallback(() => {
@@ -109,12 +174,21 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   }, []);
 
   const handleAddExerciseFromSheet = useCallback((exerciseName: string) => {
-    addExercise(exerciseName);
-    setIsAddExerciseSheetOpen(false);
-    toast({
-      title: "Exercise added",
-      description: `${exerciseName} has been added to your workout`
-    });
+    try {
+      addExercise(exerciseName);
+      setIsAddExerciseSheetOpen(false);
+      toast({
+        title: "Exercise added",
+        description: `${exerciseName} has been added to your workout`
+      });
+    } catch (error) {
+      console.error('[TrainingSession] Error adding exercise:', error);
+      toast({
+        title: "Error adding exercise",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
   }, [addExercise]);
 
   const handleRetrySave = useCallback(() => {
@@ -122,16 +196,25 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   }, []);
 
   const handleResetWorkout = useCallback(() => {
-    resetWorkout();
-    navigate('/');
+    try {
+      resetWorkout();
+      navigate('/');
+    } catch (error) {
+      console.error('[TrainingSession] Error resetting workout:', error);
+      navigate('/');
+    }
   }, [resetWorkout, navigate]);
 
   const handleRestTimerComplete = useCallback(() => {
-    stopRestTimer();
-    toast({
-      title: "Rest time complete!",
-      description: "Ready for your next set"
-    });
+    try {
+      stopRestTimer();
+      toast({
+        title: "Rest time complete!",
+        description: "Ready for your next set"
+      });
+    } catch (error) {
+      console.error('[TrainingSession] Error stopping rest timer:', error);
+    }
   }, [stopRestTimer]);
 
   const handleShowRestTimer = useCallback(() => {
@@ -139,7 +222,11 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   }, []);
 
   const handleRestTimerReset = useCallback(() => {
-    resetRestTimer();
+    try {
+      resetRestTimer();
+    } catch (error) {
+      console.error('[TrainingSession] Error resetting rest timer:', error);
+    }
   }, [resetRestTimer]);
 
   const handleFinishWorkout = useCallback(() => {
@@ -148,27 +235,36 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
 
   // Session initialization logic - using useCallback to prevent multiple executions
   const initializeSession = useCallback(() => {
-    if (trainingConfig && !isActive) {
-      console.log('Starting new workout session with config:', trainingConfig);
-      
-      resetWorkout();
-      setTrainingConfig(trainingConfig);
-      updateLastActiveRoute('/training-session');
-      startWorkout();
-      
-      toast({
-        title: "Workout started",
-        description: "You can return to it anytime from the banner"
-      });
-    } 
-    else if (isActive) {
-      console.log('Continuing existing active workout session');
-      
-      if (metrics.exerciseCount > 0) {
+    try {
+      if (trainingConfig && !isActive) {
+        console.log('Starting new workout session with config:', trainingConfig);
+        
+        resetWorkout();
+        setTrainingConfig(trainingConfig);
+        updateLastActiveRoute('/training-session');
+        startWorkout();
+        
         toast({
-          title: "Resuming your active workout"
+          title: "Workout started",
+          description: "You can return to it anytime from the banner"
         });
+      } 
+      else if (isActive) {
+        console.log('Continuing existing active workout session');
+        
+        if (metrics.exerciseCount > 0) {
+          toast({
+            title: "Resuming your active workout"
+          });
+        }
       }
+    } catch (error) {
+      console.error('[TrainingSession] Error initializing session:', error);
+      toast({
+        title: "Error starting workout",
+        description: "Please try again",
+        variant: "destructive"
+      });
     }
   }, [
     trainingConfig, 
