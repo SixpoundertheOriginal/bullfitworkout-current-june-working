@@ -5,7 +5,7 @@ import { useWorkoutTimer } from '@/hooks/useWorkoutStoreSelectors';
 import { useTrainingTimers } from '@/hooks/useTrainingTimers';
 
 export const OptimizedTimerHeader = React.memo(() => {
-  const { elapsedTime, restTimerActive, currentRestTime, restTimerResetSignal, restTimerTargetDuration } = useWorkoutTimer();
+  const timerState = useWorkoutTimer();
   const { workoutTimer, restTimer } = useTrainingTimers();
 
   return (

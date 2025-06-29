@@ -1,6 +1,5 @@
 
 import { useWorkoutStore } from '@/store/workoutStore';
-import { useShallow } from 'zustand/react/shallow';
 
 // Timer-specific selector - only subscribes to timer-related state
 export const useWorkoutTimer = () => {
@@ -11,8 +10,7 @@ export const useWorkoutTimer = () => {
       currentRestTime: state.currentRestTime,
       restTimerResetSignal: state.restTimerResetSignal,
       restTimerTargetDuration: state.restTimerTargetDuration,
-    }),
-    useShallow
+    })
   );
 };
 
@@ -23,8 +21,7 @@ export const useWorkoutExercises = () => {
       exercises: state.exercises,
       isActive: state.isActive,
       workoutStatus: state.workoutStatus,
-    }),
-    useShallow
+    })
   );
 };
 
@@ -36,8 +33,7 @@ export const useWorkoutSession = () => {
       trainingConfig: state.trainingConfig,
       needsRecovery: state.needsRecovery,
       recoveryData: state.recoveryData,
-    }),
-    useShallow
+    })
   );
 };
 
@@ -56,7 +52,6 @@ export const useWorkoutActions = () => {
       resetRestTimer: state.resetRestTimer,
       performRecovery: state.performRecovery,
       clearRecovery: state.clearRecovery,
-    }),
-    useShallow
+    })
   );
 };

@@ -38,9 +38,15 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   
   // Split store subscriptions for optimal performance
-  const { elapsedTime } = useWorkoutTimer();
-  const { exercises, isActive, workoutStatus } = useWorkoutExercises();
-  const { sessionId, needsRecovery, recoveryData } = useWorkoutSession();
+  const timerState = useWorkoutTimer();
+  const exerciseState = useWorkoutExercises();
+  const sessionState = useWorkoutSession();
+  const actions = useWorkoutActions();
+  
+  // Destructure for cleaner code
+  const { elapsedTime } = timerState;
+  const { exercises, isActive, workoutStatus } = exerciseState;
+  const { sessionId, needsRecovery, recoveryData } = sessionState;
   const {
     resetWorkout, 
     setTrainingConfig, 
@@ -53,7 +59,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     resetRestTimer,
     performRecovery,
     clearRecovery
-  } = useWorkoutActions();
+  } = actions;
   
   // Memoized workout metrics - only recalculates when exercises change
   const metrics = useOptimizedWorkoutMetrics(exercises);
