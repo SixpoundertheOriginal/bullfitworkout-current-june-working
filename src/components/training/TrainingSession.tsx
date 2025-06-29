@@ -1,13 +1,14 @@
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { toast } from "@/hooks/use-toast";
 import { usePageVisibility } from '@/hooks/usePageVisibility';
-import { ExerciseTrackerContainer } from '@/components/training/ExerciseTrackerContainer';
+import { ExerciseList } from '@/components/training/ExerciseList';
 import { WorkoutSessionHeader } from '@/components/training/WorkoutSessionHeader';
 import { WorkoutSessionFooter } from '@/components/training/WorkoutSessionFooter';
+import { AddExerciseSheet } from '@/components/training/AddExerciseSheet';
 
 interface TrainingSessionProps {
   trainingConfig: TrainingConfig | null;
@@ -22,6 +23,8 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isVisible } = usePageVisibility();
+  const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  
   const { 
     resetWorkout, 
     setTrainingConfig, 
@@ -30,7 +33,21 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     isActive, 
     exercises, 
     elapsedTime,
-    sessionId
+    sessionId,
+    completeSet,
+    removeExercise,
+    addExercise,
+    restTimerActive,
+    currentRestTime,
+    restTimerResetSignal,
+    restTimerTargetDuration,
+    stopRestTimer,
+    resetRestTimer,
+    workoutStatus,
+    needsRecovery,
+    recoveryData,
+    performRecovery,
+    clearRecovery
   } = useWorkoutStore();
   
   // Debug logging for component state
@@ -44,7 +61,89 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       isVisible 
     });
   }, [trainingConfig, isActive, exercises, elapsedTime, sessionId, isVisible]);
-  
+
+  // Calculate metrics for header
+  const exerciseCount = Object.keys(exercises).length;
+  const completedSets = Object.values(exercises).reduce((total, sets) => 
+    total + sets.filter(set => set.completed).length, 0
+  );
+  const totalSets = Object.values(exercises).reduce((total, sets) => 
+    total + sets.length, 0
+  );
+  const totalVolume = Object.values(exercises).reduce((total, sets) => 
+    total + sets.filter(set => set.completed).reduce((setTotal, set) => 
+      setTotal + (set.weight * set.reps), 0
+    ), 0
+  );
+  const totalReps = Object.values(exercises).reduce((total, sets) => 
+    total + sets.filter(set => set.completed).reduce((setTotal, set) => 
+      setTotal + set.reps, 0
+    ), 0
+  );
+
+  // Exercise list handlers
+  const handleCompleteSet = useCallback((exerciseName: string, setIndex: number) => {
+    completeSet(exerciseName, setIndex);
+    toast({
+      title: "Set completed!",
+      description: "Rest timer started"
+    });
+  }, [completeSet]);
+
+  const handleDeleteExercise = useCallback((exerciseName: string) => {
+    removeExercise(exerciseName);
+    toast({
+      title: "Exercise removed",
+      description: `${exerciseName} has been removed from your workout`
+    });
+  }, [removeExercise]);
+
+  const handleAddExercise = useCallback(() => {
+    setIsAddExerciseSheetOpen(true);
+  }, []);
+
+  const handleAddExerciseFromSheet = useCallback((exerciseName: string) => {
+    addExercise(exerciseName);
+    setIsAddExerciseSheetOpen(false);
+    toast({
+      title: "Exercise added",
+      description: `${exerciseName} has been added to your workout`
+    });
+  }, [addExercise]);
+
+  // Header action handlers
+  const handleRetrySave = useCallback(() => {
+    // Implement retry save logic if needed
+    console.log('Retry save requested');
+  }, []);
+
+  const handleResetWorkout = useCallback(() => {
+    resetWorkout();
+    navigate('/');
+  }, [resetWorkout, navigate]);
+
+  const handleRestTimerComplete = useCallback(() => {
+    stopRestTimer();
+    toast({
+      title: "Rest time complete!",
+      description: "Ready for your next set"
+    });
+  }, [stopRestTimer]);
+
+  const handleShowRestTimer = useCallback(() => {
+    // Could open a rest timer modal or sheet
+    console.log('Show rest timer requested');
+  }, []);
+
+  const handleRestTimerReset = useCallback(() => {
+    resetRestTimer();
+  }, [resetRestTimer]);
+
+  // Footer handlers
+  const handleFinishWorkout = useCallback(() => {
+    onComplete();
+  }, [onComplete]);
+
   // Session initialization logic - using useCallback to prevent multiple executions
   const initializeSession = useCallback(() => {
     if (trainingConfig && !isActive) {
@@ -106,13 +205,44 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   if (trainingConfig || isActive) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col">
-        <WorkoutSessionHeader />
+        <WorkoutSessionHeader 
+          elapsedTime={elapsedTime}
+          exerciseCount={exerciseCount}
+          completedSets={completedSets}
+          totalSets={totalSets}
+          totalVolume={totalVolume}
+          totalReps={totalReps}
+          workoutStatus={workoutStatus}
+          isRecoveryMode={needsRecovery}
+          saveProgress={null}
+          onRetrySave={handleRetrySave}
+          onResetWorkout={handleResetWorkout}
+          restTimerActive={restTimerActive}
+          onRestTimerComplete={handleRestTimerComplete}
+          onShowRestTimer={handleShowRestTimer}
+          onRestTimerReset={handleRestTimerReset}
+          restTimerResetSignal={restTimerResetSignal}
+          currentRestTime={currentRestTime}
+        />
         <div className="flex-1 overflow-y-auto">
-          <ExerciseTrackerContainer />
+          <ExerciseList 
+            exercises={exercises}
+            onCompleteSet={handleCompleteSet}
+            onDeleteExercise={handleDeleteExercise}
+            onAddExercise={handleAddExercise}
+          />
         </div>
         <WorkoutSessionFooter 
-          onComplete={onComplete}
-          onCancel={onCancel}
+          onAddExercise={handleAddExercise}
+          onFinishWorkout={handleFinishWorkout}
+          hasExercises={exerciseCount > 0}
+          isSaving={workoutStatus === 'saving'}
+        />
+        
+        <AddExerciseSheet 
+          isOpen={isAddExerciseSheetOpen}
+          onClose={() => setIsAddExerciseSheetOpen(false)}
+          onAddExercise={handleAddExerciseFromSheet}
         />
       </div>
     );
