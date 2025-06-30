@@ -1,5 +1,5 @@
 
-import React, { useEffect, useCallback, useState, useRef, useMemo, useLayoutEffect } from 'react';
+import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { toast } from "@/hooks/use-toast";
@@ -8,7 +8,6 @@ import { ExerciseList } from '@/components/training/ExerciseList';
 import { WorkoutSessionHeader } from '@/components/training/WorkoutSessionHeader';
 import { WorkoutSessionFooter } from '@/components/training/WorkoutSessionFooter';
 import { AddExerciseSheet } from '@/components/training/AddExerciseSheet';
-import { OptimizedTimerHeader } from '@/components/training/OptimizedTimerHeader';
 import { useOptimizedWorkoutMetrics } from '@/hooks/useOptimizedWorkoutMetrics';
 import { 
   useWorkoutTimer,
@@ -107,11 +106,12 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     clearRecovery = () => {}
   } = actions || {};
   
-  // Memoize exercises to prevent unnecessary metrics recalculation
-  const memoizedExercises = useMemo(() => exercises, [JSON.stringify(exercises)]);
+  // Use stable reference for exercises to prevent JSON.stringify issues
+  const exercisesKeys = Object.keys(exercises);
+  const stableExercises = useMemo(() => exercises, [exercisesKeys.join(',')]);
   
   // Memoized workout metrics - only recalculates when exercises change
-  const metrics = useOptimizedWorkoutMetrics(memoizedExercises || {});
+  const metrics = useOptimizedWorkoutMetrics(stableExercises || {});
   
   // Debug logging for component state
   useEffect(() => {
@@ -235,78 +235,56 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     onComplete();
   }, [onComplete]);
 
-  // Session initialization logic - using useLayoutEffect to run before paint
-  const initializeSession = useCallback(() => {
+  // Single initialization effect to prevent circular dependencies
+  useEffect(() => {
     // Prevent multiple initializations
-    if (initializationRef.current) {
-      console.log('[TrainingSession] Already initialized, skipping');
+    if (initializationRef.current || isInitialized) {
       return;
     }
 
-    try {
-      if (trainingConfig && !isActive) {
-        console.log('Starting new workout session with config:', trainingConfig);
-        
-        resetWorkout();
-        setTrainingConfig(trainingConfig);
-        updateLastActiveRoute('/training-session');
-        startWorkout();
-        
-        initializationRef.current = true;
-        setIsInitialized(true);
-        
-        toast({
-          title: "Workout started",
-          description: "You can return to it anytime from the banner"
-        });
-      } 
-      else if (isActive) {
-        console.log('Continuing existing active workout session');
-        
-        initializationRef.current = true;
-        setIsInitialized(true);
-        
-        if (Object.keys(exercises).length > 0) {
+    const initializeSession = async () => {
+      try {
+        if (trainingConfig && !isActive) {
+          console.log('Starting new workout session with config:', trainingConfig);
+          
+          resetWorkout();
+          setTrainingConfig(trainingConfig);
+          updateLastActiveRoute('/training-session');
+          startWorkout();
+          
           toast({
-            title: "Resuming your active workout"
+            title: "Workout started",
+            description: "You can return to it anytime from the banner"
           });
+        } 
+        else if (isActive) {
+          console.log('Continuing existing active workout session');
+          
+          if (Object.keys(exercises).length > 0) {
+            toast({
+              title: "Resuming your active workout"
+            });
+          }
         }
-      } else {
-        // No training config and not active - set as initialized to prevent loading state
+        
+        initializationRef.current = true;
         setIsInitialized(true);
+        setIsLoading(false);
+        
+      } catch (error) {
+        console.error('[TrainingSession] Error initializing session:', error);
+        setIsInitialized(true);
+        setIsLoading(false);
+        toast({
+          title: "Error starting workout",
+          description: "Please try again",
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      console.error('[TrainingSession] Error initializing session:', error);
-      setIsInitialized(true); // Set initialized even on error to prevent loading loop
-      toast({
-        title: "Error starting workout",
-        description: "Please try again",
-        variant: "destructive"
-      });
-    }
-  }, [
-    trainingConfig, 
-    isActive, 
-    resetWorkout, 
-    setTrainingConfig, 
-    startWorkout, 
-    updateLastActiveRoute,
-    exercises
-  ]);
+    };
 
-  // Use layoutEffect for critical initialization to run before paint
-  useLayoutEffect(() => {
-    if (!isInitialized) {
-      initializeSession();
-    }
-  }, [initializeSession, isInitialized]);
-
-  // Set loading to false once initialization is complete
-  useEffect(() => {
-    if (isInitialized) {
-      setIsLoading(false);
-    }
-  }, [isInitialized]);
+    initializeSession();
+  }, [trainingConfig, isActive]); // Removed exercises from dependencies to break circular dependency
 
   // Show loading state during initialization
   if (isLoading) {
