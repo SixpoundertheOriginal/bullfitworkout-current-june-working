@@ -1,4 +1,5 @@
-import React, { useEffect, useCallback, useState } from 'react';
+
+import React, { useEffect, useCallback, useState, useRef, useMemo, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 import { toast } from "@/hooks/use-toast";
@@ -35,6 +36,9 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   const navigate = useNavigate();
   const { isVisible } = usePageVisibility();
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const initializationRef = useRef(false);
   
   console.log('[TrainingSession] Starting component render with props:', { trainingConfig });
   
@@ -47,12 +51,7 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     sessionState = useWorkoutSession();
     actions = useWorkoutActions();
     
-    console.log('[TrainingSession] Successfully got store states:', {
-      timerState,
-      exerciseState,
-      sessionState,
-      actions: Object.keys(actions)
-    });
+    console.log('[TrainingSession] Successfully got store states');
   } catch (error) {
     console.error('[TrainingSession] Error accessing workout store:', error);
     
@@ -108,8 +107,11 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     clearRecovery = () => {}
   } = actions || {};
   
+  // Memoize exercises to prevent unnecessary metrics recalculation
+  const memoizedExercises = useMemo(() => exercises, [JSON.stringify(exercises)]);
+  
   // Memoized workout metrics - only recalculates when exercises change
-  const metrics = useOptimizedWorkoutMetrics(exercises || {});
+  const metrics = useOptimizedWorkoutMetrics(memoizedExercises || {});
   
   // Debug logging for component state
   useEffect(() => {
@@ -233,8 +235,14 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     onComplete();
   }, [onComplete]);
 
-  // Session initialization logic - using useCallback to prevent multiple executions
+  // Session initialization logic - using useLayoutEffect to run before paint
   const initializeSession = useCallback(() => {
+    // Prevent multiple initializations
+    if (initializationRef.current) {
+      console.log('[TrainingSession] Already initialized, skipping');
+      return;
+    }
+
     try {
       if (trainingConfig && !isActive) {
         console.log('Starting new workout session with config:', trainingConfig);
@@ -244,6 +252,9 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
         updateLastActiveRoute('/training-session');
         startWorkout();
         
+        initializationRef.current = true;
+        setIsInitialized(true);
+        
         toast({
           title: "Workout started",
           description: "You can return to it anytime from the banner"
@@ -252,14 +263,21 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
       else if (isActive) {
         console.log('Continuing existing active workout session');
         
-        if (metrics.exerciseCount > 0) {
+        initializationRef.current = true;
+        setIsInitialized(true);
+        
+        if (Object.keys(exercises).length > 0) {
           toast({
             title: "Resuming your active workout"
           });
         }
+      } else {
+        // No training config and not active - set as initialized to prevent loading state
+        setIsInitialized(true);
       }
     } catch (error) {
       console.error('[TrainingSession] Error initializing session:', error);
+      setIsInitialized(true); // Set initialized even on error to prevent loading loop
       toast({
         title: "Error starting workout",
         description: "Please try again",
@@ -272,20 +290,32 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
     resetWorkout, 
     setTrainingConfig, 
     startWorkout, 
-    updateLastActiveRoute, 
-    metrics.exerciseCount
+    updateLastActiveRoute,
+    exercises
   ]);
 
-  // Run initialization once on mount
-  useEffect(() => {
-    initializeSession();
-  }, [initializeSession]);
+  // Use layoutEffect for critical initialization to run before paint
+  useLayoutEffect(() => {
+    if (!isInitialized) {
+      initializeSession();
+    }
+  }, [initializeSession, isInitialized]);
 
-  // Show loading state only during initial setup
-  if (trainingConfig && !isActive) {
+  // Set loading to false once initialization is complete
+  useEffect(() => {
+    if (isInitialized) {
+      setIsLoading(false);
+    }
+  }, [isInitialized]);
+
+  // Show loading state during initialization
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-white">Initializing workout...</p>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p>Initializing workout...</p>
+        </div>
       </div>
     );
   }
@@ -338,8 +368,17 @@ export const TrainingSession: React.FC<TrainingSessionProps> = ({
   }
 
   return (
-    <div className="flex items-center justify-center h-full">
-      <p className="text-white">No active workout session found</p>
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="text-center text-white">
+        <h1 className="text-2xl font-bold mb-4">No Active Workout</h1>
+        <p className="text-gray-400 mb-6">Start a workout from the home page to begin training.</p>
+        <a 
+          href="/" 
+          className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+        >
+          Go Home
+        </a>
+      </div>
     </div>
   );
 };
