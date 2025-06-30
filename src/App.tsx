@@ -27,7 +27,7 @@ const AllExercises = lazy(() => import("@/pages/AllExercisesPage"));
 const TrainingSession = lazy(() => import("@/pages/TrainingSession"));
 const WorkoutDetails = lazy(() => import("@/pages/WorkoutDetailsPage"));
 const DesignSystemPage = lazy(() => import("@/pages/DesignSystemPage"));
-const WorkoutSetup = lazy(() => import("@/pages/WorkoutSetup").then(module => ({ default: module.WorkoutSetup })));
+const WorkoutSetup = lazy(() => import("@/pages/WorkoutSetup"));
 
 const queryClient = new QueryClient({
   defaultOptions: {

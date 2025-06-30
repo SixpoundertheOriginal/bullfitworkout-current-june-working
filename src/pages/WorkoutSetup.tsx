@@ -5,7 +5,7 @@ import { WorkoutTypeSelectionPage } from "./workout-setup/WorkoutTypeSelectionPa
 import { WorkoutCustomizationPage } from "./workout-setup/WorkoutCustomizationPage";
 import { WorkoutSetupProvider } from "@/context/WorkoutSetupContext";
 
-export const WorkoutSetup = () => {
+export default function WorkoutSetup() {
   return (
     <WorkoutSetupProvider>
       <div className="min-h-screen bg-gray-900">
@@ -17,4 +17,4 @@ export const WorkoutSetup = () => {
       </div>
     </WorkoutSetupProvider>
   );
-};
+}
