@@ -2,7 +2,7 @@
 import React from 'react';
 import { TrainingSession as TrainingSessionComponent } from '@/components/training/TrainingSession';
 import { TrainingSessionErrorBoundary } from '@/components/training/TrainingSessionErrorBoundary';
-import { useWorkoutStore } from '@/store/workoutStore';
+import { useWorkoutExercises } from '@/hooks/useWorkoutStoreSelectors';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { TrainingConfig } from '@/hooks/useTrainingSetupPersistence';
 
@@ -10,20 +10,8 @@ const TrainingSessionPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Safely extract workout store state
-  let isActive = false;
-  let exercises = {};
-  
-  try {
-    const workoutState = useWorkoutStore((state) => ({
-      isActive: state.isActive,
-      exercises: state.exercises
-    }));
-    isActive = workoutState.isActive;
-    exercises = workoutState.exercises;
-  } catch (error) {
-    console.error('[TrainingSessionPage] Error accessing workout store:', error);
-  }
+  // Use stable selectors instead of direct store access
+  const { exercises, isActive } = useWorkoutExercises();
   
   // Extract training config from navigation state
   const trainingConfig = location.state?.trainingConfig as TrainingConfig | null;

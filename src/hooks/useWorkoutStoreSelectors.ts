@@ -34,7 +34,7 @@ export const useWorkoutExercises = () => {
   );
   
   // Memoize exercises object to prevent unnecessary re-renders
-  const memoizedExercises = useMemo(() => result.exercises, [JSON.stringify(result.exercises)]);
+  const memoizedExercises = useMemo(() => result.exercises, [Object.keys(result.exercises).join(',')]);
   
   return useMemo(() => ({
     exercises: memoizedExercises,
