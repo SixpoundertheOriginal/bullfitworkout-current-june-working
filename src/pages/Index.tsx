@@ -11,15 +11,116 @@ import { WorkoutBanner } from "@/components/training/WorkoutBanner";
 import { ExerciseFAB } from "@/components/ExerciseFAB";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Eye, EyeOff } from "lucide-react";
+import { BarChart3, Eye, EyeOff, Dumbbell, Target, TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 // Lazy-load the WorkoutHistory component to speed up initial page load.
 const WorkoutHistory = lazy(() => import("@/components/WorkoutHistory").then(module => ({ default: module.WorkoutHistory })));
 
 const Index = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  // Show loading spinner while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show landing page for unauthenticated users
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+        <div className="container mx-auto px-6 py-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex items-center justify-center mb-8">
+                <Dumbbell className="h-12 w-12 text-primary mr-4" />
+                <h1 className="text-4xl md:text-6xl font-bold text-foreground">
+                  BullFit
+                </h1>
+              </div>
+              
+              <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto">
+                Your intelligent fitness tracking companion. Log workouts, track progress, and achieve your fitness goals with data-driven insights.
+              </p>
+
+              <div className="grid md:grid-cols-3 gap-8 mb-12">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="p-6 rounded-2xl bg-card border border-border"
+                >
+                  <Target className="h-8 w-8 text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Smart Tracking</h3>
+                  <p className="text-muted-foreground">Track sets, reps, weight, and rest times with intelligent recommendations</p>
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="p-6 rounded-2xl bg-card border border-border"
+                >
+                  <TrendingUp className="h-8 w-8 text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Progress Analytics</h3>
+                  <p className="text-muted-foreground">Visualize your progress with detailed charts and performance metrics</p>
+                </motion.div>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="p-6 rounded-2xl bg-card border border-border"
+                >
+                  <Dumbbell className="h-8 w-8 text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Exercise Library</h3>
+                  <p className="text-muted-foreground">Access hundreds of exercises with detailed instructions and variations</p>
+                </motion.div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+              >
+                <Button
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="px-8 py-4 text-lg font-semibold"
+                >
+                  Get Started
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => navigate('/auth')}
+                  className="px-8 py-4 text-lg font-semibold"
+                >
+                  Sign In
+                </Button>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Only load workout state if user is authenticated
   const {
     showWorkouts,
     showLevelUp,
@@ -35,9 +136,6 @@ const Index = () => {
     handleContinueWorkout,
     toggleWorkoutDisplay,
   } = useIndexPageState();
-
-  const isMobile = useIsMobile();
-  const navigate = useNavigate();
 
   // Mock data for achievements and insights (in real app, this would come from hooks)
   const mockAchievements = [
@@ -241,63 +339,6 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Debug Navigation Section */}
-      <TestNavigation />
-    </div>
-  );
-};
-
-// Add this debug navigation section before the closing div
-const TestNavigation = () => {
-  const navigate = useNavigate();
-  
-  const handleNavigation = (path: string) => {
-    console.log('[Index] Navigating to:', path);
-    navigate(path);
-  };
-
-  return (
-    <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-      <h3 className="text-white text-lg font-semibold mb-4">Debug Navigation</h3>
-      <div className="grid grid-cols-2 gap-2">
-        <button 
-          onClick={() => handleNavigation('/auth')}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Auth Page
-        </button>
-        <button 
-          onClick={() => handleNavigation('/overview')}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Overview
-        </button>
-        <button 
-          onClick={() => handleNavigation('/profile')}
-          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-        >
-          Profile
-        </button>
-        <button 
-          onClick={() => handleNavigation('/all-exercises')}
-          className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-        >
-          All Exercises
-        </button>
-        <button 
-          onClick={() => handleNavigation('/training-session')}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Training Session
-        </button>
-        <button 
-          onClick={() => handleNavigation('/design-system')}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-        >
-          Design System
-        </button>
-      </div>
     </div>
   );
 };
