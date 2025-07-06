@@ -25,22 +25,13 @@ export const useWorkoutTimer = () => {
 
 // Exercise-specific selector - only subscribes to exercise-related state
 export const useWorkoutExercises = () => {
-  const result = useWorkoutStore(
+  return useWorkoutStore(
     (state) => ({
       exercises: state.exercises ?? {},
       isActive: state.isActive ?? false,
       workoutStatus: state.workoutStatus ?? 'idle',
     })
   );
-  
-  // Memoize exercises object to prevent unnecessary re-renders
-  const memoizedExercises = useMemo(() => result.exercises, [Object.keys(result.exercises).join(',')]);
-  
-  return useMemo(() => ({
-    exercises: memoizedExercises,
-    isActive: result.isActive,
-    workoutStatus: result.workoutStatus
-  }), [memoizedExercises, result.isActive, result.workoutStatus]);
 };
 
 // Session metadata selector - for session info that rarely changes
